@@ -1,0 +1,19 @@
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+*.log
+.idea/
+.vscode/
+.DS_Store
+.env
+.env.*
+!.env.example
+# NFR-3 / NFR-4: runtime data and workbook content never enter a repository
+uploads/
+storage/
+pgdata/
+backups/
+*.dump
+**/raw/

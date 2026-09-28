@@ -1,0 +1,88 @@
+{
+  "_comment": [
+    "Doučko factory config for the FRONTEND repo (React + Vite + TypeScript).",
+    "Read by every scripts/check-*.mjs, qa-verify, gate-status and the git/Claude hooks via scripts/lib/factory-config.mjs.",
+    "GATE-BEARING: this file is hashed into factory-lock.json. Weakening the battery or a hook rule without an approved `Refs: PD-x` commit is a hard red.",
+    "src/design-system/ is vendored from the Doučko design-system artifact: excluded from product-code detection, linting hooks and trailer rules."
+  ],
+  "project": "doucko",
+  "repo": "frontend",
+  "store": "doucko",
+  "contract": { "submodule": "contract", "sibling": "../docs" },
+  "paths": {
+    "requirements": "{contract}/docs/requirements.md",
+    "plan": "{contract}/docs/mvp-capability-plan.md",
+    "storeSpecs": "{contract}/openspec/specs",
+    "specsDir": "openspec/specs",
+    "changesDir": "openspec/changes",
+    "openapi": "{contract}/api/openapi.yaml"
+  },
+  "productCode": { "dirs": ["src"], "ext": "\\.(tsx?|jsx?|css)$", "exclude": ["src/design-system", "src/api/generated"] },
+  "tests": { "dirs": ["src", "e2e", "evals"], "pattern": "\\.(test|spec|eval)\\.(ts|tsx|js|mjs)$" },
+  "featureCodePattern": "^src/",
+  "moduleScope": { "pattern": "^src/features/([^/]+)/", "shared": ["shared", "ui", "api", "app"] },
+  "acceptanceMethods": ["local-verifiable", "e2e", "recording", "vision-verify", "a11y", "eval"],
+  "gateKeysExcluded": ["visual", "workspace", "workspaceRelease"],
+  "coverage": { "format": "istanbul-summary", "summary": "coverage/coverage-summary.json" },
+  "battery": [
+    { "name": "traceability", "command": "node", "args": ["scripts/check-traceability.mjs"] },
+    { "name": "trajectory", "command": "node", "args": ["scripts/check-trajectory.mjs"] },
+    { "name": "recordings", "command": "node", "args": ["scripts/check-recordings.mjs"] },
+    { "name": "acceptance-artifacts", "command": "node", "args": ["scripts/check-acceptance-methods.mjs", "--mode=artifact"] },
+    { "name": "process-ratchet", "command": "node", "args": ["scripts/check-process-ratchet.mjs"] },
+    { "name": "factory-integrity", "command": "node", "args": ["scripts/check-factory-integrity.mjs"] },
+    { "name": "lint", "command": "npm", "args": ["run", "lint"] },
+    { "name": "typecheck", "command": "npm", "args": ["run", "typecheck"] },
+    { "name": "unit-tests", "command": "npm", "args": ["run", "test:run"] },
+    { "name": "coverage", "command": "npm", "args": ["run", "test:coverage"] },
+    { "name": "coverage-ratchet", "command": "node", "args": ["scripts/check-coverage-ratchet.mjs"] },
+    { "name": "browser-e2e-tests", "command": "npm", "args": ["run", "test:e2e"] },
+    { "name": "eval-ratchet", "command": "node", "args": ["scripts/check-eval-ratchet.mjs"] },
+    { "name": "production-build", "command": "npm", "args": ["run", "build"] },
+    { "name": "openspec-all", "command": "npx", "args": ["openspec", "validate", "--all", "--strict"] },
+    { "name": "openspec-active-list", "command": "npx", "args": ["openspec", "list"] }
+  ],
+  "precommit": [
+    {
+      "name": "eslint",
+      "when": "^(src|e2e|evals)/.*\\.(ts|tsx|js|mjs)$",
+      "requires": "node_modules/.bin/eslint",
+      "run": "npx eslint {files}",
+      "hint": "scaffold the Vite app and npm install (eslint) first"
+    },
+    {
+      "name": "typecheck",
+      "when": "\\.(ts|tsx)$",
+      "requires": "node_modules/.bin/tsc",
+      "run": "npm run typecheck",
+      "hint": "scaffold the Vite app and npm install (typescript) first"
+    },
+    {
+      "name": "openspec",
+      "when": "^openspec/",
+      "requires": "node_modules/.bin/openspec",
+      "run": "npx openspec validate --all --strict",
+      "hint": "npm install (pins @fission-ai/openspec)"
+    }
+  ],
+  "postEdit": [
+    {
+      "name": "eslint",
+      "match": "^(src|e2e|evals)/.*\\.(ts|tsx|js|mjs)$",
+      "requires": "node_modules/.bin/eslint",
+      "run": "npx eslint --no-warn-ignored {file}",
+      "hint": "eslint not installed yet"
+    }
+  ],
+  "forbidden": [
+    {
+      "pattern": "\\.pdf$",
+      "allow": "(^|/)fixtures/self-authored/",
+      "reason": "NFR-4: workbook PDFs are copyrighted and are never committed. Self-authored test PDFs go under .../fixtures/self-authored/."
+    },
+    {
+      "pattern": "(^|/)(uploads|storage|pgdata|backups?)/|\\.(dump|sql\\.gz)$",
+      "reason": "NFR-3/NFR-4: runtime data (uploaded files, DB volumes, pg_dump backups) holds the child's data and workbook content — never commit it."
+    }
+  ]
+}

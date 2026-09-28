@@ -1,0 +1,30 @@
+schema: spec-driven
+
+# Product-level truth lives in the docs STORE (id: doucko) — read-only here.
+# `openspec instructions` lists its specs with the exact fetch command:
+#   openspec show <spec-id> --type spec --store doucko
+# When the docs repo has a remote, switch to:
+#   - { id: doucko, remote: "<docs-clone-url>" }
+references:
+  - doucko
+
+context: |
+  Repo: Doučko FRONTEND — implementation-level changes only (implement-<capability>-ui).
+  Stack: React, Vite, TypeScript strict, TanStack Query, generated TS client from
+  contract/api/openapi.yaml (never hand-edited), Vitest, Playwright (against the
+  docker compose stack), axe a11y (light + dark).
+  UI: the vendored Doučko design system in src/design-system/ ("Hero Pop",
+  original hero-academy skin). Child UI Czech, admin UI English, task text may
+  show a Ukrainian translation. Laptop only (>= 1280x720), keyboard-operable.
+  Contract: the docs store, pinned as the contract/ git submodule.
+
+rules:
+  proposal:
+    - Cite the store spec (`openspec show <cap> --type spec --store doucko`) and the FR/NFR ids this frontend change owns per the capability plan.
+    - If the API must change, stop — that is a docs-store contract change first, then a contract/ pin bump.
+  specs:
+    - ADDED requirements describe UI-observable behavior only (screens, states, copy, keyboard paths) and cite FR ids.
+  design:
+    - Map every screen state to design-system components and tokens; list Czech copy keys.
+  tasks:
+    - Follow factory template change.frontend.md — failing unit/e2e/eval tests (red) before UI, `npm run qa:verify` + review-gate before archive.

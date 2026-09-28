@@ -1,0 +1,63 @@
+# Doučko frontend CI — the loop nobody can skip. Adapted from upstream
+# project-factory templates/ci/github-actions.yml for React + Vite + TS.
+name: ci
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive # contract/ = the pinned docs store
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Contract is pinned
+        run: test -f contract/docs/requirements.md || { echo "contract/ submodule missing or empty"; exit 1; }
+
+      - name: Traceability (freshness)
+        run: node scripts/check-traceability.mjs --check-fresh
+      - name: Trajectory (freshness)
+        run: node scripts/check-trajectory.mjs --check-fresh
+      - name: Dependency audit (fail on high+)
+        run: npm audit --audit-level=high
+
+      - name: Install Playwright browsers
+        if: hashFiles('playwright.config.ts') != ''
+        run: npx playwright install --with-deps chromium
+
+      # The battery: lint, typecheck, unit + coverage + ratchet, Playwright
+      # E2E, eval ratchet, build, recordings gate, acceptance join, integrity
+      # lock, OpenSpec. E2E runs against the compose stack (backend image +
+      # Postgres) once Phase 5 wires it — until then the member renders
+      # MISSING/SKIP-pending explicitly, never PASS.
+      - name: qa-verify battery
+        run: node scripts/qa-verify.mjs
+
+      - name: Release hygiene (main only)
+        if: github.ref_name == 'main' || github.ref_name == 'master'
+        run: |
+          node scripts/check-traceability.mjs --release --strict-tests --strict-recordings
+          node scripts/check-trajectory.mjs --release
+
+      - name: Upload QA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-evidence
+          path: |
+            docs/qa/
+            trace/
+            coverage/coverage-summary.json
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
