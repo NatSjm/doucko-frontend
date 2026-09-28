@@ -5,7 +5,7 @@ is a REAL artifact (video exists + >= 10000B, screenshot exists, flow
 asserted, vision met) — not just an id mentioned in a manifest.
 
 Scope: 0 clip(s) across 0 manifest(s).
-Result: SKIP-pending, 1 warning(s)
+Result: NOT-EARNED
 
 | Clip | Proves | Video bytes | Shot | Asserted | Vision |
 |---|---|---|---|---|---|
@@ -17,4 +17,4 @@ None.
 
 ## Warnings
 
-- **recordings**: no manifest.json under docs/qa/ (expected before Phase 6)
+None.

@@ -17,3 +17,5 @@ pgdata/
 backups/
 *.dump
 **/raw/
+# generated from the contract (NFR-12) by `npm run api:generate`
+src/api/generated/
