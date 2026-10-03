@@ -51,7 +51,7 @@ Result: PASS, 60 warning(s)
 | FR-37 | yes | yes | backend, frontend | - | - |
 | FR-38 | yes | yes | backend, frontend | - | - |
 | FR-39 | yes | yes | backend, frontend | - | - |
-| FR-58 | yes | yes | frontend | - | - |
+| FR-58 | yes | yes | frontend | 1 | - |
 | FR-40 | yes | yes | backend, frontend | - | - |
 | FR-41 | yes | yes | backend, frontend | - | - |
 | FR-42 | yes | yes | backend | n/a | n/a |
@@ -91,7 +91,6 @@ None.
 - **test-trace**: FR-37 (owned by frontend) has no test annotated "@trace FR-37"
 - **test-trace**: FR-38 (owned by frontend) has no test annotated "@trace FR-38"
 - **test-trace**: FR-39 (owned by frontend) has no test annotated "@trace FR-39"
-- **test-trace**: FR-58 (owned by frontend) has no test annotated "@trace FR-58"
 - **test-trace**: FR-40 (owned by frontend) has no test annotated "@trace FR-40"
 - **test-trace**: FR-41 (owned by frontend) has no test annotated "@trace FR-41"
 - **recording-evidence**: FR-1 is not referenced by any recording manifest under docs/qa/
@@ -124,3 +123,4 @@ None.
 - **recording-evidence**: FR-58 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-40 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-41 is not referenced by any recording manifest under docs/qa/
+- **active-changes**: active change "implement-platform-foundation-ui" is not archived

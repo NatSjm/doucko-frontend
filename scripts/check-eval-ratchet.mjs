@@ -24,6 +24,7 @@
 // Wire as: "check:eval": "node scripts/check-eval-ratchet.mjs"
 import { readFileSync, writeFileSync, existsSync, mkdirSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import { declaredMethodIds } from "./lib/factory-config.mjs";
 
 const SUMMARY = "evals/results/latest.json";
 const BASELINE = "quality/eval-baseline.json";
@@ -55,7 +56,20 @@ if (!existsSync(SUMMARY)) {
   // there is nothing to ratchet yet, so SKIP rather than fail the build.
   console.warn(`SKIP  ${SUMMARY} not found — no eval results yet (run the eval-suite workflow). Nothing to ratchet.`);
   console.log("Scope: 0 eval case(s)");
-  console.log("Result: SKIP-pending");
+  // PD-10: when no requirement owned here and due (plan slice started) declares `eval`, no eval
+  // result is owed yet: SKIP-planned (visible, never PASS). Otherwise the usual SKIP-pending, which
+  // qa-verify / gate-status render NOT-EARNED once product code exists.
+  const { due, planned } = declaredMethodIds(process.cwd(), "eval");
+  if (due.length === 0) {
+    console.log(
+      planned.length
+        ? `PLANNED: ${planned.join(", ")} declare eval in plan slices not started in this repo (PD-10)`
+        : "PLANNED: no MVP requirement owned by this repo declares eval (PD-10)",
+    );
+    console.log("Result: SKIP-planned");
+  } else {
+    console.log("Result: SKIP-pending");
+  }
   process.exit(0);
 }
 const summary = JSON.parse(readFileSync(SUMMARY, "utf8"));

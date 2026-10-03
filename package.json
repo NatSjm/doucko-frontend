@@ -35,6 +35,7 @@
     "check:vision": "node scripts/check-vision.mjs"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "^10.0.1",
     "@fission-ai/openspec": "1.13.2",
     "@playwright/test": "^1.63.0",

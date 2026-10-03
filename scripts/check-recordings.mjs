@@ -33,7 +33,7 @@
 // code, no --strict) prints SKIP-pending (exit 0, visible, still never PASS).
 import { readdirSync, readFileSync, statSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { hasProductCode as cfgHasProductCode, loadConfig } from "./lib/factory-config.mjs";
+import { declaredMethodIds, hasProductCode as cfgHasProductCode, loadConfig } from "./lib/factory-config.mjs";
 
 const root = process.cwd();
 const argv = process.argv.slice(2);
@@ -111,6 +111,10 @@ for (const mf of walk(PATHS.qaDir, (f) => f === "manifest.json")) {
 // three-valued verdict BEFORE rendering so both the report file and stdout
 // agree.
 const productCode = hasProductCode();
+
+// PD-10: which requirements owned here declare `recording`, and has each one's plan slice started
+// in this repo? Zero clips is only unearned when a started slice declares a recording.
+const { due: recordingDue, planned: recordingPlanned } = declaredMethodIds(root, "recording");
 let verdict;
 let exitCode;
 let notEarnedMsg = null;
@@ -118,7 +122,13 @@ if (failures.length) {
   verdict = "FAIL";
   exitCode = 1;
 } else if (clipCount === 0) {
-  if (STRICT || productCode) {
+  if (!STRICT && productCode && recordingDue.length === 0 && recordingPlanned.length > 0) {
+    // PD-10: nothing is due yet — every requirement declaring a recording belongs to a slice that
+    // has not started in this repo. Visible, never PASS, not NOT-EARNED.
+    verdict = "SKIP-planned";
+    exitCode = 0;
+    warn("recordings", `no clip due yet: ${recordingPlanned.join(", ")} declare recording in slices not started here (PD-10)`);
+  } else if (STRICT || productCode) {
     verdict = "NOT-EARNED";
     exitCode = 1;
     notEarnedMsg = productCode

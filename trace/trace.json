@@ -674,10 +674,13 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/gamification/spec.md"
+        "contract/openspec/specs/gamification/spec.md",
+        "openspec/changes/implement-platform-foundation-ui/specs/platform-foundation/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "e2e/theme.spec.ts"
+      ],
       "recordings": []
     },
     {
@@ -860,10 +863,6 @@
     },
     {
       "check": "test-trace",
-      "msg": "FR-58 (owned by frontend) has no test annotated \"@trace FR-58\""
-    },
-    {
-      "check": "test-trace",
       "msg": "FR-40 (owned by frontend) has no test annotated \"@trace FR-40\""
     },
     {
@@ -989,6 +988,10 @@
     {
       "check": "recording-evidence",
       "msg": "FR-41 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "active-changes",
+      "msg": "active change \"implement-platform-foundation-ui\" is not archived"
     }
   ]
 }

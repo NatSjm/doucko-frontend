@@ -14,6 +14,7 @@
 //
 // Three-valued, never a vacuous PASS (lesson vacuous-pass-not-earned):
 //   - no owned requirement declares vision-verify  -> SKIP-pending (exit 0)
+//   - all of them belong to plan slices not started here -> SKIP-planned (exit 0, PD-10)
 //   - verdicts missing, no product code, no --strict -> SKIP-pending (exit 0)
 //   - verdicts missing while product code exists    -> NOT-EARNED (exit 1)
 //   - any judged clip not met/readable, or a screenshot missing -> FAIL (exit 1)
@@ -51,12 +52,13 @@ if (reqText === null) {
 }
 const own = ownership(root);
 const required = [];
+const plannedIds = []; // PD-10: owned here, but the plan slice has not started in this repo
 for (const line of reqText.split("\n")) {
   const m = line.match(/^\|\s*((?:FR|NFR)-(?:[A-Z0-9]+-)?\d+)\s*\|/);
   if (!m || /\|\s*Future\s*\|/i.test(line)) continue;
   const cells = line.split("|").slice(1, -1).map((c) => c.trim().replace(/`/g, ""));
   const tags = (cells.at(-1) ?? "").toLowerCase().split(/[\s,;/+]+/);
-  if (tags.includes("vision-verify") && own.owns(m[1])) required.push(m[1]);
+  if (tags.includes("vision-verify") && own.owns(m[1])) (own.sliceStarted(m[1]) ? required : plannedIds).push(m[1]);
 }
 
 // ---------- 2. clips with verdicts ----------
@@ -102,7 +104,7 @@ const rows = required.map((id) => {
 const missing = rows.filter((r) => r.status === "no-clip" || r.status === "unjudged");
 
 let result;
-if (required.length === 0) result = "SKIP-pending";
+if (required.length === 0) result = plannedIds.length ? "SKIP-planned" : "SKIP-pending";
 else if (failures.length) result = "FAIL";
 else if (missing.length) result = flags.has("--strict") || hasProductCode(root) ? "NOT-EARNED" : "SKIP-pending";
 else result = "PASS";
@@ -124,6 +126,7 @@ if (required.length) {
   writeFileSync(join(root, REPORT), `${JSON.stringify(report, null, 2)}\n`);
 }
 
+if (plannedIds.length) console.log(`PLANNED: ${plannedIds.join(", ")} (plan slices not started in this repo, PD-10)`);
 for (const w of warnings) console.warn(`WARN  [vision] ${w}`);
 for (const f of failures) console.error(`FAIL  [vision] ${f}`);
 console.log(`\nScope: ${required.length} requirement(s) declaring vision-verify owned by ${CFG.repo}; ${clips.length} recorded clip(s)`);
