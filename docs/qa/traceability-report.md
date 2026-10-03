@@ -58,6 +58,39 @@ Result: PASS, 60 warning(s)
 | FR-43 | yes | yes | backend | n/a | n/a |
 | FR-44 | yes | yes | backend | n/a | n/a |
 
+## Other MVP requirements (NFR / TC / BC)
+
+| Req | Owner repo(s) | Test trace here |
+|---|---|---|
+| NFR-1 | backend | n/a |
+| NFR-2 | backend | n/a |
+| NFR-3 | backend, frontend | 1 |
+| NFR-4 | backend, frontend | 1 |
+| NFR-5 | backend, frontend | - |
+| NFR-6 | frontend | 1 |
+| NFR-7 | frontend | - |
+| NFR-8 | frontend | - |
+| NFR-9 | backend, frontend | 2 |
+| NFR-10 | backend | n/a |
+| NFR-11 | backend | n/a |
+| NFR-12 | backend, frontend | 1 |
+| NFR-13 | frontend | 2 |
+| NFR-15 | backend | n/a |
+| NFR-16 | backend | n/a |
+| NFR-17 | backend, frontend | - |
+| TC-1 | - | n/a |
+| TC-2 | - | n/a |
+| TC-3 | - | n/a |
+| TC-4 | - | n/a |
+| TC-5 | - | n/a |
+| TC-6 | - | n/a |
+| TC-7 | - | n/a |
+| TC-8 | - | n/a |
+| BC-1 | - | n/a |
+| BC-2 | - | n/a |
+| BC-3 | - | n/a |
+| BC-4 | - | n/a |
+
 ## Failures
 
 None.
