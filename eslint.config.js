@@ -3,6 +3,7 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import { defineConfig, globalIgnores } from 'eslint/config';
 import globals from 'globals';
+import noLiteralUiText from './eslint-rules/no-literal-ui-text.js';
 import tseslint from 'typescript-eslint';
 
 export default defineConfig([
@@ -38,7 +39,14 @@ export default defineConfig([
     },
   },
   {
-    files: ['e2e/**/*.ts', '*.config.ts', 'tools/**/*.mjs'],
+    files: ['e2e/**/*.ts', '*.config.ts', 'tools/**/*.mjs', 'eslint-rules/**/*.js'],
     languageOptions: { globals: globals.node },
+  },
+  // NFR-9: UI text only from the message catalog. Tests may use literals (they assert on them).
+  {
+    files: ['src/**/*.tsx'],
+    ignores: ['src/**/*.test.tsx'],
+    plugins: { doucko: { rules: { 'no-literal-ui-text': noLiteralUiText } } },
+    rules: { 'doucko/no-literal-ui-text': 'error' },
   },
 ]);

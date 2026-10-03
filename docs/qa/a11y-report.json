@@ -1,0 +1,13 @@
+{
+  "generatedBy": "scripts/check-a11y.mjs",
+  "status": "passed",
+  "baseUrl": "http://localhost:4174",
+  "routes": [
+    "/"
+  ],
+  "schemes": [
+    "light",
+    "dark"
+  ],
+  "failures": []
+}

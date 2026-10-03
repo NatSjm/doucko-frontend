@@ -5,11 +5,11 @@
 
 ## Last Updated
 
-- **Date and time:** 2026-09-28 (Europe/Prague)
-- **Current phase:** Phase 0
-- **Last completed gate:** none
-- **Active change:** none
-- **Contract pin:** none yet — gates read the sibling `../docs` (UNPINNED warning) until `contract/` is added
+- **Date and time:** 2026-10-03 (Europe/Prague)
+- **Current phase:** Phase 4
+- **Last completed gate:** G3
+- **Active change:** `implement-platform-foundation-ui` (slice 1, in progress)
+- **Contract pin:** `contract/` submodule (`url = ../docs`) at docs `4c87d67`, API 0.5.1
 - **Progress:** Harness installed; design system vendored at `src/design-system/`. Vite 8 +
   React 19 + TypeScript 5.9 strict scaffold (ADR-0003): `@` alias, app shell `src/app/` with a
   TanStack Query provider, ESLint 10 flat config (ignores the design system, generated client and

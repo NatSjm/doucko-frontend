@@ -15,7 +15,14 @@ export default defineConfig({
     baseURL: externalBaseUrl ?? `http://localhost:${previewPort}`,
     trace: 'retain-on-failure',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  // NFR-6: current Chrome, Edge and Firefox on a laptop at 1280×720. `msedge` drives the installed
+  // Edge (Windows ships it); `npx playwright install firefox` provides Firefox. A missing browser
+  // fails the run, it is never skipped.
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: { width: 1280, height: 720 } } },
+    { name: 'msedge', use: { ...devices['Desktop Edge'], channel: 'msedge', viewport: { width: 1280, height: 720 } } },
+    { name: 'firefox', use: { ...devices['Desktop Firefox'], viewport: { width: 1280, height: 720 } } },
+  ],
   webServer: externalBaseUrl
     ? undefined
     : {

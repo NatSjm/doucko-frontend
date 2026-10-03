@@ -1,44 +1,44 @@
 {
   "generatedBy": "scripts/check-acceptance-methods.mjs",
-  "mode": "existence",
+  "mode": "artifact",
   "productCode": true,
   "contracts": {
     "FR-1": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       },
       {
         "method": "local-verifiable",
         "mechanism": "npm:test:run",
         "artifact": null,
-        "status": "mechanism-ok"
+        "status": "planned"
       }
     ],
     "FR-2": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-3": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-4": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-6": [
@@ -46,7 +46,7 @@
         "method": "local-verifiable",
         "mechanism": "npm:test:run",
         "artifact": null,
-        "status": "mechanism-ok"
+        "status": "planned"
       }
     ],
     "FR-7": [
@@ -54,7 +54,7 @@
         "method": "local-verifiable",
         "mechanism": "npm:test:run",
         "artifact": null,
-        "status": "mechanism-ok"
+        "status": "planned"
       }
     ],
     "FR-8": [
@@ -62,145 +62,145 @@
         "method": "local-verifiable",
         "mechanism": "npm:test:run",
         "artifact": null,
-        "status": "mechanism-ok"
+        "status": "planned"
       }
     ],
     "FR-9": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-10": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-11": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-13": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-55": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-22": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       },
       {
         "method": "local-verifiable",
         "mechanism": "npm:test:run",
         "artifact": null,
-        "status": "mechanism-ok"
+        "status": "planned"
       }
     ],
     "FR-24": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-25": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-26": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-27": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       },
       {
         "method": "local-verifiable",
         "mechanism": "npm:test:run",
         "artifact": null,
-        "status": "mechanism-ok"
+        "status": "planned"
       }
     ],
     "FR-28": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-29": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-30": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-31": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-32": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       },
       {
         "method": "recording",
         "mechanism": "npm:check:recordings",
         "artifact": null,
-        "status": "mechanism-ok"
+        "status": "planned"
       }
     ],
     "FR-33": [
@@ -208,7 +208,7 @@
         "method": "local-verifiable",
         "mechanism": "npm:test:run",
         "artifact": null,
-        "status": "mechanism-ok"
+        "status": "planned"
       }
     ],
     "FR-36": [
@@ -216,27 +216,27 @@
         "method": "local-verifiable",
         "mechanism": "npm:test:run",
         "artifact": null,
-        "status": "mechanism-ok"
+        "status": "planned"
       },
       {
         "method": "vision-verify",
         "mechanism": "npm:check:vision",
         "artifact": null,
-        "status": "mechanism-ok"
+        "status": "planned"
       }
     ],
     "FR-37": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       },
       {
         "method": "vision-verify",
         "mechanism": "npm:check:vision",
         "artifact": null,
-        "status": "mechanism-ok"
+        "status": "planned"
       }
     ],
     "FR-38": [
@@ -244,7 +244,7 @@
         "method": "local-verifiable",
         "mechanism": "npm:test:run",
         "artifact": null,
-        "status": "mechanism-ok"
+        "status": "planned"
       }
     ],
     "FR-39": [
@@ -252,83 +252,83 @@
         "method": "local-verifiable",
         "mechanism": "npm:test:run",
         "artifact": null,
-        "status": "mechanism-ok"
+        "status": "planned"
       }
     ],
     "FR-58": [
       {
         "method": "a11y",
         "mechanism": "npm:check:a11y",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "docs/qa/a11y-report.json",
+        "status": "artifact-ok"
       },
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-40": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-41": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "NFR-3": [
       {
         "method": "local-verifiable",
         "mechanism": "npm:test:run",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "e2e/app-shell.spec.ts",
+        "status": "artifact-ok"
       }
     ],
     "NFR-4": [
       {
         "method": "local-verifiable",
         "mechanism": "npm:test:run",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "src/test/provenance.test.ts",
+        "status": "artifact-ok"
       }
     ],
     "NFR-5": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       },
       {
         "method": "local-verifiable",
         "mechanism": "npm:test:run",
         "artifact": null,
-        "status": "mechanism-ok"
+        "status": "planned"
       }
     ],
     "NFR-6": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "NFR-7": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "NFR-8": [
@@ -336,31 +336,31 @@
         "method": "recording",
         "mechanism": "npm:check:recordings",
         "artifact": null,
-        "status": "mechanism-ok"
+        "status": "planned"
       }
     ],
     "NFR-9": [
       {
         "method": "local-verifiable",
         "mechanism": "npm:test:run",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "src/app/i18n-coverage.test.tsx",
+        "status": "artifact-ok"
       }
     ],
     "NFR-12": [
       {
         "method": "local-verifiable",
         "mechanism": "npm:test:run",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "src/api/contract-client.test.ts",
+        "status": "artifact-ok"
       }
     ],
     "NFR-13": [
       {
         "method": "a11y",
         "mechanism": "npm:check:a11y",
-        "artifact": null,
-        "status": "mechanism-ok"
+        "artifact": "docs/qa/a11y-report.json",
+        "status": "artifact-ok"
       }
     ],
     "NFR-17": [
@@ -368,7 +368,7 @@
         "method": "local-verifiable",
         "mechanism": "npm:test:run",
         "artifact": null,
-        "status": "mechanism-ok"
+        "status": "planned"
       }
     ]
   }

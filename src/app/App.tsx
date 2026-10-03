@@ -1,16 +1,16 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
+import { I18nProvider } from '@/i18n';
 import { createQueryClient } from './queryClient';
+import { routes } from './routes';
 import './app.css';
 
-/** App shell: providers + placeholder until the first UI slice adds the child and admin routes. */
+/** App shell: providers + the only route so far (no router until a slice has a second route). */
 export function App() {
   const [queryClient] = useState(createQueryClient);
   return (
     <QueryClientProvider client={queryClient}>
-      <main className="app-shell">
-        <h1 className="dk-t-title">Doučko</h1>
-      </main>
+      <I18nProvider>{routes[0].element}</I18nProvider>
     </QueryClientProvider>
   );
 }

@@ -5,7 +5,7 @@ is a REAL artifact (video exists + >= 10000B, screenshot exists, flow
 asserted, vision met) — not just an id mentioned in a manifest.
 
 Scope: 0 clip(s) across 0 manifest(s).
-Result: NOT-EARNED
+Result: SKIP-planned, 2 warning(s)
 
 | Clip | Proves | Video bytes | Shot | Asserted | Vision |
 |---|---|---|---|---|---|
@@ -17,4 +17,5 @@ None.
 
 ## Warnings
 
-None.
+- **recordings**: no clip due yet: FR-32, NFR-8 declare recording in slices not started here (PD-10)
+- **recordings**: no manifest.json under docs/qa/ (expected before Phase 6)

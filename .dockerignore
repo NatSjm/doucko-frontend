@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+.git/
+docs/
+trace/
+retro/
+openspec/
+.env
+.env.*

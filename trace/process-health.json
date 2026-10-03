@@ -1,0 +1,278 @@
+{
+  "generatedAt": "2026-10-03T18:07:11.660Z",
+  "ledger": {
+    "path": "trace/ledger.jsonl",
+    "present": true,
+    "eventCount": 66,
+    "malformedLines": 0
+  },
+  "productCodePresent": true,
+  "result": "PASS",
+  "vacuousPasses": 0,
+  "warningsByClass": {},
+  "acceptanceCoverage": {
+    "covered": 32,
+    "declared": 48
+  },
+  "metrics": {
+    "vacuousPasses": {
+      "count": 0,
+      "events": []
+    },
+    "warningsByClass": {},
+    "notEarned": {
+      "count": 11
+    },
+    "warningTrendByClass": {},
+    "retriesPerCheck": {
+      "traceability": {
+        "runs": 4,
+        "failures": 0,
+        "retries": 0
+      },
+      "trajectory": {
+        "runs": 4,
+        "failures": 0,
+        "retries": 0
+      },
+      "recordings": {
+        "runs": 4,
+        "failures": 2,
+        "retries": 2
+      },
+      "acceptance-artifacts": {
+        "runs": 4,
+        "failures": 1,
+        "retries": 1
+      },
+      "process-ratchet": {
+        "runs": 3,
+        "failures": 0,
+        "retries": 0
+      },
+      "factory-integrity": {
+        "runs": 3,
+        "failures": 1,
+        "retries": 1
+      },
+      "coverage-ratchet": {
+        "runs": 2,
+        "failures": 0,
+        "retries": 0
+      },
+      "eval-ratchet": {
+        "runs": 2,
+        "failures": 0,
+        "retries": 0
+      },
+      "openspec-all": {
+        "runs": 2,
+        "failures": 0,
+        "retries": 0
+      },
+      "openspec-active-list": {
+        "runs": 2,
+        "failures": 0,
+        "retries": 0
+      },
+      "qa-verify": {
+        "runs": 4,
+        "failures": 4,
+        "retries": 3
+      },
+      "pre-commit": {
+        "runs": 8,
+        "failures": 0,
+        "retries": 0
+      },
+      "commit-msg": {
+        "runs": 8,
+        "failures": 0,
+        "retries": 0
+      },
+      "gate-status": {
+        "runs": 4,
+        "failures": 4,
+        "retries": 3
+      },
+      "lint": {
+        "runs": 1,
+        "failures": 0,
+        "retries": 0
+      },
+      "typecheck": {
+        "runs": 1,
+        "failures": 0,
+        "retries": 0
+      },
+      "unit-tests": {
+        "runs": 1,
+        "failures": 0,
+        "retries": 0
+      },
+      "coverage": {
+        "runs": 1,
+        "failures": 0,
+        "retries": 0
+      },
+      "browser-e2e-tests": {
+        "runs": 1,
+        "failures": 0,
+        "retries": 0
+      },
+      "production-build": {
+        "runs": 1,
+        "failures": 0,
+        "retries": 0
+      }
+    },
+    "redToGreenLatency": {
+      "perCheck": {
+        "traceability": {
+          "episodes": [],
+          "avgMs": null,
+          "stillRed": false
+        },
+        "trajectory": {
+          "episodes": [],
+          "avgMs": null,
+          "stillRed": false
+        },
+        "recordings": {
+          "episodes": [
+            {
+              "redAt": "2026-10-03T17:50:52.719Z",
+              "greenAt": "2026-10-03T18:03:53.831Z",
+              "ms": 781112
+            }
+          ],
+          "avgMs": 781112,
+          "stillRed": false
+        },
+        "acceptance-artifacts": {
+          "episodes": [
+            {
+              "redAt": "2026-10-03T17:50:53.252Z",
+              "greenAt": "2026-10-03T18:00:39.323Z",
+              "ms": 586071
+            }
+          ],
+          "avgMs": 586071,
+          "stillRed": false
+        },
+        "process-ratchet": {
+          "episodes": [],
+          "avgMs": null,
+          "stillRed": false
+        },
+        "factory-integrity": {
+          "episodes": [
+            {
+              "redAt": "2026-10-03T18:00:40.060Z",
+              "greenAt": "2026-10-03T18:03:54.955Z",
+              "ms": 194895
+            }
+          ],
+          "avgMs": 194895,
+          "stillRed": false
+        },
+        "coverage-ratchet": {
+          "episodes": [],
+          "avgMs": null,
+          "stillRed": false
+        },
+        "eval-ratchet": {
+          "episodes": [],
+          "avgMs": null,
+          "stillRed": false
+        },
+        "openspec-all": {
+          "episodes": [],
+          "avgMs": null,
+          "stillRed": false
+        },
+        "openspec-active-list": {
+          "episodes": [],
+          "avgMs": null,
+          "stillRed": false
+        },
+        "qa-verify": {
+          "episodes": [],
+          "avgMs": null,
+          "stillRed": true
+        },
+        "pre-commit": {
+          "episodes": [],
+          "avgMs": null,
+          "stillRed": false
+        },
+        "commit-msg": {
+          "episodes": [],
+          "avgMs": null,
+          "stillRed": false
+        },
+        "gate-status": {
+          "episodes": [],
+          "avgMs": null,
+          "stillRed": true
+        },
+        "lint": {
+          "episodes": [],
+          "avgMs": null,
+          "stillRed": false
+        },
+        "typecheck": {
+          "episodes": [],
+          "avgMs": null,
+          "stillRed": false
+        },
+        "unit-tests": {
+          "episodes": [],
+          "avgMs": null,
+          "stillRed": false
+        },
+        "coverage": {
+          "episodes": [],
+          "avgMs": null,
+          "stillRed": false
+        },
+        "browser-e2e-tests": {
+          "episodes": [],
+          "avgMs": null,
+          "stillRed": false
+        },
+        "production-build": {
+          "episodes": [],
+          "avgMs": null,
+          "stillRed": false
+        }
+      },
+      "overallAvgMs": 520693
+    },
+    "waivers": {
+      "ledgerEvents": 0,
+      "contractWaivers": 0,
+      "total": 0
+    },
+    "claimDivergence": {
+      "ledgerEvents": 0,
+      "unmetContracts": 0,
+      "unmet": [],
+      "total": 0
+    },
+    "uncommittedWork": {
+      "dirtyStreakEvents": 66,
+      "since": "2026-09-28T11:48:48.639Z",
+      "ageMs": 454597050
+    },
+    "corrections": {
+      "total": 0,
+      "open": 0,
+      "openIds": []
+    }
+  },
+  "inputs": {
+    "acceptanceContracts": 48,
+    "corrections": 0
+  }
+}
