@@ -1,6 +1,6 @@
 {
-  "createdAt": "2026-10-03T03:39:33.177Z",
-  "gitHead": "31829313784efbb1851158dcb3dce4a4e32e5ce0",
+  "createdAt": "2026-10-03T17:09:11.939Z",
+  "gitHead": "4d2e1e18dd29126c236db3da7f9ef3bfeef6f388",
   "files": {
     ".claude/workflows/eval-suite.js": "f93c99d868b812cfa7412927f52b62d1042525396a9d0265f16cfe435b9c6098",
     ".claude/workflows/review-gate.js": "7295d8e94ba347213120b9d190b9ebbb88dee373173cfc7daba2114b726ca76b",
@@ -13,7 +13,7 @@
     "quality/process-baseline.json": "c4138cf68d31420931034e59d580cc4db6fdd08550de95347c7396bd9b2923d5",
     "quality/telemetry.config.json": "98276dbbd18f9d694f3378aed7ecc042439d99c8e292bb3caeed7a833005835b",
     "scripts/check-a11y.mjs": "25930dd0eefb2b70c4ca9b2733e89b712def89120f1b41ff2a215cc52a480f51",
-    "scripts/check-acceptance-methods.mjs": "1d84aea2bd117e4da7b5432fa4072678676e5797a6a2ec8f7f44554f7153409f",
+    "scripts/check-acceptance-methods.mjs": "5384a80c28c3ec57207382ac623a3f287e7dfe22b4c238d3c953d7d4f641c758",
     "scripts/check-coverage-ratchet.mjs": "99acb7e873845655fa21c202a199e57716757e269f5209d25d8315458ede9e33",
     "scripts/check-eval-ratchet.mjs": "0a996c69ee12d6cb14aebe240bbca1f3460f362430bc7fe71276fb4c87c4d4c8",
     "scripts/check-factory-integrity.mjs": "40aae2f7f12ae0a1f30897977e08ce9ad2617e9a4f7d007361fe75b460fd9883",
@@ -21,6 +21,7 @@
     "scripts/check-recordings.mjs": "6fcec5a7556fc0741d66940c2576cd79410cc9b4ace3024f9946e65529948db8",
     "scripts/check-traceability.mjs": "a78a1d83660b38f7f03bf830016498d4beb5c47c27abef5ad1d82e67536739e0",
     "scripts/check-trajectory.mjs": "4cee32bc3f87aef5a26f6b240913a930b438aba0579397d4357253e36839004f",
+    "scripts/check-vision.mjs": "bd7f1f22507108eba043bc3602274e5af68e341f7363b61ddd5b066da659e41d",
     "scripts/gate-status.mjs": "e0cd5057ded6fb8d05f9bd1f6e8fde04844e5d91b49e2d8d8db4112b1de84b11",
     "scripts/hooks-commit-msg.mjs": "2cd9ebbd0054e1dfc9a9b2b39bca25de6d3dc188fd5d7793808ee48f209aaf20",
     "scripts/hooks-post-edit.mjs": "9b51573b157c1841f5fc275ea9f7b4a2b0167f664860a65d00f8c6a1503a89e0",
@@ -29,6 +30,6 @@
     "scripts/qa-verify.mjs": "e301272c73d4c2507b4a3a92207b01bb35a5570902dd18fe8e9fe96442254986"
   },
   "adaptations": [
-    "doucko multi-repo harness (frontend); PD-8 check-traceability SKIP-pending before first spec"
+    "PD-9: check-vision gate; vision-verify artifact is the JSON report"
   ]
 }
