@@ -30,7 +30,8 @@
     "qa:record-demos": "node scripts/record-demos.mjs",
     "qa:record-proof": "node scripts/record-demos.mjs",
     "factory:check": "node ../docs/factory/install.mjs --repo=frontend --check",
-    "factory:install": "node ../docs/factory/install.mjs --repo=frontend"
+    "factory:install": "node ../docs/factory/install.mjs --repo=frontend",
+    "workflow": "node scripts/run-workflow.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
