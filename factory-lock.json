@@ -1,6 +1,6 @@
 {
-  "createdAt": "2026-10-03T23:13:40.572Z",
-  "gitHead": "7f066454e936170753fe619f31ada48b99b463e9",
+  "createdAt": "2026-10-03T23:30:42.249Z",
+  "gitHead": "cf12e8791df1c100e28cea26f474268e489ad460",
   "files": {
     ".claude/workflows/eval-suite.js": "f93c99d868b812cfa7412927f52b62d1042525396a9d0265f16cfe435b9c6098",
     ".claude/workflows/review-gate.js": "7295d8e94ba347213120b9d190b9ebbb88dee373173cfc7daba2114b726ca76b",
