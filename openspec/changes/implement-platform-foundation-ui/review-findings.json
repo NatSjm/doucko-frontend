@@ -11,17 +11,17 @@
       "rejected": 0
     },
     "security": {
-      "confirmed": 2,
-      "contested": 1,
+      "confirmed": 1,
+      "contested": 0,
       "rejected": 0
     },
     "spec-compliance": {
-      "confirmed": 2,
-      "contested": 1,
+      "confirmed": 1,
+      "contested": 2,
       "rejected": 0
     },
     "visual": {
-      "confirmed": 2,
+      "confirmed": 0,
       "contested": 0,
       "rejected": 0
     }
@@ -32,9 +32,9 @@
       "severity": "minor",
       "dimension": "correctness",
       "verdict": "confirmed",
-      "title": "Theme guard's comment stripper treats `/*` inside string literals as a comment opener, hiding real code up to the next `*/`",
+      "title": "Scheme-word pattern misses `theme…` prefixes and all-lowercase compounds that the spec forbids",
       "file": "src/app/theme-source.test.ts",
-      "line": 31,
+      "line": 27,
       "status": "open"
     },
     {
@@ -42,92 +42,52 @@
       "severity": "minor",
       "dimension": "correctness",
       "verdict": "confirmed",
-      "title": ".dockerignore/.gitignore mirror test compares lines literally, but Docker anchors patterns at the context root while git matches at any depth",
-      "file": "src/test/container-config.test.ts",
-      "line": 100,
+      "title": "Build context and the 'clean commit' check both miss local and global git excludes",
+      "file": ".dockerignore",
+      "line": 5,
       "status": "open"
     },
     {
       "id": "F03",
-      "severity": "major",
+      "severity": "minor",
       "dimension": "security",
       "verdict": "confirmed",
-      "title": "The .dockerignore mirror test compares pattern strings, but Docker anchors patterns to the context root, so files git ignores in subdirectories still reach the image while the smoke evidence reports a clean commit",
-      "file": "src/test/container-config.test.ts",
-      "line": 100,
+      "title": "Theme guard (invariant 3) misses all-lowercase compound scheme names such as 'darkmode', 'darktheme', 'lightmode'",
+      "file": "src/app/theme-source.test.ts",
+      "line": 27,
       "status": "open"
     },
     {
       "id": "F04",
       "severity": "minor",
-      "dimension": "security",
+      "dimension": "spec-compliance",
       "verdict": "confirmed",
-      "title": "The theme guard's block-comment stripper starts at `/*` inside an ordinary string literal (e.g. `accept=\"image/*\"`) and deletes all code up to the next `*/`",
-      "file": "src/app/theme-source.test.ts",
-      "line": 31,
+      "title": ".dockerignore mirror test checks that patterns exist but not that they take effect: a later `!` negation in .dockerignore passes the test",
+      "file": "src/test/container-config.test.ts",
+      "line": 119,
       "status": "open"
     },
     {
       "id": "F05",
-      "severity": "major",
+      "severity": "minor",
       "dimension": "spec-compliance",
-      "verdict": "confirmed",
-      "title": "Theme guard misses ordinary camelCase or underscored scheme class names ('darkMode', 'isDark', 'lightTheme', 'mode_dark')",
-      "file": "src/app/theme-source.test.ts",
-      "line": 22,
+      "verdict": "contested",
+      "title": "Coverage summary (round 9): 18 scenarios: 18 implemented, 0 partial, 0 missing, 0 contradicted. The round-8 fixes hold: TS-printer comment stripping, camelCase/underscore scheme matching, the root-anchored .dockerignore with its mapping and mirror tests, and Firefox test.slow. Two minor test-strength gaps remain.",
+      "file": "openspec/changes/implement-platform-foundation-ui/specs/platform-foundation/spec.md",
+      "line": 1,
       "status": "open"
     },
     {
       "id": "F06",
-      "severity": "major",
+      "severity": "minor",
       "dimension": "spec-compliance",
-      "verdict": "confirmed",
-      "title": ".dockerignore 'mirror' matches .gitignore by string only: Docker anchors patterns at the context root, git does not, so nested git-ignored files (public/uploads/, src/**/*.log, …) reach the image while the smoke reports a clean commit",
-      "file": "src/test/container-config.test.ts",
-      "line": 100,
-      "status": "open"
-    },
-    {
-      "id": "F07",
-      "severity": "major",
-      "dimension": "visual",
-      "verdict": "confirmed",
-      "title": "Scheme-word invariant misses ordinary camelCase class names ('darkMode', 'isLight', 'appDark')",
+      "verdict": "contested",
+      "title": "Theme guard: the known-bad (`forced`) cases never go through the TypeScript-printer path that real .ts/.tsx files use",
       "file": "src/app/theme-source.test.ts",
-      "line": 22,
-      "status": "open"
-    },
-    {
-      "id": "F08",
-      "severity": "minor",
-      "dimension": "visual",
-      "verdict": "confirmed",
-      "title": ".dockerignore 'mirror' test compares text, but Docker anchors patterns at the root, so files git ignores in subfolders still reach the image",
-      "file": "src/test/container-config.test.ts",
-      "line": 520,
-      "status": "open"
-    },
-    {
-      "id": "F09",
-      "severity": "minor",
-      "dimension": "security",
-      "verdict": "contested",
-      "title": "Checklist coverage for this round (other areas clean; dependency audit not verified)",
-      "file": "package.json",
-      "line": null,
-      "status": "open"
-    },
-    {
-      "id": "F10",
-      "severity": "minor",
-      "dimension": "spec-compliance",
-      "verdict": "contested",
-      "title": "Coverage summary: 18 scenarios: 17 implemented, 1 partial, 0 missing, 0 contradicted",
-      "file": "openspec/changes/implement-platform-foundation-ui/specs/platform-foundation/spec.md",
-      "line": 1,
+      "line": 76,
       "status": "open"
     }
   ],
   "clean": false,
-  "generatedAt": "2026-10-04T11:16:32Z"
+  "generatedAt": "2026-10-04T11:25:35Z"
 }

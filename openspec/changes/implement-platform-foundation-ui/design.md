@@ -151,6 +151,10 @@ Kept on purpose; each later slice covers what it adds.
   Review and the "never commit" rule cover it.
 - `client_max_body_size 51m` applies to every `/api/` path; the backend caps
   child request bodies at 16 KB (NFR-17), so nginx only bounds the transfer.
+- `.dockerignore` mirrors the repository's `.gitignore`, not a developer's
+  `.git/info/exclude` or global excludes: a file hidden only there reaches
+  the image without making the smoke's tree dirty. The evidence also names
+  the image id, which is exact.
 - The real-name guard reads the page's `innerText`; attributes and titles
   are covered by the pseudo-catalog (no name is in a catalog).
 

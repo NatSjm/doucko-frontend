@@ -123,6 +123,8 @@ describe('Docker build context', () => {
         .map(dockerForm)
         .filter((p) => !docker.has(p)),
     ).toEqual([]);
+    // A `!` exception could re-include what a mirrored pattern excludes, so there are none.
+    expect([...docker].filter((p) => p.startsWith('!'))).toEqual([]);
   });
 });
 

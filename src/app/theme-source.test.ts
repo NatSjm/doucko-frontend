@@ -24,7 +24,17 @@ const SCHEME_API = /data-theme|dataset\.theme|colorScheme|color-scheme|prefers-c
  * A scheme word as a word or as a part of an identifier-like name: `dark`, `is-dark`, `mode_dark`,
  * `darkMode`, `isDark`, `lightTheme`, `THEME`. Not inside another word (`highlight`, `darken`).
  */
-const SCHEME = String.raw`(?:(?<![A-Za-z])(?:dark|light|theme)(?![a-z])|(?<![A-Za-z])(?:Dark|Light|Theme|DARK|LIGHT|THEME)(?![a-z])|(?<=[a-z0-9])(?:Dark|Light|Theme)(?![a-z]))`;
+const SCHEME = [
+  // theme, themes, themed, theme-x, themeMode, isTheme: any word or name part starting with theme
+  String.raw`(?<![A-Za-z])(?:theme|Theme|THEME)`,
+  String.raw`(?<=[a-z0-9])Theme`,
+  // dark/light alone or with a scheme suffix, also run together in lowercase (darkmode, lighttheme)
+  String.raw`(?<![A-Za-z])(?:dark|light|Dark|Light|DARK|LIGHT)(?:mode|theme|scheme|ui|bg)?(?![a-z])`,
+  String.raw`(?<=[a-z0-9])(?:Dark|Light)(?![a-z])`,
+]
+  .map((alt) => `(?:${alt})`)
+  .join('|')
+  .replace(/^(.*)$/, '(?:$1)');
 const QUOTED_SCHEME = new RegExp(String.raw`(['"])(?:(?!\1)[^\n\\]|\\.)*?${SCHEME}(?:(?!\1)[^\n\\]|\\.)*?\1`);
 const TEMPLATE_SCHEME = new RegExp(String.raw`${'`'}(?:[^${'`'}\\]|\\.)*?${SCHEME}(?:[^${'`'}\\]|\\.)*?${'`'}`);
 const CATALOGS = ['src/i18n/cs.ts', 'src/i18n/en.ts'];
@@ -68,38 +78,52 @@ function sources(dir: string): string[] {
 
 describe('theme follows the OS (FR-58)', () => {
   it('the invariants catch the ways a theme can be forced', () => {
-    const forced = [
-      "document.documentElement.dataset.theme = 'dark'",
-      'root.classList.toggle(`theme-${mode}`)',
-      "<div className={`app ${dark ? 'dark' : ''}`}>",
-      "el.setAttribute('class', 'x dark')",
+    // Script cases go through the TypeScript-printer path real .tsx files take; style and markup
+    // cases through the pattern path real .css/.html files take.
+    const forcedScript = [
+      "document.documentElement.dataset.theme = 'dark';",
+      'root.classList.toggle(`theme-${mode}`);',
+      "const a = <div className={`app ${dark ? 'dark' : ''}`} />;",
+      "el.setAttribute('class', 'x dark');",
       "const cls = 'light'; root.className = cls;",
-      "el.style.setProperty('--paper', '#000')",
+      "el.style.setProperty('--paper', '#000');",
       "const token = '--paper'; el.style.setProperty(token, v);",
-      "<div style={{ '--paper': '#000' }}>",
-      '<div style={{ [`--${name}`]: v }}>',
+      "const a = <div style={{ '--paper': '#000' }} />;",
+      'const a = <div style={{ [`--${name}`]: v }} />;',
+      'const css = `\n  .x {\n    color: red;\n  }\n  .dark { color: blue; }\n`;',
+    ];
+    const forcedStyle = [
       ':root { --paper: #000; }',
       '.wrapper { --paper: #000; }',
       'main, body { --hero: red; }',
       '@media (prefers-color-scheme: dark) { body { color: red } }',
       '<meta name="color-scheme" content="dark">',
-      'const css = `\n  .x {\n    color: red;\n  }\n  .dark { color: blue; }\n`;',
     ];
-    expect(forced.filter((s) => themeViolations(s).length === 0)).toEqual([]);
-    const fine = [
-      '<div className="app-route">',
-      "classList.add('is-open')",
-      'color: var(--paper);',
-      "<div style={{ color: 'var(--hero)' }}>",
-      '.nobody { color: var(--ink); }',
+    expect(forcedScript.filter((s) => themeViolations(s, false, 'a.tsx').length === 0)).toEqual([]);
+    expect(forcedStyle.filter((s) => themeViolations(s, false, 'a.css').length === 0)).toEqual([]);
+    const fineScript = [
+      'const a = <div className="app-route" />;',
+      "classList.add('is-open');",
+      "const a = <div style={{ color: 'var(--hero)' }} />;",
       'const darkMode = useMemo(() => x, []);',
       '/** The `light` theme comes from the OS. */ const a = 1;',
       '// light theme\nconst b = 2;',
     ];
-    expect(fine.filter((s) => themeViolations(s).length > 0)).toEqual([]);
+    const fineStyle = ['.x { color: var(--paper); }', '.nobody { color: var(--ink); }', '/* the light theme */ .y { margin: 0; }'];
+    expect(fineScript.filter((s) => themeViolations(s, false, 'a.tsx').length > 0)).toEqual([]);
+    expect(fineStyle.filter((s) => themeViolations(s, false, 'a.css').length > 0)).toEqual([]);
     expect(themeViolations("export const en = { 'admin.x': 'Light reading' };", true)).toEqual([]);
     // camelCase and underscored scheme names are scheme names; words that only contain one are not
-    const named = ["root.className = 'darkMode'", "cls('isLight')", "el.classList.add('mode_dark')", "<div className=\"app lightTheme\">"];
+    const named = [
+      "root.className = 'darkMode'",
+      "cls('isLight')",
+      "el.classList.add('mode_dark')",
+      "const a = <div className=\"app lightTheme\" />;",
+      "cls('darkmode')",
+      "cls('lighttheme')",
+      "cls('themed')",
+      "cls('themes-x')",
+    ];
     expect(named.filter((s) => themeViolations(s, false, 'a.tsx').length === 0)).toEqual([]);
     expect(["<mark className=\"highlight\">", "const c = 'darken-on-hover';"].filter((s) => themeViolations(s, false, 'a.tsx').length > 0)).toEqual([]);
     // '/*' or '//' inside a string is not a comment: the code after it is still checked

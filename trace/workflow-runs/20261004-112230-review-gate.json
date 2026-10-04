@@ -1,0 +1,480 @@
+{
+  "workflow": "review-gate",
+  "file": "./.claude/workflows/review-gate.js",
+  "description": "Multi-dimensional adversarial review of a diff or capability: correctness, security, and spec compliance, with every finding adversarially verified before it is reported.",
+  "dryRun": false,
+  "startedAt": "2026-10-04T11:22:30.220Z",
+  "finishedAt": "2026-10-04T11:25:35.149Z",
+  "args": {
+    "scope": "slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui",
+    "baseRef": "93e81cd",
+    "headRef": "HEAD",
+    "focus": "Round 9. Verify the round-8 fixes (commit 62b9845): the theme guard comment stripping via the TypeScript printer and camelCase/underscore scheme-name matching, and the Docker-anchored .dockerignore with its mapping test.dockerignore/.gitignore mirror test, the Firefox axe slow timeout. Check against the spec delta and design.md. Do NOT re-report what design.md lists under \"Accepted limits (review round 3)\" or the documented real-compose-stack follow-up; static checks are heuristics backed by e2e, so do not report further obfuscation patterns (eval, string concatenation across variables, encoded strings) as defects; report only defects in shipped behaviour or tests that can pass while the spec is violated by ordinary code.",
+    "change": "implement-platform-foundation-ui"
+  },
+  "settings": {
+    "allowedTools": null,
+    "concurrency": 4,
+    "model": null,
+    "budgetPerAgentUsd": 2,
+    "maxTotalUsd": 15,
+    "untypedTools": "Read,Grep,Glob,Write,Bash",
+    "permissionMode": "acceptEdits"
+  },
+  "outcome": "ok",
+  "stoppedBecause": null,
+  "error": null,
+  "totalCostUsd": 3.0293,
+  "steps": [
+    {
+      "label": "find:correctness",
+      "phase": "Find",
+      "agentType": "code-reviewer",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 1204,
+      "durationMs": 113631,
+      "sessionId": "1a4b50ac-a740-4007-9913-28fc0a0aa546",
+      "costUsd": 0.5288780000000001,
+      "numTurns": 12,
+      "result": {
+        "findings": [
+          {
+            "title": "Scheme-word pattern misses `theme…` prefixes and all-lowercase compounds that the spec forbids",
+            "file": "src/app/theme-source.test.ts",
+            "line": 27,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "The spec delta (specs/platform-foundation/spec.md:9-10) forbids naming `dark`, `light` or `theme…` in a string literal, and the `…` means any word that starts with `theme`. The pattern `(?<![A-Za-z])(?:dark|light|theme)(?![a-z])` only matches when no lowercase letter follows. It also needs an uppercase letter at an inner word boundary. Ordinary class names like `root.className = 'themedark'`, `'themed'`, `classList.add('darkmode')` or `'lighttheme'` therefore produce no violation. The new `named` cases only test camelCase, underscore and hyphen forms, so this gap stays untested.",
+            "suggestion": "Make `theme` a prefix match: `(?<![A-Za-z])theme` with no lookahead, and the same for `Theme`/`THEME` at a camel boundary. Also add explicit lowercase compounds such as `(?:dark|light)(?:mode|theme|scheme)`. That keeps `darken` and `highlight` allowed. Add `'themedark'`, `'darkmode'` and `'lighttheme'` to the `named` cases."
+          },
+          {
+            "title": "Build context and the 'clean commit' check both miss local and global git excludes",
+            "file": ".dockerignore",
+            "line": 5,
+            "severity": "minor",
+            "confidence": "low",
+            "evidence": "The comment says 'The build context is then exactly the files git reports, and smoke evidence that names a clean commit really did build from that commit.' The mirror test only maps `.gitignore`. A file ignored through `.git/info/exclude` or the user's global `core.excludesFile` stays in the Docker build context (`COPY . .`). `git status --porcelain` in tools/container-smoke.mjs:52 also hides it, so `dirty` is false. Smoke evidence can then name a clean commit while the image contains a file that commit does not have, for example an excluded local `src/` or config file the build picks up.",
+            "suggestion": "In the smoke script, build from `git ls-files` or `git archive HEAD` (plus the contract submodule) rather than the working tree. Alternatively, also fail `dirty` when `git status --porcelain --ignored` lists ignored files that `.dockerignore` does not exclude. Otherwise, reword the comment to drop the 'exactly' claim."
+          }
+        ]
+      }
+    },
+    {
+      "label": "find:security",
+      "phase": "Find",
+      "agentType": "security-reviewer",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 1232,
+      "durationMs": 57786,
+      "sessionId": "8c337b3c-4a2c-47f0-8631-1439e626abbc",
+      "costUsd": 0.3335298,
+      "numTurns": 12,
+      "result": {
+        "findings": [
+          {
+            "title": "Theme guard (invariant 3) misses all-lowercase compound scheme names such as 'darkmode', 'darktheme', 'lightmode'",
+            "file": "src/app/theme-source.test.ts",
+            "line": 27,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "Round 8 widened SCHEME to cover camelCase and underscore names, but the lowercase branch `(?<![A-Za-z])(?:dark|light|theme)(?![a-z])` needs a non-lowercase character after the word. So `root.className = 'darkmode'` or `el.classList.add('darktheme')` matches no branch: 'dark' is followed by 'm'/'t', and 'theme' follows the letter 'k'. These are ordinary class names, not obfuscation (the darkmode.js convention is `darkmode--activated`, for example). Say a screen or state the e2e cannot reach applies such a class, and app CSS styles `.darkmode body` without custom properties (CSS selectors are only checked for token writes and scheme APIs). The theme is then forced, FR-58 is broken, and `no app source … breaks an invariant` still passes. The `fine` list shows the intended split is 'not inside another word' (highlight, darken), but a scheme word at the start of a name followed by a lowercase word passes too.",
+            "suggestion": "Treat a scheme word at the start of a name as a match when a common scheme suffix follows (`(?<![A-Za-z])(?:dark|light)(?:mode|theme|scheme)?(?![a-z])`), or flag `dark|light` at a word start unless the next letters are in a short allowlist (`darken`, `lighten`, `lightbox`, `lightweight`). Add 'darkmode', 'darktheme' and 'lightmode' to the `named` cases."
+          }
+        ]
+      }
+    },
+    {
+      "label": "find:spec-compliance",
+      "phase": "Find",
+      "agentType": "spec-compliance-auditor",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 1175,
+      "durationMs": 116973,
+      "sessionId": "87a24332-d0f2-461c-a4c3-99efd6194dc7",
+      "costUsd": 0.49846360000000006,
+      "numTurns": 11,
+      "result": {
+        "findings": [
+          {
+            "title": "Coverage summary (round 9): 18 scenarios: 18 implemented, 0 partial, 0 missing, 0 contradicted. The round-8 fixes hold: TS-printer comment stripping, camelCase/underscore scheme matching, the root-anchored .dockerignore with its mapping and mirror tests, and Firefox test.slow. Two minor test-strength gaps remain.",
+            "file": "openspec/changes/implement-platform-foundation-ui/specs/platform-foundation/spec.md",
+            "line": 1,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "Spec delta has 18 `#### Scenario` entries. Round-8 artifacts checked: src/app/theme-source.test.ts:38-50 (withoutComments sends .ts/.tsx/.js through ts.createPrinter({removeComments:true})); SCHEME regex at :27 with named/highlight/darken and slashStar cases at :101-110; .dockerignore turns every unanchored .gitignore pattern into `**/x`; src/test/container-config.test.ts:105-126 (dockerForm plus the mapping test); e2e/a11y.spec.ts:13 `test.slow(browserName === 'firefox')`, which raises only the time limit, never the assertions. The design-system scheme hooks are just `[data-theme=…]` and `prefers-color-scheme` (src/design-system/tokens.css:3,50,83-84), and SCHEME_API still catches both. Unticked tasks.md items (2.8, 4.3-4.6) are honestly marked open. No ticked task lacks its artifact.",
+            "suggestion": "No action for the round-8 fixes. See the two minor findings below."
+          },
+          {
+            "title": "Theme guard: the known-bad (`forced`) cases never go through the TypeScript-printer path that real .ts/.tsx files use",
+            "file": "src/app/theme-source.test.ts",
+            "line": 76,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "Spec: 'Scenario: No toggle': app code cannot force a scheme or write tokens. Code: `themeViolations(source, isCatalog = false, file?)` defaults `file` to 'snippet.css' (line 38). The `forced` list (lines 76-93) calls `themeViolations(s)` without a file, so all 15 known-bad cases (setProperty('--paper'), dataset.theme, `theme-${mode}`, the multi-line CSS template, …) only go through the regex comment stripper. The production scan (line 121) passes the real filename, so every .ts/.tsx goes through `ts.createPrinter().printFile` instead. Only the 4 `named` cases and 2 slash cases test that path. The printer does not keep the original literal text: createSourceFile is called with setParentNodes=false, and TypeScript's canUseOriginalText returns false when `!node.parent` (node_modules/typescript/lib/typescript.js:17291). Literals are therefore re-escaped: in template literals, tabs and other control characters become `\\t` etc. (backtickQuoteEscapedCharsRegExp, :20023), and non-ASCII becomes `\\uXXXX`. Example: a tab-indented `--paper:` line inside a CSS template becomes `\\t--paper:`. TOKEN_WRITE needs `[;{\\s]` before `--`, so the scan passes while the spec is violated. .editorconfig sets `indent_style = space`, which lowers the practical risk. Even so, the suite that proves the detector works never runs on the code path it guards.",
+            "suggestion": "Run the `forced` and `fine` lists through both paths (e.g. `themeViolations(s, false, 'a.tsx')` as well as the CSS default). Pass `setParentNodes: true` to ts.createSourceFile so the printer keeps the original literal text, or strip comments with ts.forEachLeadingCommentRange / the scanner rather than re-printing. Add a case with a tab-indented custom property in a template literal."
+          },
+          {
+            "title": ".dockerignore mirror test checks that patterns exist but not that they take effect: a later `!` negation in .dockerignore passes the test",
+            "file": "src/test/container-config.test.ts",
+            "line": 119,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "Intent (.dockerignore header and test name): 'excludes everything git ignores, at any depth'. This protects NFR-3/NFR-4: `.env`, uploads/, storage/ and **/raw/ never enter the image. The test only checks `docker.has(dockerForm(p))` for each .gitignore pattern. Docker applies .dockerignore rules in order, and a later `!` line re-includes files. So adding, say, `!**/.env` or `!**/uploads/` (an ordinary exception line) leaves every pattern 'present', the test stays green, and secrets or workbook content enter the build context through `COPY . .` (Dockerfile:9). The reverse direction also goes unasserted: .gitignore's own `!.env.example` is dropped from the comparison, and `.dockerignore` excludes `.env.example` via `**/.env.*`. That one is harmless, but it shows the header's claim that 'the build context is then exactly the files git reports' is not literally true.",
+            "suggestion": "Also assert that .dockerignore has no `!` lines, or allow only an explicit list such as `!.env.example`. Reword the header comment to say 'everything git ignores is excluded' rather than 'exactly the files git reports', since docs/, openspec/, trace/ and retro/ are also excluded on purpose."
+          }
+        ]
+      }
+    },
+    {
+      "label": "find:visual",
+      "phase": "Find",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1444,
+      "durationMs": 55679,
+      "sessionId": "e5562c98-df80-446d-9a0e-b17e1f19f0f0",
+      "costUsd": 0.2533486,
+      "numTurns": 11,
+      "result": {
+        "findings": []
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1545,
+      "durationMs": 15611,
+      "sessionId": "1a33d13b-146d-45aa-b364-0578e8f13a93",
+      "costUsd": 0.106346,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I could not refute this finding. The mechanism is real. At src/app/theme-source.test.ts:27, SCHEME has three alternatives:\n- `(?<![A-Za-z])(?:dark|light|theme)(?![a-z])`\n- all-caps or capitalised words after a non-letter, with `(?![a-z])`\n- a capitalised word after a lowercase letter or digit, with `(?![a-z])`\n\nEvery alternative ends in a negative lookahead for a lowercase letter, so none of them matches when lowercase letters follow:\n- In `'themed'` and `'themedark'`, `theme` is followed by `d`, so alternative 1 fails. Alternatives 2 and 3 need a capital letter, so they fail too.\n- In `'darkmode'`, `dark` is followed by `m`, so it fails.\n- In `'lighttheme'`, `light` is followed by `t`, so it fails. The inner `theme` comes after `t`, which the `(?<![A-Za-z])` lookbehind rejects, and alternative 3 needs `Theme` with a capital T.\n\nThe spec (openspec/changes/implement-platform-foundation-ui/specs/platform-foundation/spec.md:9-10) and the docblock at line 16 both say `theme…`, which means a prefix. The regex treats `theme` as a whole word only, so the code does not do what the spec says.\n\nNothing else catches these strings. SCHEME_API only covers `data-theme`, `dataset.theme`, `colorScheme`, `color-scheme` and `prefers-color-scheme`, so a bare `classList.add('themed')` passes. The `named` cases at line 102 test only camelCase, underscore and hyphen forms, so the gap has no test.\n\nThe impact is limited. This is a static guard in a test, and the e2e check plus the design system's ownership of `data-theme` still apply. Minor severity is right.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1578,
+      "durationMs": 22606,
+      "sessionId": "5b8c85fc-4edb-40ef-9184-c5eac328680e",
+      "costUsd": 0.1294584,
+      "numTurns": 6,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the finding by reading the regex. The node check needed approval and wasn't run.\n\nAt src/app/theme-source.test.ts:27 the SCHEME regex has three alternatives:\n1. Lowercase dark, light or theme, followed by `(?![a-z])`.\n2. Capitalised or all-caps forms, also followed by `(?![a-z])`.\n3. Capitalised forms that come after `[a-z0-9]`.\n\nHow the example strings fare:\n- **`themed`:** no match. `theme` is followed by the lowercase `d`, so the lookahead in (1) fails, and (2) and (3) need a capital letter.\n- **`themedark`:** no match. `theme` fails the same way. The inner `dark` follows the letter `e`, so the `(?<![A-Za-z])` lookbehind fails, and (3) needs `Dark`.\n- **`darkmode` and `lighttheme`:** no match. The leading word is followed by a lowercase letter, and the inner `theme` follows a letter.\n\nThe spec (openspec/changes/implement-platform-foundation-ui/specs/platform-foundation/spec.md:10), design.md:136 and the test's own docstring (line 16) all say `theme…`, meaning anything that starts with `theme`. The regex does not do that. The `named` cases at line 102 only cover camelCase, underscore and hyphen forms, so the gap is untested.\n\nNothing refutes it: no other check catches these strings. SCHEME_API only covers data-theme, colorScheme and similar names. TOKEN_WRITE only covers `--` custom properties.\n\nExploitability: this is a developer-facing guard test, not a runtime path. A child or attacker cannot trigger anything. The impact is a false negative: a future change could add a scheme class like `'darkmode'` or `'themed'`, pass the FR-58 test, and force a theme, which breaks \"theme follows the OS\". The current repo scan passes, so no such code exists today. That makes it a real but latent coverage gap, and \"minor\" fits.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:.dockerignore",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1518,
+      "durationMs": 19862,
+      "sessionId": "1c8da987-f174-4fb0-a6a9-749131f993b1",
+      "costUsd": 0.10624619999999999,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I couldn't refute the mechanism. The code works the way the finding says:\n\n1. **What reaches the image:** The Dockerfile does `COPY . .`, so the build context is the working tree minus `.dockerignore`. `.dockerignore` lists only the `.gitignore` patterns, in Docker's form, plus a few directories (docs/, trace/, retro/, openspec/). Nothing in Docker reads `.git/info/exclude` or `core.excludesFile`.\n\n2. **What the dirty check sees:** `tools/container-smoke.mjs` sets `dirty` from `git status --porcelain` with some evidence paths excluded. That command leaves out every ignored file, whatever the ignore source: .gitignore, info/exclude or the global excludesFile. A file ignored only through info/exclude or the global excludes therefore reaches the Docker context but does not set `dirty`. The evidence then records `commit: HEAD, dirty: false` for an image whose inputs differ from that commit.\n\n3. **Why the claims are false:** The `.dockerignore` comment says \"the build context is then exactly the files git reports\". The smoke-script comment says \".dockerignore mirrors .gitignore, so ignored files never reach the image\". Both hold only when .gitignore is the sole ignore source.\n\n**What I checked to refute it:**\n- This repo's `.git/info/exclude` has no active entries.\n- `core.excludesFile` is unset.\n- `git status --ignored` lists only the .gitignore'd directories, all of which `.dockerignore` also excludes.\n\nSo the gap is not triggered today. It is latent and depends on the machine. No other guard covers it: the Dockerfile does not build from `git archive`, and the script does not check `--ignored`. The mechanism is correct as described. Minor severity with low confidence fits a latent, configuration-dependent gap, so I'm keeping the severity.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:.dockerignore",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1551,
+      "durationMs": 27616,
+      "sessionId": "ef4cdd8d-ba12-47d1-a996-2ce5adf01651",
+      "costUsd": 0.1354686,
+      "numTurns": 6,
+      "result": {
+        "refuted": false,
+        "reasoning": "I could not refute the mechanism. It is real and can be reproduced, though nothing on this machine triggers it right now.\n\nWhat the code does:\n- The `.dockerignore` comment (lines 1–5) says the build context is \"exactly the files git reports\". The file only mirrors `.gitignore` patterns.\n- The Dockerfile runs `COPY . .` and then `npm run build`, so the whole working tree minus `.dockerignore` reaches the build.\n- In `tools/container-smoke.mjs`, the `dirty` check runs `git status --porcelain` without `--ignored`. That command already hides anything excluded through `.git/info/exclude` or `core.excludesFile`, so those files leave `dirty` false.\n\nA concrete way to reproduce it:\n1. `echo public/ >> .git/info/exclude`\n2. `mkdir public && echo x > public/x.txt`\n3. Run the smoke script.\n\nThe repo has no `public/` directory. Vite's default `publicDir` is `public`, so `x.txt` is copied into `dist` and shipped in the nginx image. `git status --porcelain` stays empty, so `dirty` is false and the evidence names a clean commit for an image that commit cannot reproduce.\n\nLimits on the finding:\n- An excluded file under `src/` would not affect the bundle unless tracked code imports it, and that import would show up as a tracked change. The finding's `src/` example is therefore weak; `public/` or auto-discovered config files (for example a `postcss.config` that the repo does not have) are the real vectors.\n- `.env.local` and similar files are already caught by `**/.env.*`.\n- On this machine `.git/info/exclude` holds only comments, `core.excludesFile` is unset, and `git status --ignored` lists only paths that `.dockerignore` already covers.\n\nExploiting this needs the developer's own local exclude configuration, and the result is an integrity gap in the evidence, not an attack. Even so, the \"exactly\" claim in the comment is false and the mechanism works as described. It is minor with low practical likelihood; keep as filed.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1923,
+      "durationMs": 18563,
+      "sessionId": "3a864b6a-c8ef-4f3c-9b05-9320d6575af8",
+      "costUsd": 0.115849,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I traced SCHEME at src/app/theme-source.test.ts:27 by hand against the regex; I couldn't run it because the node command needed approval. It has three branches:\n(1) `(?<![A-Za-z])(?:dark|light|theme)(?![a-z])`\n(2) the capitalised or all-caps forms, with the same lookarounds\n(3) `(?<=[a-z0-9])(?:Dark|Light|Theme)(?![a-z])`\n\nFor `'darkmode'`:\n- Branch 1 finds `dark` with a quote before it, which passes the lookbehind. The next character is `m`, so `(?![a-z])` fails.\n- Branches 2 and 3 need an uppercase letter, so they can't match.\n- QUOTED_SCHEME and TEMPLATE_SCHEME only wrap SCHEME, so nothing else catches it.\n\nFor `'darktheme'`, `dark` fails for the same reason. `theme` has `k` before it, so the lookbehind fails, and branch 3 needs a capital `Theme`. `'lightmode'` behaves like `'darkmode'`. TOKEN_WRITE and SCHEME_API don't fire on any of these strings either.\n\nSo `themeViolations(\"root.className = 'darkmode'\", false, 'a.tsx')` returns `[]`, and the whole-repo invariant test would pass with such a class in app code. The `named` test cases (`darkMode`, `isLight`, `mode_dark`, `lightTheme`) don't cover all-lowercase compounds.\n\nNothing else guards this: the CSS checks only flag token writes and scheme APIs, so `.darkmode body {...}` would not be caught. The doc comment says invariant 3 means \"no string literal … names a scheme\", so this is a real gap against its stated goal. The impact is hypothetical (no such class exists today) and this is a test-time guard, so minor severity is right.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1956,
+      "durationMs": 23592,
+      "sessionId": "f2aa4cd6-8530-4343-b1a6-a827592079c0",
+      "costUsd": 0.1383994,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "I traced the SCHEME regex at src/app/theme-source.test.ts:27 by hand, and the gap is real. In 'darkmode', branch 1 matches 'dark' at a word start, but the lookahead (?![a-z]) then fails on 'm'. 'mode' is not a scheme word. Branches 2 and 3 need a capital letter (Dark/DARK/…) and there isn't one. In 'darktheme', 'theme' fails branch 1's lookbehind (?<![A-Za-z]) because it follows 'k', and branch 3 needs a capital 'Theme'. 'lightmode' fails the same way as 'darkmode'. So QUOTED_SCHEME and TEMPLATE_SCHEME miss all three, and invariant 3 does not fire.\n\nNothing else catches them. TOKEN_WRITE only looks for `--x:` and quoted `--`. SCHEME_API only looks for data-theme, colorScheme, color-scheme and prefers-color-scheme. A CSS rule like `.darkmode body { background: … }` is plain CSS that breaks none of the three invariants. The docstring says invariant 3 should stop any string literal naming a scheme. The `named` cases show the round-8 intent was to catch compound names (darkMode, lightTheme), and the all-lowercase forms slip through that intent.\n\nI don't call this an injection risk, because no attacker controls source code. The impact is weaker detection: a future developer, or a screen the e2e cannot reach, could force a theme and the regression guard would still pass. No current source uses darkmode, darktheme, lightmode or lighttheme (grep of src/ found only the test file itself), so nothing violates FR-58 today. That limited, hypothetical impact matches the 'minor' rating, so I'm keeping the severity.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:openspec/changes/implement-platform-foundation-ui/specs/platform-foundation/spec.md",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1775,
+      "durationMs": 15458,
+      "sessionId": "e037aa11-dd37-4649-a8a3-1ae251645ada",
+      "costUsd": 0.0894772,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "This is a coverage summary, not a defect claim. Its suggestion is \"No action\", and the two gaps it mentions are filed as separate findings. Each fact I checked holds:\n- The spec delta has exactly 18 `#### Scenario` entries (grep count = 18).\n- In `theme-source.test.ts`, `withoutComments` sends `.m?[jt]sx?` files through `ts.createPrinter({removeComments:true})`. The SCHEME regex uses lookarounds to match whole words and camelCase or underscore boundaries, and to skip `highlight` and `darken`.\n- `container-config.test.ts:105` defines `dockerForm`, which leaves anchored patterns alone and turns unanchored ones into `**/`.\n- `e2e/a11y.spec.ts:13` calls `test.slow(browserName === 'firefox')`, which only raises the timeout.\n\nNothing in the claimed mechanism is wrong. It is informational and asks for no fix, so I'm not refuting it but am downgrading it to informational.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:openspec/changes/implement-platform-foundation-ui/specs/platform-foundation/spec.md",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1808,
+      "durationMs": 13238,
+      "sessionId": "d496e2b1-876d-4ebe-ba25-d6c7923a2c7d",
+      "costUsd": 0.0810136,
+      "numTurns": 4,
+      "result": {
+        "refuted": true,
+        "reasoning": "This entry is a coverage summary, not a defect. Its own suggestion is \"No action for the round-8 fixes\", and the two \"minor test-strength gaps\" it mentions are filed as separate findings. I checked its factual claims and they hold:\n- The spec delta has exactly 18 `#### Scenario` entries.\n- `e2e/a11y.spec.ts` contains the `test.slow` call. That only raises the time limit and changes no assertions.\n- `src/app/theme-source.test.ts` uses `removeComments`.\n\nSo the summary is accurate. But it names nothing a user or attacker could trigger, and no failing behaviour to reproduce. As an issue it should be refuted. Treat it as informational at most, not a minor-severity defect against spec.md:1.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 2397,
+      "durationMs": 33717,
+      "sessionId": "e2bd5336-28c8-4077-9281-b65dbcd23e6d",
+      "costUsd": 0.1812474,
+      "numTurns": 8,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed this by reading the code. I could not run the Node repro because approval was needed, so the confirmation comes from the TypeScript source, not an executed test.\n\n1. **Which path runs:** In `src/app/theme-source.test.ts:39-44`, `withoutComments` sends `.m?[jt]sx?` files through `ts.createSourceFile(file, source, Latest, false, kind)` and then `createPrinter({removeComments:true}).printFile`. Every other file goes through the regex stripper.\n2. **What the tests cover:** All 15 `forced` cases (lines 71-88) and the 8 `fine` cases call `themeViolations(s)` without a file name, so they default to `snippet.css` and only use the regex path. The production scan (line 121) passes real `.ts`/`.tsx` names, so the printer path is what actually guards app code. Only the `named`, highlight and slash cases (lines 102-110) use that path, and none of them write a token in a template literal.\n3. **Why the printer changes literals:** With `setParentNodes=false`, the parser runs `fixupParentReferences` only when that flag is true (typescript.js:33311, 33407), so `node.parent` stays undefined. `canUseOriginalText` then returns false on `!node.parent` (typescript.js:17291), and `getLiteralText` (17248) re-escapes the literal. `backtickQuoteEscapedCharsRegExp` (20023) covers U+0000–U+0009, which includes tab, plus `\\r\\n`. `escapedCharsMap` turns tab into `\\t` and LF into `\\n`.\n4. **Result:** In a template literal, a tab-indented `--paper:` prints as `...\\t--paper:`. The character before `--` is then `t`, which does not match `[;{\\s]`, and the regex's `^` with the `m` flag cannot help because the newlines are now escaped too. `TOKEN_WRITE` misses it.\n5. **Worse than the finding says:** An unindented `--paper:` at the start of a line inside a multi-line template prints as `\\n--paper:`, and that is missed as well. So `indent_style = space` in `.editorconfig` does not fully reduce the risk.\n\nThe finding is right that the detector's known-bad cases never exercise the path that scans real files, and that this path has a real false-negative gap for the \"No toggle\" spec. Minor severity fits: it is a hole in a test guard, not product behaviour.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 2430,
+      "durationMs": 27536,
+      "sessionId": "81ff17e9-1aba-419d-b720-96c98277f065",
+      "costUsd": 0.1567018,
+      "numTurns": 6,
+      "result": {
+        "refuted": true,
+        "reasoning": "The bypass the finding describes doesn't happen. It's true that `!node.parent` makes `canUseOriginalText` return false (typescript.js:17291). But for template literals, `getLiteralText` then uses `node.rawText ?? escapeTemplateSubstitution(...)` (typescript.js:17266). The parser always sets `rawText` for template-literal tokens: `createTemplateLiteralLikeNode(kind, ..., getTemplateLiteralRawText(kind), ...)` takes the scanner's exact token text (typescript.js:34825-34832). So `backtickQuoteEscapedCharsRegExp` never runs on parsed template literals. A tab-indented `--paper:` line inside a CSS template is printed with its real tab, and TOKEN_WRITE's `[;{\\s]` still matches it.\n\nPlain string literals can be re-escaped, but TOKEN_WRITE also matches a quote followed by `--`. A custom property name inside a quoted string after a control character is not a realistic way to force the theme. The scheme words are ASCII. The only gap I can build is a contrived one: a non-ASCII letter whose escape ends in A-F placed right before `dark` (e.g. `'údark'` becomes `údark`). Nobody would write that.\n\nWhat remains is a test-design point: the `forced` list runs only through the regex path. That doesn't change behaviour, and the production scan still catches the claimed example. The specific reproduction is wrong, so no real violation can slip through the way the finding says.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/test/container-config.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1853,
+      "durationMs": 12247,
+      "sessionId": "6d48cae9-f4c4-4b28-8b7b-643e6c336c60",
+      "costUsd": 0.0865694,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the mechanism. At container-config.test.ts:118-126 the test puts the .dockerignore lines into a Set and only checks that each mapped .gitignore pattern is a member. It ignores both line order and `!` lines in .dockerignore. Docker applies .dockerignore rules in order, and a later `!` re-includes matching paths. So appending `!**/.env` or `!**/uploads/` would leave every pattern present and the test green, while those files would enter the context through `COPY . .`. Nothing else guards against this; the Set check is the only assertion.\n\nThe secondary point also holds. .dockerignore currently has no `!` lines, and `**/.env.*` excludes .env.example even though .gitignore re-includes it with `!.env.example`. docs/, trace/, retro/ and openspec/ are also excluded on purpose. So the header claim that \"the build context is then exactly the files git reports\" is literally false; it is a subset.\n\nThere is no current leak. The gap is a regression-guard weakness: the test does not fully enforce the stated intent of \"excludes everything git ignores\", so minor severity is right.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/test/container-config.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1886,
+      "durationMs": 14913,
+      "sessionId": "e6646e8b-ac32-426f-95f2-2b9ecda2d035",
+      "costUsd": 0.088343,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the mechanism in the code. At `src/test/container-config.test.ts:118-126` the test builds a Set of the `.dockerignore` lines. It then only checks that each non-`!` `.gitignore` pattern, in its Docker form, is in that Set. It ignores line order and never looks for `!` lines in `.dockerignore`. Docker gives later lines precedence, so adding `!**/.env` or `!**/uploads/` at the end would re-include those paths. The test would stay green, and `COPY . .` would pull the files into the image.\n\nThe current `.dockerignore` has no `!` lines, so no leak happens today. Nobody using the app or attacking it can trigger this. It would take a developer edit that the test is meant to catch and doesn't, which makes this a gap in the test's regression protection, not a live exploit.\n\nThe secondary point is also accurate. The header says \"The build context is then exactly the files git reports\", but `docs/`, `trace/`, `retro/` and `openspec/` are deliberately excluded. Also, `**/.env.*` excludes `.env.example`, which git tracks. That is only a wording problem.\n\nThe finding is correct as a minor test-strength gap with no current impact. Minor is the right severity, and the suggested fix (reject `!` lines or allow only a listed set) is cheap.",
+        "severityAdjustment": "keep"
+      }
+    }
+  ],
+  "logs": [
+    {
+      "phase": "Find",
+      "message": "6 unique findings across 4 dimensions"
+    },
+    {
+      "phase": "Report",
+      "message": "confirmed: 4, contested: 2, rejected: 0"
+    }
+  ],
+  "persisted": [
+    "openspec/changes/implement-platform-foundation-ui/review-findings.json"
+  ],
+  "returned": {
+    "scope": "slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui",
+    "summary": "Review gate for slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui: 4 confirmed, 2 contested (treat as confirmed unless trivially wrong), 0 rejected.",
+    "confirmed": [
+      {
+        "title": "Scheme-word pattern misses `theme…` prefixes and all-lowercase compounds that the spec forbids",
+        "file": "src/app/theme-source.test.ts",
+        "line": 27,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "The spec delta (specs/platform-foundation/spec.md:9-10) forbids naming `dark`, `light` or `theme…` in a string literal, and the `…` means any word that starts with `theme`. The pattern `(?<![A-Za-z])(?:dark|light|theme)(?![a-z])` only matches when no lowercase letter follows. It also needs an uppercase letter at an inner word boundary. Ordinary class names like `root.className = 'themedark'`, `'themed'`, `classList.add('darkmode')` or `'lighttheme'` therefore produce no violation. The new `named` cases only test camelCase, underscore and hyphen forms, so this gap stays untested.",
+        "suggestion": "Make `theme` a prefix match: `(?<![A-Za-z])theme` with no lookahead, and the same for `Theme`/`THEME` at a camel boundary. Also add explicit lowercase compounds such as `(?:dark|light)(?:mode|theme|scheme)`. That keeps `darken` and `highlight` allowed. Add `'themedark'`, `'darkmode'` and `'lighttheme'` to the `named` cases.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I could not refute this finding. The mechanism is real. At src/app/theme-source.test.ts:27, SCHEME has three alternatives:\n- `(?<![A-Za-z])(?:dark|light|theme)(?![a-z])`\n- all-caps or capitalised words after a non-letter, with `(?![a-z])`\n- a capitalised word after a lowercase letter or digit, with `(?![a-z])`\n\nEvery alternative ends in a negative lookahead for a lowercase letter, so none of them matches when lowercase letters follow:\n- In `'themed'` and `'themedark'`, `theme` is followed by `d`, so alternative 1 fails. Alternatives 2 and 3 need a capital letter, so they fail too.\n- In `'darkmode'`, `dark` is followed by `m`, so it fails.\n- In `'lighttheme'`, `light` is followed by `t`, so it fails. The inner `theme` comes after `t`, which the `(?<![A-Za-z])` lookbehind rejects, and alternative 3 needs `Theme` with a capital T.\n\nThe spec (openspec/changes/implement-platform-foundation-ui/specs/platform-foundation/spec.md:9-10) and the docblock at line 16 both say `theme…`, which means a prefix. The regex treats `theme` as a whole word only, so the code does not do what the spec says.\n\nNothing else catches these strings. SCHEME_API only covers `data-theme`, `dataset.theme`, `colorScheme`, `color-scheme` and `prefers-color-scheme`, so a bare `classList.add('themed')` passes. The `named` cases at line 102 test only camelCase, underscore and hyphen forms, so the gap has no test.\n\nThe impact is limited. This is a static guard in a test, and the e2e check plus the design system's ownership of `data-theme` still apply. Minor severity is right.",
+          "I confirmed the finding by reading the regex. The node check needed approval and wasn't run.\n\nAt src/app/theme-source.test.ts:27 the SCHEME regex has three alternatives:\n1. Lowercase dark, light or theme, followed by `(?![a-z])`.\n2. Capitalised or all-caps forms, also followed by `(?![a-z])`.\n3. Capitalised forms that come after `[a-z0-9]`.\n\nHow the example strings fare:\n- **`themed`:** no match. `theme` is followed by the lowercase `d`, so the lookahead in (1) fails, and (2) and (3) need a capital letter.\n- **`themedark`:** no match. `theme` fails the same way. The inner `dark` follows the letter `e`, so the `(?<![A-Za-z])` lookbehind fails, and (3) needs `Dark`.\n- **`darkmode` and `lighttheme`:** no match. The leading word is followed by a lowercase letter, and the inner `theme` follows a letter.\n\nThe spec (openspec/changes/implement-platform-foundation-ui/specs/platform-foundation/spec.md:10), design.md:136 and the test's own docstring (line 16) all say `theme…`, meaning anything that starts with `theme`. The regex does not do that. The `named` cases at line 102 only cover camelCase, underscore and hyphen forms, so the gap is untested.\n\nNothing refutes it: no other check catches these strings. SCHEME_API only covers data-theme, colorScheme and similar names. TOKEN_WRITE only covers `--` custom properties.\n\nExploitability: this is a developer-facing guard test, not a runtime path. A child or attacker cannot trigger anything. The impact is a false negative: a future change could add a scheme class like `'darkmode'` or `'themed'`, pass the FR-58 test, and force a theme, which breaks \"theme follows the OS\". The current repo scan passes, so no such code exists today. That makes it a real but latent coverage gap, and \"minor\" fits."
+        ]
+      },
+      {
+        "title": "Build context and the 'clean commit' check both miss local and global git excludes",
+        "file": ".dockerignore",
+        "line": 5,
+        "severity": "minor",
+        "confidence": "low",
+        "evidence": "The comment says 'The build context is then exactly the files git reports, and smoke evidence that names a clean commit really did build from that commit.' The mirror test only maps `.gitignore`. A file ignored through `.git/info/exclude` or the user's global `core.excludesFile` stays in the Docker build context (`COPY . .`). `git status --porcelain` in tools/container-smoke.mjs:52 also hides it, so `dirty` is false. Smoke evidence can then name a clean commit while the image contains a file that commit does not have, for example an excluded local `src/` or config file the build picks up.",
+        "suggestion": "In the smoke script, build from `git ls-files` or `git archive HEAD` (plus the contract submodule) rather than the working tree. Alternatively, also fail `dirty` when `git status --porcelain --ignored` lists ignored files that `.dockerignore` does not exclude. Otherwise, reword the comment to drop the 'exactly' claim.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I couldn't refute the mechanism. The code works the way the finding says:\n\n1. **What reaches the image:** The Dockerfile does `COPY . .`, so the build context is the working tree minus `.dockerignore`. `.dockerignore` lists only the `.gitignore` patterns, in Docker's form, plus a few directories (docs/, trace/, retro/, openspec/). Nothing in Docker reads `.git/info/exclude` or `core.excludesFile`.\n\n2. **What the dirty check sees:** `tools/container-smoke.mjs` sets `dirty` from `git status --porcelain` with some evidence paths excluded. That command leaves out every ignored file, whatever the ignore source: .gitignore, info/exclude or the global excludesFile. A file ignored only through info/exclude or the global excludes therefore reaches the Docker context but does not set `dirty`. The evidence then records `commit: HEAD, dirty: false` for an image whose inputs differ from that commit.\n\n3. **Why the claims are false:** The `.dockerignore` comment says \"the build context is then exactly the files git reports\". The smoke-script comment says \".dockerignore mirrors .gitignore, so ignored files never reach the image\". Both hold only when .gitignore is the sole ignore source.\n\n**What I checked to refute it:**\n- This repo's `.git/info/exclude` has no active entries.\n- `core.excludesFile` is unset.\n- `git status --ignored` lists only the .gitignore'd directories, all of which `.dockerignore` also excludes.\n\nSo the gap is not triggered today. It is latent and depends on the machine. No other guard covers it: the Dockerfile does not build from `git archive`, and the script does not check `--ignored`. The mechanism is correct as described. Minor severity with low confidence fits a latent, configuration-dependent gap, so I'm keeping the severity.",
+          "I could not refute the mechanism. It is real and can be reproduced, though nothing on this machine triggers it right now.\n\nWhat the code does:\n- The `.dockerignore` comment (lines 1–5) says the build context is \"exactly the files git reports\". The file only mirrors `.gitignore` patterns.\n- The Dockerfile runs `COPY . .` and then `npm run build`, so the whole working tree minus `.dockerignore` reaches the build.\n- In `tools/container-smoke.mjs`, the `dirty` check runs `git status --porcelain` without `--ignored`. That command already hides anything excluded through `.git/info/exclude` or `core.excludesFile`, so those files leave `dirty` false.\n\nA concrete way to reproduce it:\n1. `echo public/ >> .git/info/exclude`\n2. `mkdir public && echo x > public/x.txt`\n3. Run the smoke script.\n\nThe repo has no `public/` directory. Vite's default `publicDir` is `public`, so `x.txt` is copied into `dist` and shipped in the nginx image. `git status --porcelain` stays empty, so `dirty` is false and the evidence names a clean commit for an image that commit cannot reproduce.\n\nLimits on the finding:\n- An excluded file under `src/` would not affect the bundle unless tracked code imports it, and that import would show up as a tracked change. The finding's `src/` example is therefore weak; `public/` or auto-discovered config files (for example a `postcss.config` that the repo does not have) are the real vectors.\n- `.env.local` and similar files are already caught by `**/.env.*`.\n- On this machine `.git/info/exclude` holds only comments, `core.excludesFile` is unset, and `git status --ignored` lists only paths that `.dockerignore` already covers.\n\nExploiting this needs the developer's own local exclude configuration, and the result is an integrity gap in the evidence, not an attack. Even so, the \"exactly\" claim in the comment is false and the mechanism works as described. It is minor with low practical likelihood; keep as filed."
+        ]
+      },
+      {
+        "title": "Theme guard (invariant 3) misses all-lowercase compound scheme names such as 'darkmode', 'darktheme', 'lightmode'",
+        "file": "src/app/theme-source.test.ts",
+        "line": 27,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "Round 8 widened SCHEME to cover camelCase and underscore names, but the lowercase branch `(?<![A-Za-z])(?:dark|light|theme)(?![a-z])` needs a non-lowercase character after the word. So `root.className = 'darkmode'` or `el.classList.add('darktheme')` matches no branch: 'dark' is followed by 'm'/'t', and 'theme' follows the letter 'k'. These are ordinary class names, not obfuscation (the darkmode.js convention is `darkmode--activated`, for example). Say a screen or state the e2e cannot reach applies such a class, and app CSS styles `.darkmode body` without custom properties (CSS selectors are only checked for token writes and scheme APIs). The theme is then forced, FR-58 is broken, and `no app source … breaks an invariant` still passes. The `fine` list shows the intended split is 'not inside another word' (highlight, darken), but a scheme word at the start of a name followed by a lowercase word passes too.",
+        "suggestion": "Treat a scheme word at the start of a name as a match when a common scheme suffix follows (`(?<![A-Za-z])(?:dark|light)(?:mode|theme|scheme)?(?![a-z])`), or flag `dark|light` at a word start unless the next letters are in a short allowlist (`darken`, `lighten`, `lightbox`, `lightweight`). Add 'darkmode', 'darktheme' and 'lightmode' to the `named` cases.",
+        "dimension": "security",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I traced SCHEME at src/app/theme-source.test.ts:27 by hand against the regex; I couldn't run it because the node command needed approval. It has three branches:\n(1) `(?<![A-Za-z])(?:dark|light|theme)(?![a-z])`\n(2) the capitalised or all-caps forms, with the same lookarounds\n(3) `(?<=[a-z0-9])(?:Dark|Light|Theme)(?![a-z])`\n\nFor `'darkmode'`:\n- Branch 1 finds `dark` with a quote before it, which passes the lookbehind. The next character is `m`, so `(?![a-z])` fails.\n- Branches 2 and 3 need an uppercase letter, so they can't match.\n- QUOTED_SCHEME and TEMPLATE_SCHEME only wrap SCHEME, so nothing else catches it.\n\nFor `'darktheme'`, `dark` fails for the same reason. `theme` has `k` before it, so the lookbehind fails, and branch 3 needs a capital `Theme`. `'lightmode'` behaves like `'darkmode'`. TOKEN_WRITE and SCHEME_API don't fire on any of these strings either.\n\nSo `themeViolations(\"root.className = 'darkmode'\", false, 'a.tsx')` returns `[]`, and the whole-repo invariant test would pass with such a class in app code. The `named` test cases (`darkMode`, `isLight`, `mode_dark`, `lightTheme`) don't cover all-lowercase compounds.\n\nNothing else guards this: the CSS checks only flag token writes and scheme APIs, so `.darkmode body {...}` would not be caught. The doc comment says invariant 3 means \"no string literal … names a scheme\", so this is a real gap against its stated goal. The impact is hypothetical (no such class exists today) and this is a test-time guard, so minor severity is right.",
+          "I traced the SCHEME regex at src/app/theme-source.test.ts:27 by hand, and the gap is real. In 'darkmode', branch 1 matches 'dark' at a word start, but the lookahead (?![a-z]) then fails on 'm'. 'mode' is not a scheme word. Branches 2 and 3 need a capital letter (Dark/DARK/…) and there isn't one. In 'darktheme', 'theme' fails branch 1's lookbehind (?<![A-Za-z]) because it follows 'k', and branch 3 needs a capital 'Theme'. 'lightmode' fails the same way as 'darkmode'. So QUOTED_SCHEME and TEMPLATE_SCHEME miss all three, and invariant 3 does not fire.\n\nNothing else catches them. TOKEN_WRITE only looks for `--x:` and quoted `--`. SCHEME_API only looks for data-theme, colorScheme, color-scheme and prefers-color-scheme. A CSS rule like `.darkmode body { background: … }` is plain CSS that breaks none of the three invariants. The docstring says invariant 3 should stop any string literal naming a scheme. The `named` cases show the round-8 intent was to catch compound names (darkMode, lightTheme), and the all-lowercase forms slip through that intent.\n\nI don't call this an injection risk, because no attacker controls source code. The impact is weaker detection: a future developer, or a screen the e2e cannot reach, could force a theme and the regression guard would still pass. No current source uses darkmode, darktheme, lightmode or lighttheme (grep of src/ found only the test file itself), so nothing violates FR-58 today. That limited, hypothetical impact matches the 'minor' rating, so I'm keeping the severity."
+        ]
+      },
+      {
+        "title": ".dockerignore mirror test checks that patterns exist but not that they take effect: a later `!` negation in .dockerignore passes the test",
+        "file": "src/test/container-config.test.ts",
+        "line": 119,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "Intent (.dockerignore header and test name): 'excludes everything git ignores, at any depth'. This protects NFR-3/NFR-4: `.env`, uploads/, storage/ and **/raw/ never enter the image. The test only checks `docker.has(dockerForm(p))` for each .gitignore pattern. Docker applies .dockerignore rules in order, and a later `!` line re-includes files. So adding, say, `!**/.env` or `!**/uploads/` (an ordinary exception line) leaves every pattern 'present', the test stays green, and secrets or workbook content enter the build context through `COPY . .` (Dockerfile:9). The reverse direction also goes unasserted: .gitignore's own `!.env.example` is dropped from the comparison, and `.dockerignore` excludes `.env.example` via `**/.env.*`. That one is harmless, but it shows the header's claim that 'the build context is then exactly the files git reports' is not literally true.",
+        "suggestion": "Also assert that .dockerignore has no `!` lines, or allow only an explicit list such as `!.env.example`. Reword the header comment to say 'everything git ignores is excluded' rather than 'exactly the files git reports', since docs/, openspec/, trace/ and retro/ are also excluded on purpose.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I confirmed the mechanism. At container-config.test.ts:118-126 the test puts the .dockerignore lines into a Set and only checks that each mapped .gitignore pattern is a member. It ignores both line order and `!` lines in .dockerignore. Docker applies .dockerignore rules in order, and a later `!` re-includes matching paths. So appending `!**/.env` or `!**/uploads/` would leave every pattern present and the test green, while those files would enter the context through `COPY . .`. Nothing else guards against this; the Set check is the only assertion.\n\nThe secondary point also holds. .dockerignore currently has no `!` lines, and `**/.env.*` excludes .env.example even though .gitignore re-includes it with `!.env.example`. docs/, trace/, retro/ and openspec/ are also excluded on purpose. So the header claim that \"the build context is then exactly the files git reports\" is literally false; it is a subset.\n\nThere is no current leak. The gap is a regression-guard weakness: the test does not fully enforce the stated intent of \"excludes everything git ignores\", so minor severity is right.",
+          "I confirmed the mechanism in the code. At `src/test/container-config.test.ts:118-126` the test builds a Set of the `.dockerignore` lines. It then only checks that each non-`!` `.gitignore` pattern, in its Docker form, is in that Set. It ignores line order and never looks for `!` lines in `.dockerignore`. Docker gives later lines precedence, so adding `!**/.env` or `!**/uploads/` at the end would re-include those paths. The test would stay green, and `COPY . .` would pull the files into the image.\n\nThe current `.dockerignore` has no `!` lines, so no leak happens today. Nobody using the app or attacking it can trigger this. It would take a developer edit that the test is meant to catch and doesn't, which makes this a gap in the test's regression protection, not a live exploit.\n\nThe secondary point is also accurate. The header says \"The build context is then exactly the files git reports\", but `docs/`, `trace/`, `retro/` and `openspec/` are deliberately excluded. Also, `**/.env.*` excludes `.env.example`, which git tracks. That is only a wording problem.\n\nThe finding is correct as a minor test-strength gap with no current impact. Minor is the right severity, and the suggested fix (reject `!` lines or allow only a listed set) is cheap."
+        ]
+      }
+    ],
+    "contested": [
+      {
+        "title": "Coverage summary (round 9): 18 scenarios: 18 implemented, 0 partial, 0 missing, 0 contradicted. The round-8 fixes hold: TS-printer comment stripping, camelCase/underscore scheme matching, the root-anchored .dockerignore with its mapping and mirror tests, and Firefox test.slow. Two minor test-strength gaps remain.",
+        "file": "openspec/changes/implement-platform-foundation-ui/specs/platform-foundation/spec.md",
+        "line": 1,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "Spec delta has 18 `#### Scenario` entries. Round-8 artifacts checked: src/app/theme-source.test.ts:38-50 (withoutComments sends .ts/.tsx/.js through ts.createPrinter({removeComments:true})); SCHEME regex at :27 with named/highlight/darken and slashStar cases at :101-110; .dockerignore turns every unanchored .gitignore pattern into `**/x`; src/test/container-config.test.ts:105-126 (dockerForm plus the mapping test); e2e/a11y.spec.ts:13 `test.slow(browserName === 'firefox')`, which raises only the time limit, never the assertions. The design-system scheme hooks are just `[data-theme=…]` and `prefers-color-scheme` (src/design-system/tokens.css:3,50,83-84), and SCHEME_API still catches both. Unticked tasks.md items (2.8, 4.3-4.6) are honestly marked open. No ticked task lacks its artifact.",
+        "suggestion": "No action for the round-8 fixes. See the two minor findings below.",
+        "dimension": "spec-compliance",
+        "verdict": "contested",
+        "verifierNotes": [
+          "This is a coverage summary, not a defect claim. Its suggestion is \"No action\", and the two gaps it mentions are filed as separate findings. Each fact I checked holds:\n- The spec delta has exactly 18 `#### Scenario` entries (grep count = 18).\n- In `theme-source.test.ts`, `withoutComments` sends `.m?[jt]sx?` files through `ts.createPrinter({removeComments:true})`. The SCHEME regex uses lookarounds to match whole words and camelCase or underscore boundaries, and to skip `highlight` and `darken`.\n- `container-config.test.ts:105` defines `dockerForm`, which leaves anchored patterns alone and turns unanchored ones into `**/`.\n- `e2e/a11y.spec.ts:13` calls `test.slow(browserName === 'firefox')`, which only raises the timeout.\n\nNothing in the claimed mechanism is wrong. It is informational and asks for no fix, so I'm not refuting it but am downgrading it to informational.",
+          "This entry is a coverage summary, not a defect. Its own suggestion is \"No action for the round-8 fixes\", and the two \"minor test-strength gaps\" it mentions are filed as separate findings. I checked its factual claims and they hold:\n- The spec delta has exactly 18 `#### Scenario` entries.\n- `e2e/a11y.spec.ts` contains the `test.slow` call. That only raises the time limit and changes no assertions.\n- `src/app/theme-source.test.ts` uses `removeComments`.\n\nSo the summary is accurate. But it names nothing a user or attacker could trigger, and no failing behaviour to reproduce. As an issue it should be refuted. Treat it as informational at most, not a minor-severity defect against spec.md:1."
+        ]
+      },
+      {
+        "title": "Theme guard: the known-bad (`forced`) cases never go through the TypeScript-printer path that real .ts/.tsx files use",
+        "file": "src/app/theme-source.test.ts",
+        "line": 76,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "Spec: 'Scenario: No toggle': app code cannot force a scheme or write tokens. Code: `themeViolations(source, isCatalog = false, file?)` defaults `file` to 'snippet.css' (line 38). The `forced` list (lines 76-93) calls `themeViolations(s)` without a file, so all 15 known-bad cases (setProperty('--paper'), dataset.theme, `theme-${mode}`, the multi-line CSS template, …) only go through the regex comment stripper. The production scan (line 121) passes the real filename, so every .ts/.tsx goes through `ts.createPrinter().printFile` instead. Only the 4 `named` cases and 2 slash cases test that path. The printer does not keep the original literal text: createSourceFile is called with setParentNodes=false, and TypeScript's canUseOriginalText returns false when `!node.parent` (node_modules/typescript/lib/typescript.js:17291). Literals are therefore re-escaped: in template literals, tabs and other control characters become `\\t` etc. (backtickQuoteEscapedCharsRegExp, :20023), and non-ASCII becomes `\\uXXXX`. Example: a tab-indented `--paper:` line inside a CSS template becomes `\\t--paper:`. TOKEN_WRITE needs `[;{\\s]` before `--`, so the scan passes while the spec is violated. .editorconfig sets `indent_style = space`, which lowers the practical risk. Even so, the suite that proves the detector works never runs on the code path it guards.",
+        "suggestion": "Run the `forced` and `fine` lists through both paths (e.g. `themeViolations(s, false, 'a.tsx')` as well as the CSS default). Pass `setParentNodes: true` to ts.createSourceFile so the printer keeps the original literal text, or strip comments with ts.forEachLeadingCommentRange / the scanner rather than re-printing. Add a case with a tab-indented custom property in a template literal.",
+        "dimension": "spec-compliance",
+        "verdict": "contested",
+        "verifierNotes": [
+          "I confirmed this by reading the code. I could not run the Node repro because approval was needed, so the confirmation comes from the TypeScript source, not an executed test.\n\n1. **Which path runs:** In `src/app/theme-source.test.ts:39-44`, `withoutComments` sends `.m?[jt]sx?` files through `ts.createSourceFile(file, source, Latest, false, kind)` and then `createPrinter({removeComments:true}).printFile`. Every other file goes through the regex stripper.\n2. **What the tests cover:** All 15 `forced` cases (lines 71-88) and the 8 `fine` cases call `themeViolations(s)` without a file name, so they default to `snippet.css` and only use the regex path. The production scan (line 121) passes real `.ts`/`.tsx` names, so the printer path is what actually guards app code. Only the `named`, highlight and slash cases (lines 102-110) use that path, and none of them write a token in a template literal.\n3. **Why the printer changes literals:** With `setParentNodes=false`, the parser runs `fixupParentReferences` only when that flag is true (typescript.js:33311, 33407), so `node.parent` stays undefined. `canUseOriginalText` then returns false on `!node.parent` (typescript.js:17291), and `getLiteralText` (17248) re-escapes the literal. `backtickQuoteEscapedCharsRegExp` (20023) covers U+0000–U+0009, which includes tab, plus `\\r\\n`. `escapedCharsMap` turns tab into `\\t` and LF into `\\n`.\n4. **Result:** In a template literal, a tab-indented `--paper:` prints as `...\\t--paper:`. The character before `--` is then `t`, which does not match `[;{\\s]`, and the regex's `^` with the `m` flag cannot help because the newlines are now escaped too. `TOKEN_WRITE` misses it.\n5. **Worse than the finding says:** An unindented `--paper:` at the start of a line inside a multi-line template prints as `\\n--paper:`, and that is missed as well. So `indent_style = space` in `.editorconfig` does not fully reduce the risk.\n\nThe finding is right that the detector's known-bad cases never exercise the path that scans real files, and that this path has a real false-negative gap for the \"No toggle\" spec. Minor severity fits: it is a hole in a test guard, not product behaviour.",
+          "The bypass the finding describes doesn't happen. It's true that `!node.parent` makes `canUseOriginalText` return false (typescript.js:17291). But for template literals, `getLiteralText` then uses `node.rawText ?? escapeTemplateSubstitution(...)` (typescript.js:17266). The parser always sets `rawText` for template-literal tokens: `createTemplateLiteralLikeNode(kind, ..., getTemplateLiteralRawText(kind), ...)` takes the scanner's exact token text (typescript.js:34825-34832). So `backtickQuoteEscapedCharsRegExp` never runs on parsed template literals. A tab-indented `--paper:` line inside a CSS template is printed with its real tab, and TOKEN_WRITE's `[;{\\s]` still matches it.\n\nPlain string literals can be re-escaped, but TOKEN_WRITE also matches a quote followed by `--`. A custom property name inside a quoted string after a control character is not a realistic way to force the theme. The scheme words are ASCII. The only gap I can build is a contrived one: a non-ASCII letter whose escape ends in A-F placed right before `dark` (e.g. `'údark'` becomes `údark`). Nobody would write that.\n\nWhat remains is a test-design point: the `forced` list runs only through the regex path. That doesn't change behaviour, and the production scan still catches the claimed example. The specific reproduction is wrong, so no real violation can slip through the way the finding says."
+        ]
+      }
+    ],
+    "rejected": [],
+    "reviewEvidence": "openspec/changes/implement-platform-foundation-ui/review-findings.json"
+  }
+}
