@@ -44,9 +44,10 @@ for (const scheme of ['light', 'dark'] as const) {
             await page.waitForTimeout(300);
             await expect(page.locator('[data-theme]')).toHaveCount(0);
             await expect(page.locator('body')).toHaveCSS('background-color', PAPER[scheme]);
+            // An option or control that navigated away: come back and carry on (the locator re-resolves).
             if (new URL(page.url()).pathname !== new URL(screen.path, page.url()).pathname) {
               await page.goto(screen.path);
-              break;
+              await expect(page.locator(screen.marker)).toBeAttached();
             }
           }
         }

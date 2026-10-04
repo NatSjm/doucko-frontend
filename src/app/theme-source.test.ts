@@ -21,10 +21,11 @@ const THEME_WRITE = new RegExp(
     'prefers-color-scheme',
     // classList.add('dark'), classList.toggle(`theme-${x}`), className = 'dark', className={`… theme-${x}`}
     'classList\\.\\w+\\([^)]*\\b(dark|light|theme)',
-    'className\\s*=\\s*[{"\'`][^\\n]*\\b(dark|light|theme)\\b',
-    // style.setProperty('--paper', …) or a :root/html rule redefining a token
+    'className\\s*\\+?=\\s*[{"\'`][^\\n]*\\b(dark|light|theme)\\b',
+    // style.setProperty('--paper', …), or a CSS rule on :root, html or body (with any qualifier, such
+    // as html.dark) redefining a token
     'setProperty\\(\\s*[\'"`]--',
-    '(:root|html)\\s*\\{[^}]*--[\\w-]+\\s*:',
+    '(:root|html|body)[^{,;]*\\{[^}]*--[\\w-]+\\s*:',
   ].join('|'),
 );
 
@@ -44,6 +45,9 @@ describe('theme follows the OS (FR-58)', () => {
       "<div className={`app ${dark ? 'dark' : ''}`}>",
       "el.style.setProperty('--paper', '#000')",
       ':root { --paper: #000; }',
+      'html.dark { --paper: #000; }',
+      'body[data-x] { --hero: red; }',
+      "root.className += ' dark'",
       '@media (prefers-color-scheme: dark) { body { color: red } }',
       '<meta name="color-scheme" content="dark">',
     ];

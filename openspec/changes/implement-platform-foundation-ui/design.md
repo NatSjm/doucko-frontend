@@ -110,8 +110,9 @@ origin and author) listed beside it (the two OFL fonts).
   React `style` props need them (scripts stay `'self'`).
 - DNS rebinding: a `default_server` answers 421; the app server only answers
   `localhost` and bare IPv4 hosts (127.0.0.1, the LAN address). `/api`
-  without the slash is 404. The backend's own published port (8080) is
-  outside this repo and still answers any host (backend follow-up).
+  without the slash is 404. The backend no longer publishes 8080 (only this
+  image's 8081 is published), and its own firewall refuses any other host
+  with 400 too (backend `SecurityConfiguration.httpFirewall`).
 - Live check: `npm run test:container` (`tools/container-smoke.mjs`) builds
   the image, runs it beside a stub backend on a private network and checks
   the proxying, headers, fallback, 404s and the Host guard over HTTP, then

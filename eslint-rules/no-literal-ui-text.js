@@ -50,11 +50,12 @@ const NAME_IS_IDENTIFIER = new Set(["Icon", "ChoiceGroup"]);
 const NON_TEXT_KEYS = new Set([...NON_TEXT_PROPS, "value"]);
 
 /** Locale formatting: n.toLocaleString('cs-CZ', { style: 'percent' }) and Intl.* take locales and options, not text. */
+// `new Intl.X('cs-CZ', {...})` needs no rule: a constructor's arguments are never read as text, while
+// what is passed to its .format(...) is (Intl.ListFormat formats the strings it is given).
 const isLocaleFormatting = (callee) =>
   callee.type === "MemberExpression" &&
-  ((callee.property.type === "Identifier" && /^(toLocale\w*|localeCompare)$/.test(callee.property.name)) ||
-    (callee.object.type === "NewExpression" && callee.object.callee.type === "MemberExpression" &&
-      callee.object.callee.object.type === "Identifier" && callee.object.callee.object.name === "Intl"));
+  callee.property.type === "Identifier" &&
+  /^(toLocale\w*|localeCompare)$/.test(callee.property.name);
 
 /** Functions whose string argument is a catalog key. */
 const CATALOG_LOOKUPS = new Set(["t"]);

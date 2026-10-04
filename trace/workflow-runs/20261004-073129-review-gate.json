@@ -1,0 +1,660 @@
+{
+  "workflow": "review-gate",
+  "file": "./.claude/workflows/review-gate.js",
+  "description": "Multi-dimensional adversarial review of a diff or capability: correctness, security, and spec compliance, with every finding adversarially verified before it is reported.",
+  "dryRun": false,
+  "startedAt": "2026-10-04T07:31:29.124Z",
+  "finishedAt": "2026-10-04T07:36:09.575Z",
+  "args": {
+    "scope": "slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui",
+    "baseRef": "93e81cd",
+    "headRef": "HEAD",
+    "focus": "Round 5. Verify the round-4 fixes (commit HEAD): the docs/qa recordings exemption (results[].video/.screenshot only), http-level security headers incl. the 421 refusal, the Host-guard static test, tools/container-smoke.mjs and its evidence file, the lint rule name-key and Intl/toLocale exemption, the theme e2e select handling and the widened static theme guard. Check against the spec delta and design.md. Do NOT re-report what design.md lists under \"Accepted limits (review round 3)\" or the documented backend-port and real-compose-stack follow-ups; report only defects in shipped behaviour or tests that can pass while the spec is violated.",
+    "change": "implement-platform-foundation-ui"
+  },
+  "settings": {
+    "allowedTools": null,
+    "concurrency": 4,
+    "model": null,
+    "budgetPerAgentUsd": 2,
+    "maxTotalUsd": 15,
+    "untypedTools": "Read,Grep,Glob,Write,Bash",
+    "permissionMode": "acceptEdits"
+  },
+  "outcome": "ok",
+  "stoppedBecause": null,
+  "error": null,
+  "totalCostUsd": 3.8992,
+  "steps": [
+    {
+      "label": "find:correctness",
+      "phase": "Find",
+      "agentType": "code-reviewer",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 1117,
+      "durationMs": 97302,
+      "sessionId": "2cc76ed1-4693-44c4-9ef6-d3163129ab59",
+      "costUsd": 0.5748587999999999,
+      "numTurns": 15,
+      "result": {
+        "findings": [
+          {
+            "title": "Intl/toLocale exemption also exempts literal UI text passed to Intl formatters (e.g. Intl.ListFormat)",
+            "file": "eslint-rules/no-literal-ui-text.js",
+            "line": 89,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "`if (isLocaleFormatting(node.callee)) return literalTexts(node.callee.object);` drops every argument of any `.method()` called on `new Intl.X(...)`. Locale and options arguments sit on the constructor, not on `.format()`, so this branch only drops the value being formatted. For `<p>{new Intl.ListFormat('cs').format(['Matematika', 'Čeština'])}</p>` the receiver is a NewExpression, `literalTexts` falls to `default: []`, and the hard-coded Czech words are never reported (NFR-9). The opposite case also fails: `Intl.DateTimeFormat('cs-CZ').format(d)` without `new` is not recognised, so the locale string 'cs-CZ' is reported as UI text.",
+            "suggestion": "Exempt the arguments of `toLocale*`/`localeCompare` calls and of the `Intl.*` constructor or call. Keep scanning the arguments of `.format`/`.formatToParts` on an Intl instance, at least for ListFormat. Accept `Intl.X(...)` without `new` as well. Add an invalid test case for `new Intl.ListFormat('cs').format(['Ahoj'])`."
+          },
+          {
+            "title": "Theme e2e skips a select's remaining options once one option navigates away",
+            "file": "e2e/theme.spec.ts",
+            "line": 47,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "Inside `for (const choice of choices)`, a pathname change triggers `await page.goto(screen.path); break;`. When the first option of a select navigates (for example a picker that changes route or reloads with a query), every later option is never selected. A later option that forces `data-theme` would then pass the test. The spec scenario requires every select on a route to be activated (spec.md line 25).",
+            "suggestion": "After navigating back, re-locate the select (`controls.nth(i)`) and `continue` with the next option instead of `break`. Alternatively, collect the choices first and run each one from a fresh `page.goto(screen.path)`."
+          },
+          {
+            "title": "Static theme guard and e2e only see token redefinition on :root/html and the body background",
+            "file": "src/app/theme-source.test.ts",
+            "line": 27,
+            "severity": "minor",
+            "confidence": "low",
+            "evidence": "The token pattern `'(:root|html)\\\\s*\\\\{[^}]*--[\\\\w-]+\\\\s*:'` misses a theme forced by redefining `--paper` (or other tokens) on another selector, such as `.app-shell { --paper: … }` or `[data-route] { --ink: … }`. It also misses an inline style object `style={{ '--paper': x }}` and a class set from a variable, such as `classList.add(mode)` or `className={mode}`. The e2e only asserts `body` background-color and `[data-theme]` count, so a control that switches the shell container's tokens passes both checks.",
+            "suggestion": "Widen the CSS token check to any selector that redefines a design-system colour token (`--paper`, `--ink`, `--hero`, …) in app CSS. Flag `'--` keys in inline style objects. In the e2e, also assert the computed `--paper` (or background) of the route's `data-route` container, not just `body`."
+          },
+          {
+            "title": "container-smoke evidence file leaves out the exception that caused a FAIL",
+            "file": "tools/container-smoke.mjs",
+            "line": 140,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "The catch block runs `failures.push(String(err.message ?? err))` but never adds to `results`. A docker build error or a `waitReady` timeout therefore writes `Result: FAIL (1)` with a table that has no failing row and does not name the error, and the Scope line says 'Playwright through nginx NOT included' with no reason. Separately, `writeFileSync('docs/qa/container-smoke-latest.md', …)` resolves against the cwd. Run from any other directory, it throws after cleanup with no summary line, so no evidence is written.",
+            "suggestion": "In the catch block, call `check('setup', false, err.message)` or push an equivalent row into `results`. Resolve the evidence path from `import.meta.url` (the repo root) rather than the cwd."
+          }
+        ]
+      }
+    },
+    {
+      "label": "find:security",
+      "phase": "Find",
+      "agentType": "security-reviewer",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 1145,
+      "durationMs": 106622,
+      "sessionId": "769d0429-e7f6-4735-833c-7e87fbccd4ea",
+      "costUsd": 0.61519,
+      "numTurns": 17,
+      "result": {
+        "findings": [
+          {
+            "title": "Intl/toLocale exemption skips all format() arguments, so literal UI text passed to Intl.ListFormat is never linted (NFR-9)",
+            "file": "eslint-rules/no-literal-ui-text.js",
+            "line": 89,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "For `new Intl.X(...).format(args)`, `isLocaleFormatting` matches the callee and returns `literalTexts(node.callee.object)`. That object is a NewExpression, which falls through to `default: return []` (line 107), so `.format()`'s arguments are never inspected. A feature dev can write `<p>{new Intl.ListFormat('cs').format(['Matematika', 'Čeština'])}</p>` and the screen shows hard-coded Czech (\"Matematika a Čeština\"), yet `doucko/no-literal-ui-text` stays green. This is a literal in the same file, which design.md says the rule catches (\"literals nested in arrays\"), so it is a regression from round 4, not the accepted cross-module limit. The pseudo-catalog render only catches it if a registered route renders that state.",
+            "suggestion": "Exempt only the locale and options arguments: the constructor's arguments for `new Intl.*(locales, options)`, and the arguments of `toLocale*`/`localeCompare`. Keep linting the arguments of `.format()`/`.formatToParts()` on an Intl instance, or at least those of `Intl.ListFormat`. Add an invalid test case: `<p>{new Intl.ListFormat(\"cs\").format([\"Matematika\"])}</p>`."
+          },
+          {
+            "title": "Container-smoke evidence is not tied to the image or config it tested, so a PASS can outlive an nginx.conf change",
+            "file": "tools/container-smoke.mjs",
+            "line": 148,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "`docs/qa/container-smoke-latest.md` records only start/finish times, the check count and the result. It has no commit SHA, image digest or nginx.conf/Dockerfile hash, and nothing in `qa:verify` or the gate scripts checks that it is fresh (only package.json refers to the smoke). If someone later adds an `add_header` inside `location /api/` (which drops the http-level CSP and nosniff on API responses) or loosens `server_name`, the committed evidence file still says PASS for 'the refusal carries the security headers'. tasks.md 4.4 cites this file as the evidence for those claims. The static test in container-config.test.ts guards most of this, but the evidence the live behaviour claim points to can go stale silently, which the done-claims-need-evidence rule forbids.",
+            "suggestion": "Write `git rev-parse HEAD`, a dirty flag and a sha256 of nginx.conf and Dockerfile (or the built image ID) into the evidence header. Have the qa battery or gate-status mark the file STALE/NOT-EARNED when those hashes don't match the working tree."
+          }
+        ]
+      }
+    },
+    {
+      "label": "find:spec-compliance",
+      "phase": "Find",
+      "agentType": "spec-compliance-auditor",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 1088,
+      "durationMs": 173505,
+      "sessionId": "e79c910f-77c1-4262-8bb4-40d2e83830eb",
+      "costUsd": 0.6114676000000001,
+      "numTurns": 12,
+      "result": {
+        "findings": [
+          {
+            "title": "Lint rule skips the literal arguments of every Intl.*(...).format() call, including text-bearing ones like Intl.ListFormat",
+            "file": "eslint-rules/no-literal-ui-text.js",
+            "line": 89,
+            "severity": "major",
+            "confidence": "high",
+            "evidence": "Spec delta, Requirement 'Externalized UI strings': \"A lint rule SHALL refuse literal UI text that it can see in `src/` (JSX, props, nested collections, call arguments, …)\". Round-4 change: `if (isLocaleFormatting(node.callee)) return literalTexts(node.callee.object);`. isLocaleFormatting (line ~53) returns true for any member call whose object is `new Intl.<X>(…)`, so the call's arguments are never checked. For `new Intl.NumberFormat(…).format(n)` that is correct. For `<p>{new Intl.ListFormat('cs').format(['Matematika', 'Čeština'])}</p>` it is not: the callee object is a NewExpression, `literalTexts` falls to `default: return []`, and the two visible Czech literals go unreported. The rule can see them in the file, so this is inside its stated reach, not one of the accepted 'variable / other module' limits. The new tests only cover numeric/date formatters (lint-rule.test.ts valid cases). Coverage (whole slice, 18 scenarios): 17 implemented, 1 partial ('API through the frontend origin': real backend problem+json, a documented follow-up), 0 missing, 0 contradicted.",
+            "suggestion": "Exempt only the constructor/locale arguments: for `new Intl.X(...)` skip the NewExpression's arguments (locales and options), but still run literalTexts over the `.format(...)` / `.formatToParts(...)` call arguments (or at least for ListFormat / DisplayNames / RelativeTimeFormat). For `toLocale*`, skip only the arguments, not the receiver (as now). Add an invalid case `<p>{new Intl.ListFormat('cs').format(['Matematika'])}</p>`."
+          },
+          {
+            "title": "Widened static theme guard still misses common ways to force a theme (className +=, html.dark / body token overrides)",
+            "file": "src/app/theme-source.test.ts",
+            "line": 15,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "Spec: \"No app source outside the vendored design system SHALL set `data-theme` or a colour scheme\" and No-toggle scenario: \"a route with no control reports the check as skipped … and the static source check covers it\". The guard's own docstring says it covers 'a theme class set through classList or className' and 'a design token rewritten at runtime / a :root/html rule redefining a token'. By reading the regex alternatives: `document.documentElement.className += ' dark'` fails `className\\s*=\\s*[{\"'`]` because of the '+'. `html.dark { --paper: #000 }` fails `(:root|html)\\s*\\{` because `.dark` sits between html and the brace. `body { --paper: #000 }` and `.dark { --paper: … }` match nothing. `classList.add(mode)` with a variable also passes. So a no-control screen (where the e2e skips) could force a theme by `className +=` plus a `html.dark` token block in app.css, and the static guard would still pass. The self-test lists only patterns the regex already matches.",
+            "suggestion": "Allow compound assignment (`className\\s*\\+?=`). Flag any selector block outside the design system that redefines a design-system colour token (e.g. `--(paper|ink|hero|…)\\s*:` in any CSS rule, not just :root/html). Add these strings to the 'recognises the ways a theme can be forced' self-test."
+          },
+          {
+            "title": "Container smoke checks only that the 421 refusal has the security headers, not their values; server-version check covers only the shell",
+            "file": "tools/container-smoke.mjs",
+            "line": 148,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "Spec 'Served behind one origin': \"Every response SHALL carry `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer` and a Content-Security-Policy with `script-src 'self'`, `object-src 'none'` and `frame-ancestors 'none'`, and no server version.\" The smoke's refusal check is `['x-content-type-options','referrer-policy','content-security-policy'].every((h) => foreign.headers.get(h))`, which only tests presence. The `server` header is asserted only on `/` (`shell.headers.get('server') === 'nginx'`), not on the 421 or the proxied /api/ answer. The /api/ check also only shows the value is non-empty and not the stub's. No live check confirms nosniff / no-referrer / the CSP directives on any response. Today the static test pins the http-level directives, so this is a gap in evidence, not a broken behaviour.",
+            "suggestion": "Add one helper that asserts the exact values (nosniff, no-referrer, CSP containing the three directives, server === 'nginx') and run it on the shell, /assets/ 404, /api 404, the proxied /api/ answer and the 421 refusal."
+          }
+        ]
+      }
+    },
+    {
+      "label": "find:visual",
+      "phase": "Find",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1357,
+      "durationMs": 13967,
+      "sessionId": "af8433d6-d6d8-41d7-87aa-88269d66eb2e",
+      "costUsd": 0.0806184,
+      "numTurns": 4,
+      "result": {
+        "findings": []
+      }
+    },
+    {
+      "label": "verify:eslint-rules/no-literal-ui-text.js",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1606,
+      "durationMs": 18891,
+      "sessionId": "a8567940-3511-490a-a6ca-52f0d7f68424",
+      "costUsd": 0.11578279999999999,
+      "numTurns": 3,
+      "result": {
+        "refuted": false,
+        "reasoning": "I traced both cases through the code in `eslint-rules/no-literal-ui-text.js`, and the finding holds.\n\n**Case 1: literal text inside `Intl.ListFormat` is never reported.** Take `{new Intl.ListFormat('cs').format(['Matematika','Čeština'])}`:\n- `JSXExpressionContainer` calls `literalTexts(CallExpression)`.\n- The callee is a MemberExpression whose object is `new Intl.ListFormat(...)`. Its callee is `Intl.ListFormat`, with `Intl` as the object, so `isLocaleFormatting` returns true (lines 56-57).\n- Line 89 then returns `literalTexts(callee.object)`. That object is a NewExpression, and `literalTexts` has no case for it, so it falls to `default: []` (line 107).\n- The array argument `['Matematika','Čeština']` is never visited, so this NFR-9 violation is not reported.\n- Nothing else catches it. `JSXExpressionContainer` is the only path for child expressions, and `JSXText` and `JSXAttribute` do not apply here.\n\n**Case 2: a locale string is reported as UI text.** Take `Intl.DateTimeFormat('cs-CZ').format(d)`, written without `new`:\n- `callee.object` is a CallExpression, not a NewExpression, and the property `format` does not match `toLocale*` or `localeCompare`. So `isLocaleFormatting` is false.\n- The rule goes to the generic branch (line 92). Calling `literalTexts` on the receiver, `Intl.DateTimeFormat('cs-CZ')`, reaches the generic CallExpression branch again.\n- That branch scans the arguments, and `'cs-CZ'` contains letters, so the rule reports it as UI text.\n\n**Why it isn't refuted:** Nothing else in the rule guards either path. The header comment (lines 20-22) says the pseudo-catalog render test is the backstop only for text reached through a variable, another module, or spread attributes. It does not list this case as a known blind spot. The mechanism is exactly as described.\n\n**Severity:** Minor is right. This is a gap in a lint rule, the `i18n-coverage` render test partly backs it up, and `Intl.ListFormat` with literal words is an uncommon pattern.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:eslint-rules/no-literal-ui-text.js",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1639,
+      "durationMs": 19708,
+      "sessionId": "965bf56c-5a09-4ef2-9a74-890a9b35497f",
+      "costUsd": 0.115069,
+      "numTurns": 3,
+      "result": {
+        "refuted": false,
+        "reasoning": "I traced both cases against the code in eslint-rules/no-literal-ui-text.js, and both happen as the finding says.\n\n1) False negative. Take `<p>{new Intl.ListFormat('cs').format(['Matematika'])}</p>`. The JSXExpressionContainer handler calls literalTexts on the CallExpression. Its callee is a MemberExpression whose object is a NewExpression with callee `Intl.ListFormat`, so isLocaleFormatting returns true (lines 56-57). Line 89 then returns literalTexts(callee.object). A NewExpression has no case in the switch, so it falls to `default: []`. The argument `['Matematika']` is never looked at, and nothing is reported. That contradicts what the rule's own header says it catches (\"call receivers and arguments\"), and the text really is visible UI text (NFR-9).\n\n2) False positive. Take `Intl.DateTimeFormat('cs-CZ').format(d)`. Here callee.object is a CallExpression, not a NewExpression, so isLocaleFormatting returns false. The generic branch (lines 92-93) then recurses into the receiver `Intl.DateTimeFormat('cs-CZ')`. Its callee is `Intl.DateTimeFormat`, a MemberExpression whose object is the Identifier `Intl`, not a NewExpression, and whose property is not toLocale*. So the check fails again and the argument 'cs-CZ' is scanned. 'cs-CZ' contains letters, so it is reported as literal UI text.\n\nNothing else catches the false negative. The rule notes that src/app/i18n-coverage.test.tsx (the pseudo-catalog render test) is the backstop, but only for text the linter cannot see, and its coverage depends on rendering. The lint gap itself is real.\n\nImpact is low. Formatting literal arrays with Intl.ListFormat is uncommon, and the false positive only makes lint noisier; it doesn't hide anything. Minor severity is right, so no change to severity.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:e2e/theme.spec.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1228,
+      "durationMs": 19860,
+      "sessionId": "c96513f5-1cf3-49f5-b367-3ec0f272f9bf",
+      "costUsd": 0.09673319999999999,
+      "numTurns": 6,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the mechanism in e2e/theme.spec.ts:39-50. For a native select, `choices` lists every enabled option value. In the per-choice loop, if the pathname after a selection differs from screen.path, the test calls `page.goto(screen.path)` and then `break`s, so the remaining options of that select are never selected. Nothing else re-activates them: the outer loop moves on to control i+1. A select whose first option navigates away and whose later option sets data-theme would therefore pass. That falls short of spec.md:25, which says every select on a route is activated. Earlier review rounds (review-findings.json:45, :135) also show the select handling was added on purpose to catch a theme picker built as a select.\n\nTwo caveats limit the impact. First, one of the finding's examples is wrong: a reload that only changes the query keeps the same pathname, so it does not hit the `break`. Only a real route change does. Second, there is currently no `<select>` or combobox under src/, so the gap is latent. It weakens the test's guarantee but does not hide a bug that exists today. The core claim still holds, so minor severity is right.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:e2e/theme.spec.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1261,
+      "durationMs": 17859,
+      "sessionId": "a8b4182b-a9c2-4806-9d75-754b3b2dec1d",
+      "costUsd": 0.0857984,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "The code does what the finding says. At e2e/theme.spec.ts:47-49, if any option changes the pathname, the test calls `page.goto(screen.path)` and then `break`s out of `for (const choice of choices)`, so the select's remaining options are never selected. After the navigation-back the outer loop moves on to `controls.nth(i+1)`, so later options of that select are silently skipped. A later option that set `data-theme` would go undetected. This is a real gap against the \"activate every control/option\" spec scenario.\n\nIt cannot happen today, though. Searching `src/` finds no `<select`, `role=\"combobox\"` or `HTMLSelectElement`, so no screen has a select and the `choices` array is always `[null]`. One of the finding's examples is also wrong: a reload that only changes the query string keeps the same pathname, so the check at line 47 is false and the loop does not break.\n\nThis is a latent weakness in a regression guard, not a bug a user would hit, and it only matters once someone adds a select whose earlier option navigates to a new path. The mechanism is confirmed, so it is not refuted, but the severity should drop to nit.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1440,
+      "durationMs": 20460,
+      "sessionId": "92f5e8e9-bef6-4d1a-9b2c-5adeaf3f5cff",
+      "costUsd": 0.09759780000000001,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the mechanism in the code. At `src/app/theme-source.test.ts:27` the token alternative is `'(:root|html)\\s*\\{[^}]*--[\\w-]+\\s*:'`, so it only matches rules whose selector ends in `:root` or `html` right before the `{`. A rule like `.app-shell { --paper: #000 }` or `[data-route] { --ink: … }` matches none of the other alternatives either. It contains no data-theme, color-scheme, setProperty, classList or className, so it passes the guard. An inline style object such as `style={{ '--paper': x }}` is also missed, because only `setProperty('--` is caught. `className={mode}` is missed too, because the className alternative needs the literal word dark, light or theme. The e2e (`e2e/theme.spec.ts:21-22,45-46`) only asserts the `body` background-color and that `[data-theme]` count is 0. A token redefined on a descendant container would leave `body` showing the OS `--paper`, so both e2e checks pass. Nothing else guards this: the guard's own self-test (lines 41-49) uses only `:root` for the token case, and no other check exists. No app source outside `src/design-system` redefines these tokens today; the only matches are `tokens.css` and the test fixture. So this is a coverage gap in the guard, not a live violation. That fits the \"minor\" severity, so I'm keeping it.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1473,
+      "durationMs": 32785,
+      "sessionId": "e06bcb66-5981-4e6d-a7a3-9a277b18d1e0",
+      "costUsd": 0.1368122,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the gap by reading the code, but nothing in the app triggers it today.\n\n**What the guard checks.** In `src/app/theme-source.test.ts:15-29`, the only token-redefinition patterns are `setProperty('--…')` and `(:root|html)\\s*\\{[^}]*--[\\w-]+\\s*:`. None of these inputs match any part of the regex:\n- `.app-shell { --paper: #000 }`\n- `[data-route] { --ink: #000 }`\n- `style={{ '--paper': x }}` (no `setProperty`, no `:root`)\n- `className={mode}` and `classList.add(mode)`: the class patterns need the literal words dark, light or theme in the same expression, so a variable name like `mode` gets through.\n\n**What the e2e checks.** `e2e/theme.spec.ts:21-22,45-46` asserts only the `body` background-color and that no `[data-theme]` exists. A control that redefined `--paper` on a route container would leave `body` unchanged and pass both checks.\n\n**Why it matters.** The test says its purpose is that \"no control added later can switch it\", and it is meant to cover screens the e2e cannot reach. So a regression guard that real future code can slip past is a genuine weakness in what the test claims.\n\n**Why it is only minor.** Grep shows no app source outside `src/design-system/` (excluded) redefines any `--` token or uses inline custom properties. `--dk-accent` appears only in design-system `core.tsx`. No user or attacker is affected today; this only lets a future regression through. The mechanism is confirmed, so I am not refuting the finding, and the minor severity stays.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:tools/container-smoke.mjs",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1317,
+      "durationMs": 18624,
+      "sessionId": "42a73868-7902-4452-8ea1-adbf8f80e13a",
+      "costUsd": 0.0981554,
+      "numTurns": 3,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the main mechanism in tools/container-smoke.mjs. The catch block at lines 140-142 only runs `failures.push(String(err.message ?? err))` and logs to the console. It never adds anything to `results`. The evidence writer at lines 149-166 builds the table only from `results`. So when `docker build` fails, a `docker run` fails, or `waitReady` times out (line 82), the file shows `Result: FAIL (1)` but has no failing row and never names the error. For an early failure, the Scope line reads '0 check(s), Playwright through nginx NOT included'. An exception thrown in the middle of the checks (for example, a `get` rejecting) also leaves the failure count one higher than the FAIL rows. Nothing elsewhere handles this, so the evidence file can't explain its own FAIL. That clashes with the project's done-claims-need-evidence rule.\n\nThe second claim, that the path depends on the cwd, is weaker than stated. The whole script is built to run from the repo root: `docker build ... '.'` (line 88) and `../backend/.env` (line 61) are also relative to the cwd. It is invoked through `npm run test:container`, which sets the cwd to the package root. Run from somewhere else, `docker build` would most likely fail first. That failure would be recorded only in `failures`, and then `writeFileSync` would throw on the missing docs/qa directory. So the bad outcome is real, but it's a convention issue rather than a separate bug.\n\nThe core finding stands, and minor severity is right.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:tools/container-smoke.mjs",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1350,
+      "durationMs": 24723,
+      "sessionId": "23169e58-fd03-4918-9e59-2cf06fe49e71",
+      "costUsd": 0.1010092,
+      "numTurns": 3,
+      "result": {
+        "refuted": false,
+        "reasoning": "The main claim holds. At tools/container-smoke.mjs:140-142 the catch block only does `failures.push(String(err.message ?? err))` and logs the error to stderr. It never calls `check()` and never pushes to `results`. Any exception thrown before the first check therefore reaches this path. That includes `docker build` failing at line 88 (a broken Dockerfile, the daemon not running, or the contract submodule missing), `docker network create` failing, a `docker run` port conflict on 18081, or the `waitReady` timeout at line 82. The evidence file is written unconditionally after `finally`, at lines 149-166. In that case it would show `Scope: 0 check(s), Playwright through nginx NOT included`, `Result: FAIL (1)`, and an empty table. The error message only goes to stderr, never into the evidence file. The same happens if an exception occurs partway through the checks, for example a `get()` connection reset: the failure count includes an entry with no matching table row. All of these failures happen in normal use, so this is reproducible. The verdict is still honest (FAIL, exit 1); the file just doesn't say why. That makes \"minor\" the right severity.\n\nThe second claim, about the path resolving against the cwd, is technically true but weak. The whole script depends on the cwd by design: `docker build ... '.'` at line 88 and `readFileSync('../backend/.env')` at line 61 both resolve against it. It is run through `npm run test:container`, which sets the cwd to the package root. Run from any other directory, the docker build would most likely already fail. The final writeFileSync would then throw only if `docs/qa/` is missing there. That sub-point adds little. The core finding about the missing failure row is confirmed.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:eslint-rules/no-literal-ui-text.js",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1765,
+      "durationMs": 27061,
+      "sessionId": "58c39f89-2330-4bcf-8bd7-732f0a25b8ea",
+      "costUsd": 0.149652,
+      "numTurns": 7,
+      "result": {
+        "refuted": false,
+        "reasoning": "Confirmed by tracing the code by hand. I couldn't run the repro: the Linter script I wrote to the scratchpad needed approval, so it never ran.\n\nFor `new Intl.ListFormat('cs').format(['Matematika','Čeština'])`:\n- The CallExpression's callee is a MemberExpression. Its object is a NewExpression whose callee is the MemberExpression `Intl.ListFormat`, and `Intl` is an Identifier. So `isLocaleFormatting` (lines 53-57) returns true through its second branch.\n- Line 89 then returns `literalTexts(node.callee.object)`, which is `literalTexts(NewExpression)`.\n- `literalTexts` has no `NewExpression` case, so it hits `default: return []` (line 107).\n- So the `.format()` arguments are never inspected: line 93's argument scan runs only when line 89 doesn't return first.\n- `JSXExpressionContainer` (line 190) relies only on `literalTexts`, and no other rule handler catches this case.\n\nThe same array passed to `.join()` would be reported. That case follows the generic CallExpression path, so this really is a hole in the exemption, not a general limit of the rule.\n\nThe header comment (lines 14-17) promises to catch \"literals nested in arrays\" and \"call … arguments\". It lists only variables, other modules and spreads as not seen, so this case is not among the documented limits.\n\nI could not check the \"regression from round 4\" claim because the git history command was denied, but the mechanism holds either way. Severity stays minor: it is a lint gap with a runtime backstop (the pseudo-catalog render test), and writing hard-coded Intl.ListFormat input is an unusual pattern.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:eslint-rules/no-literal-ui-text.js",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1798,
+      "durationMs": 18208,
+      "sessionId": "8a796824-9190-47e1-aa87-49b291ceafce",
+      "costUsd": 0.12294680000000001,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I traced the code and the problem is real. I could not run the rule tester (the shell blocked the inline test script), so this rests on reading the code, not on a run. Take `<p>{new Intl.ListFormat('cs').format(['Matematika','Čeština'])}</p>`. The JSXExpressionContainer handler at line 190 calls literalTexts on the CallExpression. Its callee is a MemberExpression whose object is a NewExpression with callee `Intl.ListFormat`. That makes isLocaleFormatting (lines 53-57) return true through its second branch. Line 89 then returns literalTexts(node.callee.object), the NewExpression. That hits `default: return []` at line 107. The array argument passed to `.format()` is never inspected, so nothing is reported. Without that exemption, the generic path at lines 92-93 would walk the arguments and flag 'Matematika' and 'Čeština'. So this exemption causes the miss. Nothing else catches it: the header comment (lines 14-16) promises that literals inside arrays and call arguments are caught, and the only backstop is the pseudo-catalog render test, which sees it only if a route renders that state. Real impact: a developer can put hard-coded Czech on screen and lint stays green. This breaks NFR-9 (UI strings must come from the catalog). It is not a security exploit, and it needs a fairly unusual code pattern, so minor severity is right.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:tools/container-smoke.mjs",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1668,
+      "durationMs": 19501,
+      "sessionId": "6e8ef756-1bf7-4419-8429-44fa95557a04",
+      "costUsd": 0.11161579999999999,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "Confirmed. In tools/container-smoke.mjs (lines ~146–165), the writer puts only Started, Finished, Scope (check count plus whether e2e ran), Result and the per-check table into docs/qa/container-smoke-latest.md. There is no commit SHA, dirty flag, image ID or hash of nginx.conf or the Dockerfile. The committed file confirms this. The only things that refer to the smoke script are package.json (test:container), design.md and tasks.md:31, which cites the file as evidence. No script under scripts/, .githooks/ or factory.config.json reads container-smoke-latest.md. The freshness logic in check-acceptance-methods.mjs is time-based (mtime within 168h) and does not cover this file anyway. So if nginx.conf changes after a run, the committed PASS still stands and nothing marks it stale. That is the mechanism the finding describes.\n\nTwo things lower the impact, so it stays minor. First, the static container-config.test.ts guards most of the config properties. Second, tasks.md marks 4.4 as only 'Partly automated' and still open, so it does not make a full done-claim. Even so, the evidence the live-behaviour claim points to is not bound to the artifact it tested, and the done-claims-need-evidence rule requires evidence to be fresh.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:tools/container-smoke.mjs",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1701,
+      "durationMs": 24174,
+      "sessionId": "b1ace54e-f5f7-4936-ad34-2573df1ed277",
+      "costUsd": 0.1141636,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "The mechanism is real. tools/container-smoke.mjs:147-166 writes docs/qa/container-smoke-latest.md with only start and finish times, the check count and the result. It records no commit SHA, image ID, dirty flag or hash of nginx.conf or the Dockerfile. A grep of scripts/, tools/, src/, .githooks and factory.config.json finds no reader of the file other than the script that writes it. Only package.json's test:container mentions the smoke, so neither qa:verify nor gate-status checks that the file is fresh. tasks.md:31 does cite the file as evidence for task 4.4. A later nginx.conf change can therefore leave a committed PASS that no longer describes the image, which goes against the \"fresh\" requirement in the done-claims-need-evidence rule.\n\nThe security examples the finding gives are already blocked, though. src/test/container-config.test.ts:29-31 fails if any add_header appears inside a server or location block, and lines 38-39 pin the server_name list. Those unit tests run in qa:verify, so neither of the cited regressions could ship with the live behaviour silently broken. Staleness only matters for config changes those static tests don't cover, such as proxy_set_header or caching directives.\n\nNo user or attacker can exploit this. It is an evidence-provenance gap, not a runtime security flaw. The finding stands as a process issue, but its security framing overstates the impact, so I'm downgrading it.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:eslint-rules/no-literal-ui-text.js",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 2182,
+      "durationMs": 15865,
+      "sessionId": "254bae04-64ce-4889-8af1-fbbd66e0591b",
+      "costUsd": 0.11170740000000001,
+      "numTurns": 3,
+      "result": {
+        "refuted": false,
+        "reasoning": "I could not refute the mechanism; the code works as the finding says. In `eslint-rules/no-literal-ui-text.js`, `isLocaleFormatting` (lines 53-57) returns true for any member call whose object is `new Intl.<X>(…)`, whichever Intl constructor it is. Line 89 then returns only `literalTexts(node.callee.object)`. That object is a NewExpression, and `literalTexts` has no case for NewExpression, so it falls to `default: return []` (line 107-108). The `.format(...)` arguments are never examined.\n\nFor `<p>{new Intl.ListFormat('cs').format(['Matematika', 'Čeština'])}</p>` the path is: the `JSXExpressionContainer` handler calls `literalTexts`, which reaches the CallExpression case, where `isLocaleFormatting` is true and the result is []. Nothing is reported, although both visible literals are in the file. That falls inside what the rule claims to cover in its header comment (\"call receivers and arguments\"). The documented blind spots are text reached through a variable, through another module or through spread attributes, and this case is none of those. Nothing else guards it: the rule has no other visitor for CallExpression or NewExpression.\n\nI recommend downgrading the severity. The finding is accurate, but the pattern is rare: formatting literal Czech words with ListFormat or RelativeTimeFormat inside a component is unusual. The header also names the pseudo-catalog render test (`src/app/i18n-coverage.test.tsx`) as a backstop for text the lint cannot see. I did not read that test, so I have not confirmed it would catch this case. Either way, a gap in a lint rule this narrow is minor, not major.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:eslint-rules/no-literal-ui-text.js",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 2215,
+      "durationMs": 17077,
+      "sessionId": "c54c7539-c3f7-4a1d-a0b5-4e4196be73b2",
+      "costUsd": 0.11177400000000001,
+      "numTurns": 3,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the mechanism in the code. isLocaleFormatting (lines 53-57) returns true for any member call whose object is `new Intl.<Anything>(...)`. In that case line 89 returns `literalTexts(node.callee.object)`, and the object is a NewExpression, which hits `default: return []` (line 107). So neither the constructor arguments nor the `.format(...)` arguments are checked. For `<p>{new Intl.ListFormat('cs').format(['Matematika', 'Čeština'])}</p>`, JSXExpressionContainer → literalTexts(CallExpression) → [] and nothing is reported. The rule does see that array literal (lines 75-76 handle ArrayExpression, and line 93 would scan call arguments without this early return). So this is within the rule's stated reach in the header comment ('call receivers and arguments'). It is not one of the documented blind spots, which are text reached through a variable, another module or spread attributes. The same early return also skips arguments for `'x'.localeCompare('Ahoj')`, though that returns a number and isn't text. Exploitability is a developer writing that pattern and lint passing. That is reproducible, but the pattern is narrow: ListFormat over inline literals is unusual (real lists usually come from data or t() calls), and the pseudo-catalog render test (src/app/i18n-coverage.test.tsx) is a declared backstop for rendered paths. I recommend downgrading from major to minor. The gap is real and the suggested fix is correct: exempt only the NewExpression's locale and options arguments, and keep scanning the format call's arguments.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1940,
+      "durationMs": 18121,
+      "sessionId": "4fa365a1-e0f9-498e-bb05-13fcbc63e501",
+      "costUsd": 0.0850098,
+      "numTurns": 3,
+      "result": {
+        "refuted": false,
+        "reasoning": "I checked the finding against `THEME_WRITE` in `src/app/theme-source.test.ts:15-29`, and its claims hold:\n- **`className += ' dark'`**: the pattern `className\\s*=\\s*[{\"'\\`]` expects `=` right after the optional whitespace. Here it finds `+`, so the line is not caught. No other alternative catches it either: there is no `classList`, `data-theme` or `colorScheme`.\n- **`html.dark { --paper: #000 }`**: the pattern `(:root|html)\\s*\\{` needs only whitespace between `html` and `{`. The `.dark` in between breaks the match.\n- **`body { --paper: … }` and `.dark { --paper: … }`**: no alternative matches a token redefined under any other selector.\n- **`classList.add(mode)`**: the `classList` pattern needs the literal words dark, light or theme inside the parentheses. A plain variable like `mode` gets through.\n\nNothing else covers these cases:\n- `sources()` scans all `.ts`, `.tsx` and `.css` files under `src` except the design system and the generated client, so an app-level CSS file such as `app.css` is in scope. The regex is the only filter.\n- The self-test only lists strings the regex already matches.\n- The comment above the regex says it covers a class set through `className` and a design token rewritten at runtime. The spec says the static check is what covers screens where the e2e skips.\n\nA screen with no theme control could therefore set `className += ' dark'` and add an `html.dark { --token }` block, the guard would still pass, and the theme would be forced. The mechanism is real. A static regex guard can never be complete, so this is a coverage gap rather than a behaviour bug, and 'minor' is the right severity.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1973,
+      "durationMs": 23826,
+      "sessionId": "50513b32-2bc8-4228-acc3-9ce3d89548a3",
+      "costUsd": 0.109015,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I checked the finding against the regex in src/app/theme-source.test.ts:15-29 by tracing each pattern by hand. A Node run to confirm it was blocked by the permission prompt, but the patterns are simple enough to trace reliably.\n\n- **`className += ' dark'` is missed.** The pattern `className\\s*=\\s*[{\"'\\`]` needs optional whitespace followed directly by `=`. The `+` stops the match, and no other pattern matches the string.\n- **`html.dark { --paper: #000 }` is missed.** The pattern `(:root|html)\\s*\\{` needs a `{` right after `html`, but `.dark` sits in between.\n- **`body { --paper:… }` and `.dark { --paper:… }` are missed.** No pattern looks at token redefinitions in selectors other than `:root` or `html`.\n- **`classList.add(mode)` is missed.** `[^)]*\\b(dark|light|theme)` finds none of those words in `mode`.\n\nThe scan in sources() covers all .ts, .tsx and .css files under src/, except the design system and generated API code, plus index.html. So a new app.css rule or a TS assignment written in any of these forms would pass the guard. Nothing else in the file catches them.\n\nThe self-test at lines 41-49 lists only strings the regex already matches. That supports the claim that the guard's docstring (\"a theme class set through classList or className\", \"a design token rewritten at runtime\") promises more than the regex delivers.\n\nExploitability: the \"attacker\" here is a later code change, not an end user. The guard exists to cover screens where the e2e test skips because the screen has no control. So the gap really does weaken a spec-cited verification mechanism, but it is not a product bug that users see today. Minor severity fits.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:tools/container-smoke.mjs",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1721,
+      "durationMs": 20111,
+      "sessionId": "23644877-adb8-4f13-86dd-35f5489afe55",
+      "costUsd": 0.133544,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "The finding's factual claims hold. The cited line is wrong, though: line 148 is the evidence-file writer, and the relevant code is at lines 110–122.\n- **421 refusal (lines 120–122):** the check is `[...].every((h) => foreign.headers.get(h))`, so it only tests that the headers are present. A wrong value such as `Referrer-Policy: origin` would still pass.\n- **Server header (line 114):** `server === 'nginx'` is checked only on the `/` shell response. It is not checked on the 421, the `/api/` proxy answer, `/assets/` 404 or `/api` 404.\n- **/api/ header loop (lines 110–113):** it only checks that each value is non-empty, does not contain \"backend\" and appears once. It never checks the actual values (nosniff, no-referrer, or the CSP directives).\n\nSo nothing in the live smoke confirms the values the spec requires.\n\nAs the finding itself says, this is a gap in evidence, not broken behaviour:\n- `nginx.conf:8–11` sets `server_tokens off` and all three headers with the correct values at http level, with `always`, so they apply to every response, including the `return 421`.\n- `src/test/container-config.test.ts:21–25` pins those exact values and directives statically.\n\nNothing in the shipped behaviour is wrong; only the runtime assertion is weaker than the spec. I confirm the gap, but I'm downgrading it: it is test thoroughness only, the static test already covers the values, and the line number is off.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:tools/container-smoke.mjs",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1754,
+      "durationMs": 25659,
+      "sessionId": "b4216a64-e8ca-4b54-ac84-35338b846bc5",
+      "costUsd": 0.12066879999999999,
+      "numTurns": 4,
+      "result": {
+        "refuted": true,
+        "reasoning": "The finding describes the code correctly, but no real user or attacker can hit the problem it names, and the finding says so itself (\"a gap in evidence, not a broken behaviour\").\n\nWhat I checked:\n- **The weak checks are real, but the line number is wrong.** They are at tools/container-smoke.mjs:110-122, not line 148 (which is the evidence-file writer). Line 121 checks the 421 refusal only for header presence (`.every((h) => foreign.headers.get(h))`). Line 114 asserts `server === 'nginx'` only on the `/` shell.\n- **No response can lose these headers or values at runtime.** In nginx.conf, `server_tokens off;` (line 8) and all three headers (lines 9-11) are set at the http level with `always`. They therefore apply to every server block and every status, including the `return 421` fallback server (line 18) and proxied /api/ answers. The values are exactly `nosniff`, `no-referrer`, and a CSP containing `script-src 'self'`, `object-src 'none'` and `frame-ancestors 'none'`.\n- **Those values are already pinned by a test.** src/test/container-config.test.ts:18-25 asserts `server_tokens off`, the exact nosniff and no-referrer values and each CSP directive at the http level, and line 37 asserts the 421 return.\n- **The live smoke adds further proof on the proxied answer.** Lines 110-113 show nginx's own header is sent once and the backend's copy is dropped.\n\nThe only remaining risk is a future config change that the static test fails to catch while the live smoke would. That is a hypothetical about how strong the test is, not a reproducible defect. At most it is a nit about hardening the test; it is not a spec-compliance failure that can occur.",
+        "severityAdjustment": "downgrade"
+      }
+    }
+  ],
+  "logs": [
+    {
+      "phase": "Find",
+      "message": "9 unique findings across 4 dimensions"
+    },
+    {
+      "phase": "Report",
+      "message": "confirmed: 8, contested: 1, rejected: 0"
+    }
+  ],
+  "persisted": [
+    "openspec/changes/implement-platform-foundation-ui/review-findings.json"
+  ],
+  "returned": {
+    "scope": "slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui",
+    "summary": "Review gate for slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui: 8 confirmed, 1 contested (treat as confirmed unless trivially wrong), 0 rejected.",
+    "confirmed": [
+      {
+        "title": "Intl/toLocale exemption also exempts literal UI text passed to Intl formatters (e.g. Intl.ListFormat)",
+        "file": "eslint-rules/no-literal-ui-text.js",
+        "line": 89,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "`if (isLocaleFormatting(node.callee)) return literalTexts(node.callee.object);` drops every argument of any `.method()` called on `new Intl.X(...)`. Locale and options arguments sit on the constructor, not on `.format()`, so this branch only drops the value being formatted. For `<p>{new Intl.ListFormat('cs').format(['Matematika', 'Čeština'])}</p>` the receiver is a NewExpression, `literalTexts` falls to `default: []`, and the hard-coded Czech words are never reported (NFR-9). The opposite case also fails: `Intl.DateTimeFormat('cs-CZ').format(d)` without `new` is not recognised, so the locale string 'cs-CZ' is reported as UI text.",
+        "suggestion": "Exempt the arguments of `toLocale*`/`localeCompare` calls and of the `Intl.*` constructor or call. Keep scanning the arguments of `.format`/`.formatToParts` on an Intl instance, at least for ListFormat. Accept `Intl.X(...)` without `new` as well. Add an invalid test case for `new Intl.ListFormat('cs').format(['Ahoj'])`.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I traced both cases through the code in `eslint-rules/no-literal-ui-text.js`, and the finding holds.\n\n**Case 1: literal text inside `Intl.ListFormat` is never reported.** Take `{new Intl.ListFormat('cs').format(['Matematika','Čeština'])}`:\n- `JSXExpressionContainer` calls `literalTexts(CallExpression)`.\n- The callee is a MemberExpression whose object is `new Intl.ListFormat(...)`. Its callee is `Intl.ListFormat`, with `Intl` as the object, so `isLocaleFormatting` returns true (lines 56-57).\n- Line 89 then returns `literalTexts(callee.object)`. That object is a NewExpression, and `literalTexts` has no case for it, so it falls to `default: []` (line 107).\n- The array argument `['Matematika','Čeština']` is never visited, so this NFR-9 violation is not reported.\n- Nothing else catches it. `JSXExpressionContainer` is the only path for child expressions, and `JSXText` and `JSXAttribute` do not apply here.\n\n**Case 2: a locale string is reported as UI text.** Take `Intl.DateTimeFormat('cs-CZ').format(d)`, written without `new`:\n- `callee.object` is a CallExpression, not a NewExpression, and the property `format` does not match `toLocale*` or `localeCompare`. So `isLocaleFormatting` is false.\n- The rule goes to the generic branch (line 92). Calling `literalTexts` on the receiver, `Intl.DateTimeFormat('cs-CZ')`, reaches the generic CallExpression branch again.\n- That branch scans the arguments, and `'cs-CZ'` contains letters, so the rule reports it as UI text.\n\n**Why it isn't refuted:** Nothing else in the rule guards either path. The header comment (lines 20-22) says the pseudo-catalog render test is the backstop only for text reached through a variable, another module, or spread attributes. It does not list this case as a known blind spot. The mechanism is exactly as described.\n\n**Severity:** Minor is right. This is a gap in a lint rule, the `i18n-coverage` render test partly backs it up, and `Intl.ListFormat` with literal words is an uncommon pattern.",
+          "I traced both cases against the code in eslint-rules/no-literal-ui-text.js, and both happen as the finding says.\n\n1) False negative. Take `<p>{new Intl.ListFormat('cs').format(['Matematika'])}</p>`. The JSXExpressionContainer handler calls literalTexts on the CallExpression. Its callee is a MemberExpression whose object is a NewExpression with callee `Intl.ListFormat`, so isLocaleFormatting returns true (lines 56-57). Line 89 then returns literalTexts(callee.object). A NewExpression has no case in the switch, so it falls to `default: []`. The argument `['Matematika']` is never looked at, and nothing is reported. That contradicts what the rule's own header says it catches (\"call receivers and arguments\"), and the text really is visible UI text (NFR-9).\n\n2) False positive. Take `Intl.DateTimeFormat('cs-CZ').format(d)`. Here callee.object is a CallExpression, not a NewExpression, so isLocaleFormatting returns false. The generic branch (lines 92-93) then recurses into the receiver `Intl.DateTimeFormat('cs-CZ')`. Its callee is `Intl.DateTimeFormat`, a MemberExpression whose object is the Identifier `Intl`, not a NewExpression, and whose property is not toLocale*. So the check fails again and the argument 'cs-CZ' is scanned. 'cs-CZ' contains letters, so it is reported as literal UI text.\n\nNothing else catches the false negative. The rule notes that src/app/i18n-coverage.test.tsx (the pseudo-catalog render test) is the backstop, but only for text the linter cannot see, and its coverage depends on rendering. The lint gap itself is real.\n\nImpact is low. Formatting literal arrays with Intl.ListFormat is uncommon, and the false positive only makes lint noisier; it doesn't hide anything. Minor severity is right, so no change to severity."
+        ]
+      },
+      {
+        "title": "Theme e2e skips a select's remaining options once one option navigates away",
+        "file": "e2e/theme.spec.ts",
+        "line": 47,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "Inside `for (const choice of choices)`, a pathname change triggers `await page.goto(screen.path); break;`. When the first option of a select navigates (for example a picker that changes route or reloads with a query), every later option is never selected. A later option that forces `data-theme` would then pass the test. The spec scenario requires every select on a route to be activated (spec.md line 25).",
+        "suggestion": "After navigating back, re-locate the select (`controls.nth(i)`) and `continue` with the next option instead of `break`. Alternatively, collect the choices first and run each one from a fresh `page.goto(screen.path)`.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I confirmed the mechanism in e2e/theme.spec.ts:39-50. For a native select, `choices` lists every enabled option value. In the per-choice loop, if the pathname after a selection differs from screen.path, the test calls `page.goto(screen.path)` and then `break`s, so the remaining options of that select are never selected. Nothing else re-activates them: the outer loop moves on to control i+1. A select whose first option navigates away and whose later option sets data-theme would therefore pass. That falls short of spec.md:25, which says every select on a route is activated. Earlier review rounds (review-findings.json:45, :135) also show the select handling was added on purpose to catch a theme picker built as a select.\n\nTwo caveats limit the impact. First, one of the finding's examples is wrong: a reload that only changes the query keeps the same pathname, so it does not hit the `break`. Only a real route change does. Second, there is currently no `<select>` or combobox under src/, so the gap is latent. It weakens the test's guarantee but does not hide a bug that exists today. The core claim still holds, so minor severity is right.",
+          "The code does what the finding says. At e2e/theme.spec.ts:47-49, if any option changes the pathname, the test calls `page.goto(screen.path)` and then `break`s out of `for (const choice of choices)`, so the select's remaining options are never selected. After the navigation-back the outer loop moves on to `controls.nth(i+1)`, so later options of that select are silently skipped. A later option that set `data-theme` would go undetected. This is a real gap against the \"activate every control/option\" spec scenario.\n\nIt cannot happen today, though. Searching `src/` finds no `<select`, `role=\"combobox\"` or `HTMLSelectElement`, so no screen has a select and the `choices` array is always `[null]`. One of the finding's examples is also wrong: a reload that only changes the query string keeps the same pathname, so the check at line 47 is false and the loop does not break.\n\nThis is a latent weakness in a regression guard, not a bug a user would hit, and it only matters once someone adds a select whose earlier option navigates to a new path. The mechanism is confirmed, so it is not refuted, but the severity should drop to nit."
+        ]
+      },
+      {
+        "title": "Static theme guard and e2e only see token redefinition on :root/html and the body background",
+        "file": "src/app/theme-source.test.ts",
+        "line": 27,
+        "severity": "minor",
+        "confidence": "low",
+        "evidence": "The token pattern `'(:root|html)\\\\s*\\\\{[^}]*--[\\\\w-]+\\\\s*:'` misses a theme forced by redefining `--paper` (or other tokens) on another selector, such as `.app-shell { --paper: … }` or `[data-route] { --ink: … }`. It also misses an inline style object `style={{ '--paper': x }}` and a class set from a variable, such as `classList.add(mode)` or `className={mode}`. The e2e only asserts `body` background-color and `[data-theme]` count, so a control that switches the shell container's tokens passes both checks.",
+        "suggestion": "Widen the CSS token check to any selector that redefines a design-system colour token (`--paper`, `--ink`, `--hero`, …) in app CSS. Flag `'--` keys in inline style objects. In the e2e, also assert the computed `--paper` (or background) of the route's `data-route` container, not just `body`.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I confirmed the mechanism in the code. At `src/app/theme-source.test.ts:27` the token alternative is `'(:root|html)\\s*\\{[^}]*--[\\w-]+\\s*:'`, so it only matches rules whose selector ends in `:root` or `html` right before the `{`. A rule like `.app-shell { --paper: #000 }` or `[data-route] { --ink: … }` matches none of the other alternatives either. It contains no data-theme, color-scheme, setProperty, classList or className, so it passes the guard. An inline style object such as `style={{ '--paper': x }}` is also missed, because only `setProperty('--` is caught. `className={mode}` is missed too, because the className alternative needs the literal word dark, light or theme. The e2e (`e2e/theme.spec.ts:21-22,45-46`) only asserts the `body` background-color and that `[data-theme]` count is 0. A token redefined on a descendant container would leave `body` showing the OS `--paper`, so both e2e checks pass. Nothing else guards this: the guard's own self-test (lines 41-49) uses only `:root` for the token case, and no other check exists. No app source outside `src/design-system` redefines these tokens today; the only matches are `tokens.css` and the test fixture. So this is a coverage gap in the guard, not a live violation. That fits the \"minor\" severity, so I'm keeping it.",
+          "I confirmed the gap by reading the code, but nothing in the app triggers it today.\n\n**What the guard checks.** In `src/app/theme-source.test.ts:15-29`, the only token-redefinition patterns are `setProperty('--…')` and `(:root|html)\\s*\\{[^}]*--[\\w-]+\\s*:`. None of these inputs match any part of the regex:\n- `.app-shell { --paper: #000 }`\n- `[data-route] { --ink: #000 }`\n- `style={{ '--paper': x }}` (no `setProperty`, no `:root`)\n- `className={mode}` and `classList.add(mode)`: the class patterns need the literal words dark, light or theme in the same expression, so a variable name like `mode` gets through.\n\n**What the e2e checks.** `e2e/theme.spec.ts:21-22,45-46` asserts only the `body` background-color and that no `[data-theme]` exists. A control that redefined `--paper` on a route container would leave `body` unchanged and pass both checks.\n\n**Why it matters.** The test says its purpose is that \"no control added later can switch it\", and it is meant to cover screens the e2e cannot reach. So a regression guard that real future code can slip past is a genuine weakness in what the test claims.\n\n**Why it is only minor.** Grep shows no app source outside `src/design-system/` (excluded) redefines any `--` token or uses inline custom properties. `--dk-accent` appears only in design-system `core.tsx`. No user or attacker is affected today; this only lets a future regression through. The mechanism is confirmed, so I am not refuting the finding, and the minor severity stays."
+        ]
+      },
+      {
+        "title": "container-smoke evidence file leaves out the exception that caused a FAIL",
+        "file": "tools/container-smoke.mjs",
+        "line": 140,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "The catch block runs `failures.push(String(err.message ?? err))` but never adds to `results`. A docker build error or a `waitReady` timeout therefore writes `Result: FAIL (1)` with a table that has no failing row and does not name the error, and the Scope line says 'Playwright through nginx NOT included' with no reason. Separately, `writeFileSync('docs/qa/container-smoke-latest.md', …)` resolves against the cwd. Run from any other directory, it throws after cleanup with no summary line, so no evidence is written.",
+        "suggestion": "In the catch block, call `check('setup', false, err.message)` or push an equivalent row into `results`. Resolve the evidence path from `import.meta.url` (the repo root) rather than the cwd.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I confirmed the main mechanism in tools/container-smoke.mjs. The catch block at lines 140-142 only runs `failures.push(String(err.message ?? err))` and logs to the console. It never adds anything to `results`. The evidence writer at lines 149-166 builds the table only from `results`. So when `docker build` fails, a `docker run` fails, or `waitReady` times out (line 82), the file shows `Result: FAIL (1)` but has no failing row and never names the error. For an early failure, the Scope line reads '0 check(s), Playwright through nginx NOT included'. An exception thrown in the middle of the checks (for example, a `get` rejecting) also leaves the failure count one higher than the FAIL rows. Nothing elsewhere handles this, so the evidence file can't explain its own FAIL. That clashes with the project's done-claims-need-evidence rule.\n\nThe second claim, that the path depends on the cwd, is weaker than stated. The whole script is built to run from the repo root: `docker build ... '.'` (line 88) and `../backend/.env` (line 61) are also relative to the cwd. It is invoked through `npm run test:container`, which sets the cwd to the package root. Run from somewhere else, `docker build` would most likely fail first. That failure would be recorded only in `failures`, and then `writeFileSync` would throw on the missing docs/qa directory. So the bad outcome is real, but it's a convention issue rather than a separate bug.\n\nThe core finding stands, and minor severity is right.",
+          "The main claim holds. At tools/container-smoke.mjs:140-142 the catch block only does `failures.push(String(err.message ?? err))` and logs the error to stderr. It never calls `check()` and never pushes to `results`. Any exception thrown before the first check therefore reaches this path. That includes `docker build` failing at line 88 (a broken Dockerfile, the daemon not running, or the contract submodule missing), `docker network create` failing, a `docker run` port conflict on 18081, or the `waitReady` timeout at line 82. The evidence file is written unconditionally after `finally`, at lines 149-166. In that case it would show `Scope: 0 check(s), Playwright through nginx NOT included`, `Result: FAIL (1)`, and an empty table. The error message only goes to stderr, never into the evidence file. The same happens if an exception occurs partway through the checks, for example a `get()` connection reset: the failure count includes an entry with no matching table row. All of these failures happen in normal use, so this is reproducible. The verdict is still honest (FAIL, exit 1); the file just doesn't say why. That makes \"minor\" the right severity.\n\nThe second claim, about the path resolving against the cwd, is technically true but weak. The whole script depends on the cwd by design: `docker build ... '.'` at line 88 and `readFileSync('../backend/.env')` at line 61 both resolve against it. It is run through `npm run test:container`, which sets the cwd to the package root. Run from any other directory, the docker build would most likely already fail. The final writeFileSync would then throw only if `docs/qa/` is missing there. That sub-point adds little. The core finding about the missing failure row is confirmed."
+        ]
+      },
+      {
+        "title": "Intl/toLocale exemption skips all format() arguments, so literal UI text passed to Intl.ListFormat is never linted (NFR-9)",
+        "file": "eslint-rules/no-literal-ui-text.js",
+        "line": 89,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "For `new Intl.X(...).format(args)`, `isLocaleFormatting` matches the callee and returns `literalTexts(node.callee.object)`. That object is a NewExpression, which falls through to `default: return []` (line 107), so `.format()`'s arguments are never inspected. A feature dev can write `<p>{new Intl.ListFormat('cs').format(['Matematika', 'Čeština'])}</p>` and the screen shows hard-coded Czech (\"Matematika a Čeština\"), yet `doucko/no-literal-ui-text` stays green. This is a literal in the same file, which design.md says the rule catches (\"literals nested in arrays\"), so it is a regression from round 4, not the accepted cross-module limit. The pseudo-catalog render only catches it if a registered route renders that state.",
+        "suggestion": "Exempt only the locale and options arguments: the constructor's arguments for `new Intl.*(locales, options)`, and the arguments of `toLocale*`/`localeCompare`. Keep linting the arguments of `.format()`/`.formatToParts()` on an Intl instance, or at least those of `Intl.ListFormat`. Add an invalid test case: `<p>{new Intl.ListFormat(\"cs\").format([\"Matematika\"])}</p>`.",
+        "dimension": "security",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "Confirmed by tracing the code by hand. I couldn't run the repro: the Linter script I wrote to the scratchpad needed approval, so it never ran.\n\nFor `new Intl.ListFormat('cs').format(['Matematika','Čeština'])`:\n- The CallExpression's callee is a MemberExpression. Its object is a NewExpression whose callee is the MemberExpression `Intl.ListFormat`, and `Intl` is an Identifier. So `isLocaleFormatting` (lines 53-57) returns true through its second branch.\n- Line 89 then returns `literalTexts(node.callee.object)`, which is `literalTexts(NewExpression)`.\n- `literalTexts` has no `NewExpression` case, so it hits `default: return []` (line 107).\n- So the `.format()` arguments are never inspected: line 93's argument scan runs only when line 89 doesn't return first.\n- `JSXExpressionContainer` (line 190) relies only on `literalTexts`, and no other rule handler catches this case.\n\nThe same array passed to `.join()` would be reported. That case follows the generic CallExpression path, so this really is a hole in the exemption, not a general limit of the rule.\n\nThe header comment (lines 14-17) promises to catch \"literals nested in arrays\" and \"call … arguments\". It lists only variables, other modules and spreads as not seen, so this case is not among the documented limits.\n\nI could not check the \"regression from round 4\" claim because the git history command was denied, but the mechanism holds either way. Severity stays minor: it is a lint gap with a runtime backstop (the pseudo-catalog render test), and writing hard-coded Intl.ListFormat input is an unusual pattern.",
+          "I traced the code and the problem is real. I could not run the rule tester (the shell blocked the inline test script), so this rests on reading the code, not on a run. Take `<p>{new Intl.ListFormat('cs').format(['Matematika','Čeština'])}</p>`. The JSXExpressionContainer handler at line 190 calls literalTexts on the CallExpression. Its callee is a MemberExpression whose object is a NewExpression with callee `Intl.ListFormat`. That makes isLocaleFormatting (lines 53-57) return true through its second branch. Line 89 then returns literalTexts(node.callee.object), the NewExpression. That hits `default: return []` at line 107. The array argument passed to `.format()` is never inspected, so nothing is reported. Without that exemption, the generic path at lines 92-93 would walk the arguments and flag 'Matematika' and 'Čeština'. So this exemption causes the miss. Nothing else catches it: the header comment (lines 14-16) promises that literals inside arrays and call arguments are caught, and the only backstop is the pseudo-catalog render test, which sees it only if a route renders that state. Real impact: a developer can put hard-coded Czech on screen and lint stays green. This breaks NFR-9 (UI strings must come from the catalog). It is not a security exploit, and it needs a fairly unusual code pattern, so minor severity is right."
+        ]
+      },
+      {
+        "title": "Container-smoke evidence is not tied to the image or config it tested, so a PASS can outlive an nginx.conf change",
+        "file": "tools/container-smoke.mjs",
+        "line": 148,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "`docs/qa/container-smoke-latest.md` records only start/finish times, the check count and the result. It has no commit SHA, image digest or nginx.conf/Dockerfile hash, and nothing in `qa:verify` or the gate scripts checks that it is fresh (only package.json refers to the smoke). If someone later adds an `add_header` inside `location /api/` (which drops the http-level CSP and nosniff on API responses) or loosens `server_name`, the committed evidence file still says PASS for 'the refusal carries the security headers'. tasks.md 4.4 cites this file as the evidence for those claims. The static test in container-config.test.ts guards most of this, but the evidence the live behaviour claim points to can go stale silently, which the done-claims-need-evidence rule forbids.",
+        "suggestion": "Write `git rev-parse HEAD`, a dirty flag and a sha256 of nginx.conf and Dockerfile (or the built image ID) into the evidence header. Have the qa battery or gate-status mark the file STALE/NOT-EARNED when those hashes don't match the working tree.",
+        "dimension": "security",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "Confirmed. In tools/container-smoke.mjs (lines ~146–165), the writer puts only Started, Finished, Scope (check count plus whether e2e ran), Result and the per-check table into docs/qa/container-smoke-latest.md. There is no commit SHA, dirty flag, image ID or hash of nginx.conf or the Dockerfile. The committed file confirms this. The only things that refer to the smoke script are package.json (test:container), design.md and tasks.md:31, which cites the file as evidence. No script under scripts/, .githooks/ or factory.config.json reads container-smoke-latest.md. The freshness logic in check-acceptance-methods.mjs is time-based (mtime within 168h) and does not cover this file anyway. So if nginx.conf changes after a run, the committed PASS still stands and nothing marks it stale. That is the mechanism the finding describes.\n\nTwo things lower the impact, so it stays minor. First, the static container-config.test.ts guards most of the config properties. Second, tasks.md marks 4.4 as only 'Partly automated' and still open, so it does not make a full done-claim. Even so, the evidence the live-behaviour claim points to is not bound to the artifact it tested, and the done-claims-need-evidence rule requires evidence to be fresh.",
+          "The mechanism is real. tools/container-smoke.mjs:147-166 writes docs/qa/container-smoke-latest.md with only start and finish times, the check count and the result. It records no commit SHA, image ID, dirty flag or hash of nginx.conf or the Dockerfile. A grep of scripts/, tools/, src/, .githooks and factory.config.json finds no reader of the file other than the script that writes it. Only package.json's test:container mentions the smoke, so neither qa:verify nor gate-status checks that the file is fresh. tasks.md:31 does cite the file as evidence for task 4.4. A later nginx.conf change can therefore leave a committed PASS that no longer describes the image, which goes against the \"fresh\" requirement in the done-claims-need-evidence rule.\n\nThe security examples the finding gives are already blocked, though. src/test/container-config.test.ts:29-31 fails if any add_header appears inside a server or location block, and lines 38-39 pin the server_name list. Those unit tests run in qa:verify, so neither of the cited regressions could ship with the live behaviour silently broken. Staleness only matters for config changes those static tests don't cover, such as proxy_set_header or caching directives.\n\nNo user or attacker can exploit this. It is an evidence-provenance gap, not a runtime security flaw. The finding stands as a process issue, but its security framing overstates the impact, so I'm downgrading it."
+        ]
+      },
+      {
+        "title": "Lint rule skips the literal arguments of every Intl.*(...).format() call, including text-bearing ones like Intl.ListFormat",
+        "file": "eslint-rules/no-literal-ui-text.js",
+        "line": 89,
+        "severity": "major",
+        "confidence": "high",
+        "evidence": "Spec delta, Requirement 'Externalized UI strings': \"A lint rule SHALL refuse literal UI text that it can see in `src/` (JSX, props, nested collections, call arguments, …)\". Round-4 change: `if (isLocaleFormatting(node.callee)) return literalTexts(node.callee.object);`. isLocaleFormatting (line ~53) returns true for any member call whose object is `new Intl.<X>(…)`, so the call's arguments are never checked. For `new Intl.NumberFormat(…).format(n)` that is correct. For `<p>{new Intl.ListFormat('cs').format(['Matematika', 'Čeština'])}</p>` it is not: the callee object is a NewExpression, `literalTexts` falls to `default: return []`, and the two visible Czech literals go unreported. The rule can see them in the file, so this is inside its stated reach, not one of the accepted 'variable / other module' limits. The new tests only cover numeric/date formatters (lint-rule.test.ts valid cases). Coverage (whole slice, 18 scenarios): 17 implemented, 1 partial ('API through the frontend origin': real backend problem+json, a documented follow-up), 0 missing, 0 contradicted.",
+        "suggestion": "Exempt only the constructor/locale arguments: for `new Intl.X(...)` skip the NewExpression's arguments (locales and options), but still run literalTexts over the `.format(...)` / `.formatToParts(...)` call arguments (or at least for ListFormat / DisplayNames / RelativeTimeFormat). For `toLocale*`, skip only the arguments, not the receiver (as now). Add an invalid case `<p>{new Intl.ListFormat('cs').format(['Matematika'])}</p>`.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I could not refute the mechanism; the code works as the finding says. In `eslint-rules/no-literal-ui-text.js`, `isLocaleFormatting` (lines 53-57) returns true for any member call whose object is `new Intl.<X>(…)`, whichever Intl constructor it is. Line 89 then returns only `literalTexts(node.callee.object)`. That object is a NewExpression, and `literalTexts` has no case for NewExpression, so it falls to `default: return []` (line 107-108). The `.format(...)` arguments are never examined.\n\nFor `<p>{new Intl.ListFormat('cs').format(['Matematika', 'Čeština'])}</p>` the path is: the `JSXExpressionContainer` handler calls `literalTexts`, which reaches the CallExpression case, where `isLocaleFormatting` is true and the result is []. Nothing is reported, although both visible literals are in the file. That falls inside what the rule claims to cover in its header comment (\"call receivers and arguments\"). The documented blind spots are text reached through a variable, through another module or through spread attributes, and this case is none of those. Nothing else guards it: the rule has no other visitor for CallExpression or NewExpression.\n\nI recommend downgrading the severity. The finding is accurate, but the pattern is rare: formatting literal Czech words with ListFormat or RelativeTimeFormat inside a component is unusual. The header also names the pseudo-catalog render test (`src/app/i18n-coverage.test.tsx`) as a backstop for text the lint cannot see. I did not read that test, so I have not confirmed it would catch this case. Either way, a gap in a lint rule this narrow is minor, not major.",
+          "I confirmed the mechanism in the code. isLocaleFormatting (lines 53-57) returns true for any member call whose object is `new Intl.<Anything>(...)`. In that case line 89 returns `literalTexts(node.callee.object)`, and the object is a NewExpression, which hits `default: return []` (line 107). So neither the constructor arguments nor the `.format(...)` arguments are checked. For `<p>{new Intl.ListFormat('cs').format(['Matematika', 'Čeština'])}</p>`, JSXExpressionContainer → literalTexts(CallExpression) → [] and nothing is reported. The rule does see that array literal (lines 75-76 handle ArrayExpression, and line 93 would scan call arguments without this early return). So this is within the rule's stated reach in the header comment ('call receivers and arguments'). It is not one of the documented blind spots, which are text reached through a variable, another module or spread attributes. The same early return also skips arguments for `'x'.localeCompare('Ahoj')`, though that returns a number and isn't text. Exploitability is a developer writing that pattern and lint passing. That is reproducible, but the pattern is narrow: ListFormat over inline literals is unusual (real lists usually come from data or t() calls), and the pseudo-catalog render test (src/app/i18n-coverage.test.tsx) is a declared backstop for rendered paths. I recommend downgrading from major to minor. The gap is real and the suggested fix is correct: exempt only the NewExpression's locale and options arguments, and keep scanning the format call's arguments."
+        ]
+      },
+      {
+        "title": "Widened static theme guard still misses common ways to force a theme (className +=, html.dark / body token overrides)",
+        "file": "src/app/theme-source.test.ts",
+        "line": 15,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "Spec: \"No app source outside the vendored design system SHALL set `data-theme` or a colour scheme\" and No-toggle scenario: \"a route with no control reports the check as skipped … and the static source check covers it\". The guard's own docstring says it covers 'a theme class set through classList or className' and 'a design token rewritten at runtime / a :root/html rule redefining a token'. By reading the regex alternatives: `document.documentElement.className += ' dark'` fails `className\\s*=\\s*[{\"'`]` because of the '+'. `html.dark { --paper: #000 }` fails `(:root|html)\\s*\\{` because `.dark` sits between html and the brace. `body { --paper: #000 }` and `.dark { --paper: … }` match nothing. `classList.add(mode)` with a variable also passes. So a no-control screen (where the e2e skips) could force a theme by `className +=` plus a `html.dark` token block in app.css, and the static guard would still pass. The self-test lists only patterns the regex already matches.",
+        "suggestion": "Allow compound assignment (`className\\s*\\+?=`). Flag any selector block outside the design system that redefines a design-system colour token (e.g. `--(paper|ink|hero|…)\\s*:` in any CSS rule, not just :root/html). Add these strings to the 'recognises the ways a theme can be forced' self-test.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I checked the finding against `THEME_WRITE` in `src/app/theme-source.test.ts:15-29`, and its claims hold:\n- **`className += ' dark'`**: the pattern `className\\s*=\\s*[{\"'\\`]` expects `=` right after the optional whitespace. Here it finds `+`, so the line is not caught. No other alternative catches it either: there is no `classList`, `data-theme` or `colorScheme`.\n- **`html.dark { --paper: #000 }`**: the pattern `(:root|html)\\s*\\{` needs only whitespace between `html` and `{`. The `.dark` in between breaks the match.\n- **`body { --paper: … }` and `.dark { --paper: … }`**: no alternative matches a token redefined under any other selector.\n- **`classList.add(mode)`**: the `classList` pattern needs the literal words dark, light or theme inside the parentheses. A plain variable like `mode` gets through.\n\nNothing else covers these cases:\n- `sources()` scans all `.ts`, `.tsx` and `.css` files under `src` except the design system and the generated client, so an app-level CSS file such as `app.css` is in scope. The regex is the only filter.\n- The self-test only lists strings the regex already matches.\n- The comment above the regex says it covers a class set through `className` and a design token rewritten at runtime. The spec says the static check is what covers screens where the e2e skips.\n\nA screen with no theme control could therefore set `className += ' dark'` and add an `html.dark { --token }` block, the guard would still pass, and the theme would be forced. The mechanism is real. A static regex guard can never be complete, so this is a coverage gap rather than a behaviour bug, and 'minor' is the right severity.",
+          "I checked the finding against the regex in src/app/theme-source.test.ts:15-29 by tracing each pattern by hand. A Node run to confirm it was blocked by the permission prompt, but the patterns are simple enough to trace reliably.\n\n- **`className += ' dark'` is missed.** The pattern `className\\s*=\\s*[{\"'\\`]` needs optional whitespace followed directly by `=`. The `+` stops the match, and no other pattern matches the string.\n- **`html.dark { --paper: #000 }` is missed.** The pattern `(:root|html)\\s*\\{` needs a `{` right after `html`, but `.dark` sits in between.\n- **`body { --paper:… }` and `.dark { --paper:… }` are missed.** No pattern looks at token redefinitions in selectors other than `:root` or `html`.\n- **`classList.add(mode)` is missed.** `[^)]*\\b(dark|light|theme)` finds none of those words in `mode`.\n\nThe scan in sources() covers all .ts, .tsx and .css files under src/, except the design system and generated API code, plus index.html. So a new app.css rule or a TS assignment written in any of these forms would pass the guard. Nothing else in the file catches them.\n\nThe self-test at lines 41-49 lists only strings the regex already matches. That supports the claim that the guard's docstring (\"a theme class set through classList or className\", \"a design token rewritten at runtime\") promises more than the regex delivers.\n\nExploitability: the \"attacker\" here is a later code change, not an end user. The guard exists to cover screens where the e2e test skips because the screen has no control. So the gap really does weaken a spec-cited verification mechanism, but it is not a product bug that users see today. Minor severity fits."
+        ]
+      }
+    ],
+    "contested": [
+      {
+        "title": "Container smoke checks only that the 421 refusal has the security headers, not their values; server-version check covers only the shell",
+        "file": "tools/container-smoke.mjs",
+        "line": 148,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "Spec 'Served behind one origin': \"Every response SHALL carry `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer` and a Content-Security-Policy with `script-src 'self'`, `object-src 'none'` and `frame-ancestors 'none'`, and no server version.\" The smoke's refusal check is `['x-content-type-options','referrer-policy','content-security-policy'].every((h) => foreign.headers.get(h))`, which only tests presence. The `server` header is asserted only on `/` (`shell.headers.get('server') === 'nginx'`), not on the 421 or the proxied /api/ answer. The /api/ check also only shows the value is non-empty and not the stub's. No live check confirms nosniff / no-referrer / the CSP directives on any response. Today the static test pins the http-level directives, so this is a gap in evidence, not a broken behaviour.",
+        "suggestion": "Add one helper that asserts the exact values (nosniff, no-referrer, CSP containing the three directives, server === 'nginx') and run it on the shell, /assets/ 404, /api 404, the proxied /api/ answer and the 421 refusal.",
+        "dimension": "spec-compliance",
+        "verdict": "contested",
+        "verifierNotes": [
+          "The finding's factual claims hold. The cited line is wrong, though: line 148 is the evidence-file writer, and the relevant code is at lines 110–122.\n- **421 refusal (lines 120–122):** the check is `[...].every((h) => foreign.headers.get(h))`, so it only tests that the headers are present. A wrong value such as `Referrer-Policy: origin` would still pass.\n- **Server header (line 114):** `server === 'nginx'` is checked only on the `/` shell response. It is not checked on the 421, the `/api/` proxy answer, `/assets/` 404 or `/api` 404.\n- **/api/ header loop (lines 110–113):** it only checks that each value is non-empty, does not contain \"backend\" and appears once. It never checks the actual values (nosniff, no-referrer, or the CSP directives).\n\nSo nothing in the live smoke confirms the values the spec requires.\n\nAs the finding itself says, this is a gap in evidence, not broken behaviour:\n- `nginx.conf:8–11` sets `server_tokens off` and all three headers with the correct values at http level, with `always`, so they apply to every response, including the `return 421`.\n- `src/test/container-config.test.ts:21–25` pins those exact values and directives statically.\n\nNothing in the shipped behaviour is wrong; only the runtime assertion is weaker than the spec. I confirm the gap, but I'm downgrading it: it is test thoroughness only, the static test already covers the values, and the line number is off.",
+          "The finding describes the code correctly, but no real user or attacker can hit the problem it names, and the finding says so itself (\"a gap in evidence, not a broken behaviour\").\n\nWhat I checked:\n- **The weak checks are real, but the line number is wrong.** They are at tools/container-smoke.mjs:110-122, not line 148 (which is the evidence-file writer). Line 121 checks the 421 refusal only for header presence (`.every((h) => foreign.headers.get(h))`). Line 114 asserts `server === 'nginx'` only on the `/` shell.\n- **No response can lose these headers or values at runtime.** In nginx.conf, `server_tokens off;` (line 8) and all three headers (lines 9-11) are set at the http level with `always`. They therefore apply to every server block and every status, including the `return 421` fallback server (line 18) and proxied /api/ answers. The values are exactly `nosniff`, `no-referrer`, and a CSP containing `script-src 'self'`, `object-src 'none'` and `frame-ancestors 'none'`.\n- **Those values are already pinned by a test.** src/test/container-config.test.ts:18-25 asserts `server_tokens off`, the exact nosniff and no-referrer values and each CSP directive at the http level, and line 37 asserts the 421 return.\n- **The live smoke adds further proof on the proxied answer.** Lines 110-113 show nginx's own header is sent once and the backend's copy is dropped.\n\nThe only remaining risk is a future config change that the static test fails to catch while the live smoke would. That is a hypothetical about how strong the test is, not a reproducible defect. At most it is a nit about hardening the test; it is not a spec-compliance failure that can occur."
+        ]
+      }
+    ],
+    "rejected": [],
+    "reviewEvidence": "openspec/changes/implement-platform-foundation-ui/review-findings.json"
+  }
+}

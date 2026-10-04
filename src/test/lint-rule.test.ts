@@ -87,6 +87,7 @@ tester.run('doucko/no-literal-ui-text', rule, {
     { code: 'const a = <ul>{items.map(function () { return "Ahoj"; })}</ul>;', errors: [{ messageId: 'text' }] },
     { code: 'const a = <p>{"Ahoj".toLocaleUpperCase("cs")}</p>;', errors: [{ messageId: 'text' }] },
     { code: 'const a = <SubjectList items={[{ id: "m", name: "Matematika" }]} />;', errors: [{ messageId: 'attr' }] },
+    { code: 'const a = <p>{new Intl.ListFormat("cs", { type: "conjunction" }).format(["Ahoj", t("x")])}</p>;', errors: [{ messageId: 'text' }] },
     // The document title
     { code: 'window.document.title = "Doučko";', errors: [{ messageId: 'title' }] },
     { code: 'document.title = "Doučko";', errors: [{ messageId: 'title' }] },

@@ -8,6 +8,7 @@
 //   node tools/container-smoke.mjs [--e2e]
 import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { request } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -40,6 +41,13 @@ const check = (name, ok, detail = '') => {
   if (!ok) failures.push(name);
 };
 const startedAt = new Date().toISOString();
+/** What this run tested, so the evidence cannot outlive a change to it. */
+const tested = {
+  commit: spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).stdout.trim(),
+  dirty: spawnSync('git', ['status', '--porcelain', '--', 'nginx.conf', 'Dockerfile', 'src', 'index.html'], { encoding: 'utf8' }).stdout.trim() !== '',
+  nginxConf: createHash('sha256').update(readFileSync('nginx.conf')).digest('hex'),
+  image: 'not built',
+};
 
 /** GET over node:http (fetch silently drops a custom Host header, which the rebinding check needs). */
 function get(path, headers = {}) {
@@ -86,6 +94,7 @@ cleanup();
 try {
   console.log('building the frontend image (Dockerfile, contract submodule)…');
   docker('build', '-q', '-t', IMAGE, '.');
+  tested.image = docker('image', 'inspect', '--format', '{{.Id}}', IMAGE);
   docker('network', 'create', NET);
   const stubDir = mkdtempSync(join(tmpdir(), 'doucko-stub-'));
   writeFileSync(join(stubDir, 'default.conf'), STUB);
@@ -111,14 +120,17 @@ try {
     const value = api.headers.get(h) ?? '';
     check(`${h} is nginx's, once`, value !== '' && !value.includes('backend') && !value.includes(','), value);
   }
-  check('the server version is hidden', (shell.headers.get('server') ?? '') === 'nginx', shell.headers.get('server'));
+  for (const [what, res] of [['shell', shell], ['API', api]])
+    check(`the server version is hidden (${what})`, (res.headers.get('server') ?? '') === 'nginx', res.headers.get('server'));
 
   check('localhost is served', (await get('/', { Host: 'localhost' })).status === 200);
   check('a LAN address is served', (await get('/', { Host: '192.168.1.20' })).status === 200);
   const foreign = await get('/api/health', { Host: 'evil.example' });
   check('a foreign host name is refused (DNS rebinding)', foreign.status === 421, String(foreign.status));
-  check('the refusal carries the security headers',
-    ['x-content-type-options', 'referrer-policy', 'content-security-policy'].every((h) => foreign.headers.get(h)),
+  // The same values as on every other response, and no version in Server.
+  check('the refusal carries the same security headers and no version',
+    ['x-content-type-options', 'referrer-policy', 'content-security-policy'].every((h) => foreign.headers.get(h) === shell.headers.get(h) && !!shell.headers.get(h)) &&
+      foreign.headers.get('server') === 'nginx',
     JSON.stringify(Object.fromEntries(foreign.headers)));
 
   if (failures.length === 0 && process.argv.includes('--e2e')) {
@@ -138,7 +150,7 @@ try {
     }
   }
 } catch (err) {
-  failures.push(String(err.message ?? err));
+  check('the smoke run completed', false, String(err.message ?? err).split(/\r?\n/)[0]);
   console.error(err.stderr?.toString() || err.message);
 } finally {
   cleanup();
@@ -155,6 +167,7 @@ writeFileSync(
     '',
     `- Started: ${startedAt}`,
     `- Finished: ${new Date().toISOString()}`,
+    `- Tested: commit ${tested.commit}${tested.dirty ? ' (with uncommitted changes to the image inputs)' : ''}, image ${tested.image}, nginx.conf sha256 ${tested.nginxConf}`,
     `- Scope: ${results.length} check(s)${e2eRan ? ', Playwright through nginx included' : ', Playwright through nginx NOT included'}`,
     `- Result: ${failures.length ? `FAIL (${failures.length})` : results.length ? 'PASS' : 'NOT-EARNED (no check ran)'}`,
     '',

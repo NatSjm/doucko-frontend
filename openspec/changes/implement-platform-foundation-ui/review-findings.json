@@ -6,19 +6,19 @@
   "headRef": "HEAD",
   "dimensions": {
     "correctness": {
-      "confirmed": 5,
-      "contested": 1,
+      "confirmed": 4,
+      "contested": 0,
       "rejected": 0
     },
     "security": {
-      "confirmed": 1,
-      "contested": 1,
-      "rejected": 1
+      "confirmed": 2,
+      "contested": 0,
+      "rejected": 0
     },
     "spec-compliance": {
-      "confirmed": 3,
-      "contested": 0,
-      "rejected": 2
+      "confirmed": 2,
+      "contested": 1,
+      "rejected": 0
     },
     "visual": {
       "confirmed": 0,
@@ -29,12 +29,12 @@
   "findings": [
     {
       "id": "F01",
-      "severity": "major",
+      "severity": "minor",
       "dimension": "correctness",
       "verdict": "confirmed",
-      "title": "docs/qa recordings exemption still covers PDFs, fonts and images named in any key of any manifest",
-      "file": "src/test/provenance.test.ts",
-      "line": 84,
+      "title": "Intl/toLocale exemption also exempts literal UI text passed to Intl formatters (e.g. Intl.ListFormat)",
+      "file": "eslint-rules/no-literal-ui-text.js",
+      "line": 89,
       "status": "open"
     },
     {
@@ -42,9 +42,9 @@
       "severity": "minor",
       "dimension": "correctness",
       "verdict": "confirmed",
-      "title": "No-toggle e2e only clicks a select/combobox, so a theme picker built as a select is never switched",
+      "title": "Theme e2e skips a select's remaining options once one option navigates away",
       "file": "e2e/theme.spec.ts",
-      "line": 33,
+      "line": 47,
       "status": "open"
     },
     {
@@ -52,9 +52,9 @@
       "severity": "minor",
       "dimension": "correctness",
       "verdict": "confirmed",
-      "title": "Lint rule exempts the `name` key in nested objects, though `name` is display text on most components",
-      "file": "eslint-rules/no-literal-ui-text.js",
-      "line": 50,
+      "title": "Static theme guard and e2e only see token redefinition on :root/html and the body background",
+      "file": "src/app/theme-source.test.ts",
+      "line": 27,
       "status": "open"
     },
     {
@@ -62,19 +62,19 @@
       "severity": "minor",
       "dimension": "correctness",
       "verdict": "confirmed",
-      "title": "Call-argument coverage flags locale and format arguments, so idiomatic Intl formatting fails lint",
-      "file": "eslint-rules/no-literal-ui-text.js",
-      "line": 84,
+      "title": "container-smoke evidence file leaves out the exception that caused a FAIL",
+      "file": "tools/container-smoke.mjs",
+      "line": 140,
       "status": "open"
     },
     {
       "id": "F05",
       "severity": "minor",
-      "dimension": "correctness",
+      "dimension": "security",
       "verdict": "confirmed",
-      "title": "Container smoke PASS is claimed with no evidence file, and the Host guard has no static test",
-      "file": "openspec/changes/implement-platform-foundation-ui/tasks.md",
-      "line": 31,
+      "title": "Intl/toLocale exemption skips all format() arguments, so literal UI text passed to Intl.ListFormat is never linted (NFR-9)",
+      "file": "eslint-rules/no-literal-ui-text.js",
+      "line": 89,
       "status": "open"
     },
     {
@@ -82,9 +82,9 @@
       "severity": "minor",
       "dimension": "security",
       "verdict": "confirmed",
-      "title": "docs/qa recordings exemption also covers PDFs, photos and fonts listed in any docs/qa manifest.json",
-      "file": "src/test/provenance.test.ts",
-      "line": 84,
+      "title": "Container-smoke evidence is not tied to the image or config it tested, so a PASS can outlive an nginx.conf change",
+      "file": "tools/container-smoke.mjs",
+      "line": 148,
       "status": "open"
     },
     {
@@ -92,52 +92,32 @@
       "severity": "major",
       "dimension": "spec-compliance",
       "verdict": "confirmed",
-      "title": "The provenance exemption covers PDFs, e-books and fonts listed in a docs/qa manifest, not just recordings",
-      "file": "src/test/provenance.test.ts",
-      "line": 84,
+      "title": "Lint rule skips the literal arguments of every Intl.*(...).format() call, including text-bearing ones like Intl.ListFormat",
+      "file": "eslint-rules/no-literal-ui-text.js",
+      "line": 89,
       "status": "open"
     },
     {
       "id": "F08",
-      "severity": "major",
+      "severity": "minor",
       "dimension": "spec-compliance",
       "verdict": "confirmed",
-      "title": "The 421 response from the Host guard has no security headers",
-      "file": "nginx.conf",
-      "line": 7,
+      "title": "Widened static theme guard still misses common ways to force a theme (className +=, html.dark / body token overrides)",
+      "file": "src/app/theme-source.test.ts",
+      "line": 15,
       "status": "open"
     },
     {
       "id": "F09",
-      "severity": "major",
+      "severity": "minor",
       "dimension": "spec-compliance",
-      "verdict": "confirmed",
-      "title": "The Host guard (421) has no check in the qa:verify battery",
-      "file": "src/test/container-config.test.ts",
-      "line": 50,
-      "status": "open"
-    },
-    {
-      "id": "F10",
-      "severity": "minor",
-      "dimension": "correctness",
       "verdict": "contested",
-      "title": "Static theme guard misses dynamic theme classes and token overrides",
-      "file": "src/app/theme-source.test.ts",
-      "line": 12,
-      "status": "open"
-    },
-    {
-      "id": "F11",
-      "severity": "minor",
-      "dimension": "security",
-      "verdict": "contested",
-      "title": "The theme no-toggle checks miss a native <select> theme picker and className-based theme switches",
-      "file": "e2e/theme.spec.ts",
-      "line": 33,
+      "title": "Container smoke checks only that the 421 refusal has the security headers, not their values; server-version check covers only the shell",
+      "file": "tools/container-smoke.mjs",
+      "line": 148,
       "status": "open"
     }
   ],
   "clean": false,
-  "generatedAt": "2026-10-04T07:24:48Z"
+  "generatedAt": "2026-10-04T07:36:09Z"
 }
