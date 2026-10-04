@@ -75,14 +75,18 @@ export function provenanceProblems(
 }
 
 /** Files a recording manifest under docs/qa/ lists (written by scripts/record-demos.mjs). */
-function recordedFiles(files: string[]): Set<string> {
+export function recordedFiles(files: string[], read = (f: string) => readFileSync(f, 'utf8')): Set<string> {
   const listed = new Set<string>();
   for (const m of files.filter((f) => f.startsWith('docs/qa/') && f.endsWith('/manifest.json'))) {
     const walk = (v: unknown): void => {
-      if (typeof v === 'string') listed.add(`${dirOf(m)}${v.replace(/^\.\//, '')}`).add(v);
-      else if (v && typeof v === 'object') Object.values(v).forEach(walk);
+      if (typeof v === 'string') {
+        // Only a recording: a media file under docs/qa/, named relative to the manifest or to the repo.
+        if (!MEDIA.test(v)) return;
+        const p = v.startsWith('docs/') ? v : `${dirOf(m)}${v.replace(/^\.\//, '')}`;
+        if (p.startsWith('docs/qa/') && !p.includes('..')) listed.add(p);
+      } else if (v && typeof v === 'object') Object.values(v).forEach(walk);
     };
-    walk(JSON.parse(readFileSync(m, 'utf8')));
+    walk(JSON.parse(read(m)));
   }
   return listed;
 }
@@ -127,6 +131,12 @@ describe('fixture and asset provenance (NFR-4)', () => {
       'src/features/task/scan.heic: not listed in fixtures/PROVENANCE.md',
       'docs/qa/scan.pdf: not listed in fixtures/PROVENANCE.md',
     ]);
+  });
+
+  it('only media files a docs/qa manifest lists under docs/qa/ count as recordings', () => {
+    const manifest = JSON.stringify({ clips: [{ file: 'clip.webm', frs: ['FR-1'] }, 'docs/qa/demo/b.png'], note: 'scan.pdf is fine', other: ['../../fixtures/x.png', 'src/a.png', 'notes.md'] });
+    const listed = recordedFiles(['docs/qa/demo/manifest.json', 'src/manifest.json'], () => manifest);
+    expect([...listed].sort()).toEqual(['docs/qa/demo/b.png', 'docs/qa/demo/clip.webm', 'docs/qa/demo/src/a.png']);
   });
 
   it('a licensed asset needs its licence file listed beside it; fixtures must be self-authored', () => {

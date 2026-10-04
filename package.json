@@ -32,7 +32,8 @@
     "factory:check": "node ../docs/factory/install.mjs --repo=frontend --check",
     "factory:install": "node ../docs/factory/install.mjs --repo=frontend",
     "workflow": "node scripts/run-workflow.mjs",
-    "check:vision": "node scripts/check-vision.mjs"
+    "check:vision": "node scripts/check-vision.mjs",
+    "test:container": "node tools/container-smoke.mjs --e2e"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

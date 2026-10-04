@@ -8,7 +8,8 @@ import { describe, expect, it } from 'vitest';
  * vendored design system sets `data-theme` or a colour scheme, so no control added later can switch
  * it. (The e2e activates every control on every screen; this covers screens and states it cannot reach.)
  */
-const THEME_WRITE = /data-theme|dataset\.theme|colorScheme|color-scheme/;
+/** data-theme, a colour-scheme declaration or meta, or a theme class toggled on an element. */
+const THEME_WRITE = /data-theme|dataset\.theme|colorScheme|color-scheme|classList\.\w+\(\s*['"`](dark|light|theme)/;
 
 function sources(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
@@ -20,7 +21,7 @@ function sources(dir: string): string[] {
 
 describe('theme follows the OS (FR-58)', () => {
   it('no app source sets data-theme or a colour scheme', () => {
-    const files = sources('src');
+    const files = [...sources('src'), 'index.html'];
     expect(files.length).toBeGreaterThan(0);
     expect(files.filter((f) => THEME_WRITE.test(readFileSync(f, 'utf8')))).toEqual([]);
   });

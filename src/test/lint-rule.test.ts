@@ -30,6 +30,10 @@ tester.run('doucko/no-literal-ui-text', rule, {
     { code: 'const a = <ChoiceGroup options={[{ value: "a", id: "q1-a", label: t("yes") }]} />;' },
     { code: 'const a = <input type="number" defaultValue={3} />;' },
     { code: 'document.title = t("app.name");' },
+    { code: 'const a = <input type="checkbox" value="yes" />;' },
+    { code: 'const a = <input type="hidden" value="token" />;' },
+    { code: 'const a = <p>{items.map((i) => t(i.key)).join(" · ")}</p>;' },
+    { code: 'const a = <p>{items.map((i) => { if (i) return t("a"); return t("b"); })}</p>;' },
   ],
   invalid: [
     { code: 'const a = <h1>Doučko</h1>;', errors: [{ messageId: 'text' }] },
@@ -68,7 +72,18 @@ tester.run('doucko/no-literal-ui-text', rule, {
     { code: 'const a = <optgroup label="Možnosti" />;', errors: [{ messageId: 'attr' }] },
     { code: 'const a = <input defaultValue="Ahoj" />;', errors: [{ messageId: 'attr' }] },
     { code: 'const a = <textarea defaultValue="Ahoj" />;', errors: [{ messageId: 'attr' }] },
+    // value on fields that show it
+    { code: 'const a = <input value="Tvoje odpověď" />;', errors: [{ messageId: 'attr' }] },
+    { code: 'const a = <input type="text" value="Ahoj" />;', errors: [{ messageId: 'attr' }] },
+    { code: 'const a = <input type={kind} value="Ahoj" />;', errors: [{ messageId: 'attr' }] },
+    { code: 'const a = <textarea value="Ahoj" />;', errors: [{ messageId: 'attr' }] },
+    // Call arguments and callback returns
+    { code: 'const a = <p>{items.join(" a ")}</p>;', errors: [{ messageId: 'text' }] },
+    { code: 'const a = <p>{format("Úroveň {n}", n)}</p>;', errors: [{ messageId: 'text' }] },
+    { code: 'const a = <ul>{items.map(() => "Ahoj")}</ul>;', errors: [{ messageId: 'text' }] },
+    { code: 'const a = <ul>{items.map(function () { return "Ahoj"; })}</ul>;', errors: [{ messageId: 'text' }] },
     // The document title
+    { code: 'window.document.title = "Doučko";', errors: [{ messageId: 'title' }] },
     { code: 'document.title = "Doučko";', errors: [{ messageId: 'title' }] },
     { code: 'document.title = ok ? "A" : t("x");', errors: [{ messageId: 'title' }] },
   ],

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { I18nProvider, useT, type Messages } from '@/i18n';
 import { NotFound } from './NotFound';
 import { createQueryClient } from './queryClient';
+import { routePath } from './route-paths';
 import { routes } from './routes';
 import './app.css';
 
@@ -16,7 +17,8 @@ function CurrentRoute() {
   useEffect(() => {
     document.title = t('app.name');
   }, [t]);
-  const route = routes.find((r) => r.path === window.location.pathname);
+  const path = routePath(window.location.pathname);
+  const route = routes.find((r) => r.path === path);
   if (!route)
     return (
       <div className="app-route" data-route="not-found">

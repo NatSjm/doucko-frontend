@@ -30,7 +30,10 @@ const TEXT_ATTRIBUTES = [
   'label',
 ];
 
-/** Visible text nodes, text attributes, visible input values and the document title. */
+/** Input types whose value is not shown as text (as in the lint rule). */
+const NON_TEXT_INPUT_TYPES = ['hidden', 'checkbox', 'radio', 'range', 'color', 'file', 'image'];
+
+/** Visible text nodes, text attributes, visible field values and the document title. */
 function uiTexts(root: HTMLElement): string[] {
   const texts: string[] = [];
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
@@ -44,7 +47,10 @@ function uiTexts(root: HTMLElement): string[] {
       const value = el.getAttribute(attr)?.trim();
       if (value) texts.push(value);
     }
-    if (el instanceof HTMLInputElement && ['submit', 'button', 'reset'].includes(el.type) && el.value.trim()) texts.push(el.value.trim());
+    // A field's value is a DOM property, not a text node: read it from every field that shows it.
+    const shown =
+      el instanceof HTMLTextAreaElement || (el instanceof HTMLInputElement && !NON_TEXT_INPUT_TYPES.includes(el.type));
+    if (shown && el.value.trim()) texts.push(el.value.trim());
   }
   texts.push(document.title.trim());
   return texts;
@@ -75,6 +81,18 @@ describe('externalized UI strings (NFR-9)', () => {
     expect(uncovered(['⟦Doučko⟧', '⟦a⟧ · ⟦b⟧', '3 × ⟦úloha⟧', '⟦Úroveň⟧ 3.'])).toEqual([]);
     expect(uncovered(['⟦Doučko⟧ navíc', 'Ahoj', '⟦a⟧ – Ahoj', '⟦a'])).toEqual(['⟦Doučko⟧ navíc', 'Ahoj', '⟦a⟧ – Ahoj', '⟦a']);
     expect(uncovered([' · ', '3', '12 / 20', '—'])).toEqual([]);
+  });
+
+  it('the coverage check reads the value shown in text fields', () => {
+    const { container } = render(
+      <form>
+        <input readOnly value="Ahoj" />
+        <textarea readOnly value="Čau" />
+        <input type="checkbox" readOnly value="yes" />
+      </form>,
+    );
+    // React also writes a textarea's value as its text node, so it may be seen twice.
+    expect([...new Set(uncovered(uiTexts(container)))].sort()).toEqual(['Ahoj', 'Čau']);
   });
 
   it.each(routes.map((r) => [r.path] as const))('route %s shows only catalog text, title included', async (path) => {

@@ -108,13 +108,43 @@ origin and author) listed beside it (the two OFL fonts).
   Compose port mapping and is left to Phase 5. `client_max_body_size 51m`
   follows NFR-17's 50 MB upload cap; the CSP allows inline styles because
   React `style` props need them (scripts stay `'self'`).
+- DNS rebinding: a `default_server` answers 421; the app server only answers
+  `localhost` and bare IPv4 hosts (127.0.0.1, the LAN address). `/api`
+  without the slash is 404. The backend's own published port (8080) is
+  outside this repo and still answers any host (backend follow-up).
+- Live check: `npm run test:container` (`tools/container-smoke.mjs`) builds
+  the image, runs it beside a stub backend on a private network and checks
+  the proxying, headers, fallback, 404s and the Host guard over HTTP, then
+  runs the Playwright suite through nginx (`E2E_BASE_URL`). That last step
+  needs `DOUCKO_CHILD_DISPLAY_NAME` (env or `../backend/.env`) for the
+  real-name guard; without it the step is reported NOT RUN and the command
+  fails.
 - Screens: the a11y and theme e2e iterate `e2e/screens.ts`: every registered
-  route plus the not-found screen, each with its `data-route` marker. The
-  no-toggle e2e clicks every control (a failed click fails) and records how
-  many it activated; `src/app/theme-source.test.ts` proves statically that no
-  app source sets `data-theme`.
+  route plus the not-found screen, each with its `data-route` marker.
+  `routePath` maps `/index.html` and a trailing slash to the registered path.
+  The no-toggle e2e clicks every control (a failed click fails), waits for
+  async effects, and is skipped (never passed) on a screen with no control;
+  `src/app/theme-source.test.ts` proves statically that no app source or
+  `index.html` sets `data-theme`, a colour scheme or a theme class.
 - `tsconfig.e2e.json` gives only the e2e specs DOM types; Node-side config
   files have none.
+
+## Accepted limits (review round 3)
+
+Kept on purpose; each later slice covers what it adds.
+
+- NFR-9 is two layers, neither complete: the lint rule sees only literals in
+  the file (not through variables, other modules or `createElement`), and
+  the pseudo-catalog render sees only what the registered routes show once
+  settled. Interaction states (loading, error, dialogs) belong to the
+  slice that adds them, whose tests render them with the pseudo-catalog.
+- Provenance is by file type and location: workbook content committed as a
+  TS/JS module or in an archive outside the fixture roots is not detected.
+  Review and the "never commit" rule cover it.
+- `client_max_body_size 51m` applies to every `/api/` path; the backend caps
+  child request bodies at 16 KB (NFR-17), so nginx only bounds the transfer.
+- The real-name guard reads the page's `innerText`; attributes and titles
+  are covered by the pseudo-catalog (no name is in a catalog).
 
 ## Risks & mitigations
 

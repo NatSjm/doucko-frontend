@@ -8,7 +8,8 @@ const PAPER = { light: 'rgb(255, 247, 239)', dark: 'rgb(14, 19, 48)' } as const;
 /** Every control a user could flip: buttons, switches, checkboxes, radios, selects, menu toggles, the DS toggle. */
 const CONTROLS =
   'button, [role=button], [role=switch], [role=checkbox], [role=radio], [role=menuitemcheckbox], [role=menuitemradio], ' +
-  'input[type=checkbox], input[type=radio], select, [role=combobox], .dk-toggle';
+  '[role=tab], [role=option], [aria-pressed], summary, input[type=checkbox], input[type=radio], input[type=button], ' +
+  'input[type=submit], input[type=reset], select, [role=combobox], .dk-toggle';
 
 for (const scheme of ['light', 'dark'] as const) {
   test.describe(`${scheme} OS`, () => {
@@ -31,12 +32,15 @@ for (const scheme of ['light', 'dark'] as const) {
           if (!(await control.isVisible()) || !(await control.isEnabled())) continue;
           await control.click({ timeout: 2_000 }); // a control that cannot be clicked fails the test
           activated += 1;
+          // Let a switch that applies asynchronously (effect, timer, transition) land before checking.
+          await page.waitForTimeout(300);
           if (new URL(page.url()).pathname !== new URL(screen.path, page.url()).pathname) await page.goto(screen.path);
           await expect(page.locator('[data-theme]')).toHaveCount(0);
           await expect(page.locator('body')).toHaveCSS('background-color', PAPER[scheme]);
         }
-        // Zero controls is reported, not hidden; src/app/theme-source.test.ts covers screens without any.
-        test.info().annotations.push({ type: 'controls activated', description: String(activated) });
+        // A screen without controls has nothing to activate: that is a skip, never a vacuous pass.
+        // src/app/theme-source.test.ts covers it statically.
+        test.skip(activated === 0, 'no control on this screen; covered by src/app/theme-source.test.ts');
       });
     }
   });

@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { messages } from '@/i18n';
 import { App } from './App';
+import { routePath } from './route-paths';
 
 afterEach(() => {
   window.history.pushState({}, '', '/');
@@ -32,5 +33,19 @@ describe('App shell', () => {
   it('sets the document title from the catalog', () => {
     render(<App />);
     expect(document.title).toBe(messages['app.name']);
+  });
+});
+
+describe('routePath', () => {
+  it.each([
+    ['/', '/'],
+    ['/index.html', '/'],
+    ['//', '/'],
+    ['/admin/', '/admin'],
+    ['/admin//', '/admin'],
+    ['/admin/index.html', '/admin'],
+    ['/no-such-route', '/no-such-route'],
+  ])('%s resolves as %s', (input, expected) => {
+    expect(routePath(input)).toBe(expected);
   });
 });

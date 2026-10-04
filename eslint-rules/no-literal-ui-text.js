@@ -7,13 +7,15 @@
 //     {err && 'Chyba'}, {label ?? 'Zavřít'}, {`Úroveň ${n}`}, {t('a') + ' bodů'}
 //   - the same inside a text attribute of a DOM element: aria-label, aria-description,
 //     aria-roledescription, aria-valuetext, aria-placeholder, aria-braillelabel, title, alt,
-//     placeholder, children, and value on <input type="submit|button|reset">
+//     placeholder, children, label, defaultValue and value on <textarea> and every <input> whose type
+//     shows its value (any but hidden/checkbox/radio/range/color/file/image)
 //   - the same inside any prop of a component (PascalCase), except props that never carry text
 //     (NON_TEXT_PROPS, plus `name` on components where it is an identifier)
 //   - literals nested in arrays and objects ({ label: 'Ano' }, except identifier keys such as
-//     `value`), template expressions, TS wrappers (`as`, `satisfies`, `!`), String('…') and
-//     method calls on a literal ('Ahoj'.toUpperCase())
-//   - a literal assigned to document.title, in .ts and .tsx files
+//     `value`), template expressions, TS wrappers (`as`, `satisfies`, `!`), call receivers and
+//     arguments ('Ahoj'.toUpperCase(), items.join(' a ')) and what callbacks return
+//     (items.map(() => 'Ahoj')); t('key') is exempt
+//   - a literal assigned to document.title (or window./globalThis.document.title), in .ts and .tsx files
 // Allows punctuation-only text (" · ", "/"), whitespace, and every expression ({t('key')}).
 // Not seen (static analysis cannot follow them): text reached through a variable or another module,
 // and spread attributes. The pseudo-catalog render test (src/app/i18n-coverage.test.tsx) is the
@@ -35,7 +37,6 @@ const DOM_TEXT_ATTRIBUTES = new Set([
 ]);
 /** Elements whose `defaultValue` is shown in the field. */
 const DEFAULT_VALUE_ELEMENTS = new Set(["input", "textarea"]);
-const VISIBLE_VALUE_INPUT_TYPES = new Set(["submit", "button", "reset"]);
 /** Component props that hold identifiers, styling or behaviour, never UI text. */
 const NON_TEXT_PROPS = new Set([
   "className", "id", "key", "variant", "tone", "size", "type", "kind", "state", "subject", "accent", "icon", "iconAfter",
@@ -47,6 +48,11 @@ const NAME_IS_IDENTIFIER = new Set(["Icon", "ChoiceGroup"]);
 
 /** Object keys inside a text prop that hold identifiers, not text ({ value: 'a', label: t('yes') }). */
 const NON_TEXT_KEYS = new Set([...NON_TEXT_PROPS, "value", "name"]);
+
+/** Functions whose string argument is a catalog key. */
+const CATALOG_LOOKUPS = new Set(["t"]);
+/** Input types whose `value` is not shown as text in the field. */
+const NON_TEXT_INPUT_TYPES = new Set(["hidden", "checkbox", "radio", "range", "color", "file", "image"]);
 
 const hasLetter = (s) => /\p{L}/u.test(s);
 const propertyKey = (p) => (p.key?.type === "Identifier" ? p.key.name : p.key?.type === "Literal" ? String(p.key.value) : null);
@@ -69,11 +75,18 @@ function literalTexts(node) {
     case "TSTypeAssertion":
     case "ChainExpression":
       return literalTexts(node.expression);
-    case "CallExpression":
-      // 'Ahoj'.toUpperCase() / `…`.trim(): the text is the receiver; String('Ahoj'): the argument.
-      if (node.callee.type === "MemberExpression") return literalTexts(node.callee.object);
-      if (node.callee.type === "Identifier" && node.callee.name === "String") return node.arguments.flatMap(literalTexts);
-      return [];
+    case "CallExpression": {
+      // t('key') is the catalog lookup; its argument is a key, not text.
+      if (node.callee.type === "Identifier" && CATALOG_LOOKUPS.has(node.callee.name)) return [];
+      // 'Ahoj'.toUpperCase(), items.join(' a '), format('Ahoj {n}', n), items.map(() => 'Ahoj'):
+      // the receiver, the arguments and what a callback argument returns.
+      const receiver = node.callee.type === "MemberExpression" ? literalTexts(node.callee.object) : [];
+      return [...receiver, ...node.arguments.flatMap((a) => literalTexts(a.type === "SpreadElement" ? a.argument : a))];
+    }
+    case "ArrowFunctionExpression":
+      return node.body.type === "BlockStatement" ? returnedTexts(node.body) : literalTexts(node.body);
+    case "FunctionExpression":
+      return returnedTexts(node.body);
     case "ConditionalExpression":
       return [...literalTexts(node.consequent), ...literalTexts(node.alternate)];
     case "LogicalExpression":
@@ -85,6 +98,23 @@ function literalTexts(node) {
     default:
       return [];
   }
+}
+
+/** Literal texts the `return` statements of a function body can produce (nested functions excluded). */
+function returnedTexts(body) {
+  const out = [];
+  const walk = (n) => {
+    if (!n || typeof n.type !== "string") return;
+    if (n.type === "ReturnStatement") return out.push(...literalTexts(n.argument));
+    if (/Function/.test(n.type)) return;
+    for (const [k, v] of Object.entries(n)) {
+      if (k === "parent") continue;
+      if (Array.isArray(v)) v.forEach(walk);
+      else if (v && typeof v === "object") walk(v);
+    }
+  };
+  body.body.forEach(walk);
+  return out;
 }
 
 function elementName(opening) {
@@ -109,8 +139,18 @@ function isTextAttribute(opening, prop) {
   }
   if (DOM_TEXT_ATTRIBUTES.has(prop)) return true;
   if (prop === "defaultValue") return DEFAULT_VALUE_ELEMENTS.has(element);
-  return prop === "value" && element === "input" && VISIBLE_VALUE_INPUT_TYPES.has(staticAttribute(opening, "type"));
+  if (prop !== "value") return false;
+  if (element === "textarea") return true;
+  // A text-like input shows its value; a type that is not static could be any of them.
+  if (element === "input") return !NON_TEXT_INPUT_TYPES.has(staticAttribute(opening, "type"));
+  return false;
 }
+
+/** `document`, `window.document` or `globalThis.document`. */
+const isDocument = (n) =>
+  (n.type === "Identifier" && n.name === "document") ||
+  (n.type === "MemberExpression" && n.property.type === "Identifier" && n.property.name === "document" &&
+    n.object.type === "Identifier" && ["window", "globalThis", "self"].includes(n.object.name));
 
 export default {
   meta: {
@@ -129,8 +169,7 @@ export default {
         const left = node.left;
         const isTitle =
           left.type === "MemberExpression" &&
-          left.object.type === "Identifier" &&
-          left.object.name === "document" &&
+          isDocument(left.object) &&
           ((left.property.type === "Identifier" && left.property.name === "title") || left.property.value === "title");
         if (isTitle) for (const text of literalTexts(node.right)) context.report({ node, messageId: "title", data: { text: JSON.stringify(text) } });
       },

@@ -22,22 +22,25 @@ route" includes the not-found screen.
 
 #### Scenario: No toggle
 
-- **WHEN** every button, switch, checkbox, radio, select or menu toggle on a route is activated
-- **THEN** `<html>` never gets `data-theme` and the background stays the OS theme's `--paper`
+- **WHEN** every button, switch, checkbox, radio, tab, option, pressed toggle, disclosure or select on a route is activated
+- **THEN** no element gets `data-theme` and the background stays the OS theme's `--paper`; a route with no control reports the check as skipped, never passed, and the static source check covers it
 
 ### Requirement: Externalized UI strings
 
 Every visible string and accessible name SHALL come from a message catalog:
 Czech for the child UI and English for the admin UI (NFR-9). A lint rule
 SHALL refuse literal UI text that it can see in `src/` (JSX, props, nested
-collections, the document title); text reached through a variable or another
-module is caught by the pseudo-catalog render.
+collections, call arguments, callback returns, shown field values, the
+document title). Text reached through a variable, another module or a state
+the first render does not show is out of the rule's reach; the
+pseudo-catalog render covers what the registered routes render once
+settled, and each later slice's tests cover its own states.
 
 #### Scenario: Pseudo-catalog render
 
 - **GIVEN** a catalog in which every value is wrapped as `⟦…⟧`
 - **WHEN** `App` renders every route in the route registry, and an unregistered path, with it
-- **THEN** every visible text node, text attribute and the document title consists only of whole `⟦…⟧` segments (with whitespace, digits or punctuation between them)
+- **THEN** every visible text node, text attribute, shown field value and the document title consists only of whole `⟦…⟧` segments, digits and punctuation
 
 #### Scenario: Literal text is a lint error
 
@@ -81,7 +84,7 @@ origin and author) listed beside it (NFR-4, CA-D21).
 
 #### Scenario: Unlisted asset fails
 
-- **GIVEN** a file under `fixtures/`, `e2e/fixtures/`, `evals/cases/`, `public/`, `src/assets/`, `src/design-system/fonts/` or `src/design-system/icons/`, or a media or PDF file anywhere else, that the manifest does not list
+- **GIVEN** a file under `fixtures/`, `e2e/fixtures/`, `evals/cases/`, `public/`, `src/assets/`, `src/design-system/fonts/` or `src/design-system/icons/`, or a media, document or data file anywhere else as above, that the manifest does not list (only `contract/`, which the docs store checks, and the media files a `docs/qa/**/manifest.json` lists as recordings are exempt)
 - **WHEN** the provenance test runs
 - **THEN** it fails and names the file
 
@@ -130,8 +133,11 @@ stop when the pinned contract is missing (NFR-12).
 ### Requirement: Served behind one origin
 
 The image SHALL serve the SPA and proxy `/api/` to the backend on the same
-origin, forwarding the original `Host` and client address, and SHALL find a
-recreated backend container without a restart. A path that is
+origin, forwarding the original `Host` and the connecting client address
+(never a client-supplied `X-Forwarded-For`), and SHALL find a recreated
+backend container without a restart. Only `localhost` and IPv4 address hosts
+SHALL be served; any other `Host` gets 421 (DNS rebinding). `/index.html` and
+a trailing slash resolve to the registered route. A path that is
 not a built file SHALL get the SPA, except under `/assets/`, where a missing
 file is 404; the SPA shell is never cached. Every response SHALL carry `X-Content-Type-Options: nosniff`,
 `Referrer-Policy: no-referrer` and a Content-Security-Policy with
@@ -147,3 +153,13 @@ no server version. Base images SHALL be pinned by digest.
 
 - **WHEN** `/assets/missing.js` is requested
 - **THEN** the answer is 404, not the SPA page
+
+#### Scenario: Foreign host name
+
+- **WHEN** `/api/health` is requested with `Host: evil.example`
+- **THEN** the answer is 421 and the backend is not reached
+
+#### Scenario: Spoofed client address
+
+- **WHEN** a request to `/api/` carries `X-Forwarded-For: 6.6.6.6`
+- **THEN** the backend receives the connecting address, not 6.6.6.6
