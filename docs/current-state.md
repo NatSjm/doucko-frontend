@@ -24,7 +24,7 @@
   - Real-stack smoke (task 4.4) — evidence: `docs/qa/evidence/slice1-compose-smoke.md`
   - Review gate clean after 10 rounds and the owner's sign-off — evidence:
     `openspec/changes/archive/*implement-platform-foundation-ui/review-findings.json`
-  - G0, G2, G5, G8 PASS; G1 and G3 need the owner's sign-off; G4 and G6 are SKIP-planned; G7
+  - G0, G2, G4, G5, G8 PASS (G4 audits the archived slice); G1 and G3 need the owner's sign-off; G6 is SKIP-planned; G7
     (release) fails until every MVP slice is archived. Evidence: `npm run gate:status`
 - **Scope NOT delivered:** the child and admin feature screens (later slices); recordings and evals
   (planned with their slices); task 2.8's original RED run (waived:
