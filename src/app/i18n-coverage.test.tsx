@@ -1,12 +1,13 @@
 // @trace NFR-9
 import { act, render } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { messages, type Messages } from '@/i18n';
 import { cs } from '@/i18n/cs';
 import { en } from '@/i18n/en';
 import { App } from './App';
 import { routes } from './routes';
+import { stubAdminBackend } from '@/test/admin-backend';
 
 /**
  * Every catalog value wrapped in ⟦…⟧. A text is covered only if it consists of whole wrapped
@@ -58,8 +59,12 @@ function uiTexts(root: HTMLElement): string[] {
 
 const uncovered = (texts: string[]) => texts.filter((t) => !COVERED.test(t) && !NO_WORDS.test(t));
 
-/** Renders App with the pseudo-catalog and lets effects and pending work settle before reading. */
+/**
+ * Renders App with the pseudo-catalog and lets effects and pending work settle before reading. The
+ * API answers like a backend with no admin session, so `/admin` shows its sign-in form (admin-access).
+ */
 async function renderSettled(path: string) {
+  stubAdminBackend();
   window.history.pushState({}, '', path);
   render(<App messages={pseudo} />);
   await act(async () => {
@@ -70,6 +75,7 @@ async function renderSettled(path: string) {
 afterEach(() => {
   window.history.pushState({}, '', '/');
   document.title = '';
+  vi.unstubAllGlobals();
 });
 
 describe('externalized UI strings (NFR-9)', () => {

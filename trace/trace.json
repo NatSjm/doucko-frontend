@@ -757,7 +757,10 @@
         "backend"
       ],
       "ownedHere": false,
-      "tests": []
+      "tests": [
+        "src/features/admin-access/AdminGate.test.tsx",
+        "e2e/admin-sign-in.spec.ts"
+      ]
     },
     {
       "id": "NFR-2",
@@ -805,6 +808,7 @@
       ],
       "ownedHere": true,
       "tests": [
+        "e2e/admin-sign-in.spec.ts",
         "e2e/app-shell.spec.ts"
       ]
     },
@@ -881,7 +885,11 @@
         "backend"
       ],
       "ownedHere": false,
-      "tests": []
+      "tests": [
+        "src/features/admin-access/adminClient.test.ts",
+        "src/features/admin-access/AdminGate.test.tsx",
+        "e2e/admin-sign-in.spec.ts"
+      ]
     },
     {
       "id": "NFR-16",
@@ -1210,6 +1218,10 @@
     {
       "check": "recording-evidence",
       "msg": "FR-41 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "active-changes",
+      "msg": "active change \"implement-admin-access-ui\" is not archived"
     }
   ]
 }

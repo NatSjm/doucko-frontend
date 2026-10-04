@@ -1,0 +1,14 @@
+/* Carries lang="en" only; the screen lays out as if it were not there. */
+.admin-area {
+  display: contents;
+}
+
+.admin-stack {
+  display: grid;
+  gap: var(--space-4);
+  width: min(100%, 28rem);
+}
+
+.admin-label {
+  font-weight: 700;
+}
