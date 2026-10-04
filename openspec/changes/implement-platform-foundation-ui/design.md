@@ -9,7 +9,11 @@ API call, any feature screen.
 ## Screens and states
 
 Only the app shell: the product name as the page heading. It is the single
-entry in `src/app/routes.tsx`.
+entry in `src/app/routes.tsx`. `App` renders the route registered for
+`location.pathname`, wrapped in `data-route="<path>"` (`display: contents`)
+so the e2e checks prove they reached that screen; any other path shows a
+not-found screen. `document.title` comes from the catalog; `index.html`
+keeps the same name as the pre-load title, and a unit test keeps the two equal.
 
 ## Design-system mapping
 
@@ -28,13 +32,24 @@ a Vitest check confirms that every contract path is in it.
 
 - `src/i18n/cs.ts` is the child catalog (Czech). `src/i18n/en.ts` is the
   admin catalog (English). Both are typed, and a missing key is a type error.
-- `useT()` reads the catalog from `I18nProvider`. Tests can inject a
-  pseudo-catalog (every value prefixed `⟦`) to prove that nothing visible
-  bypasses it (NFR-9, generalizing the content-authoring scenario).
+- `useT()` reads the catalog from `I18nProvider`. Tests render `App` with a
+  pseudo-catalog (every value wrapped `⟦…⟧`) and require every text node,
+  text attribute (`aria-*` names and descriptions, `title`, `alt`,
+  `placeholder`, visible input values) and `document.title` under
+  `document.body` to consist only of whole wrapped segments, so a literal
+  concatenated to catalog text is caught too (NFR-9).
 - Lint rule `doucko/no-literal-ui-text` is a local ESLint rule with no new
-  dependency. It reports JSX text with letters, and string literals in
-  `aria-label`, `title`, `alt` and `placeholder`. Tests, the vendored design
-  system and generated code are exempt.
+  dependency. It reports a string with a letter that can reach the screen or
+  the accessibility tree: JSX text; literals inside child expressions
+  (conditional, logical, template, `+`); the same in DOM text attributes;
+  and the same in any prop of a component except identifier/styling props
+  (`NON_TEXT_PROPS`, `name` on `Icon`/`ChoiceGroup`). A unit test lints a
+  probe file through `eslint.config.js` to prove the wiring. Tests, the
+  vendored design system and generated code are exempt.
+- Known gap (out of scope here): components in the vendored design system
+  carry default Czech strings (e.g. `AnswerPart` placeholder, `Feedback`
+  labels). The design system is linted nowhere, so feature slices must pass
+  every text prop from `t()`; the fix belongs in the design-system artifact.
 
 ## Accessibility
 
@@ -44,23 +59,44 @@ a Vitest check confirms that every contract path is in it.
   the `test:e2e` battery. The installed `check:a11y` script stays available
   as the standalone runner.
 - Reduced motion: `components.css` already honours `prefers-reduced-motion`.
-  The e2e checks it on the shell (no running animation).
+  The e2e checks every route after network idle and again 500 ms later,
+  counting running and pending animations with a duration.
 
 ## Provenance (NFR-4, CA-D21)
 
-`fixtures/PROVENANCE.md` lists every file under `fixtures/`, `e2e/fixtures/`
-and the skin assets (`src/design-system/fonts`, `src/design-system/icons`).
-Fixtures must be `self-authored`. A skin asset may also be
-`licensed: <SPDX>` with its licence file listed next to it (the two OFL
-fonts).
+`fixtures/PROVENANCE.md` lists every file under `fixtures/`, `e2e/fixtures/`,
+`evals/cases/` and the asset roots (`public/`, `src/assets/`,
+`src/design-system/fonts`, `src/design-system/icons`), and every image,
+font, audio, video or PDF file anywhere in git (generated `docs/qa/`
+evidence and `contract/` excepted). Fixtures must be `self-authored`. A
+skin asset may also be `licensed: <SPDX>` with its licence file (same
+origin and author) listed beside it (the two OFL fonts).
 
 ## PII (NFR-3)
 
 - `e2e/fixtures/profile.ts` exports the fictional display name the stack is
   seeded with for e2e runs and recordings.
 - `expectNoRealName(page)` fails if the text of a page contains the value
-  of `DOUCKO_CHILD_DISPLAY_NAME`, the real name set on the laptop. The smoke
-  test calls it, and every later e2e spec does too.
+  of `DOUCKO_CHILD_DISPLAY_NAME`, the real name set on the laptop. It never
+  hands the name to a matcher, so a failure (and the QA report that copies
+  it) does not contain it. Against a stack (`E2E_BASE_URL`) the variable is
+  required. `e2e/fixtures/test.ts` runs it after every test as an auto
+  fixture; every spec imports `test` from there.
+
+## Serving (Dockerfile, nginx)
+
+- Base images pinned by digest (node 22, nginx stable 1.30). The build stops
+  if `contract/api/openapi.yaml` is missing, so the image is always built
+  from the pinned contract (NFR-12).
+- nginx: one origin for SPA and `/api/` (proxied with the original
+  `Host` and `X-Forwarded-For`); a missing `/assets/` file is 404, not the
+  SPA page; `server_tokens off`; `X-Content-Type-Options`,
+  `Referrer-Policy` and a CSP (`script-src 'self'`, `frame-ancestors
+  'none'`, `object-src 'none'`) on every response. nginx still runs as
+  root inside the container; an unprivileged image would change the
+  Compose port mapping and is left to Phase 5.
+- `tsconfig.e2e.json` gives only the e2e specs DOM types; Node-side config
+  files have none.
 
 ## Risks & mitigations
 

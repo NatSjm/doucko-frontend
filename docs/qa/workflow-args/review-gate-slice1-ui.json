@@ -1,0 +1,7 @@
+{
+  "scope": "slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui",
+  "baseRef": "93e81cd",
+  "headRef": "HEAD",
+  "focus": "Check against the change's spec delta (openspec/changes/implement-platform-foundation-ui/specs/platform-foundation/spec.md) and the store specs gamification ('Light and dark theme') and content-authoring (CA-D21). Pay attention to: the lint rule's false negatives (literal text it misses), whether the pseudo-catalog test can pass while a string bypasses the catalog, the theme and a11y e2e actually iterating every route, the provenance check's coverage of fixture/asset roots, nginx proxying and SPA fallback, the Dockerfile build with the contract submodule, and tsconfig splits leaking Node types into app code.",
+  "change": "implement-platform-foundation-ui"
+}

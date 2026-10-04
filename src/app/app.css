@@ -4,3 +4,8 @@
   place-items: center;
   padding: var(--space-6);
 }
+
+/* Route marker only: no box of its own, so the screen lays out as if it were not there. */
+.app-route {
+  display: contents;
+}

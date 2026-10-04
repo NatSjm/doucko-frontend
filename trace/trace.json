@@ -859,7 +859,8 @@
       ],
       "ownedHere": true,
       "tests": [
-        "src/api/contract-client.test.ts"
+        "src/api/contract-client.test.ts",
+        "src/test/container-config.test.ts"
       ]
     },
     {

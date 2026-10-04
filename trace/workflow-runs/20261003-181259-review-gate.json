@@ -1,0 +1,105 @@
+{
+  "workflow": "review-gate",
+  "file": "./.claude/workflows/review-gate.js",
+  "description": "Multi-dimensional adversarial review of a diff or capability: correctness, security, and spec compliance, with every finding adversarially verified before it is reported.",
+  "dryRun": false,
+  "startedAt": "2026-10-03T18:12:59.288Z",
+  "finishedAt": "2026-10-03T18:15:01.430Z",
+  "args": {
+    "scope": "slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui",
+    "baseRef": "93e81cd",
+    "headRef": "HEAD",
+    "focus": "Check against the change's spec delta (openspec/changes/implement-platform-foundation-ui/specs/platform-foundation/spec.md) and the store specs gamification ('Light and dark theme') and content-authoring (CA-D21). Pay attention to: the lint rule's false negatives (literal text it misses), whether the pseudo-catalog test can pass while a string bypasses the catalog, the theme and a11y e2e actually iterating every route, the provenance check's coverage of fixture/asset roots, nginx proxying and SPA fallback, the Dockerfile build with the contract submodule, and tsconfig splits leaking Node types into app code."
+  },
+  "settings": {
+    "allowedTools": null,
+    "concurrency": 4,
+    "model": null,
+    "budgetPerAgentUsd": 2,
+    "maxTotalUsd": 10,
+    "untypedTools": "Read,Grep,Glob",
+    "permissionMode": "acceptEdits"
+  },
+  "outcome": "failed",
+  "stoppedBecause": null,
+  "error": null,
+  "totalCostUsd": 1.6658,
+  "steps": [
+    {
+      "label": "find:correctness",
+      "phase": "Find",
+      "agentType": "code-reviewer",
+      "structured": true,
+      "ok": false,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --agent code-reviewer --json-schema <…>",
+      "promptChars": 1088,
+      "durationMs": 122134,
+      "sessionId": "fc55afc3-7509-4867-a853-f74ca3adccc9",
+      "costUsd": 0.5560406,
+      "numTurns": 9,
+      "error": "result did not contain JSON for the requested schema"
+    },
+    {
+      "label": "find:security",
+      "phase": "Find",
+      "agentType": "security-reviewer",
+      "structured": true,
+      "ok": false,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --agent security-reviewer --json-schema <…>",
+      "promptChars": 1116,
+      "durationMs": 85736,
+      "sessionId": "d9908f08-8017-4327-a62a-486cf29c0019",
+      "costUsd": 0.5026764,
+      "numTurns": 18,
+      "error": "success — You've hit your session limit · resets 10pm (Europe/Prague)"
+    },
+    {
+      "label": "find:spec-compliance",
+      "phase": "Find",
+      "agentType": "spec-compliance-auditor",
+      "structured": true,
+      "ok": false,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --agent spec-compliance-auditor --json-schema <…>",
+      "promptChars": 1059,
+      "durationMs": 87681,
+      "sessionId": "f5883cd2-2fdf-438b-aa45-c1dd29d73b45",
+      "costUsd": 0.48749020000000004,
+      "numTurns": 10,
+      "error": "success — You've hit your session limit · resets 10pm (Europe/Prague)"
+    },
+    {
+      "label": "find:visual",
+      "phase": "Find",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1328,
+      "durationMs": 12515,
+      "sessionId": "f58b7140-7cb3-4ee9-8676-519cc6941903",
+      "costUsd": 0.1196318,
+      "numTurns": 5,
+      "result": {
+        "findings": []
+      }
+    }
+  ],
+  "logs": [
+    {
+      "phase": "Find",
+      "message": "0 unique findings across 4 dimensions"
+    },
+    {
+      "phase": "Report",
+      "message": "confirmed: 0, contested: 0, rejected: 0"
+    }
+  ],
+  "returned": {
+    "scope": "slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui",
+    "summary": "Review gate for slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui: 0 confirmed, 0 contested (treat as confirmed unless trivially wrong), 0 rejected.",
+    "confirmed": [],
+    "contested": [],
+    "rejected": [],
+    "reviewEvidence": null
+  }
+}

@@ -4,4 +4,5 @@
  */
 export const cs = {
   'app.name': 'Doučko',
+  'app.notFound': 'Tahle stránka tu není.',
 } as const;

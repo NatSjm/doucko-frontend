@@ -1,0 +1,99 @@
+{
+  "workflow": "review-gate",
+  "file": "./.claude/workflows/review-gate.js",
+  "description": "Multi-dimensional adversarial review of a diff or capability: correctness, security, and spec compliance, with every finding adversarially verified before it is reported.",
+  "dryRun": false,
+  "startedAt": "2026-10-03T22:13:34.081Z",
+  "finishedAt": "2026-10-03T22:33:34.218Z",
+  "args": {
+    "scope": "slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui",
+    "baseRef": "93e81cd",
+    "headRef": "HEAD",
+    "focus": "Check against the change's spec delta (openspec/changes/implement-platform-foundation-ui/specs/platform-foundation/spec.md) and the store specs gamification ('Light and dark theme') and content-authoring (CA-D21). Pay attention to: the lint rule's false negatives (literal text it misses), whether the pseudo-catalog test can pass while a string bypasses the catalog, the theme and a11y e2e actually iterating every route, the provenance check's coverage of fixture/asset roots, nginx proxying and SPA fallback, the Dockerfile build with the contract submodule, and tsconfig splits leaking Node types into app code."
+  },
+  "settings": {
+    "allowedTools": null,
+    "concurrency": 4,
+    "model": null,
+    "budgetPerAgentUsd": 2,
+    "maxTotalUsd": 10,
+    "untypedTools": "Read,Grep,Glob",
+    "permissionMode": "acceptEdits"
+  },
+  "outcome": "failed",
+  "stoppedBecause": null,
+  "error": null,
+  "totalCostUsd": 0.6692,
+  "steps": [
+    {
+      "label": "find:correctness",
+      "phase": "Find",
+      "agentType": "code-reviewer",
+      "structured": true,
+      "ok": false,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --agent code-reviewer --json-schema <…>",
+      "promptChars": 1088,
+      "durationMs": 1200095,
+      "error": "no JSON result (exit null): [run-workflow] timed out after 20 min"
+    },
+    {
+      "label": "find:security",
+      "phase": "Find",
+      "agentType": "security-reviewer",
+      "structured": true,
+      "ok": false,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --agent security-reviewer --json-schema <…>",
+      "promptChars": 1116,
+      "durationMs": 1161528,
+      "sessionId": "e9a763e0-ad30-4fb7-82ad-6cb74e50993c",
+      "costUsd": 0.5819331999999999,
+      "numTurns": 14,
+      "error": "result did not contain JSON for the requested schema"
+    },
+    {
+      "label": "find:spec-compliance",
+      "phase": "Find",
+      "agentType": "spec-compliance-auditor",
+      "structured": true,
+      "ok": false,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --agent spec-compliance-auditor --json-schema <…>",
+      "promptChars": 1059,
+      "durationMs": 1200072,
+      "error": "no JSON result (exit null): [run-workflow] timed out after 20 min"
+    },
+    {
+      "label": "find:visual",
+      "phase": "Find",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1328,
+      "durationMs": 274380,
+      "sessionId": "23d77994-3dad-441f-9f6b-9289f713e4d4",
+      "costUsd": 0.087268,
+      "numTurns": 4,
+      "result": {
+        "findings": []
+      }
+    }
+  ],
+  "logs": [
+    {
+      "phase": "Find",
+      "message": "0 unique findings across 4 dimensions"
+    },
+    {
+      "phase": "Report",
+      "message": "confirmed: 0, contested: 0, rejected: 0"
+    }
+  ],
+  "returned": {
+    "scope": "slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui",
+    "summary": "Review gate for slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui: 0 confirmed, 0 contested (treat as confirmed unless trivially wrong), 0 rejected.",
+    "confirmed": [],
+    "contested": [],
+    "rejected": [],
+    "reviewEvidence": null
+  }
+}

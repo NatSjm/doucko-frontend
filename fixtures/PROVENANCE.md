@@ -1,16 +1,21 @@
 # Fixture and asset provenance (NFR-4, CA-D21)
 
-Every fixture file (`fixtures/**`, `e2e/fixtures/**`) and every skin asset
-(`src/design-system/fonts/**`, `src/design-system/icons/**`) is listed here.
-Workbook content (text, images, answer keys, PDFs) is never committed.
-Fixtures must be `self-authored`. A skin asset may also be
-`licensed: <SPDX id>`, with its licence file listed too.
+Every fixture file (`fixtures/**`, `e2e/fixtures/**`, `evals/cases/**`), every
+skin asset (`public/**`, `src/assets/**`, `src/design-system/fonts/**`,
+`src/design-system/icons/**`) and every image, font, audio, video or PDF file
+anywhere in the repository is listed here (generated QA evidence under
+`docs/qa/` and the pinned `contract/` excepted). Workbook content (text,
+images, answer keys, PDFs) is never committed. Fixtures must be
+`self-authored`. A skin asset may also be `licensed: <SPDX id>`, with its
+licence file (same origin and author) listed beside it.
 `src/test/provenance.test.ts` fails on an unlisted file, a disallowed origin,
-a missing author, or a listed file that does not exist.
+a missing author, a missing licence file, a listed file that does not exist,
+or a row that does not have the shape below.
 
 | Path | Origin | Author | What it is |
 |---|---|---|---|
 | `e2e/fixtures/profile.ts` | self-authored | Doučko project | Fictional e2e display name and the real-name guard (NFR-3) |
+| `e2e/fixtures/test.ts` | self-authored | Doučko project | Playwright `test` that runs the real-name guard after every test (NFR-3) |
 | `src/design-system/fonts/DelaGothicOne-Regular.woff2` | licensed: OFL-1.1 | The Dela Gothic Project Authors | Display font |
 | `src/design-system/fonts/DelaGothicOne-OFL.txt` | licensed: OFL-1.1 | The Dela Gothic Project Authors | Its SIL Open Font License |
 | `src/design-system/fonts/Rubik-Variable.woff2` | licensed: OFL-1.1 | The Rubik Project Authors | Text font |
