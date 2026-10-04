@@ -1,0 +1,659 @@
+{
+  "workflow": "review-gate",
+  "file": "./.claude/workflows/review-gate.js",
+  "description": "Multi-dimensional adversarial review of a diff or capability: correctness, security, and spec compliance, with every finding adversarially verified before it is reported.",
+  "dryRun": false,
+  "startedAt": "2026-10-04T10:48:48.990Z",
+  "finishedAt": "2026-10-04T10:52:14.083Z",
+  "args": {
+    "scope": "slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui",
+    "baseRef": "93e81cd",
+    "headRef": "HEAD",
+    "focus": "Round 6. Verify the round-5 fixes (commit 4c1aece): lint rule Intl/.format argument handling and toLocale exemption, theme e2e select navigation handling, static theme guard regex, container-smoke evidence (commit/image/nginx.conf hash, aborted-run row, 421 header values). Check against the spec delta and design.md. Do NOT re-report what design.md lists under \"Accepted limits (review round 3)\" or the documented real-compose-stack follow-up; report only defects in shipped behaviour or tests that can pass while the spec is violated.",
+    "change": "implement-platform-foundation-ui"
+  },
+  "settings": {
+    "allowedTools": null,
+    "concurrency": 4,
+    "model": null,
+    "budgetPerAgentUsd": 2,
+    "maxTotalUsd": 15,
+    "untypedTools": "Read,Grep,Glob,Write,Bash",
+    "permissionMode": "acceptEdits"
+  },
+  "outcome": "ok",
+  "stoppedBecause": null,
+  "error": null,
+  "totalCostUsd": 4.2314,
+  "steps": [
+    {
+      "label": "find:correctness",
+      "phase": "Find",
+      "agentType": "code-reviewer",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 1009,
+      "durationMs": 81646,
+      "sessionId": "a5c2fb05-c59c-4308-91eb-c5d5ce6d109d",
+      "costUsd": 0.520894,
+      "numTurns": 9,
+      "result": {
+        "findings": [
+          {
+            "title": "Static theme guard misses token overrides on a wrapper class and selector lists that continue after html/body",
+            "file": "src/app/theme-source.test.ts",
+            "line": 29,
+            "severity": "major",
+            "confidence": "medium",
+            "evidence": "The token rule is `'(:root|html|body)[^{,;]*\\{[^}]*--[\\w-]+\\s*:'`. Because `[^{,;]*` stops at a comma, `html.dark,\\n.app { --paper: #000 }` does not match. Any non-root selector also gets through, e.g. `.app-shell.night { --paper: #000 }`, and the class that turns it on (`className={night ? 'app-night' : 'app'}`) is not caught because the className rule only looks for the words `dark|light|theme`. The e2e then only checks `body` background-color (e2e/theme.spec.ts:46), so a full-viewport wrapper painting the overridden `--paper` would get past both layers. That breaks the spec's \"No app source … SHALL set … a colour scheme\" and \"the background stays the OS theme's --paper\".",
+            "suggestion": "Make the static rule reject any redefinition, in app CSS, of a design-system token name taken from src/design-system/tokens.css, whatever the selector. Allow a short list of non-colour exceptions if one is needed. Also let the selector match continue past commas (e.g. `[^{]*`). In the e2e, check the computed background of the route marker element or of `elementFromPoint` at the viewport centre, not only `body`."
+          },
+          {
+            "title": "Container-smoke 'dirty' flag ignores most image inputs, so a PASS can be credited to a commit it did not test",
+            "file": "tools/container-smoke.mjs",
+            "line": 47,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "The Dockerfile runs `COPY . .` and `npm ci` from package.json/package-lock.json, so vite.config.ts, public/, tsconfig*, package*.json and the contract/ submodule are all built into the image. The dirty probe, however, is `git status --porcelain -- nginx.conf Dockerfile src index.html`, so a local change to any of those other inputs still prints the bare commit as what was tested. The committed evidence also says `commit b1972e0… (with uncommitted changes to the image inputs)` together with `Result: PASS`, and nothing records which changes those were. The evidence therefore cannot be traced to any commit, which defeats the 'cannot outlive a change' goal on line 44.",
+            "suggestion": "Run the probe over the whole build context: `git status --porcelain` with the .dockerignore exclusions, plus `git submodule status contract`. Either refuse to write PASS evidence while the tree is dirty or record a content hash of the dirty inputs (e.g. `git stash create` or `git diff HEAD | sha256`). Then regenerate the evidence from a clean commit."
+          },
+          {
+            "title": "Intl formatter called without `new` is still a lint false positive, unlike the `new` form",
+            "file": "eslint-rules/no-literal-ui-text.js",
+            "line": 55,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "With the Intl branch gone, `new Intl.DateTimeFormat('cs', …).format(d)` passes only because `literalTexts` returns [] for a NewExpression (the default case). `Intl.DateTimeFormat('cs').format(d)` is valid JS without `new`, but it is a CallExpression: the generic branch scans its arguments, so `'cs'` is reported as 'Literal UI text'. The JSDoc on line 52 still says \"Intl.* take locales and options, not text\", which the code no longer implements for that form.",
+            "suggestion": "Treat a CallExpression whose callee is `Intl.<Ctor>` the same as the NewExpression: skip its arguments but keep scanning `.format(...)` arguments. Add valid/invalid RuleTester cases for both forms, and update the line 52 JSDoc."
+          }
+        ]
+      }
+    },
+    {
+      "label": "find:security",
+      "phase": "Find",
+      "agentType": "security-reviewer",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 1037,
+      "durationMs": 80149,
+      "sessionId": "27ca69d2-0d37-4eb8-ac79-4b1e34cc3c81",
+      "costUsd": 0.4821226,
+      "numTurns": 9,
+      "result": {
+        "findings": [
+          {
+            "title": "Static FR-58 theme guard misses token overrides set on a wrapper element or through a React style prop",
+            "file": "src/app/theme-source.test.ts",
+            "line": 28,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "Round 5 widened the CSS pattern to `(:root|html|body)[^{,;]*\\{…--x:`, but design tokens are inherited custom properties, so they can be redefined on any ancestor. A later feature could ship `#root { --paper: #0e1330 }` or `.app-night { --paper: … }` toggled by `className={mode}` (no dark/light/theme word in it), or `<div style={{ '--paper': night ? … : … }}>`. The CSP allows inline styles on purpose, and this guard only catches `setProperty('--…')`. All of these pass the guard. The e2e only checks `body` background-color and `[data-theme]`, so a theme forced on a wrapper below body also gets past it. The test says it covers 'screens and states it cannot reach', but a forced theme in these forms passes both checks.",
+            "suggestion": "Flag any custom-property declaration of a design-system token (for example `--(paper|ink|hero|surface…)\\s*:` in .css, and `['\"]--[\\w-]+['\"]\\s*:` in .tsx style objects) outside src/design-system, whatever the selector. Add `#root { --paper: #000 }`, `.x { --paper: #000 }` and `style={{ '--paper': c }}` to the `forced` list. In the e2e, also assert the computed `--paper` (or background) of the screen marker's container, not just body."
+          },
+          {
+            "title": "Container-smoke 'dirty' flag misses most image inputs, so the evidence can name a clean commit for an image built from uncommitted files",
+            "file": "tools/container-smoke.mjs",
+            "line": 47,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "The Dockerfile builds from `COPY . .`, so the whole context except .dockerignore goes into the image, including package.json, package-lock.json, vite.config.ts, tsconfig*, public/ and the contract/ submodule (from which api:generate regenerates the client). The dirty check only runs `git status --porcelain -- nginx.conf Dockerfile src index.html`. If package-lock.json (a dependency swap), vite.config.ts or the contract pin is edited locally and not committed, the evidence prints `commit <sha>` with no '(with uncommitted changes…)' note and Result: PASS. The point of the round-5 fix was that 'the evidence cannot outlive a change'. The current file is accurate: nginx.conf hash 4907790e… matches HEAD, and the only uncommitted inputs between b1972e0 and 4c1aece were two test files.",
+            "suggestion": "Run `git status --porcelain --ignore-submodules=none` across the whole build context (repo root minus the .dockerignore entries), or derive the pathspec from .dockerignore. Also record `git -C contract rev-parse HEAD`, so the contract pin the image was built from is in the evidence."
+          }
+        ]
+      }
+    },
+    {
+      "label": "find:spec-compliance",
+      "phase": "Find",
+      "agentType": "spec-compliance-auditor",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 980,
+      "durationMs": 114722,
+      "sessionId": "1a2c135f-f3ec-4fb7-948f-a3342ecb17e2",
+      "costUsd": 0.7244866,
+      "numTurns": 14,
+      "result": {
+        "findings": [
+          {
+            "title": "Static theme guard misses a theme forced through a non-html/body token rule or setAttribute/variable className, so the 'No toggle' scenario can pass on the current control-less screens while violated",
+            "file": "src/app/theme-source.test.ts",
+            "line": 17,
+            "severity": "major",
+            "confidence": "medium",
+            "evidence": "Spec 'No toggle': \"a route with no control reports the check as skipped, never passed, and the static source check covers it\". Every current screen has no control, so e2e/theme.spec.ts:57 skips and THEME_WRITE is the only check. It only recognises token redefinitions on `(:root|html|body)[^{,;]*\\{` and class writes of the form `className\\s*\\+?=\\s*[{\"'`]...(dark|light|theme)` or `classList.x(...dark|light|theme)`. This combination passes the guard but still re-themes the page: app.css `.night { --paper: #0e1330 }` with `document.documentElement.className = mode` (assigned from a variable, so there is no quote after `=`) or `document.documentElement.setAttribute('class', 'night')`. sources() also scans only `.ts/.tsx/.css` under src, so a `.js/.jsx` module or a `public/*.js` script loaded from index.html is never read. Coverage: 18 scenarios: 16 implemented, 2 partial (this one, plus 'API through the frontend origin', which is the documented real-compose follow-up), 0 missing, 0 contradicted.",
+            "suggestion": "Key the guard on token names rather than selectors. Collect every custom property declared in src/design-system/tokens.css and fail when any app CSS declares one of them under any selector. Add `setAttribute\\(\\s*['\"`](class|style)` and a `(document\\.documentElement|document\\.body)\\.className\\s*\\+?=` pattern that matches regardless of the right-hand side. Widen sources() to .js/.jsx/.mjs and to public/. Add each new form to the 'forced' probe list."
+          },
+          {
+            "title": "Container-smoke fingerprint ties the evidence to a commit that is not HEAD and leaves out most image inputs and the e2e specs it ran",
+            "file": "tools/container-smoke.mjs",
+            "line": 45,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "The round-5 fix should make the evidence unable to outlive a change. docs/qa/container-smoke-latest.md records \"commit b1972e0 … (with uncommitted changes to the image inputs)\", while HEAD is 4c1aece. Nothing in the file lets a reader confirm that the dirty tree equals 4c1aece. The `dirty` pathspec covers only `nginx.conf Dockerfile src index.html`. The Dockerfile does `COPY . .` and `npm ci`, so package.json, package-lock.json, the contract/ submodule pin, public/, vite.config and tsconfig* are image inputs that are neither checked for dirtiness nor hashed. The 'Playwright e2e through nginx: PASS' row ran e2e/theme.spec.ts, which round 5 changed, and the round-5 change is not fingerprinted either. The nginx.conf sha256 (4907790e…) does match HEAD.",
+            "suggestion": "Hash the full set of build-context inputs, for example `git ls-files -s` plus `git diff HEAD` of the context minus .dockerignore, together with e2e/ and playwright.config.ts. Record that digest in the evidence, or refuse to write a PASS for a dirty tree. Then re-run `npm run test:container` on a clean 4c1aece so the evidence names HEAD."
+          },
+          {
+            "title": "Lint rule false positive on Intl calls without `new` and on Intl methods that take identifiers (.of, RelativeTimeFormat units)",
+            "file": "eslint-rules/no-literal-ui-text.js",
+            "line": 55,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "After round 5, isLocaleFormatting exempts only toLocale*/localeCompare. A `new Intl.X(...)` receiver yields nothing because NewExpression falls to `default: []`, but `Intl.NumberFormat('cs-CZ').format(n)` (legal without `new`) is a CallExpression whose 'cs-CZ' argument gets reported. So do `new Intl.DisplayNames('cs',{type:'language'}).of('en')` and `new Intl.RelativeTimeFormat('cs').format(-1, 'day')`, because the locale, language code and unit arguments are read as UI text. This does not under-enforce the spec, but it is behaviour the spec and design.md do not describe, and it pushes later slices toward eslint-disable.",
+            "suggestion": "Treat a receiver that is a call or `new` of an `Intl.*` constructor as locale formatting for its constructor arguments. Lint only the arguments of `.format`/`.formatToParts` on Intl.ListFormat, and treat `.of(...)` and RelativeTimeFormat units as identifiers. Add valid-case tests (`Intl.NumberFormat('cs-CZ').format(n)`, `.of('en')`) beside the new ListFormat invalid case."
+          },
+          {
+            "title": "Static guard's html/body token pattern also fires on any selector containing 'body' or 'html' as a substring",
+            "file": "src/app/theme-source.test.ts",
+            "line": 28,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "The pattern `(:root|html|body)[^{,;]*\\{[^}]*--[\\w-]+\\s*:` has no word boundary, so an ordinary component rule such as `.modal-body { --gap: var(--space-2) }` or `.card-body{--pad:…}` fails 'no app source sets data-theme or a colour scheme'. The guard then reports a theme override where there is none, and the next slice is likely to weaken it rather than fix it.",
+            "suggestion": "Anchor the selector, for example `(^|[\\s,}>+~(])(:root|html|body)\\b[^{,;]*\\{`, and add `.modal-body { --gap: 1px }` to the negative probe list."
+          }
+        ]
+      }
+    },
+    {
+      "label": "find:visual",
+      "phase": "Find",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1249,
+      "durationMs": 17702,
+      "sessionId": "577aef0c-6e27-4bd2-9ab5-5a90734de204",
+      "costUsd": 0.1478234,
+      "numTurns": 4,
+      "result": {
+        "findings": []
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1754,
+      "durationMs": 22852,
+      "sessionId": "1a8a2cd8-92f0-4a11-b23b-4aa27ec65dcf",
+      "costUsd": 0.1864326,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the mechanism by reading the code. I didn't run the regex because the inline `node -e` check needed approval.\n\n1. **Selector lists.** In `src/app/theme-source.test.ts:28` the token rule is `(:root|html|body)[^{,;]*\\{…`. The class `[^{,;]*` cannot cross a comma, so in `html.dark,\\n.app { --paper: #000 }` the `html` match stops at `,` and never reaches `{`. The second selector `.app` has no :root, html or body anchor, so nothing matches.\n\n2. **Wrapper classes.** `.app-shell.night { --paper: #000 }` has no :root, html or body anchor at all, so it is not caught. No other alternative catches it: there is no data-theme, colour scheme, `setProperty` or `prefers-color-scheme` in it.\n\n3. **The class that switches it on.** The className rule `className\\s*\\+?=\\s*[{\"'`][^\\n]*\\b(dark|light|theme)\\b` only matches those three words, so `className={night ? 'app-night' : 'app'}` gets through. The test's own negative case, `<div className=\"app-route\">`, shows that ordinary class names are meant to pass.\n\n4. **The e2e check.** `e2e/theme.spec.ts:21` and `e2e/theme.spec.ts:46` only assert `body` background-color and that no `[data-theme]` exists. A wrapper element that paints a redefined `--paper` over the viewport would leave `body` unchanged, so both checks pass.\n\nThe guard's own comment says it covers \"a design token rewritten at runtime\" and rules on html or body \"with any qualifier\". It doesn't cover all such rewrites, so the claimed gap is real.\n\n**Severity: downgrade.** This is a coverage hole in a regression guard, not a bug in shipped code. Nothing I saw in current product code exploits it. The finding describes a way the guard could be bypassed in future, not an actual FR-58 violation today.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1787,
+      "durationMs": 22464,
+      "sessionId": "38dc70b7-33ca-4637-81fe-2d3e2294d71d",
+      "costUsd": 0.17642259999999998,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the mechanism by reading the code, but the problem is a gap in the tests, not a bug users can hit today.\n\nWhat's true:\n1. The token rule at src/app/theme-source.test.ts:28 is `(:root|html|body)[^{,;]*\\{[^}]*--[\\w-]+\\s*:`. The `[^{,;]*` part stops at a comma, so `html.dark,\\n.app { --paper:#000 }` doesn't match. Its `body[^{,;]*\\{` branch could still match a later rule body in the same file, but only when one exists.\n2. A selector with no `:root`, `html` or `body` in it, such as `.app-shell.night { --paper:#000 }`, is never matched by any branch.\n3. The className rule at line 24 only flags the words dark, light and theme. A class like `'app-night'` gets through.\n4. The e2e at e2e/theme.spec.ts:20 and :46 only checks the computed background-color of `body` (plus `[data-theme]` count 0). A full-viewport wrapper painting an overridden `--paper` would leave body unchanged and pass.\n\nSo the claim that both layers can be bypassed holds.\n\nWhy I'm downgrading:\n- No current app source does any of this. A grep of non-design-system app code finds no token redefinitions and no night/dark class toggles.\n- Nothing is broken for a real user right now. The risk is that a future change could slip a theme override past the guard.\n- It also needs some deliberate steps: a new token override on a custom selector plus a toggle under a name other than dark/light/theme. That fits a guard-strength issue more than a major correctness defect.\n\nThe suggested fixes are reasonable hardening: reject any token-name redefinition taken from tokens.css whatever the selector, let the selector match continue past commas with `[^{]*`, and in the e2e check the background via `elementFromPoint`.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:tools/container-smoke.mjs",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1669,
+      "durationMs": 19867,
+      "sessionId": "0ca70e1b-5cae-42a8-8b6e-8810d45378b8",
+      "costUsd": 0.1857876,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the mechanism in the code. Line 47 of tools/container-smoke.mjs only checks `git status --porcelain -- nginx.conf Dockerfile src index.html`. The Dockerfile copies package.json and package-lock.json and runs `npm ci`, then runs `COPY . .` and `npm run build`. The .dockerignore leaves out only node_modules, dist, coverage, playwright-report, test-results, .git, docs, trace, retro, openspec and .env*. So vite.config.ts, tsconfig*, package*.json, public/ and the contract/ submodule (whose openapi.yaml is used to regenerate the client) all go into the image, but the dirty probe never looks at them. A change to any of those files leaves `dirty` false, and the evidence then names the bare commit as what was tested.\n\nWhen the probe does fire, line 170 adds only \"(with uncommitted changes to the image inputs)\". It records no diff or hash of those changes. The committed docs/qa/container-smoke-latest.md shows exactly this: `commit b1972e0… (with uncommitted changes to the image inputs)` with Result PASS.\n\nOne partial mitigation exists: line 97 records the Docker image ID, and the evidence also stores the nginx.conf sha256. But an image ID can't be traced back to a source state, so the evidence still can't be tied to a commit. Nothing elsewhere guards this. Minor severity is appropriate, because this is an evidence-integrity gap, not a runtime bug.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:tools/container-smoke.mjs",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1702,
+      "durationMs": 19548,
+      "sessionId": "684af7d2-b509-4efe-96ef-c9d7237f681a",
+      "costUsd": 0.1831428,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed this by reading the code. At tools/container-smoke.mjs:47, `dirty` is computed only from `git status --porcelain -- nginx.conf Dockerfile src index.html`. The Dockerfile copies package.json and package-lock.json and runs `npm ci`, then runs `COPY . .` and `npm run build`. The only exclusions in .dockerignore are node_modules, dist, coverage, playwright-report, test-results, .git, docs, trace, retro, openspec and .env*. So vite.config.ts, the tsconfig*.json files, package*.json, the contract/ submodule and other root files all go into the image. All of these files exist in the repo except public/, which does not exist. Here is how to reproduce it: edit vite.config.ts or package.json, or check out a different contract/ commit, then run `npm run test:container`. The evidence then records the bare HEAD commit with `dirty: false` and `Result: PASS`. The image digest is recorded, but it cannot be traced back to source.\n\nThe second part of the claim also holds. The committed docs/qa/container-smoke-latest.md says \"commit b1972e0… (with uncommitted changes to the image inputs)\" next to \"Result: PASS\". Nothing records which changes those were, and HEAD is now 4c1aece. So the evidence is already tied to a tree that no commit captures.\n\nThis is a gap in evidence integrity, not a runtime or security bug, so severity \"minor\" is appropriate.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:eslint-rules/no-literal-ui-text.js",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1327,
+      "durationMs": 17060,
+      "sessionId": "a415f13b-df0a-493f-8263-ab157b806058",
+      "costUsd": 0.1476596,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I traced the code and the mechanism holds. For `{Intl.DateTimeFormat('cs').format(d)}`, `literalTexts` sees a CallExpression whose callee is the MemberExpression `.format`. `isLocaleFormatting` does not match `format`, so the generic branch runs and calls `literalTexts` on the receiver (line 93). The receiver `Intl.DateTimeFormat('cs')` is itself a CallExpression. Its callee is not `t` and is not a `toLocale*` or `localeCompare` call, so the generic branch runs again and scans its arguments (line 94). `'cs'` contains a letter, so it is reported as literal UI text. The `new` form passes only because NewExpression falls to the `default: return []` case. That case also skips the options object, so `{ style: 'unit' }` passes too, as `src/test/lint-rule.test.ts:35` shows.\n\nECMA-402 lets you call DateTimeFormat, NumberFormat and Collator without `new`, so the call form is valid JS. ListFormat, PluralRules and the other newer constructors do throw without `new`. The JSDoc on line 52 still says \"Intl.* take locales and options, not text\", which only the `new` form honours. The test file has a `new` case only and no case for the call form.\n\nSeverity stays minor. This is a false positive, so the rule is too strict and fails safe: no UI text slips through. A developer can add `new` to silence it. No code in `src/` uses `Intl.` today. Still, the claimed mechanism is accurate and reachable.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:eslint-rules/no-literal-ui-text.js",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1360,
+      "durationMs": 16563,
+      "sessionId": "feea19c7-6d8b-41a1-891d-42f90d7c8461",
+      "costUsd": 0.14431680000000002,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I traced the code and the mechanism holds. In `<p>{Intl.DateTimeFormat('cs').format(d)}</p>`, the outer CallExpression's callee is `X.format`, a MemberExpression, so line 93 computes `receiver = literalTexts(X)`, where X is the CallExpression `Intl.DateTimeFormat('cs')`. For X, `isLocaleFormatting` fails because `DateTimeFormat` does not match `toLocale*|localeCompare`, and the callee is not `t`. So X falls through to the generic branch at line 94, which scans its arguments. `'cs'` contains a letter, so the rule reports it as \"Literal UI text\".\n\nThe `new` form returns [] through the `default` case for NewExpression, and that is why the valid test at src/test/lint-rule.test.ts:35 passes. There is no valid or invalid test for the form without `new`.\n\nThe JSDoc on line 52 still says \"Intl.* take locales and options, not text\", which the code no longer implements for the call form, so that part of the finding is accurate too.\n\nImpact is limited. This is a false positive in a developer-time lint rule, not a runtime or user-facing bug. No code in `src/` uses `Intl.*` without `new` today. The workaround is trivial (add `new`) and it fails loudly rather than letting real text through. Severity \"minor\" fits that, so no change.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1803,
+      "durationMs": 12549,
+      "sessionId": "a6d02f86-f7e7-491e-bd17-60bbca7b31ac",
+      "costUsd": 0.0790134,
+      "numTurns": 3,
+      "result": {
+        "refuted": false,
+        "reasoning": "I read src/app/theme-source.test.ts:15-30 and could not refute the finding. The CSS alternative `(:root|html|body)[^{,;]*\\{[^}]*--[\\w-]+\\s*:` only matches when `:root`, `html` or `body` appears before the `{`. I checked each bypass the finding names against the regex:\n- `#root { --paper: #000 }` contains `root` but not `:root`, so it doesn't match.\n- `.app-night { --paper: … }` matches no alternative.\n- `style={{ '--paper': x }}` contains no `setProperty(`, `data-theme`, `colorScheme` or theme-word className, so it doesn't match either.\n- `className={mode}`, where the value is a variable, doesn't match the className alternative because the regex requires a literal `{\"'\\`` followed by dark/light/theme.\n\nCustom properties are inherited, so redefining `--paper` on any wrapper would force colours on the subtree and get past the guard. The test's comment claims it covers screens the e2e cannot reach, so the gap is real against the test's own stated intent. Nothing else in the code guards against this: the sources() scan is the only mechanism, and the finding's description of the e2e is plausible. These bypasses are hypothetical future code and the guard is a best-effort heuristic, so minor severity is right.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1836,
+      "durationMs": 21560,
+      "sessionId": "a72914f5-8529-43e0-9b9d-83027e215e81",
+      "costUsd": 0.1088188,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I traced the regex at src/app/theme-source.test.ts:15-29 by hand against each bypass the finding names. None of them match:\n- `#root { --paper: … }`: the alternation needs the literal `:root`, `html` or `body` before the `{`. `#root` has no colon, so it doesn't match.\n- `.app-night { --paper: … }`: no `:root`, `html` or `body`, so it doesn't match.\n- `className={mode}`: the className pattern needs a literal `\\b(dark|light|theme)\\b` on the line, so it doesn't match.\n- `style={{ '--paper': x }}`: only `setProperty\\(\\s*['\"`]--` covers runtime tokens. A style-object key isn't matched by any branch.\n\nSo the mechanism is real: a later change could force a theme in any of these forms and the static guard would pass. The `forced` self-test list doesn't include them either. The finding is accurate.\n\nOn exploitability, it is not an attacker-reachable flaw. No current source does any of this. It's a gap in a regression guard for FR-58 (the theme follows the OS), so it could only cause a future product regression. It is not a security vulnerability, and \"dimension: security\" is the wrong label. The right label is test coverage or spec conformance. \"Minor\" fits that kind of guard gap, so I'm keeping the severity. The suggested fix is reasonable: flag any token custom-property declaration and any quoted `--` style-object key outside src/design-system.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:tools/container-smoke.mjs",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1740,
+      "durationMs": 14337,
+      "sessionId": "b6b51ab5-8c41-49ac-90c8-83e0fc16b29f",
+      "costUsd": 0.1075904,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "The finding holds. At tools/container-smoke.mjs:47 the dirty flag comes from `git status --porcelain -- nginx.conf Dockerfile src index.html`. The Dockerfile copies `package.json package-lock.json`, runs `npm ci`, then runs `COPY . .` and `npm run build`. The .dockerignore leaves out only node_modules, dist, coverage, playwright-report, test-results, .git, docs, trace, retro, openspec and .env*. So package.json, package-lock.json, vite.config.ts, tsconfig*, public/ and the contract/ submodule all go into the build, and none of them is in the pathspec. Suppose someone edits package-lock.json or vite.config.ts locally, or moves the contract pin, and doesn't commit it. Then `tested.dirty` is false, line 170 prints `commit <sha>` with no uncommitted-changes note, and Result reads PASS whenever the checks pass. Nothing else in the file guards this: the only other fingerprints are the nginx.conf hash and the image ID, and the image ID is never compared with a commit. The comment at line 44 says the evidence \"cannot outlive a change\", and this gap breaks that promise. The impact is limited to the evidence/provenance record, not runtime behaviour, so minor severity is right.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:tools/container-smoke.mjs",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1773,
+      "durationMs": 18046,
+      "sessionId": "6226528b-5200-44c3-bb83-2bb6f812be00",
+      "costUsd": 0.1124262,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the mechanism in the code. tools/container-smoke.mjs:47 sets `dirty` from `git status --porcelain -- nginx.conf Dockerfile src index.html` only. The Dockerfile runs `COPY package.json package-lock.json ./` and `npm ci`, then `COPY . .` and `npm run build`. .dockerignore leaves out only node_modules, dist, coverage, reports, .git, docs, trace, retro, openspec and .env*. That means package.json, package-lock.json, vite.config.ts, tsconfig*, public/ and the contract/ submodule (used by api:generate) all go into the image but are never checked by the dirty test. A submodule pin change would also be missed, because the pathspec leaves out `contract`. At line 170 the evidence line adds '(with uncommitted changes to the image inputs)' only when `dirty` is true. To reproduce: edit vite.config.ts or package-lock.json, or check out a different contract commit, then run `node tools/container-smoke.mjs`. The evidence names the HEAD commit as if it were clean and the result can still be PASS. One partial mitigation exists: the image ID (line 97) is recorded, so the exact image is identifiable. But the ID does not tie the image back to source, so the claim that the evidence cannot outlive a change is still broken for these inputs. This is an evidence-integrity / provenance gap, not something an attacker can exploit, and it needs a developer's own uncommitted edits. Minor severity fits.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 2215,
+      "durationMs": 22633,
+      "sessionId": "c0f2e426-fbcd-4d01-81a3-ee380c268c86",
+      "costUsd": 0.12049739999999999,
+      "numTurns": 6,
+      "result": {
+        "refuted": false,
+        "reasoning": "I read the regex in `src/app/theme-source.test.ts:15-30`, and the bypasses the finding describes are real:\n- **`className` from a variable:** `className\\s*\\+?=\\s*[{\"'`]...` only matches when a quote or brace follows `=`. So `document.documentElement.className = mode` does not match.\n- **`setAttribute`:** `setAttribute('class','night')` matches none of the patterns.\n- **Token rules on other selectors:** a token is only caught when it is redefined under `(:root|html|body)`. A rule like `.night { --paper: #0e1330 }` in app CSS is not caught.\n- **File types:** `sources()` only reads `.ts/.tsx/.css` (plus `index.html`). `.js/.jsx/.mjs` files and `public/` are never scanned. There is currently no `public/` directory and there are no `.js` files under `src`, so this part is latent.\n\nNone of these forms is in the 'forced' probe list, so the guard's self-test cannot catch them.\n\n**Why I recommend downgrading:**\n- Nothing in the codebase currently uses any of these bypasses. The issue is that the guard is incomplete, not that a theme is being forced today.\n- The first e2e test (`e2e/theme.spec.ts:18-23`) checks the body background against the OS scheme on every screen. That catches any theme forced at load time, whatever method is used.\n- Any control added later is clicked by the second e2e test, which checks the background after each click.\n\nSo the gap only matters for a theme switch that is neither applied at load nor triggered by a reachable control, in code that does not exist yet. The mechanism is correct and the suggested hardening is sensible, but this is a minor robustness gap, not major.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 2248,
+      "durationMs": 21319,
+      "sessionId": "0805b506-903f-4b57-8581-40dae6aa3b1a",
+      "costUsd": 0.10257519999999999,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "The guard gap is real, but nothing in the code violates the rule today, so I'm keeping the finding at lower severity.\n\nConfirmed:\n- The regex at src/app/theme-source.test.ts:15-30 has a `className` pattern that needs `{`, `\"`, `'` or a backtick after `=`. So `document.documentElement.className = mode` (assigned from a variable) does not match.\n- The regex has no `setAttribute` pattern, so `setAttribute('class','night')` does not match.\n- Token rules only match on `:root`, `html` or `body`. A rule like `.night { --paper: … }` passes, yet once that class is on `<html>` it overrides the `:root` tokens through inheritance and source order (app CSS loads after the tokens).\n- `sources()` only reads `.ts`, `.tsx` and `.css`. e2e/theme.spec.ts:56 skips screens with no controls and points to this static test, so the static test is the only check on those screens.\n\nSo a future change could break the \"No toggle\" scenario and still pass.\n\nWhy downgrade:\n- Exploitability is nil today. There is no `public/` directory and no tracked `.js`, `.jsx` or `.mjs` file under `src`.\n- No app source uses `setAttribute` or a `className` assigned from a variable.\n- No user or attacker can trigger this. It is a regression-guard weakness that would only matter after a developer writes theme-forcing code in one of the bypass forms.\n- A regex-based static check can always be bypassed somehow. The forms listed here are plausible, though, and cheap to add.\n\nThis is a valid test-hardening and spec-coverage gap, more minor than major.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:tools/container-smoke.mjs",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1770,
+      "durationMs": 17091,
+      "sessionId": "96fa6c12-6c1b-4a09-aa4f-ae7287cddafa",
+      "costUsd": 0.13697140000000002,
+      "numTurns": 7,
+      "result": {
+        "refuted": false,
+        "reasoning": "I couldn't refute this. The mechanism is in the code. At tools/container-smoke.mjs:45-50, `tested` records `git rev-parse HEAD`. It sets a `dirty` boolean from `git status --porcelain -- nginx.conf Dockerfile src index.html` and hashes only nginx.conf. The Dockerfile does `COPY package.json package-lock.json`, `npm ci`, `COPY . .` and `npm run build`, and it checks for contract/api/openapi.yaml. So package.json, package-lock.json, the contract/ submodule pin, public/, vite.config and tsconfig all go into the image, but the dirty check does not cover them and nothing hashes them. A change to any of those files leaves `dirty` false and the evidence looks clean. The `--e2e` step runs `npx playwright test` from the working tree, and neither e2e/ nor playwright.config is fingerprinted. When `dirty` is true, the evidence only says \"with uncommitted changes\" and gives no digest. A reader cannot tell what tree was tested. The image ID is recorded, but it is a local, non-reproducible build ID, so nobody can compare it against HEAD. The committed docs/qa/container-smoke-latest.md says \"commit b1972e02… (with uncommitted changes to the image inputs)\", while git status gives HEAD as 4c1aece. So the evidence does not name HEAD and cannot be tied to it. I was blocked from running `git show --stat`, so I did not check the claim that round 5 changed e2e/theme.spec.ts. The core claim does not depend on it: the script never fingerprints e2e/ at all. Minor severity fits: this is an evidence-integrity gap, not a product bug.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:tools/container-smoke.mjs",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1803,
+      "durationMs": 17708,
+      "sessionId": "5fd0ba7a-b674-45f9-9fbf-a7e051e968c4",
+      "costUsd": 0.1358788,
+      "numTurns": 8,
+      "result": {
+        "refuted": false,
+        "reasoning": "I read the code and the claim holds. In tools/container-smoke.mjs:45-50, `tested.dirty` runs `git status --porcelain` only over `nginx.conf Dockerfile src index.html`, and the only content hash taken is of nginx.conf. The Dockerfile copies package.json and package-lock.json, runs `npm ci`, then does `COPY . .` and `npm run build`. So package*.json, vite.config, tsconfig*, public/ and the contract/ submodule pin all go into the image, and none of them is checked for changes or hashed. The script also runs `npx playwright test` from the working tree and fingerprints none of e2e/ or playwright.config.ts.\n\nThe mismatch is real. docs/qa/container-smoke-latest.md:7 names commit b1972e02… \"(with uncommitted changes to the image inputs)\", while the session's git status shows HEAD at 4c1aece. Nothing in the evidence lets a reader tell whether that dirty tree matched 4c1aece.\n\nThe failure can be reproduced: edit package.json, vite.config or an e2e spec without committing, run `npm run test:container`, and the evidence reports a clean \"commit X\" PASS for an image and e2e run that commit X never produced.\n\nThis is not something an attacker can exploit. It is a gap in how complete the evidence is: the record can outlive the inputs it claims to cover, which is exactly what the round-5 comment (\"so the evidence cannot outlive a change\") meant to prevent. Minor severity fits.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:eslint-rules/no-literal-ui-text.js",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1679,
+      "durationMs": 12848,
+      "sessionId": "4678e850-6d11-4320-9d6d-74c49245d201",
+      "costUsd": 0.1090656,
+      "numTurns": 3,
+      "result": {
+        "refuted": false,
+        "reasoning": "I traced the code in eslint-rules/no-literal-ui-text.js and the mechanism holds. isLocaleFormatting (lines 55-58) only matches a member callee named toLocale* or localeCompare.\n\n1. `{Intl.NumberFormat('cs-CZ').format(n)}`: the outer CallExpression's callee is a MemberExpression `.format`, so it is not exempt. Line 93 takes literalTexts of the receiver. The receiver is the CallExpression `Intl.NumberFormat('cs-CZ')`. Its callee `Intl.NumberFormat` is not t() and not locale formatting, so line 94 returns its arguments. 'cs-CZ' has letters, so it is reported.\n\n2. `new Intl.DisplayNames('cs',{type:'language'}).of('en')`: the receiver is a NewExpression, which falls to default and gives []. The argument 'en' is still collected at line 94 and reported.\n\n3. `new Intl.RelativeTimeFormat('cs').format(-1,'day')`: 'day' is reported the same way.\n\nThe comment at lines 53-54 says a constructor's arguments are never read as text. That is true only for `new`, not for the legal call-without-new form. The rule only runs these paths on JSX child expressions, text attributes and document.title, so the false positives only show up in rendered expressions. That is exactly where Intl formatting is used inline.\n\nThese are false positives (over-enforcement), not missed violations, so minor severity is right.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:eslint-rules/no-literal-ui-text.js",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1712,
+      "durationMs": 18788,
+      "sessionId": "c182765d-b1b7-470a-932d-fdb7d5fe7772",
+      "costUsd": 0.1299184,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I traced literalTexts() in eslint-rules/no-literal-ui-text.js and it confirms the mechanism.\n\n1. `{Intl.NumberFormat('cs-CZ').format(n)}`: the outer CallExpression (.format) passes its receiver to literalTexts. The receiver is the CallExpression `Intl.NumberFormat('cs-CZ')`. isLocaleFormatting (lines 55-58) matches only toLocale*/localeCompare, so it is false here. The code therefore falls to line 93-94, which lints the arguments, and 'cs-CZ' contains letters, so it is reported.\n2. `new Intl.DisplayNames('cs',{type:'language'}).of('en')`: the receiver is a NewExpression, which hits `default: []`. The argument 'en' of `.of(...)` is still linted at line 94 and reported.\n3. `new Intl.RelativeTimeFormat('cs').format(-1,'day')`: 'day' is reported the same way.\n\nThe existing tests (src/test/lint-rule.test.ts:35) cover only the `new Intl.NumberFormat(...).format(n)` form, where the argument is not a literal. The comment at lines 53-54 shows the author meant locale/constructor arguments not to count as text, and the call-without-`new` form breaks that intent.\n\nThe problem is reproducible as stated. It is still only a developer-facing false positive. No current src/ code uses these patterns (grep finds Intl only in the rule and its tests), so nobody is affected today. It is also over-enforcement, not under-enforcement. 'minor' severity fits, so I keep it.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1163,
+      "durationMs": 16298,
+      "sessionId": "10fcf3d4-b3e2-4377-85ff-23eb43a93bb1",
+      "costUsd": 0.0908968,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the mechanism by reading the code; I couldn't run the regex because the Node command needed approval. At src/app/theme-source.test.ts:28 the alternative `(:root|html|body)[^{,;]*\\{[^}]*--[\\w-]+\\s*:` has no anchor or word boundary in front of `html` or `body`, and THEME_WRITE is a single unanchored RegExp used with `.test()`. Tracing `.modal-body { --gap: var(--space-2) }` by hand: `body` matches inside `.modal-body`, `[^{,;]*` takes the space, `\\{` matches, `[^}]*` takes the space, then `--gap` and `\\s*:` match. So the whole string matches. The same happens with `.card-body{--pad:…}`, `tbody td { --x: 1 }` and any class ending in `html`. The 'no app source…' test runs THEME_WRITE over every .ts, .tsx and .css file under src/ (except design-system and api/generated) and over index.html, so any normal component rule like that would fail the FR-58 guard even though it doesn't override a theme. The negative probes on line 55 contain no `*-body` selector, so nothing catches this. Nothing else guards against it: sources() only filters paths, not content. This is a latent false positive. The test presumably passes today, so nothing currently in the repo triggers it, but it will trigger as soon as someone writes an ordinary component-scoped custom property on a `*-body` class. The suggested fix (anchor the selector and add a negative probe) is sound. Severity 'minor' fits: it can't hide a real theme override, it only causes false failures that may push someone to weaken the guard.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1196,
+      "durationMs": 18158,
+      "sessionId": "baa80d6f-c97e-499e-802b-fd41a1dc4c18",
+      "costUsd": 0.0986476,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I read the code at src/app/theme-source.test.ts:28. The alternative `(:root|html|body)[^{,;]*\\{[^}]*--[\\w-]+\\s*:` has no word boundary or left anchor, so it matches wherever the text \"body\" or \"html\" appears in a selector. Tracing `.modal-body { --gap: var(--space-2) }` by hand: `body` matches the literal, `[^{,;]*` takes the space, `\\{` matches the brace, `[^}]*` takes the space, and `--gap` followed by `:` completes the match. `.card-body{--pad:1px}` and `tbody td { --x: 1 }` match the same way.\n\nThe real-source test (line 61) runs this regex over every .ts/.tsx/.css file under src/ (excluding only the design system and generated code), plus index.html. So a component stylesheet that sets a local custom property on a class whose name contains \"body\" or \"html\" would fail the FR-58 test, even though no theme is being forced. The negative probes on line 55 do not cover this case, so nothing currently catches it.\n\nNothing else guards against this. The design-system rule says to use only its CSS variables, but it doesn't stop a component from defining a scoped custom property that points at a token (`--gap: var(--space-2)`). The rule allows that.\n\nThis isn't a runtime or user-facing bug and has no security impact. It's a developer-facing false positive that anyone can reproduce in the next slice, with the risk that someone weakens the guard to get past it. Minor severity is right.\n\nNote: my attempt to run the regex in Node was denied, so the confirmation comes from tracing the regex by hand, not from executing it.",
+        "severityAdjustment": "keep"
+      }
+    }
+  ],
+  "logs": [
+    {
+      "phase": "Find",
+      "message": "9 unique findings across 4 dimensions"
+    },
+    {
+      "phase": "Report",
+      "message": "confirmed: 9, contested: 0, rejected: 0"
+    }
+  ],
+  "persisted": [
+    "openspec/changes/implement-platform-foundation-ui/review-findings.json"
+  ],
+  "returned": {
+    "scope": "slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui",
+    "summary": "Review gate for slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui: 9 confirmed, 0 contested (treat as confirmed unless trivially wrong), 0 rejected.",
+    "confirmed": [
+      {
+        "title": "Static theme guard misses token overrides on a wrapper class and selector lists that continue after html/body",
+        "file": "src/app/theme-source.test.ts",
+        "line": 29,
+        "severity": "major",
+        "confidence": "medium",
+        "evidence": "The token rule is `'(:root|html|body)[^{,;]*\\{[^}]*--[\\w-]+\\s*:'`. Because `[^{,;]*` stops at a comma, `html.dark,\\n.app { --paper: #000 }` does not match. Any non-root selector also gets through, e.g. `.app-shell.night { --paper: #000 }`, and the class that turns it on (`className={night ? 'app-night' : 'app'}`) is not caught because the className rule only looks for the words `dark|light|theme`. The e2e then only checks `body` background-color (e2e/theme.spec.ts:46), so a full-viewport wrapper painting the overridden `--paper` would get past both layers. That breaks the spec's \"No app source … SHALL set … a colour scheme\" and \"the background stays the OS theme's --paper\".",
+        "suggestion": "Make the static rule reject any redefinition, in app CSS, of a design-system token name taken from src/design-system/tokens.css, whatever the selector. Allow a short list of non-colour exceptions if one is needed. Also let the selector match continue past commas (e.g. `[^{]*`). In the e2e, check the computed background of the route marker element or of `elementFromPoint` at the viewport centre, not only `body`.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I confirmed the mechanism by reading the code. I didn't run the regex because the inline `node -e` check needed approval.\n\n1. **Selector lists.** In `src/app/theme-source.test.ts:28` the token rule is `(:root|html|body)[^{,;]*\\{…`. The class `[^{,;]*` cannot cross a comma, so in `html.dark,\\n.app { --paper: #000 }` the `html` match stops at `,` and never reaches `{`. The second selector `.app` has no :root, html or body anchor, so nothing matches.\n\n2. **Wrapper classes.** `.app-shell.night { --paper: #000 }` has no :root, html or body anchor at all, so it is not caught. No other alternative catches it: there is no data-theme, colour scheme, `setProperty` or `prefers-color-scheme` in it.\n\n3. **The class that switches it on.** The className rule `className\\s*\\+?=\\s*[{\"'`][^\\n]*\\b(dark|light|theme)\\b` only matches those three words, so `className={night ? 'app-night' : 'app'}` gets through. The test's own negative case, `<div className=\"app-route\">`, shows that ordinary class names are meant to pass.\n\n4. **The e2e check.** `e2e/theme.spec.ts:21` and `e2e/theme.spec.ts:46` only assert `body` background-color and that no `[data-theme]` exists. A wrapper element that paints a redefined `--paper` over the viewport would leave `body` unchanged, so both checks pass.\n\nThe guard's own comment says it covers \"a design token rewritten at runtime\" and rules on html or body \"with any qualifier\". It doesn't cover all such rewrites, so the claimed gap is real.\n\n**Severity: downgrade.** This is a coverage hole in a regression guard, not a bug in shipped code. Nothing I saw in current product code exploits it. The finding describes a way the guard could be bypassed in future, not an actual FR-58 violation today.",
+          "I confirmed the mechanism by reading the code, but the problem is a gap in the tests, not a bug users can hit today.\n\nWhat's true:\n1. The token rule at src/app/theme-source.test.ts:28 is `(:root|html|body)[^{,;]*\\{[^}]*--[\\w-]+\\s*:`. The `[^{,;]*` part stops at a comma, so `html.dark,\\n.app { --paper:#000 }` doesn't match. Its `body[^{,;]*\\{` branch could still match a later rule body in the same file, but only when one exists.\n2. A selector with no `:root`, `html` or `body` in it, such as `.app-shell.night { --paper:#000 }`, is never matched by any branch.\n3. The className rule at line 24 only flags the words dark, light and theme. A class like `'app-night'` gets through.\n4. The e2e at e2e/theme.spec.ts:20 and :46 only checks the computed background-color of `body` (plus `[data-theme]` count 0). A full-viewport wrapper painting an overridden `--paper` would leave body unchanged and pass.\n\nSo the claim that both layers can be bypassed holds.\n\nWhy I'm downgrading:\n- No current app source does any of this. A grep of non-design-system app code finds no token redefinitions and no night/dark class toggles.\n- Nothing is broken for a real user right now. The risk is that a future change could slip a theme override past the guard.\n- It also needs some deliberate steps: a new token override on a custom selector plus a toggle under a name other than dark/light/theme. That fits a guard-strength issue more than a major correctness defect.\n\nThe suggested fixes are reasonable hardening: reject any token-name redefinition taken from tokens.css whatever the selector, let the selector match continue past commas with `[^{]*`, and in the e2e check the background via `elementFromPoint`."
+        ]
+      },
+      {
+        "title": "Container-smoke 'dirty' flag ignores most image inputs, so a PASS can be credited to a commit it did not test",
+        "file": "tools/container-smoke.mjs",
+        "line": 47,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "The Dockerfile runs `COPY . .` and `npm ci` from package.json/package-lock.json, so vite.config.ts, public/, tsconfig*, package*.json and the contract/ submodule are all built into the image. The dirty probe, however, is `git status --porcelain -- nginx.conf Dockerfile src index.html`, so a local change to any of those other inputs still prints the bare commit as what was tested. The committed evidence also says `commit b1972e0… (with uncommitted changes to the image inputs)` together with `Result: PASS`, and nothing records which changes those were. The evidence therefore cannot be traced to any commit, which defeats the 'cannot outlive a change' goal on line 44.",
+        "suggestion": "Run the probe over the whole build context: `git status --porcelain` with the .dockerignore exclusions, plus `git submodule status contract`. Either refuse to write PASS evidence while the tree is dirty or record a content hash of the dirty inputs (e.g. `git stash create` or `git diff HEAD | sha256`). Then regenerate the evidence from a clean commit.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I confirmed the mechanism in the code. Line 47 of tools/container-smoke.mjs only checks `git status --porcelain -- nginx.conf Dockerfile src index.html`. The Dockerfile copies package.json and package-lock.json and runs `npm ci`, then runs `COPY . .` and `npm run build`. The .dockerignore leaves out only node_modules, dist, coverage, playwright-report, test-results, .git, docs, trace, retro, openspec and .env*. So vite.config.ts, tsconfig*, package*.json, public/ and the contract/ submodule (whose openapi.yaml is used to regenerate the client) all go into the image, but the dirty probe never looks at them. A change to any of those files leaves `dirty` false, and the evidence then names the bare commit as what was tested.\n\nWhen the probe does fire, line 170 adds only \"(with uncommitted changes to the image inputs)\". It records no diff or hash of those changes. The committed docs/qa/container-smoke-latest.md shows exactly this: `commit b1972e0… (with uncommitted changes to the image inputs)` with Result PASS.\n\nOne partial mitigation exists: line 97 records the Docker image ID, and the evidence also stores the nginx.conf sha256. But an image ID can't be traced back to a source state, so the evidence still can't be tied to a commit. Nothing elsewhere guards this. Minor severity is appropriate, because this is an evidence-integrity gap, not a runtime bug.",
+          "I confirmed this by reading the code. At tools/container-smoke.mjs:47, `dirty` is computed only from `git status --porcelain -- nginx.conf Dockerfile src index.html`. The Dockerfile copies package.json and package-lock.json and runs `npm ci`, then runs `COPY . .` and `npm run build`. The only exclusions in .dockerignore are node_modules, dist, coverage, playwright-report, test-results, .git, docs, trace, retro, openspec and .env*. So vite.config.ts, the tsconfig*.json files, package*.json, the contract/ submodule and other root files all go into the image. All of these files exist in the repo except public/, which does not exist. Here is how to reproduce it: edit vite.config.ts or package.json, or check out a different contract/ commit, then run `npm run test:container`. The evidence then records the bare HEAD commit with `dirty: false` and `Result: PASS`. The image digest is recorded, but it cannot be traced back to source.\n\nThe second part of the claim also holds. The committed docs/qa/container-smoke-latest.md says \"commit b1972e0… (with uncommitted changes to the image inputs)\" next to \"Result: PASS\". Nothing records which changes those were, and HEAD is now 4c1aece. So the evidence is already tied to a tree that no commit captures.\n\nThis is a gap in evidence integrity, not a runtime or security bug, so severity \"minor\" is appropriate."
+        ]
+      },
+      {
+        "title": "Intl formatter called without `new` is still a lint false positive, unlike the `new` form",
+        "file": "eslint-rules/no-literal-ui-text.js",
+        "line": 55,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "With the Intl branch gone, `new Intl.DateTimeFormat('cs', …).format(d)` passes only because `literalTexts` returns [] for a NewExpression (the default case). `Intl.DateTimeFormat('cs').format(d)` is valid JS without `new`, but it is a CallExpression: the generic branch scans its arguments, so `'cs'` is reported as 'Literal UI text'. The JSDoc on line 52 still says \"Intl.* take locales and options, not text\", which the code no longer implements for that form.",
+        "suggestion": "Treat a CallExpression whose callee is `Intl.<Ctor>` the same as the NewExpression: skip its arguments but keep scanning `.format(...)` arguments. Add valid/invalid RuleTester cases for both forms, and update the line 52 JSDoc.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I traced the code and the mechanism holds. For `{Intl.DateTimeFormat('cs').format(d)}`, `literalTexts` sees a CallExpression whose callee is the MemberExpression `.format`. `isLocaleFormatting` does not match `format`, so the generic branch runs and calls `literalTexts` on the receiver (line 93). The receiver `Intl.DateTimeFormat('cs')` is itself a CallExpression. Its callee is not `t` and is not a `toLocale*` or `localeCompare` call, so the generic branch runs again and scans its arguments (line 94). `'cs'` contains a letter, so it is reported as literal UI text. The `new` form passes only because NewExpression falls to the `default: return []` case. That case also skips the options object, so `{ style: 'unit' }` passes too, as `src/test/lint-rule.test.ts:35` shows.\n\nECMA-402 lets you call DateTimeFormat, NumberFormat and Collator without `new`, so the call form is valid JS. ListFormat, PluralRules and the other newer constructors do throw without `new`. The JSDoc on line 52 still says \"Intl.* take locales and options, not text\", which only the `new` form honours. The test file has a `new` case only and no case for the call form.\n\nSeverity stays minor. This is a false positive, so the rule is too strict and fails safe: no UI text slips through. A developer can add `new` to silence it. No code in `src/` uses `Intl.` today. Still, the claimed mechanism is accurate and reachable.",
+          "I traced the code and the mechanism holds. In `<p>{Intl.DateTimeFormat('cs').format(d)}</p>`, the outer CallExpression's callee is `X.format`, a MemberExpression, so line 93 computes `receiver = literalTexts(X)`, where X is the CallExpression `Intl.DateTimeFormat('cs')`. For X, `isLocaleFormatting` fails because `DateTimeFormat` does not match `toLocale*|localeCompare`, and the callee is not `t`. So X falls through to the generic branch at line 94, which scans its arguments. `'cs'` contains a letter, so the rule reports it as \"Literal UI text\".\n\nThe `new` form returns [] through the `default` case for NewExpression, and that is why the valid test at src/test/lint-rule.test.ts:35 passes. There is no valid or invalid test for the form without `new`.\n\nThe JSDoc on line 52 still says \"Intl.* take locales and options, not text\", which the code no longer implements for the call form, so that part of the finding is accurate too.\n\nImpact is limited. This is a false positive in a developer-time lint rule, not a runtime or user-facing bug. No code in `src/` uses `Intl.*` without `new` today. The workaround is trivial (add `new`) and it fails loudly rather than letting real text through. Severity \"minor\" fits that, so no change."
+        ]
+      },
+      {
+        "title": "Static FR-58 theme guard misses token overrides set on a wrapper element or through a React style prop",
+        "file": "src/app/theme-source.test.ts",
+        "line": 28,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "Round 5 widened the CSS pattern to `(:root|html|body)[^{,;]*\\{…--x:`, but design tokens are inherited custom properties, so they can be redefined on any ancestor. A later feature could ship `#root { --paper: #0e1330 }` or `.app-night { --paper: … }` toggled by `className={mode}` (no dark/light/theme word in it), or `<div style={{ '--paper': night ? … : … }}>`. The CSP allows inline styles on purpose, and this guard only catches `setProperty('--…')`. All of these pass the guard. The e2e only checks `body` background-color and `[data-theme]`, so a theme forced on a wrapper below body also gets past it. The test says it covers 'screens and states it cannot reach', but a forced theme in these forms passes both checks.",
+        "suggestion": "Flag any custom-property declaration of a design-system token (for example `--(paper|ink|hero|surface…)\\s*:` in .css, and `['\"]--[\\w-]+['\"]\\s*:` in .tsx style objects) outside src/design-system, whatever the selector. Add `#root { --paper: #000 }`, `.x { --paper: #000 }` and `style={{ '--paper': c }}` to the `forced` list. In the e2e, also assert the computed `--paper` (or background) of the screen marker's container, not just body.",
+        "dimension": "security",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I read src/app/theme-source.test.ts:15-30 and could not refute the finding. The CSS alternative `(:root|html|body)[^{,;]*\\{[^}]*--[\\w-]+\\s*:` only matches when `:root`, `html` or `body` appears before the `{`. I checked each bypass the finding names against the regex:\n- `#root { --paper: #000 }` contains `root` but not `:root`, so it doesn't match.\n- `.app-night { --paper: … }` matches no alternative.\n- `style={{ '--paper': x }}` contains no `setProperty(`, `data-theme`, `colorScheme` or theme-word className, so it doesn't match either.\n- `className={mode}`, where the value is a variable, doesn't match the className alternative because the regex requires a literal `{\"'\\`` followed by dark/light/theme.\n\nCustom properties are inherited, so redefining `--paper` on any wrapper would force colours on the subtree and get past the guard. The test's comment claims it covers screens the e2e cannot reach, so the gap is real against the test's own stated intent. Nothing else in the code guards against this: the sources() scan is the only mechanism, and the finding's description of the e2e is plausible. These bypasses are hypothetical future code and the guard is a best-effort heuristic, so minor severity is right.",
+          "I traced the regex at src/app/theme-source.test.ts:15-29 by hand against each bypass the finding names. None of them match:\n- `#root { --paper: … }`: the alternation needs the literal `:root`, `html` or `body` before the `{`. `#root` has no colon, so it doesn't match.\n- `.app-night { --paper: … }`: no `:root`, `html` or `body`, so it doesn't match.\n- `className={mode}`: the className pattern needs a literal `\\b(dark|light|theme)\\b` on the line, so it doesn't match.\n- `style={{ '--paper': x }}`: only `setProperty\\(\\s*['\"`]--` covers runtime tokens. A style-object key isn't matched by any branch.\n\nSo the mechanism is real: a later change could force a theme in any of these forms and the static guard would pass. The `forced` self-test list doesn't include them either. The finding is accurate.\n\nOn exploitability, it is not an attacker-reachable flaw. No current source does any of this. It's a gap in a regression guard for FR-58 (the theme follows the OS), so it could only cause a future product regression. It is not a security vulnerability, and \"dimension: security\" is the wrong label. The right label is test coverage or spec conformance. \"Minor\" fits that kind of guard gap, so I'm keeping the severity. The suggested fix is reasonable: flag any token custom-property declaration and any quoted `--` style-object key outside src/design-system."
+        ]
+      },
+      {
+        "title": "Container-smoke 'dirty' flag misses most image inputs, so the evidence can name a clean commit for an image built from uncommitted files",
+        "file": "tools/container-smoke.mjs",
+        "line": 47,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "The Dockerfile builds from `COPY . .`, so the whole context except .dockerignore goes into the image, including package.json, package-lock.json, vite.config.ts, tsconfig*, public/ and the contract/ submodule (from which api:generate regenerates the client). The dirty check only runs `git status --porcelain -- nginx.conf Dockerfile src index.html`. If package-lock.json (a dependency swap), vite.config.ts or the contract pin is edited locally and not committed, the evidence prints `commit <sha>` with no '(with uncommitted changes…)' note and Result: PASS. The point of the round-5 fix was that 'the evidence cannot outlive a change'. The current file is accurate: nginx.conf hash 4907790e… matches HEAD, and the only uncommitted inputs between b1972e0 and 4c1aece were two test files.",
+        "suggestion": "Run `git status --porcelain --ignore-submodules=none` across the whole build context (repo root minus the .dockerignore entries), or derive the pathspec from .dockerignore. Also record `git -C contract rev-parse HEAD`, so the contract pin the image was built from is in the evidence.",
+        "dimension": "security",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "The finding holds. At tools/container-smoke.mjs:47 the dirty flag comes from `git status --porcelain -- nginx.conf Dockerfile src index.html`. The Dockerfile copies `package.json package-lock.json`, runs `npm ci`, then runs `COPY . .` and `npm run build`. The .dockerignore leaves out only node_modules, dist, coverage, playwright-report, test-results, .git, docs, trace, retro, openspec and .env*. So package.json, package-lock.json, vite.config.ts, tsconfig*, public/ and the contract/ submodule all go into the build, and none of them is in the pathspec. Suppose someone edits package-lock.json or vite.config.ts locally, or moves the contract pin, and doesn't commit it. Then `tested.dirty` is false, line 170 prints `commit <sha>` with no uncommitted-changes note, and Result reads PASS whenever the checks pass. Nothing else in the file guards this: the only other fingerprints are the nginx.conf hash and the image ID, and the image ID is never compared with a commit. The comment at line 44 says the evidence \"cannot outlive a change\", and this gap breaks that promise. The impact is limited to the evidence/provenance record, not runtime behaviour, so minor severity is right.",
+          "I confirmed the mechanism in the code. tools/container-smoke.mjs:47 sets `dirty` from `git status --porcelain -- nginx.conf Dockerfile src index.html` only. The Dockerfile runs `COPY package.json package-lock.json ./` and `npm ci`, then `COPY . .` and `npm run build`. .dockerignore leaves out only node_modules, dist, coverage, reports, .git, docs, trace, retro, openspec and .env*. That means package.json, package-lock.json, vite.config.ts, tsconfig*, public/ and the contract/ submodule (used by api:generate) all go into the image but are never checked by the dirty test. A submodule pin change would also be missed, because the pathspec leaves out `contract`. At line 170 the evidence line adds '(with uncommitted changes to the image inputs)' only when `dirty` is true. To reproduce: edit vite.config.ts or package-lock.json, or check out a different contract commit, then run `node tools/container-smoke.mjs`. The evidence names the HEAD commit as if it were clean and the result can still be PASS. One partial mitigation exists: the image ID (line 97) is recorded, so the exact image is identifiable. But the ID does not tie the image back to source, so the claim that the evidence cannot outlive a change is still broken for these inputs. This is an evidence-integrity / provenance gap, not something an attacker can exploit, and it needs a developer's own uncommitted edits. Minor severity fits."
+        ]
+      },
+      {
+        "title": "Static theme guard misses a theme forced through a non-html/body token rule or setAttribute/variable className, so the 'No toggle' scenario can pass on the current control-less screens while violated",
+        "file": "src/app/theme-source.test.ts",
+        "line": 17,
+        "severity": "major",
+        "confidence": "medium",
+        "evidence": "Spec 'No toggle': \"a route with no control reports the check as skipped, never passed, and the static source check covers it\". Every current screen has no control, so e2e/theme.spec.ts:57 skips and THEME_WRITE is the only check. It only recognises token redefinitions on `(:root|html|body)[^{,;]*\\{` and class writes of the form `className\\s*\\+?=\\s*[{\"'`]...(dark|light|theme)` or `classList.x(...dark|light|theme)`. This combination passes the guard but still re-themes the page: app.css `.night { --paper: #0e1330 }` with `document.documentElement.className = mode` (assigned from a variable, so there is no quote after `=`) or `document.documentElement.setAttribute('class', 'night')`. sources() also scans only `.ts/.tsx/.css` under src, so a `.js/.jsx` module or a `public/*.js` script loaded from index.html is never read. Coverage: 18 scenarios: 16 implemented, 2 partial (this one, plus 'API through the frontend origin', which is the documented real-compose follow-up), 0 missing, 0 contradicted.",
+        "suggestion": "Key the guard on token names rather than selectors. Collect every custom property declared in src/design-system/tokens.css and fail when any app CSS declares one of them under any selector. Add `setAttribute\\(\\s*['\"`](class|style)` and a `(document\\.documentElement|document\\.body)\\.className\\s*\\+?=` pattern that matches regardless of the right-hand side. Widen sources() to .js/.jsx/.mjs and to public/. Add each new form to the 'forced' probe list.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I read the regex in `src/app/theme-source.test.ts:15-30`, and the bypasses the finding describes are real:\n- **`className` from a variable:** `className\\s*\\+?=\\s*[{\"'`]...` only matches when a quote or brace follows `=`. So `document.documentElement.className = mode` does not match.\n- **`setAttribute`:** `setAttribute('class','night')` matches none of the patterns.\n- **Token rules on other selectors:** a token is only caught when it is redefined under `(:root|html|body)`. A rule like `.night { --paper: #0e1330 }` in app CSS is not caught.\n- **File types:** `sources()` only reads `.ts/.tsx/.css` (plus `index.html`). `.js/.jsx/.mjs` files and `public/` are never scanned. There is currently no `public/` directory and there are no `.js` files under `src`, so this part is latent.\n\nNone of these forms is in the 'forced' probe list, so the guard's self-test cannot catch them.\n\n**Why I recommend downgrading:**\n- Nothing in the codebase currently uses any of these bypasses. The issue is that the guard is incomplete, not that a theme is being forced today.\n- The first e2e test (`e2e/theme.spec.ts:18-23`) checks the body background against the OS scheme on every screen. That catches any theme forced at load time, whatever method is used.\n- Any control added later is clicked by the second e2e test, which checks the background after each click.\n\nSo the gap only matters for a theme switch that is neither applied at load nor triggered by a reachable control, in code that does not exist yet. The mechanism is correct and the suggested hardening is sensible, but this is a minor robustness gap, not major.",
+          "The guard gap is real, but nothing in the code violates the rule today, so I'm keeping the finding at lower severity.\n\nConfirmed:\n- The regex at src/app/theme-source.test.ts:15-30 has a `className` pattern that needs `{`, `\"`, `'` or a backtick after `=`. So `document.documentElement.className = mode` (assigned from a variable) does not match.\n- The regex has no `setAttribute` pattern, so `setAttribute('class','night')` does not match.\n- Token rules only match on `:root`, `html` or `body`. A rule like `.night { --paper: … }` passes, yet once that class is on `<html>` it overrides the `:root` tokens through inheritance and source order (app CSS loads after the tokens).\n- `sources()` only reads `.ts`, `.tsx` and `.css`. e2e/theme.spec.ts:56 skips screens with no controls and points to this static test, so the static test is the only check on those screens.\n\nSo a future change could break the \"No toggle\" scenario and still pass.\n\nWhy downgrade:\n- Exploitability is nil today. There is no `public/` directory and no tracked `.js`, `.jsx` or `.mjs` file under `src`.\n- No app source uses `setAttribute` or a `className` assigned from a variable.\n- No user or attacker can trigger this. It is a regression-guard weakness that would only matter after a developer writes theme-forcing code in one of the bypass forms.\n- A regex-based static check can always be bypassed somehow. The forms listed here are plausible, though, and cheap to add.\n\nThis is a valid test-hardening and spec-coverage gap, more minor than major."
+        ]
+      },
+      {
+        "title": "Container-smoke fingerprint ties the evidence to a commit that is not HEAD and leaves out most image inputs and the e2e specs it ran",
+        "file": "tools/container-smoke.mjs",
+        "line": 45,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "The round-5 fix should make the evidence unable to outlive a change. docs/qa/container-smoke-latest.md records \"commit b1972e0 … (with uncommitted changes to the image inputs)\", while HEAD is 4c1aece. Nothing in the file lets a reader confirm that the dirty tree equals 4c1aece. The `dirty` pathspec covers only `nginx.conf Dockerfile src index.html`. The Dockerfile does `COPY . .` and `npm ci`, so package.json, package-lock.json, the contract/ submodule pin, public/, vite.config and tsconfig* are image inputs that are neither checked for dirtiness nor hashed. The 'Playwright e2e through nginx: PASS' row ran e2e/theme.spec.ts, which round 5 changed, and the round-5 change is not fingerprinted either. The nginx.conf sha256 (4907790e…) does match HEAD.",
+        "suggestion": "Hash the full set of build-context inputs, for example `git ls-files -s` plus `git diff HEAD` of the context minus .dockerignore, together with e2e/ and playwright.config.ts. Record that digest in the evidence, or refuse to write a PASS for a dirty tree. Then re-run `npm run test:container` on a clean 4c1aece so the evidence names HEAD.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I couldn't refute this. The mechanism is in the code. At tools/container-smoke.mjs:45-50, `tested` records `git rev-parse HEAD`. It sets a `dirty` boolean from `git status --porcelain -- nginx.conf Dockerfile src index.html` and hashes only nginx.conf. The Dockerfile does `COPY package.json package-lock.json`, `npm ci`, `COPY . .` and `npm run build`, and it checks for contract/api/openapi.yaml. So package.json, package-lock.json, the contract/ submodule pin, public/, vite.config and tsconfig all go into the image, but the dirty check does not cover them and nothing hashes them. A change to any of those files leaves `dirty` false and the evidence looks clean. The `--e2e` step runs `npx playwright test` from the working tree, and neither e2e/ nor playwright.config is fingerprinted. When `dirty` is true, the evidence only says \"with uncommitted changes\" and gives no digest. A reader cannot tell what tree was tested. The image ID is recorded, but it is a local, non-reproducible build ID, so nobody can compare it against HEAD. The committed docs/qa/container-smoke-latest.md says \"commit b1972e02… (with uncommitted changes to the image inputs)\", while git status gives HEAD as 4c1aece. So the evidence does not name HEAD and cannot be tied to it. I was blocked from running `git show --stat`, so I did not check the claim that round 5 changed e2e/theme.spec.ts. The core claim does not depend on it: the script never fingerprints e2e/ at all. Minor severity fits: this is an evidence-integrity gap, not a product bug.",
+          "I read the code and the claim holds. In tools/container-smoke.mjs:45-50, `tested.dirty` runs `git status --porcelain` only over `nginx.conf Dockerfile src index.html`, and the only content hash taken is of nginx.conf. The Dockerfile copies package.json and package-lock.json, runs `npm ci`, then does `COPY . .` and `npm run build`. So package*.json, vite.config, tsconfig*, public/ and the contract/ submodule pin all go into the image, and none of them is checked for changes or hashed. The script also runs `npx playwright test` from the working tree and fingerprints none of e2e/ or playwright.config.ts.\n\nThe mismatch is real. docs/qa/container-smoke-latest.md:7 names commit b1972e02… \"(with uncommitted changes to the image inputs)\", while the session's git status shows HEAD at 4c1aece. Nothing in the evidence lets a reader tell whether that dirty tree matched 4c1aece.\n\nThe failure can be reproduced: edit package.json, vite.config or an e2e spec without committing, run `npm run test:container`, and the evidence reports a clean \"commit X\" PASS for an image and e2e run that commit X never produced.\n\nThis is not something an attacker can exploit. It is a gap in how complete the evidence is: the record can outlive the inputs it claims to cover, which is exactly what the round-5 comment (\"so the evidence cannot outlive a change\") meant to prevent. Minor severity fits."
+        ]
+      },
+      {
+        "title": "Lint rule false positive on Intl calls without `new` and on Intl methods that take identifiers (.of, RelativeTimeFormat units)",
+        "file": "eslint-rules/no-literal-ui-text.js",
+        "line": 55,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "After round 5, isLocaleFormatting exempts only toLocale*/localeCompare. A `new Intl.X(...)` receiver yields nothing because NewExpression falls to `default: []`, but `Intl.NumberFormat('cs-CZ').format(n)` (legal without `new`) is a CallExpression whose 'cs-CZ' argument gets reported. So do `new Intl.DisplayNames('cs',{type:'language'}).of('en')` and `new Intl.RelativeTimeFormat('cs').format(-1, 'day')`, because the locale, language code and unit arguments are read as UI text. This does not under-enforce the spec, but it is behaviour the spec and design.md do not describe, and it pushes later slices toward eslint-disable.",
+        "suggestion": "Treat a receiver that is a call or `new` of an `Intl.*` constructor as locale formatting for its constructor arguments. Lint only the arguments of `.format`/`.formatToParts` on Intl.ListFormat, and treat `.of(...)` and RelativeTimeFormat units as identifiers. Add valid-case tests (`Intl.NumberFormat('cs-CZ').format(n)`, `.of('en')`) beside the new ListFormat invalid case.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I traced the code in eslint-rules/no-literal-ui-text.js and the mechanism holds. isLocaleFormatting (lines 55-58) only matches a member callee named toLocale* or localeCompare.\n\n1. `{Intl.NumberFormat('cs-CZ').format(n)}`: the outer CallExpression's callee is a MemberExpression `.format`, so it is not exempt. Line 93 takes literalTexts of the receiver. The receiver is the CallExpression `Intl.NumberFormat('cs-CZ')`. Its callee `Intl.NumberFormat` is not t() and not locale formatting, so line 94 returns its arguments. 'cs-CZ' has letters, so it is reported.\n\n2. `new Intl.DisplayNames('cs',{type:'language'}).of('en')`: the receiver is a NewExpression, which falls to default and gives []. The argument 'en' is still collected at line 94 and reported.\n\n3. `new Intl.RelativeTimeFormat('cs').format(-1,'day')`: 'day' is reported the same way.\n\nThe comment at lines 53-54 says a constructor's arguments are never read as text. That is true only for `new`, not for the legal call-without-new form. The rule only runs these paths on JSX child expressions, text attributes and document.title, so the false positives only show up in rendered expressions. That is exactly where Intl formatting is used inline.\n\nThese are false positives (over-enforcement), not missed violations, so minor severity is right.",
+          "I traced literalTexts() in eslint-rules/no-literal-ui-text.js and it confirms the mechanism.\n\n1. `{Intl.NumberFormat('cs-CZ').format(n)}`: the outer CallExpression (.format) passes its receiver to literalTexts. The receiver is the CallExpression `Intl.NumberFormat('cs-CZ')`. isLocaleFormatting (lines 55-58) matches only toLocale*/localeCompare, so it is false here. The code therefore falls to line 93-94, which lints the arguments, and 'cs-CZ' contains letters, so it is reported.\n2. `new Intl.DisplayNames('cs',{type:'language'}).of('en')`: the receiver is a NewExpression, which hits `default: []`. The argument 'en' of `.of(...)` is still linted at line 94 and reported.\n3. `new Intl.RelativeTimeFormat('cs').format(-1,'day')`: 'day' is reported the same way.\n\nThe existing tests (src/test/lint-rule.test.ts:35) cover only the `new Intl.NumberFormat(...).format(n)` form, where the argument is not a literal. The comment at lines 53-54 shows the author meant locale/constructor arguments not to count as text, and the call-without-`new` form breaks that intent.\n\nThe problem is reproducible as stated. It is still only a developer-facing false positive. No current src/ code uses these patterns (grep finds Intl only in the rule and its tests), so nobody is affected today. It is also over-enforcement, not under-enforcement. 'minor' severity fits, so I keep it."
+        ]
+      },
+      {
+        "title": "Static guard's html/body token pattern also fires on any selector containing 'body' or 'html' as a substring",
+        "file": "src/app/theme-source.test.ts",
+        "line": 28,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "The pattern `(:root|html|body)[^{,;]*\\{[^}]*--[\\w-]+\\s*:` has no word boundary, so an ordinary component rule such as `.modal-body { --gap: var(--space-2) }` or `.card-body{--pad:…}` fails 'no app source sets data-theme or a colour scheme'. The guard then reports a theme override where there is none, and the next slice is likely to weaken it rather than fix it.",
+        "suggestion": "Anchor the selector, for example `(^|[\\s,}>+~(])(:root|html|body)\\b[^{,;]*\\{`, and add `.modal-body { --gap: 1px }` to the negative probe list.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I confirmed the mechanism by reading the code; I couldn't run the regex because the Node command needed approval. At src/app/theme-source.test.ts:28 the alternative `(:root|html|body)[^{,;]*\\{[^}]*--[\\w-]+\\s*:` has no anchor or word boundary in front of `html` or `body`, and THEME_WRITE is a single unanchored RegExp used with `.test()`. Tracing `.modal-body { --gap: var(--space-2) }` by hand: `body` matches inside `.modal-body`, `[^{,;]*` takes the space, `\\{` matches, `[^}]*` takes the space, then `--gap` and `\\s*:` match. So the whole string matches. The same happens with `.card-body{--pad:…}`, `tbody td { --x: 1 }` and any class ending in `html`. The 'no app source…' test runs THEME_WRITE over every .ts, .tsx and .css file under src/ (except design-system and api/generated) and over index.html, so any normal component rule like that would fail the FR-58 guard even though it doesn't override a theme. The negative probes on line 55 contain no `*-body` selector, so nothing catches this. Nothing else guards against it: sources() only filters paths, not content. This is a latent false positive. The test presumably passes today, so nothing currently in the repo triggers it, but it will trigger as soon as someone writes an ordinary component-scoped custom property on a `*-body` class. The suggested fix (anchor the selector and add a negative probe) is sound. Severity 'minor' fits: it can't hide a real theme override, it only causes false failures that may push someone to weaken the guard.",
+          "I read the code at src/app/theme-source.test.ts:28. The alternative `(:root|html|body)[^{,;]*\\{[^}]*--[\\w-]+\\s*:` has no word boundary or left anchor, so it matches wherever the text \"body\" or \"html\" appears in a selector. Tracing `.modal-body { --gap: var(--space-2) }` by hand: `body` matches the literal, `[^{,;]*` takes the space, `\\{` matches the brace, `[^}]*` takes the space, and `--gap` followed by `:` completes the match. `.card-body{--pad:1px}` and `tbody td { --x: 1 }` match the same way.\n\nThe real-source test (line 61) runs this regex over every .ts/.tsx/.css file under src/ (excluding only the design system and generated code), plus index.html. So a component stylesheet that sets a local custom property on a class whose name contains \"body\" or \"html\" would fail the FR-58 test, even though no theme is being forced. The negative probes on line 55 do not cover this case, so nothing currently catches it.\n\nNothing else guards against this. The design-system rule says to use only its CSS variables, but it doesn't stop a component from defining a scoped custom property that points at a token (`--gap: var(--space-2)`). The rule allows that.\n\nThis isn't a runtime or user-facing bug and has no security impact. It's a developer-facing false positive that anyone can reproduce in the next slice, with the risk that someone weakens the guard to get past it. Minor severity is right.\n\nNote: my attempt to run the regex in Node was denied, so the confirmation comes from tracing the regex by hand, not from executing it."
+        ]
+      }
+    ],
+    "contested": [],
+    "rejected": [],
+    "reviewEvidence": "openspec/changes/implement-platform-foundation-ui/review-findings.json"
+  }
+}

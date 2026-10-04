@@ -130,8 +130,10 @@ origin and author) listed beside it (the two OFL fonts).
   `routePath` maps `/index.html` and a trailing slash to the registered path.
   The no-toggle e2e clicks every control (a failed click fails), waits for
   async effects, and is skipped (never passed) on a screen with no control;
-  `src/app/theme-source.test.ts` proves statically that no app source or
-  `index.html` sets `data-theme`, a colour scheme or a theme class.
+  `src/app/theme-source.test.ts` holds app code (outside the design system)
+  and `index.html` to three invariants: no CSS custom property declared or
+  set anywhere, no colour-scheme API, and no string literal naming a scheme
+  (`dark`, `light`, `theme…`; catalogs excepted).
 - `tsconfig.e2e.json` gives only the e2e specs DOM types; Node-side config
   files have none.
 

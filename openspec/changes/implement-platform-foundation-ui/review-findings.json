@@ -6,7 +6,7 @@
   "headRef": "HEAD",
   "dimensions": {
     "correctness": {
-      "confirmed": 4,
+      "confirmed": 3,
       "contested": 0,
       "rejected": 0
     },
@@ -16,8 +16,8 @@
       "rejected": 0
     },
     "spec-compliance": {
-      "confirmed": 2,
-      "contested": 1,
+      "confirmed": 4,
+      "contested": 0,
       "rejected": 0
     },
     "visual": {
@@ -29,12 +29,12 @@
   "findings": [
     {
       "id": "F01",
-      "severity": "minor",
+      "severity": "major",
       "dimension": "correctness",
       "verdict": "confirmed",
-      "title": "Intl/toLocale exemption also exempts literal UI text passed to Intl formatters (e.g. Intl.ListFormat)",
-      "file": "eslint-rules/no-literal-ui-text.js",
-      "line": 89,
+      "title": "Static theme guard misses token overrides on a wrapper class and selector lists that continue after html/body",
+      "file": "src/app/theme-source.test.ts",
+      "line": 29,
       "status": "open"
     },
     {
@@ -42,8 +42,8 @@
       "severity": "minor",
       "dimension": "correctness",
       "verdict": "confirmed",
-      "title": "Theme e2e skips a select's remaining options once one option navigates away",
-      "file": "e2e/theme.spec.ts",
+      "title": "Container-smoke 'dirty' flag ignores most image inputs, so a PASS can be credited to a commit it did not test",
+      "file": "tools/container-smoke.mjs",
       "line": 47,
       "status": "open"
     },
@@ -52,19 +52,19 @@
       "severity": "minor",
       "dimension": "correctness",
       "verdict": "confirmed",
-      "title": "Static theme guard and e2e only see token redefinition on :root/html and the body background",
-      "file": "src/app/theme-source.test.ts",
-      "line": 27,
+      "title": "Intl formatter called without `new` is still a lint false positive, unlike the `new` form",
+      "file": "eslint-rules/no-literal-ui-text.js",
+      "line": 55,
       "status": "open"
     },
     {
       "id": "F04",
       "severity": "minor",
-      "dimension": "correctness",
+      "dimension": "security",
       "verdict": "confirmed",
-      "title": "container-smoke evidence file leaves out the exception that caused a FAIL",
-      "file": "tools/container-smoke.mjs",
-      "line": 140,
+      "title": "Static FR-58 theme guard misses token overrides set on a wrapper element or through a React style prop",
+      "file": "src/app/theme-source.test.ts",
+      "line": 28,
       "status": "open"
     },
     {
@@ -72,29 +72,29 @@
       "severity": "minor",
       "dimension": "security",
       "verdict": "confirmed",
-      "title": "Intl/toLocale exemption skips all format() arguments, so literal UI text passed to Intl.ListFormat is never linted (NFR-9)",
-      "file": "eslint-rules/no-literal-ui-text.js",
-      "line": 89,
+      "title": "Container-smoke 'dirty' flag misses most image inputs, so the evidence can name a clean commit for an image built from uncommitted files",
+      "file": "tools/container-smoke.mjs",
+      "line": 47,
       "status": "open"
     },
     {
       "id": "F06",
-      "severity": "minor",
-      "dimension": "security",
+      "severity": "major",
+      "dimension": "spec-compliance",
       "verdict": "confirmed",
-      "title": "Container-smoke evidence is not tied to the image or config it tested, so a PASS can outlive an nginx.conf change",
-      "file": "tools/container-smoke.mjs",
-      "line": 148,
+      "title": "Static theme guard misses a theme forced through a non-html/body token rule or setAttribute/variable className, so the 'No toggle' scenario can pass on the current control-less screens while violated",
+      "file": "src/app/theme-source.test.ts",
+      "line": 17,
       "status": "open"
     },
     {
       "id": "F07",
-      "severity": "major",
+      "severity": "minor",
       "dimension": "spec-compliance",
       "verdict": "confirmed",
-      "title": "Lint rule skips the literal arguments of every Intl.*(...).format() call, including text-bearing ones like Intl.ListFormat",
-      "file": "eslint-rules/no-literal-ui-text.js",
-      "line": 89,
+      "title": "Container-smoke fingerprint ties the evidence to a commit that is not HEAD and leaves out most image inputs and the e2e specs it ran",
+      "file": "tools/container-smoke.mjs",
+      "line": 45,
       "status": "open"
     },
     {
@@ -102,22 +102,22 @@
       "severity": "minor",
       "dimension": "spec-compliance",
       "verdict": "confirmed",
-      "title": "Widened static theme guard still misses common ways to force a theme (className +=, html.dark / body token overrides)",
-      "file": "src/app/theme-source.test.ts",
-      "line": 15,
+      "title": "Lint rule false positive on Intl calls without `new` and on Intl methods that take identifiers (.of, RelativeTimeFormat units)",
+      "file": "eslint-rules/no-literal-ui-text.js",
+      "line": 55,
       "status": "open"
     },
     {
       "id": "F09",
       "severity": "minor",
       "dimension": "spec-compliance",
-      "verdict": "contested",
-      "title": "Container smoke checks only that the 421 refusal has the security headers, not their values; server-version check covers only the shell",
-      "file": "tools/container-smoke.mjs",
-      "line": 148,
+      "verdict": "confirmed",
+      "title": "Static guard's html/body token pattern also fires on any selector containing 'body' or 'html' as a substring",
+      "file": "src/app/theme-source.test.ts",
+      "line": 28,
       "status": "open"
     }
   ],
   "clean": false,
-  "generatedAt": "2026-10-04T07:36:09Z"
+  "generatedAt": "2026-10-04T10:52:14Z"
 }

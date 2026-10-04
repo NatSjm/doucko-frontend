@@ -1,0 +1,107 @@
+{
+  "workflow": "review-gate",
+  "file": "./.claude/workflows/review-gate.js",
+  "description": "Multi-dimensional adversarial review of a diff or capability: correctness, security, and spec compliance, with every finding adversarially verified before it is reported.",
+  "dryRun": false,
+  "startedAt": "2026-10-04T09:43:16.128Z",
+  "finishedAt": "2026-10-04T09:43:28.363Z",
+  "args": {
+    "scope": "slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui",
+    "baseRef": "93e81cd",
+    "headRef": "HEAD",
+    "focus": "Round 6. Verify the round-5 fixes (commit 4c1aece): lint rule Intl/.format argument handling and toLocale exemption, theme e2e select navigation handling, static theme guard regex, container-smoke evidence (commit/image/nginx.conf hash, aborted-run row, 421 header values). Check against the spec delta and design.md. Do NOT re-report what design.md lists under \"Accepted limits (review round 3)\" or the documented real-compose-stack follow-up; report only defects in shipped behaviour or tests that can pass while the spec is violated.",
+    "change": "implement-platform-foundation-ui"
+  },
+  "settings": {
+    "allowedTools": null,
+    "concurrency": 4,
+    "model": null,
+    "budgetPerAgentUsd": 2,
+    "maxTotalUsd": 15,
+    "untypedTools": "Read,Grep,Glob,Write,Bash",
+    "permissionMode": "acceptEdits"
+  },
+  "outcome": "failed",
+  "stoppedBecause": null,
+  "error": null,
+  "totalCostUsd": 0.4816,
+  "steps": [
+    {
+      "label": "find:correctness",
+      "phase": "Find",
+      "agentType": "code-reviewer",
+      "structured": true,
+      "ok": false,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 1009,
+      "durationMs": 11209,
+      "sessionId": "df4f5fb5-e038-4b8e-aacb-dfb3bdc4c29f",
+      "costUsd": 0.121004,
+      "numTurns": 2,
+      "error": "success — You've hit your session limit · resets 1:40pm (Europe/Prague)"
+    },
+    {
+      "label": "find:security",
+      "phase": "Find",
+      "agentType": "security-reviewer",
+      "structured": true,
+      "ok": false,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 1037,
+      "durationMs": 12182,
+      "sessionId": "c158c453-78a7-4aa1-a544-07b2c21bdbe5",
+      "costUsd": 0.122504,
+      "numTurns": 2,
+      "error": "success — You've hit your session limit · resets 1:40pm (Europe/Prague)"
+    },
+    {
+      "label": "find:spec-compliance",
+      "phase": "Find",
+      "agentType": "spec-compliance-auditor",
+      "structured": true,
+      "ok": false,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 980,
+      "durationMs": 10898,
+      "sessionId": "b4cc5bc9-0757-450b-84a5-d14d310a2bfd",
+      "costUsd": 0.120548,
+      "numTurns": 2,
+      "error": "success — You've hit your session limit · resets 1:40pm (Europe/Prague)"
+    },
+    {
+      "label": "find:visual",
+      "phase": "Find",
+      "agentType": null,
+      "structured": true,
+      "ok": false,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1249,
+      "durationMs": 11164,
+      "sessionId": "56d5b420-5d6d-4988-b7ac-266525c30301",
+      "costUsd": 0.11752399999999999,
+      "numTurns": 2,
+      "error": "success — You've hit your session limit · resets 1:40pm (Europe/Prague)"
+    }
+  ],
+  "logs": [
+    {
+      "phase": "Find",
+      "message": "0 unique findings across 4 dimensions"
+    },
+    {
+      "phase": "Report",
+      "message": "confirmed: 0, contested: 0, rejected: 0"
+    }
+  ],
+  "persisted": [
+    "openspec/changes/implement-platform-foundation-ui/review-findings.json"
+  ],
+  "returned": {
+    "scope": "slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui",
+    "summary": "Review gate for slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui: 0 confirmed, 0 contested (treat as confirmed unless trivially wrong), 0 rejected.",
+    "confirmed": [],
+    "contested": [],
+    "rejected": [],
+    "reviewEvidence": "openspec/changes/implement-platform-foundation-ui/review-findings.json"
+  }
+}

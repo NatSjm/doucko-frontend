@@ -49,13 +49,21 @@ const NAME_IS_IDENTIFIER = new Set(["Icon", "ChoiceGroup"]);
 /** Object keys inside a text prop that hold identifiers, not text ({ value: 'a', label: t('yes') }). */
 const NON_TEXT_KEYS = new Set([...NON_TEXT_PROPS, "value"]);
 
-/** Locale formatting: n.toLocaleString('cs-CZ', { style: 'percent' }) and Intl.* take locales and options, not text. */
-// `new Intl.X('cs-CZ', {...})` needs no rule: a constructor's arguments are never read as text, while
-// what is passed to its .format(...) is (Intl.ListFormat formats the strings it is given).
+/** Locale formatting: n.toLocaleString('cs-CZ', { style: 'percent' }) takes a locale and options, not text. */
 const isLocaleFormatting = (callee) =>
   callee.type === "MemberExpression" &&
   callee.property.type === "Identifier" &&
   /^(toLocale\w*|localeCompare)$/.test(callee.property.name);
+
+/** `X` when `node` is `Intl.X(...)` or `new Intl.X(...)`, else null. */
+const intlConstructor = (node) =>
+  (node?.type === "NewExpression" || node?.type === "CallExpression") &&
+  node.callee.type === "MemberExpression" &&
+  node.callee.object.type === "Identifier" &&
+  node.callee.object.name === "Intl" &&
+  node.callee.property.type === "Identifier"
+    ? node.callee.property.name
+    : null;
 
 /** Functions whose string argument is a catalog key. */
 const CATALOG_LOOKUPS = new Set(["t"]);
@@ -88,6 +96,14 @@ function literalTexts(node) {
       if (node.callee.type === "Identifier" && CATALOG_LOOKUPS.has(node.callee.name)) return [];
       // Locale and format options are not text; a literal receiver ('Ahoj'.toLocaleUpperCase()) still is.
       if (isLocaleFormatting(node.callee)) return literalTexts(node.callee.object);
+      // Intl.X('cs', {...}) with or without `new`: locale and options. Methods of an Intl formatter take
+      // numbers, dates and identifiers (format(n, 'day'), of('cs')), except Intl.ListFormat, which
+      // formats the strings it is given, so its arguments are checked below.
+      if (intlConstructor(node)) return [];
+      if (node.callee.type === "MemberExpression") {
+        const kind = intlConstructor(node.callee.object);
+        if (kind && kind !== "ListFormat") return [];
+      }
       // 'Ahoj'.toUpperCase(), items.join(' a '), format('Ahoj {n}', n), items.map(() => 'Ahoj'):
       // the receiver, the arguments and what a callback argument returns.
       const receiver = node.callee.type === "MemberExpression" ? literalTexts(node.callee.object) : [];

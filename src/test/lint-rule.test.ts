@@ -31,6 +31,9 @@ tester.run('doucko/no-literal-ui-text', rule, {
     { code: 'const a = <input type="number" defaultValue={3} />;' },
     { code: 'document.title = t("app.name");' },
     { code: 'const a = <input type="checkbox" value="yes" />;' },
+    { code: 'const a = <p>{Intl.NumberFormat("cs-CZ", { style: "percent" }).format(n)}</p>;' },
+    { code: 'const a = <p>{new Intl.RelativeTimeFormat("cs").format(-1, "day")}</p>;' },
+    { code: 'const a = <p>{new Intl.DisplayNames(["cs"], { type: "language" }).of("en")}</p>;' },
     { code: 'const a = <p>{n.toLocaleString("cs-CZ", { style: "percent" })}</p>;' },
     { code: 'const a = <p>{new Intl.NumberFormat("cs-CZ", { style: "unit", unit: "minute" }).format(n)}</p>;' },
     { code: 'const a = <p>{d.toLocaleDateString("cs", { month: "long" })}</p>;' },
@@ -88,6 +91,7 @@ tester.run('doucko/no-literal-ui-text', rule, {
     { code: 'const a = <p>{"Ahoj".toLocaleUpperCase("cs")}</p>;', errors: [{ messageId: 'text' }] },
     { code: 'const a = <SubjectList items={[{ id: "m", name: "Matematika" }]} />;', errors: [{ messageId: 'attr' }] },
     { code: 'const a = <p>{new Intl.ListFormat("cs", { type: "conjunction" }).format(["Ahoj", t("x")])}</p>;', errors: [{ messageId: 'text' }] },
+    { code: 'const a = <p>{Intl.ListFormat("cs").format(["Ahoj"])}</p>;', errors: [{ messageId: 'text' }] },
     // The document title
     { code: 'window.document.title = "Doučko";', errors: [{ messageId: 'title' }] },
     { code: 'document.title = "Doučko";', errors: [{ messageId: 'title' }] },

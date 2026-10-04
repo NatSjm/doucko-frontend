@@ -44,7 +44,12 @@ const startedAt = new Date().toISOString();
 /** What this run tested, so the evidence cannot outlive a change to it. */
 const tested = {
   commit: spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).stdout.trim(),
-  dirty: spawnSync('git', ['status', '--porcelain', '--', 'nginx.conf', 'Dockerfile', 'src', 'index.html'], { encoding: 'utf8' }).stdout.trim() !== '',
+  // Any change outside generated evidence: the image is built from the whole context and the e2e
+  // specs run from the working tree, so every other file is an input.
+  dirty:
+    spawnSync('git', ['status', '--porcelain', '--', '.', ':!docs/qa', ':!trace', ':!test-results', ':!playwright-report'], {
+      encoding: 'utf8',
+    }).stdout.trim() !== '',
   nginxConf: createHash('sha256').update(readFileSync('nginx.conf')).digest('hex'),
   image: 'not built',
 };
@@ -167,7 +172,7 @@ writeFileSync(
     '',
     `- Started: ${startedAt}`,
     `- Finished: ${new Date().toISOString()}`,
-    `- Tested: commit ${tested.commit}${tested.dirty ? ' (with uncommitted changes to the image inputs)' : ''}, image ${tested.image}, nginx.conf sha256 ${tested.nginxConf}`,
+    `- Tested: commit ${tested.commit}${tested.dirty ? ' plus uncommitted changes (the evidence is not tied to this commit alone)' : ''}, image ${tested.image}, nginx.conf sha256 ${tested.nginxConf}`,
     `- Scope: ${results.length} check(s)${e2eRan ? ', Playwright through nginx included' : ', Playwright through nginx NOT included'}`,
     `- Result: ${failures.length ? `FAIL (${failures.length})` : results.length ? 'PASS' : 'NOT-EARNED (no check ran)'}`,
     '',
