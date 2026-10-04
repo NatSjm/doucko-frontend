@@ -1,0 +1,63 @@
+.preview-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.tester-result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.editor-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.editor-viewer {
+  position: sticky;
+  top: var(--space-4);
+}
+
+.editor-images {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.editor-images li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.editor-images img {
+  max-height: calc(var(--space-8) * 2);
+  max-width: calc(var(--space-8) * 4);
+  border-radius: var(--radius-sm);
+  border: var(--stroke-hair) solid var(--line-soft);
+}
+
+.task-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: end;
+}
+
+.task-filters > .admin-control {
+  flex: 1 1 calc(var(--space-8) * 2);
+}
+
+.task-prov {
+  display: grid;
+  gap: var(--space-1);
+}

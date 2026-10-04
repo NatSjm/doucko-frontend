@@ -1,0 +1,17 @@
+{
+  "kind": "demo",
+  "results": [
+    {
+      "id": "nfr8-single-part-task-entry",
+      "title": "Typical single-part task entered with the keyboard (NFR-8)",
+      "proof": "NFR-8, FR-3",
+      "video": "docs/qa/demo-recordings/nfr8-task-entry/nfr8-single-part-task-entry.webm",
+      "screenshot": "docs/qa/demo-recordings/nfr8-task-entry/nfr8-single-part-task-entry.png",
+      "explainer": "docs/qa/demo-recordings/nfr8-task-entry/nfr8-single-part-task-entry.md",
+      "asserted": true,
+      "elapsedMs": 5855,
+      "keyDelayMs": 150,
+      "pauseMs": 700
+    }
+  ]
+}

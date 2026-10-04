@@ -5,23 +5,23 @@ requirements/spec/test/recording change; CI runs `--check-fresh`.
 
 Repo: frontend (contract: submodule).
 Scope: 48 MVP functional requirements, 30 owned by frontend.
-Result: PASS, 59 warning(s)
+Result: PASS, 49 warning(s)
 
 | FR | Spec | Plan | Owner repo(s) | Test trace here | Recording here |
 |---|---|---|---|---|---|
-| FR-1 | yes | yes | backend, frontend | - | - |
-| FR-2 | yes | yes | backend, frontend | - | - |
-| FR-3 | yes | yes | backend, frontend | - | - |
-| FR-4 | yes | yes | backend, frontend | - | - |
+| FR-1 | yes | yes | backend, frontend | 2 | - |
+| FR-2 | yes | yes | backend, frontend | 7 | - |
+| FR-3 | yes | yes | backend, frontend | 3 | yes |
+| FR-4 | yes | yes | backend, frontend | 3 | - |
 | FR-5 | yes | yes | backend | n/a | n/a |
-| FR-6 | yes | yes | backend, frontend | - | - |
-| FR-7 | yes | yes | backend, frontend | - | - |
-| FR-8 | yes | yes | backend, frontend | - | - |
+| FR-6 | yes | yes | backend, frontend | 2 | - |
+| FR-7 | yes | yes | backend, frontend | 4 | - |
+| FR-8 | yes | yes | backend, frontend | 5 | - |
 | FR-9 | yes | yes | backend, frontend | - | - |
-| FR-10 | yes | yes | backend, frontend | - | - |
-| FR-11 | yes | yes | backend, frontend | - | - |
+| FR-10 | yes | yes | backend, frontend | 3 | - |
+| FR-11 | yes | yes | backend, frontend | 2 | - |
 | FR-12 | yes | yes | backend | n/a | n/a |
-| FR-13 | yes | yes | backend, frontend | - | - |
+| FR-13 | yes | yes | backend, frontend | 3 | - |
 | FR-55 | yes | yes | backend, frontend | - | - |
 | FR-56 | yes | yes | backend | n/a | n/a |
 | FR-57 | yes | yes | backend | n/a | n/a |
@@ -69,15 +69,15 @@ Result: PASS, 59 warning(s)
 | NFR-5 | backend, frontend | - |
 | NFR-6 | frontend | 2 |
 | NFR-7 | frontend | - |
-| NFR-8 | frontend | - |
-| NFR-9 | backend, frontend | 4 |
+| NFR-8 | frontend | 2 |
+| NFR-9 | backend, frontend | 6 |
 | NFR-10 | backend | n/a |
 | NFR-11 | backend | n/a |
 | NFR-12 | backend, frontend | 2 |
 | NFR-13 | frontend | 2 |
 | NFR-15 | backend | n/a |
 | NFR-16 | backend | n/a |
-| NFR-17 | backend, frontend | - |
+| NFR-17 | backend, frontend | 5 |
 | TC-1 | - | n/a |
 | TC-2 | - | n/a |
 | TC-3 | - | n/a |
@@ -97,17 +97,7 @@ None.
 
 ## Warnings
 
-- **test-trace**: FR-1 (owned by frontend) has no test annotated "@trace FR-1"
-- **test-trace**: FR-2 (owned by frontend) has no test annotated "@trace FR-2"
-- **test-trace**: FR-3 (owned by frontend) has no test annotated "@trace FR-3"
-- **test-trace**: FR-4 (owned by frontend) has no test annotated "@trace FR-4"
-- **test-trace**: FR-6 (owned by frontend) has no test annotated "@trace FR-6"
-- **test-trace**: FR-7 (owned by frontend) has no test annotated "@trace FR-7"
-- **test-trace**: FR-8 (owned by frontend) has no test annotated "@trace FR-8"
 - **test-trace**: FR-9 (owned by frontend) has no test annotated "@trace FR-9"
-- **test-trace**: FR-10 (owned by frontend) has no test annotated "@trace FR-10"
-- **test-trace**: FR-11 (owned by frontend) has no test annotated "@trace FR-11"
-- **test-trace**: FR-13 (owned by frontend) has no test annotated "@trace FR-13"
 - **test-trace**: FR-55 (owned by frontend) has no test annotated "@trace FR-55"
 - **test-trace**: FR-22 (owned by frontend) has no test annotated "@trace FR-22"
 - **test-trace**: FR-24 (owned by frontend) has no test annotated "@trace FR-24"
@@ -128,7 +118,6 @@ None.
 - **test-trace**: FR-41 (owned by frontend) has no test annotated "@trace FR-41"
 - **recording-evidence**: FR-1 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-2 is not referenced by any recording manifest under docs/qa/
-- **recording-evidence**: FR-3 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-4 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-6 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-7 is not referenced by any recording manifest under docs/qa/
@@ -156,3 +145,4 @@ None.
 - **recording-evidence**: FR-58 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-40 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-41 is not referenced by any recording manifest under docs/qa/
+- **active-changes**: active change "implement-authoring-tasks-ui" is not archived

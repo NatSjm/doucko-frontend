@@ -13,8 +13,8 @@
       {
         "method": "local-verifiable",
         "mechanism": "npm:test:run",
-        "artifact": null,
-        "status": "planned"
+        "artifact": "src/features/sources/SourcesScreen.test.tsx",
+        "status": "artifact-ok"
       }
     ],
     "FR-2": [
@@ -45,24 +45,24 @@
       {
         "method": "local-verifiable",
         "mechanism": "npm:test:run",
-        "artifact": null,
-        "status": "planned"
+        "artifact": "src/features/tasks/TaskEditorScreen.test.tsx",
+        "status": "artifact-ok"
       }
     ],
     "FR-7": [
       {
         "method": "local-verifiable",
         "mechanism": "npm:test:run",
-        "artifact": null,
-        "status": "planned"
+        "artifact": "src/features/tasks/PreviewScreen.test.tsx",
+        "status": "artifact-ok"
       }
     ],
     "FR-8": [
       {
         "method": "local-verifiable",
         "mechanism": "npm:test:run",
-        "artifact": null,
-        "status": "planned"
+        "artifact": "src/features/task/TaskView.test.tsx",
+        "status": "artifact-ok"
       }
     ],
     "FR-9": [
@@ -199,8 +199,8 @@
       {
         "method": "recording",
         "mechanism": "npm:check:recordings",
-        "artifact": null,
-        "status": "planned"
+        "artifact": "docs/qa/demo-recordings/nfr8-task-entry/manifest.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-33": [
@@ -335,8 +335,8 @@
       {
         "method": "recording",
         "mechanism": "npm:check:recordings",
-        "artifact": null,
-        "status": "planned"
+        "artifact": "docs/qa/demo-recordings/nfr8-task-entry/manifest.json",
+        "status": "artifact-ok"
       }
     ],
     "NFR-9": [
@@ -367,8 +367,8 @@
       {
         "method": "local-verifiable",
         "mechanism": "npm:test:run",
-        "artifact": null,
-        "status": "planned"
+        "artifact": "src/features/sources/SourcesScreen.test.tsx",
+        "status": "artifact-ok"
       }
     ]
   }

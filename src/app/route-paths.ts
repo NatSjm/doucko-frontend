@@ -2,10 +2,38 @@
  * Every route the app serves. Plain data (no JSX, no aliases) so Playwright specs can import it:
  * the a11y and theme e2e iterate it, and `routes.test.ts` keeps it equal to `routes.tsx`.
  */
-export const ROUTE_PATHS = ['/', '/admin'] as const;
+export const ROUTE_PATHS = [
+  '/',
+  '/admin',
+  '/admin/sources',
+  '/admin/sources/view',
+  '/admin/tasks',
+  '/admin/tasks/edit',
+  '/admin/tasks/preview',
+] as const;
+
+export type RoutePath = (typeof ROUTE_PATHS)[number];
+
+/**
+ * Admin routes behind the session gate: the a11y, theme and `⟦` checks open them signed in against
+ * the shared fake admin backend (`src/test/fake-admin-backend.ts`, whose seed the ids below name).
+ */
+export const ADMIN_ROUTES: readonly RoutePath[] = ROUTE_PATHS.filter((p) => p.startsWith('/admin'));
+
+/** The query that brings a route to its content state for those checks (screens take ids by query). */
+export const ROUTE_EXAMPLES: Partial<Record<RoutePath, string>> = {
+  '/admin/sources/view': '?sourceId=11111111-1111-4111-8111-111111111111&page=57',
+  '/admin/tasks/edit': '?taskId=aaaaaaaa-aaaa-4aaa-8aaa-000000000001',
+  '/admin/tasks/preview': '?taskId=aaaaaaaa-aaaa-4aaa-8aaa-000000000001',
+};
 
 /** The registered path a pathname means: `/index.html` is the root; a trailing slash is ignored. */
 export function routePath(pathname: string): string {
   const path = pathname.replace(/\/index\.html$/, '/');
   return path.length > 1 ? path.replace(/\/+$/, '') || '/' : path;
+}
+
+/** The current query parameter `name`, or null. Screens read their ids from the query string. */
+export function queryParam(name: string): string | null {
+  return new URLSearchParams(window.location.search).get(name);
 }

@@ -1,6 +1,7 @@
 // @trace FR-58
 import { SCREENS } from './screens';
-import { expect, test } from './fixtures/test';
+import { expectSignedInContent, signedInAdmin } from './fixtures/admin';
+import { AGAINST_STACK, expect, test } from './fixtures/test';
 
 // --paper from src/design-system/tokens.css: light #fff7ef, dark #0e1330.
 const PAPER = { light: 'rgb(255, 247, 239)', dark: 'rgb(14, 19, 48)' } as const;
@@ -16,6 +17,7 @@ for (const scheme of ['light', 'dark'] as const) {
     test.use({ colorScheme: scheme });
     for (const screen of SCREENS) {
       test(`${screen.name} uses the ${scheme} theme`, async ({ page }) => {
+        if (screen.admin && !AGAINST_STACK) await signedInAdmin(page);
         await page.goto(screen.path);
         await expect(page.locator(screen.marker)).toBeAttached();
         await expect(page.locator('body')).toHaveCSS('background-color', PAPER[scheme]);
@@ -23,8 +25,12 @@ for (const scheme of ['light', 'dark'] as const) {
       });
 
       test(`${screen.name}: no control switches away from the ${scheme} theme`, async ({ page }) => {
+        // Signed in, the authoring screens have many controls; triple the time, never the assertions.
+        test.slow(screen.admin);
+        if (screen.admin && !AGAINST_STACK) await signedInAdmin(page);
         await page.goto(screen.path);
         await expect(page.locator(screen.marker)).toBeAttached();
+        if (screen.admin && !AGAINST_STACK) await expectSignedInContent(page);
         const controls = page.locator(CONTROLS);
         let activated = 0;
         for (let i = 0; i < (await controls.count()); i++) {

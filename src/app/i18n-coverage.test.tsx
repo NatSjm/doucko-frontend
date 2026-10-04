@@ -2,12 +2,16 @@
 import { act, render } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ADMIN_ROUTES, ROUTE_EXAMPLES, type RoutePath } from './route-paths';
 import { messages, type Messages } from '@/i18n';
 import { cs } from '@/i18n/cs';
 import { en } from '@/i18n/en';
 import { App } from './App';
 import { routes } from './routes';
-import { stubAdminBackend } from '@/test/admin-backend';
+import { stubAdminBackend, stubSignedInAdmin } from '@/test/admin-backend';
+import { seedStrings } from '@/test/fake-admin-backend';
+
+vi.mock('@/features/sources/pdf', () => import('@/test/pdf-mock'));
 
 /**
  * Every catalog value wrapped in ⟦…⟧. A text is covered only if it consists of whole wrapped
@@ -34,42 +38,53 @@ const TEXT_ATTRIBUTES = [
 /** Input types whose value is not shown as text (as in the lint rule). */
 const NON_TEXT_INPUT_TYPES = ['hidden', 'checkbox', 'radio', 'range', 'color', 'file', 'image'];
 
-/** Visible text nodes, text attributes, visible field values and the document title. */
-function uiTexts(root: HTMLElement): string[] {
+/**
+ * Visible text nodes, text attributes, visible field values and the document title. Text inside a
+ * `[data-content]` element is content the admin entered or the server sent (content-authoring
+ * "No hard-coded admin strings": task content excepted); it goes to `content` instead.
+ */
+function collectTexts(root: HTMLElement): { texts: string[]; content: string[] } {
   const texts: string[] = [];
+  const content: string[] = [];
+  const add = (el: Element | null | undefined, text: string | undefined) => {
+    const value = text?.trim();
+    if (value) (el?.closest('[data-content]') ? content : texts).push(value);
+  };
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   for (let node = walker.nextNode(); node; node = walker.nextNode()) {
     if (node.parentElement?.closest('script,style')) continue;
-    const text = node.textContent?.trim();
-    if (text) texts.push(text);
+    add(node.parentElement, node.textContent ?? undefined);
   }
   for (const el of root.querySelectorAll('*')) {
-    for (const attr of TEXT_ATTRIBUTES) {
-      const value = el.getAttribute(attr)?.trim();
-      if (value) texts.push(value);
-    }
+    for (const attr of TEXT_ATTRIBUTES) add(el, el.getAttribute(attr) ?? undefined);
     // A field's value is a DOM property, not a text node: read it from every field that shows it.
     const shown =
       el instanceof HTMLTextAreaElement || (el instanceof HTMLInputElement && !NON_TEXT_INPUT_TYPES.includes(el.type));
-    if (shown && el.value.trim()) texts.push(el.value.trim());
+    if (shown) add(el, el.value);
   }
   texts.push(document.title.trim());
-  return texts;
+  return { texts, content };
 }
+
+const uiTexts = (root: HTMLElement) => collectTexts(root).texts;
 
 const uncovered = (texts: string[]) => texts.filter((t) => !COVERED.test(t) && !NO_WORDS.test(t));
 
 /**
- * Renders App with the pseudo-catalog and lets effects and pending work settle before reading. The
- * API answers like a backend with no admin session, so `/admin` shows its sign-in form (admin-access).
+ * Renders App with the pseudo-catalog and lets effects and pending work settle before reading. Admin
+ * routes are opened signed in, with their example query, against the shared fake backend and its
+ * seed, so the authoring screens show their real content; other paths get a backend with no session.
  */
 async function renderSettled(path: string) {
-  stubAdminBackend();
-  window.history.pushState({}, '', path);
+  const admin = (ADMIN_ROUTES as readonly string[]).includes(path);
+  if (admin) stubSignedInAdmin();
+  else stubAdminBackend();
+  window.history.pushState({}, '', path + (ROUTE_EXAMPLES[path as RoutePath] ?? ''));
   render(<App messages={pseudo} />);
-  await act(async () => {
-    await new Promise((resolve) => setTimeout(resolve, 0));
-  });
+  for (let i = 0; i < 10; i++)
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
 }
 
 afterEach(() => {
@@ -103,9 +118,31 @@ describe('externalized UI strings (NFR-9)', () => {
 
   it.each(routes.map((r) => [r.path] as const))('route %s shows only catalog text, title included', async (path) => {
     await renderSettled(path);
-    const texts = uiTexts(document.body);
+    const { texts, content } = collectTexts(document.body);
     expect(texts.length).toBeGreaterThan(1);
     expect(uncovered(texts)).toEqual([]);
+    // Marked content is example data only, so nothing hides behind the marker.
+    const data = seedStrings();
+    expect(content.filter((t) => !data.has(t) && !NO_WORDS.test(t))).toEqual([]);
+  });
+
+  it.each(ADMIN_ROUTES.map((p) => [p] as const))('admin route %s is checked signed in, past loading', async (path) => {
+    await renderSettled(path);
+    expect(document.body.textContent).not.toContain(pseudo['admin.signIn.title']);
+    expect(document.body.textContent).not.toContain(pseudo['admin.common.loading']);
+    expect(document.body.textContent).not.toContain(pseudo['admin.session.checking']);
+    if (path !== '/admin') expect(document.querySelectorAll('[data-content]').length).toBeGreaterThan(0);
+  });
+
+  it('the content marker only accepts example data', () => {
+    const { container } = render(
+      <div>
+        <span data-content>Matematika 6 – pracovní sešit</span>
+        <span data-content>Ahoj</span>
+      </div>,
+    );
+    const data = seedStrings();
+    expect(collectTexts(container).content.filter((t) => !data.has(t))).toEqual(['Ahoj']);
   });
 
   it('the not-found screen shows only catalog text', async () => {

@@ -1,0 +1,28 @@
+/* The child task area (design system task classes), plus the image strip and the hint stack. */
+.task-view {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.task-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.task-images img {
+  max-width: 100%;
+  max-height: calc(var(--space-8) * 5);
+  border-radius: var(--radius-md);
+  border: var(--stroke-hair) solid var(--line-soft);
+}
+
+.task-hints {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.task-alt-inline {
+  display: block;
+  color: var(--ink-muted);
+}

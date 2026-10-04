@@ -100,10 +100,14 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/content-authoring/spec.md"
+        "contract/openspec/specs/content-authoring/spec.md",
+        "openspec/changes/implement-authoring-tasks-ui/specs/content-authoring/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "src/features/sources/SourcesScreen.test.tsx",
+        "e2e/authoring-sources.spec.ts"
+      ],
       "recordings": []
     },
     {
@@ -114,10 +118,19 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/content-authoring/spec.md"
+        "contract/openspec/specs/content-authoring/spec.md",
+        "openspec/changes/implement-authoring-tasks-ui/specs/content-authoring/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "src/features/sources/page.test.ts",
+        "src/features/sources/pdf.test.ts",
+        "src/features/sources/PdfViewer.test.tsx",
+        "src/features/sources/SourceViewerScreen.test.tsx",
+        "src/features/tasks/TaskEditorScreen.test.tsx",
+        "e2e/authoring-sources.spec.ts",
+        "e2e/authoring-tasks.spec.ts"
+      ],
       "recordings": []
     },
     {
@@ -128,11 +141,18 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/content-authoring/spec.md"
+        "contract/openspec/specs/content-authoring/spec.md",
+        "openspec/changes/implement-authoring-tasks-ui/specs/content-authoring/spec.md"
       ],
       "planned": true,
-      "tests": [],
-      "recordings": []
+      "tests": [
+        "src/features/tasks/TaskEditorScreen.test.tsx",
+        "src/features/tasks/taskForm.test.ts",
+        "e2e/authoring-tasks.spec.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/nfr8-task-entry/manifest.json"
+      ]
     },
     {
       "id": "FR-4",
@@ -142,10 +162,15 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/content-authoring/spec.md"
+        "contract/openspec/specs/content-authoring/spec.md",
+        "openspec/changes/implement-authoring-tasks-ui/specs/content-authoring/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "src/features/tasks/PreviewScreen.test.tsx",
+        "src/features/tasks/TaskEditorScreen.test.tsx",
+        "e2e/authoring-tasks.spec.ts"
+      ],
       "recordings": []
     },
     {
@@ -169,10 +194,14 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/content-authoring/spec.md"
+        "contract/openspec/specs/content-authoring/spec.md",
+        "openspec/changes/implement-authoring-tasks-ui/specs/content-authoring/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "src/features/tasks/TaskEditorScreen.test.tsx",
+        "src/features/tasks/taskForm.test.ts"
+      ],
       "recordings": []
     },
     {
@@ -183,10 +212,16 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/content-authoring/spec.md"
+        "contract/openspec/specs/content-authoring/spec.md",
+        "openspec/changes/implement-authoring-tasks-ui/specs/content-authoring/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "src/features/tasks/PreviewScreen.test.tsx",
+        "src/features/tasks/TaskEditorScreen.test.tsx",
+        "src/features/tasks/taskForm.test.ts",
+        "e2e/authoring-preview.spec.ts"
+      ],
       "recordings": []
     },
     {
@@ -197,10 +232,17 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/content-authoring/spec.md"
+        "contract/openspec/specs/content-authoring/spec.md",
+        "openspec/changes/implement-authoring-tasks-ui/specs/content-authoring/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "src/features/task/TaskView.test.tsx",
+        "src/features/tasks/PreviewScreen.test.tsx",
+        "src/features/tasks/TaskEditorScreen.test.tsx",
+        "src/features/tasks/taskForm.test.ts",
+        "e2e/authoring-preview.spec.ts"
+      ],
       "recordings": []
     },
     {
@@ -225,10 +267,15 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/content-authoring/spec.md"
+        "contract/openspec/specs/content-authoring/spec.md",
+        "openspec/changes/implement-authoring-tasks-ui/specs/content-authoring/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "src/features/task/TaskView.test.tsx",
+        "src/features/tasks/PreviewScreen.test.tsx",
+        "e2e/authoring-preview.spec.ts"
+      ],
       "recordings": []
     },
     {
@@ -239,10 +286,14 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/content-authoring/spec.md"
+        "contract/openspec/specs/content-authoring/spec.md",
+        "openspec/changes/implement-authoring-tasks-ui/specs/content-authoring/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "src/features/tasks/TaskListScreen.test.tsx",
+        "e2e/authoring-tasks.spec.ts"
+      ],
       "recordings": []
     },
     {
@@ -266,10 +317,15 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/content-authoring/spec.md"
+        "contract/openspec/specs/content-authoring/spec.md",
+        "openspec/changes/implement-authoring-tasks-ui/specs/content-authoring/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "src/features/sources/SourceViewerScreen.test.tsx",
+        "src/features/tasks/TaskListScreen.test.tsx",
+        "e2e/authoring-tasks.spec.ts"
+      ],
       "recordings": []
     },
     {
@@ -823,7 +879,10 @@
         "frontend"
       ],
       "ownedHere": true,
-      "tests": []
+      "tests": [
+        "src/features/tasks/TaskEditorScreen.test.tsx",
+        "e2e/authoring-tasks.spec.ts"
+      ]
     },
     {
       "id": "NFR-9",
@@ -835,6 +894,8 @@
       "tests": [
         "src/app/i18n-coverage.test.tsx",
         "src/features/admin-access/AdminGate.test.tsx",
+        "src/features/admin-access/AdminLayout.test.tsx",
+        "src/i18n/format.test.ts",
         "src/test/lint-rule.test.ts",
         "e2e/admin-sign-in.spec.ts"
       ]
@@ -901,7 +962,13 @@
         "frontend"
       ],
       "ownedHere": true,
-      "tests": []
+      "tests": [
+        "src/features/sources/SourcesScreen.test.tsx",
+        "src/features/sources/upload-limits.test.ts",
+        "src/features/tasks/TaskEditorScreen.test.tsx",
+        "e2e/authoring-sources.spec.ts",
+        "e2e/authoring-tasks.spec.ts"
+      ]
     },
     {
       "id": "TC-1",
@@ -980,47 +1047,7 @@
   "warnings": [
     {
       "check": "test-trace",
-      "msg": "FR-1 (owned by frontend) has no test annotated \"@trace FR-1\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-2 (owned by frontend) has no test annotated \"@trace FR-2\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-3 (owned by frontend) has no test annotated \"@trace FR-3\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-4 (owned by frontend) has no test annotated \"@trace FR-4\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-6 (owned by frontend) has no test annotated \"@trace FR-6\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-7 (owned by frontend) has no test annotated \"@trace FR-7\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-8 (owned by frontend) has no test annotated \"@trace FR-8\""
-    },
-    {
-      "check": "test-trace",
       "msg": "FR-9 (owned by frontend) has no test annotated \"@trace FR-9\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-10 (owned by frontend) has no test annotated \"@trace FR-10\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-11 (owned by frontend) has no test annotated \"@trace FR-11\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-13 (owned by frontend) has no test annotated \"@trace FR-13\""
     },
     {
       "check": "test-trace",
@@ -1101,10 +1128,6 @@
     {
       "check": "recording-evidence",
       "msg": "FR-2 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-3 is not referenced by any recording manifest under docs/qa/"
     },
     {
       "check": "recording-evidence",
@@ -1213,6 +1236,10 @@
     {
       "check": "recording-evidence",
       "msg": "FR-41 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "active-changes",
+      "msg": "active change \"implement-authoring-tasks-ui\" is not archived"
     }
   ]
 }

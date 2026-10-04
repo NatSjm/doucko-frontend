@@ -42,6 +42,8 @@ const NON_TEXT_PROPS = new Set([
   "className", "id", "key", "variant", "tone", "size", "type", "kind", "state", "subject", "accent", "icon", "iconAfter",
   "href", "to", "rel", "target", "role", "lang", "translationLang", "htmlFor", "inputMode", "autoComplete", "method",
   "as", "color", "align", "src", "srcSet", "testId",
+  // A problem field path (contract "Field paths", e.g. `parts[0].spec.accepted[1]`), never shown.
+  "path",
 ]);
 /** Components whose `name` is an identifier (icon name, form-field name), not a display name. */
 const NAME_IS_IDENTIFIER = new Set(["Icon", "ChoiceGroup"]);

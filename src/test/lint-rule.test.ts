@@ -38,6 +38,7 @@ tester.run('doucko/no-literal-ui-text', rule, {
     { code: 'const a = <p>{new Intl.NumberFormat("cs-CZ", { style: "unit", unit: "minute" }).format(n)}</p>;' },
     { code: 'const a = <p>{d.toLocaleDateString("cs", { month: "long" })}</p>;' },
     { code: 'const a = <input type="hidden" value="token" />;' },
+    { code: 'const a = <Field path="parts[0].spec.accepted[1]" label={t("a")} />;' },
     { code: 'const a = <p>{items.map((i) => t(i.key)).join(" · ")}</p>;' },
     { code: 'const a = <p>{items.map((i) => { if (i) return t("a"); return t("b"); })}</p>;' },
   ],
@@ -108,7 +109,9 @@ describe('lint wiring (NFR-9)', () => {
     });
     const hits = result.messages.filter((m) => m.ruleId === 'doucko/no-literal-ui-text');
     expect(hits.map((m) => m.severity)).toEqual([2]);
-  });
+    // The first ESLint run loads the whole config (typescript-eslint); under a parallel suite that
+    // passed 5 s. The time grows, never the assertions.
+  }, 30_000);
 
   it('npm run lint reports a literal document title in a src/ .ts module', async () => {
     const [result] = await new ESLint().lintText('document.title = "Doučko";\n', { filePath: 'src/features/probe/title.ts' });

@@ -5,6 +5,15 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    rollupOptions: {
+      output: {
+        // The pdf.js worker ships as .mjs; nginx may serve that extension without a JavaScript type, and
+        // nosniff then blocks the module worker. Emitted as .js it is served as JavaScript everywhere.
+        assetFileNames: (asset) => (asset.names.some((n) => n.endsWith('.mjs')) ? 'assets/[name]-[hash].js' : 'assets/[name]-[hash][extname]'),
+      },
+    },
+  },
   resolve: {
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
   },

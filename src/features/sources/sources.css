@@ -1,0 +1,41 @@
+.pdf-viewer {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+  min-width: 0;
+}
+
+.pdf-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pdf-page-field {
+  width: calc(var(--space-8) + var(--space-5));
+}
+
+.pdf-page {
+  overflow: auto;
+  max-height: calc(100vh - var(--space-8) * 2);
+  background: var(--panel-sunk);
+  border-radius: var(--radius-md);
+  border: var(--stroke-hair) solid var(--line-soft);
+}
+
+.pdf-page:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.admin-canvas {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  background: var(--panel);
+}
+
+.admin-canvas[hidden] {
+  display: none;
+}

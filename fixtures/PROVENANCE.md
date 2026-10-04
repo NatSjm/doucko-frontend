@@ -16,6 +16,7 @@ or a row that does not have the shape below.
 |---|---|---|---|
 | `e2e/fixtures/profile.ts` | self-authored | Doučko project | Fictional e2e display name and the real-name guard (NFR-3) |
 | `e2e/fixtures/test.ts` | self-authored | Doučko project | Playwright `test` that runs the real-name guard after every test (NFR-3) |
+| `e2e/fixtures/admin.ts` | self-authored | Doučko project | Playwright helper answering the admin API from the shared fake backend (contract stub, self-authored seed) |
 | `src/design-system/fonts/DelaGothicOne-Regular.woff2` | licensed: OFL-1.1 | The Dela Gothic Project Authors | Display font |
 | `src/design-system/fonts/DelaGothicOne-OFL.txt` | licensed: OFL-1.1 | The Dela Gothic Project Authors | Its SIL Open Font License |
 | `src/design-system/fonts/Rubik-Variable.woff2` | licensed: OFL-1.1 | The Rubik Project Authors | Text font |

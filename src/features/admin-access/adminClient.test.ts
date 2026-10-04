@@ -55,3 +55,14 @@ describe('adminClient (NFR-15)', () => {
     expect(JSON.parse(request?.body ?? '')).toEqual({ password: 'Kocka-na-plote-42' });
   });
 });
+
+describe('adminClient without a CSRF cookie', () => {
+  it('sends no CSRF header when there is no XSRF-TOKEN cookie (the server then refuses with 403)', async () => {
+    document.cookie = 'XSRF-TOKEN=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    const backend = stubAdminBackend();
+    backend.signedIn = true;
+    const { response } = await adminClient.DELETE('/api/admin/session');
+    expect(backend.seen.at(-1)?.headers.has('X-XSRF-TOKEN')).toBe(false);
+    expect(response.status).toBe(403);
+  });
+});
