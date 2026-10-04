@@ -165,3 +165,10 @@ Kept on purpose; each later slice covers what it adds.
   loudly, never as a skip.
 - No router yet, so `routes.tsx` is a plain array that slice 2 adapts to the
   chosen router (an ADR in this repo).
+
+## Review sign-off
+
+Review-gate rounds 1–10 (`trace/workflow-runs/`). Round 10 confirmed two minor findings, both the
+same gap, fixed with tests in `442dd3a`. The project owner signed off on 2026-10-04 without a further
+round; the decision is recorded in `review-findings.json` (`signOff`). Remaining limits: "Accepted
+limits" above.

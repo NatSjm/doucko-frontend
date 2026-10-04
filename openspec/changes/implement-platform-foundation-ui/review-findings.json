@@ -35,7 +35,8 @@
       "title": "Scheme-word pattern still misses lowercase compounds with a prefix or plural (`isdark`, `appdark`, `nodark`, `darkmodes`)",
       "file": "src/app/theme-source.test.ts",
       "line": 32,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "442dd3a"
     },
     {
       "id": "F02",
@@ -45,9 +46,15 @@
       "title": "Scheme-name pattern still misses lowercase compounds with a prefix (isdark, appdark) and plural suffix compounds (darkmodes, darkthemes)",
       "file": "src/app/theme-source.test.ts",
       "line": 27,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "442dd3a"
     }
   ],
   "clean": false,
-  "generatedAt": "2026-10-04T11:40:49Z"
+  "generatedAt": "2026-10-04T11:40:49Z",
+  "signOff": {
+    "by": "project owner (project owner)",
+    "at": "2026-10-04T11:55:52.669Z",
+    "decision": "Accepted after round 10 without a further review round. Both round-10 findings (the same gap: prefixed and plural lowercase scheme compounds) fixed in 442dd3a with tests; remaining limits are documented in design.md \"Accepted limits\"."
+  }
 }
