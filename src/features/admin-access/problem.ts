@@ -35,3 +35,8 @@ export function problemMessage(error: unknown): string | null {
   if (!(error instanceof ApiError) || !error.problem) return null;
   return error.problem.detail ?? error.problem.title;
 }
+
+/** The ids of the entities that block a refused action (409 `conflicts`); empty otherwise. */
+export function problemConflicts(error: unknown): string[] {
+  return error instanceof ApiError ? (error.problem?.conflicts ?? []) : [];
+}

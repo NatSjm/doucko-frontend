@@ -18,7 +18,7 @@ describe('route registry', () => {
     const ids = new Set<string>(Object.values(SEED));
     for (const query of Object.values(ROUTE_EXAMPLES)) {
       const params = new URLSearchParams(query);
-      for (const key of ['taskId', 'sourceId']) if (params.has(key)) expect(ids.has(params.get(key) as string)).toBe(true);
+      for (const key of ['taskId', 'sourceId', 'missionId']) if (params.has(key)) expect(ids.has(params.get(key) as string)).toBe(true);
     }
   });
 

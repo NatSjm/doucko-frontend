@@ -27,6 +27,7 @@
 
 .admin-nav {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-2);
   margin: 0;
   padding: 0;
@@ -222,4 +223,17 @@ textarea.admin-field {
 
 .admin-numeric {
   font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Delete confirmation ---------- */
+.admin-confirm {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--almost-soft);
+  border-radius: var(--radius-md);
+}
+
+.admin-confirm p {
+  margin: 0;
 }

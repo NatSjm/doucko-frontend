@@ -1,7 +1,7 @@
 // Store spec content-authoring: refusals are shown inline on the field the problem names
 // (`errors[].field`, contract "Field paths"). Shared admin plumbing, so no FR is traced here.
 import { describe, expect, it } from 'vitest';
-import { ApiError, fieldErrors, problemMessage, unwrap } from './problem';
+import { ApiError, fieldErrors, problemConflicts, problemMessage, unwrap } from './problem';
 
 const response = (status: number) => new Response(null, { status });
 
@@ -71,5 +71,18 @@ describe('problemMessage', () => {
   it('is null without a problem', () => {
     expect(problemMessage(new ApiError(500, null))).toBeNull();
     expect(problemMessage(new TypeError('Failed to fetch'))).toBeNull();
+  });
+});
+
+describe('problemConflicts', () => {
+  it('lists the blocking ids of a 409 refusal (Mission publishing rules, Delete only unused content)', () => {
+    const error = new ApiError(409, { type: 'about:blank', title: 'Not allowed now', status: 409, detail: 'x', conflicts: ['a', 'b'] });
+    expect(problemConflicts(error)).toEqual(['a', 'b']);
+  });
+
+  it('is empty without conflicts, without a problem, or for another error', () => {
+    expect(problemConflicts(new ApiError(409, { type: 'about:blank', title: 'Not allowed now', status: 409 }))).toEqual([]);
+    expect(problemConflicts(new ApiError(500, null))).toEqual([]);
+    expect(problemConflicts(new TypeError('Failed to fetch'))).toEqual([]);
   });
 });

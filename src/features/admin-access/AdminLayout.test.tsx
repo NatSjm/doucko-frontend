@@ -33,6 +33,9 @@ describe('admin layout', () => {
     expect(link(messages['admin.nav.newTask'])).toHaveAttribute('href', '/admin/tasks/edit');
     expect(link(messages['admin.nav.sources'])).toHaveAttribute('href', '/admin/sources');
     expect(link(messages['admin.nav.sources'])).not.toHaveAttribute('aria-current');
+    // @trace FR-9 — missions are reached from every admin screen.
+    expect(link(messages['admin.nav.missions'])).toHaveAttribute('href', '/admin/missions');
+    expect(link(messages['admin.nav.newMission'])).toHaveAttribute('href', '/admin/missions/edit');
   });
 
   it('signs out from any admin screen', async () => {
