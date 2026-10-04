@@ -92,6 +92,7 @@ tester.run('doucko/no-literal-ui-text', rule, {
     { code: 'const a = <SubjectList items={[{ id: "m", name: "Matematika" }]} />;', errors: [{ messageId: 'attr' }] },
     { code: 'const a = <p>{new Intl.ListFormat("cs", { type: "conjunction" }).format(["Ahoj", t("x")])}</p>;', errors: [{ messageId: 'text' }] },
     { code: 'const a = <p>{Intl.ListFormat("cs").format(["Ahoj"])}</p>;', errors: [{ messageId: 'text' }] },
+    { code: 'const a = <p>{Array.from(new Intl.Segmenter("cs").segment("Ahoj"), (s) => s.segment)}</p>;', errors: [{ messageId: 'text' }] },
     // The document title
     { code: 'window.document.title = "Doučko";', errors: [{ messageId: 'title' }] },
     { code: 'document.title = "Doučko";', errors: [{ messageId: 'title' }] },

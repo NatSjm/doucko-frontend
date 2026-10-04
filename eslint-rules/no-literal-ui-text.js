@@ -55,6 +55,9 @@ const isLocaleFormatting = (callee) =>
   callee.property.type === "Identifier" &&
   /^(toLocale\w*|localeCompare)$/.test(callee.property.name);
 
+/** Intl formatters whose methods never take display text. */
+const INTL_NON_TEXT = new Set(["NumberFormat", "DateTimeFormat", "RelativeTimeFormat", "PluralRules", "DisplayNames", "DurationFormat"]);
+
 /** `X` when `node` is `Intl.X(...)` or `new Intl.X(...)`, else null. */
 const intlConstructor = (node) =>
   (node?.type === "NewExpression" || node?.type === "CallExpression") &&
@@ -96,14 +99,11 @@ function literalTexts(node) {
       if (node.callee.type === "Identifier" && CATALOG_LOOKUPS.has(node.callee.name)) return [];
       // Locale and format options are not text; a literal receiver ('Ahoj'.toLocaleUpperCase()) still is.
       if (isLocaleFormatting(node.callee)) return literalTexts(node.callee.object);
-      // Intl.X('cs', {...}) with or without `new`: locale and options. Methods of an Intl formatter take
-      // numbers, dates and identifiers (format(n, 'day'), of('cs')), except Intl.ListFormat, which
-      // formats the strings it is given, so its arguments are checked below.
+      // Intl.X('cs', {...}) with or without `new`: locale and options. Only the formatters whose methods
+      // take numbers, dates and identifiers (format(n, 'day'), of('cs'), select(n)) are exempt; any other
+      // (ListFormat formats the strings it gets, Segmenter returns its input) is checked below.
       if (intlConstructor(node)) return [];
-      if (node.callee.type === "MemberExpression") {
-        const kind = intlConstructor(node.callee.object);
-        if (kind && kind !== "ListFormat") return [];
-      }
+      if (node.callee.type === "MemberExpression" && INTL_NON_TEXT.has(intlConstructor(node.callee.object))) return [];
       // 'Ahoj'.toUpperCase(), items.join(' a '), format('Ahoj {n}', n), items.map(() => 'Ahoj'):
       // the receiver, the arguments and what a callback argument returns.
       const receiver = node.callee.type === "MemberExpression" ? literalTexts(node.callee.object) : [];

@@ -6,7 +6,9 @@ The app SHALL show the light theme when the OS asks for light and the dark
 theme when it asks for dark, and SHALL offer no in-app theme toggle (FR-58;
 store spec gamification, "Light and dark theme"). No app source outside the
 vendored design system SHALL set `data-theme` or a colour scheme, declare or
-set a CSS custom property, or name a scheme in a string literal. "Any
+name a CSS custom property to write it, or name a scheme (`dark`, `light`,
+`theme…`) in a string literal; the message catalogs are text, not code, and
+are exempt from the last rule. "Any
 route" includes the not-found screen.
 
 #### Scenario: Dark OS

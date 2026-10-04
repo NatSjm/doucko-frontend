@@ -10,3 +10,17 @@ retro/
 openspec/
 .env
 .env.*
+# Everything .gitignore ignores is excluded here too (container-config.test.ts checks it), so the build
+# context is exactly the tracked and untracked files git reports: smoke evidence that names a clean
+# commit really did build from that commit.
+*.log
+.idea/
+.vscode/
+.DS_Store
+uploads/
+storage/
+pgdata/
+backups/
+*.dump
+**/raw/
+src/api/generated/

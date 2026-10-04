@@ -6,18 +6,18 @@
   "headRef": "HEAD",
   "dimensions": {
     "correctness": {
+      "confirmed": 4,
+      "contested": 0,
+      "rejected": 1
+    },
+    "security": {
       "confirmed": 3,
       "contested": 0,
       "rejected": 0
     },
-    "security": {
-      "confirmed": 2,
-      "contested": 0,
-      "rejected": 0
-    },
     "spec-compliance": {
-      "confirmed": 4,
-      "contested": 0,
+      "confirmed": 5,
+      "contested": 2,
       "rejected": 0
     },
     "visual": {
@@ -32,9 +32,9 @@
       "severity": "major",
       "dimension": "correctness",
       "verdict": "confirmed",
-      "title": "Static theme guard misses token overrides on a wrapper class and selector lists that continue after html/body",
+      "title": "Theme guard invariant 1 misses the computed-key custom-property idiom the design system itself uses",
       "file": "src/app/theme-source.test.ts",
-      "line": 29,
+      "line": 19,
       "status": "open"
     },
     {
@@ -42,9 +42,9 @@
       "severity": "minor",
       "dimension": "correctness",
       "verdict": "confirmed",
-      "title": "Container-smoke 'dirty' flag ignores most image inputs, so a PASS can be credited to a commit it did not test",
-      "file": "tools/container-smoke.mjs",
-      "line": 47,
+      "title": "Scheme-word check cannot see a scheme word inside a multi-line string or template literal",
+      "file": "src/app/theme-source.test.ts",
+      "line": 21,
       "status": "open"
     },
     {
@@ -52,19 +52,19 @@
       "severity": "minor",
       "dimension": "correctness",
       "verdict": "confirmed",
-      "title": "Intl formatter called without `new` is still a lint false positive, unlike the `new` form",
+      "title": "Intl exemption also skips Intl.Segmenter (and other non-ListFormat methods) that take display text",
       "file": "eslint-rules/no-literal-ui-text.js",
-      "line": 55,
+      "line": 101,
       "status": "open"
     },
     {
       "id": "F04",
       "severity": "minor",
-      "dimension": "security",
+      "dimension": "correctness",
       "verdict": "confirmed",
-      "title": "Static FR-58 theme guard misses token overrides set on a wrapper element or through a React style prop",
-      "file": "src/app/theme-source.test.ts",
-      "line": 28,
+      "title": "Container smoke records a clean tree when git status fails",
+      "file": "tools/container-smoke.mjs",
+      "line": 50,
       "status": "open"
     },
     {
@@ -72,52 +72,102 @@
       "severity": "minor",
       "dimension": "security",
       "verdict": "confirmed",
-      "title": "Container-smoke 'dirty' flag misses most image inputs, so the evidence can name a clean commit for an image built from uncommitted files",
-      "file": "tools/container-smoke.mjs",
-      "line": 47,
+      "title": "Theme guard invariant 1 misses a computed-key CSS custom property in a style object",
+      "file": "src/app/theme-source.test.ts",
+      "line": 19,
       "status": "open"
     },
     {
       "id": "F06",
-      "severity": "major",
-      "dimension": "spec-compliance",
+      "severity": "minor",
+      "dimension": "security",
       "verdict": "confirmed",
-      "title": "Static theme guard misses a theme forced through a non-html/body token rule or setAttribute/variable className, so the 'No toggle' scenario can pass on the current control-less screens while violated",
+      "title": "Theme guard skips any src/ directory whose name starts with 'design-system' or 'api/generated'",
       "file": "src/app/theme-source.test.ts",
-      "line": 17,
+      "line": 36,
       "status": "open"
     },
     {
       "id": "F07",
       "severity": "minor",
-      "dimension": "spec-compliance",
+      "dimension": "security",
       "verdict": "confirmed",
-      "title": "Container-smoke fingerprint ties the evidence to a commit that is not HEAD and leaves out most image inputs and the e2e specs it ran",
-      "file": "tools/container-smoke.mjs",
-      "line": 45,
+      "title": "Lint rule exempts every Intl formatter method except ListFormat, including Intl.Segmenter.segment, which returns its input text",
+      "file": "eslint-rules/no-literal-ui-text.js",
+      "line": 105,
       "status": "open"
     },
     {
       "id": "F08",
-      "severity": "minor",
+      "severity": "major",
       "dimension": "spec-compliance",
       "verdict": "confirmed",
-      "title": "Lint rule false positive on Intl calls without `new` and on Intl methods that take identifiers (.of, RelativeTimeFormat units)",
-      "file": "eslint-rules/no-literal-ui-text.js",
-      "line": 55,
+      "title": "Theme guard invariant 1 ('declares or sets a CSS custom property') misses a token name held in a variable or a computed key",
+      "file": "src/app/theme-source.test.ts",
+      "line": 19,
       "status": "open"
     },
     {
       "id": "F09",
+      "severity": "major",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Invariant 3 (no string literal naming a scheme) cannot see a multi-line template literal",
+      "file": "src/app/theme-source.test.ts",
+      "line": 21,
+      "status": "open"
+    },
+    {
+      "id": "F10",
       "severity": "minor",
       "dimension": "spec-compliance",
       "verdict": "confirmed",
-      "title": "Static guard's html/body token pattern also fires on any selector containing 'body' or 'html' as a substring",
+      "title": "Lint rule exempts every Intl method except ListFormat, including Intl.Segmenter.segment(text), which passes text through",
+      "file": "eslint-rules/no-literal-ui-text.js",
+      "line": 104,
+      "status": "open"
+    },
+    {
+      "id": "F11",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Container-smoke dirty flag ignores gitignored files that are still in the Docker build context",
+      "file": "tools/container-smoke.mjs",
+      "line": 50,
+      "status": "open"
+    },
+    {
+      "id": "F12",
+      "severity": "major",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Task 4.1 'qa:verify green' is ticked, but the battery evidence predates the round-6 changes",
+      "file": "openspec/changes/implement-platform-foundation-ui/tasks.md",
+      "line": 27,
+      "status": "open"
+    },
+    {
+      "id": "F13",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "contested",
+      "title": "Theme guard skips app files that are not .ts/.tsx/.css and everything under public/",
       "file": "src/app/theme-source.test.ts",
-      "line": 28,
+      "line": 37,
+      "status": "open"
+    },
+    {
+      "id": "F14",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "contested",
+      "title": "Catalog exemption from the scheme-word invariant is in design.md but not in the spec requirement",
+      "file": "openspec/changes/implement-platform-foundation-ui/specs/platform-foundation/spec.md",
+      "line": 7,
       "status": "open"
     }
   ],
   "clean": false,
-  "generatedAt": "2026-10-04T10:52:14Z"
+  "generatedAt": "2026-10-04T11:01:32Z"
 }

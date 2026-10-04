@@ -90,6 +90,19 @@ describe('Dockerfile', () => {
   });
 });
 
+describe('Docker build context', () => {
+  const patterns = (f: string) =>
+    readFileSync(f, 'utf8')
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter((l) => l && !l.startsWith('#'));
+
+  it('excludes everything git ignores, so a clean commit names exactly what the image was built from', () => {
+    const docker = new Set(patterns('.dockerignore'));
+    expect(patterns('.gitignore').filter((p) => !p.startsWith('!') && !docker.has(p))).toEqual([]);
+  });
+});
+
 describe('tsconfig split', () => {
   it('keeps DOM types out of Node-side code; only e2e specs get them', () => {
     expect(json('tsconfig.node.json').compilerOptions.lib).not.toContain('DOM');

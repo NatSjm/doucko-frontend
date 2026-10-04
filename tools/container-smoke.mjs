@@ -46,10 +46,14 @@ const tested = {
   commit: spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).stdout.trim(),
   // Any change outside generated evidence: the image is built from the whole context and the e2e
   // specs run from the working tree, so every other file is an input.
-  dirty:
-    spawnSync('git', ['status', '--porcelain', '--', '.', ':!docs/qa', ':!trace', ':!test-results', ':!playwright-report'], {
+  // (.dockerignore mirrors .gitignore, so ignored files never reach the image.) If git cannot answer,
+  // the tree counts as dirty: the evidence must never claim a clean commit it could not check.
+  dirty: (() => {
+    const st = spawnSync('git', ['status', '--porcelain', '--', '.', ':!docs/qa', ':!trace', ':!test-results', ':!playwright-report'], {
       encoding: 'utf8',
-    }).stdout.trim() !== '',
+    });
+    return st.status !== 0 || st.error !== undefined || st.stdout.trim() !== '';
+  })(),
   nginxConf: createHash('sha256').update(readFileSync('nginx.conf')).digest('hex'),
   image: 'not built',
 };

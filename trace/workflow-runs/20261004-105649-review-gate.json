@@ -1,0 +1,1021 @@
+{
+  "workflow": "review-gate",
+  "file": "./.claude/workflows/review-gate.js",
+  "description": "Multi-dimensional adversarial review of a diff or capability: correctness, security, and spec compliance, with every finding adversarially verified before it is reported.",
+  "dryRun": false,
+  "startedAt": "2026-10-04T10:56:49.803Z",
+  "finishedAt": "2026-10-04T11:01:32.451Z",
+  "args": {
+    "scope": "slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui",
+    "baseRef": "93e81cd",
+    "headRef": "HEAD",
+    "focus": "Round 7. Verify the round-6 fixes (commit 184ba12): the rebuilt theme guard (three invariants in src/app/theme-source.test.ts), the lint rule Intl handling (with and without new, formatter methods, ListFormat), and the container-smoke dirty flag. Check against the spec delta and design.md. Do NOT re-report what design.md lists under \"Accepted limits (review round 3)\" or the documented real-compose-stack follow-up; report only defects in shipped behaviour or tests that can pass while the spec is violated.",
+    "change": "implement-platform-foundation-ui"
+  },
+  "settings": {
+    "allowedTools": null,
+    "concurrency": 4,
+    "model": null,
+    "budgetPerAgentUsd": 2,
+    "maxTotalUsd": 15,
+    "untypedTools": "Read,Grep,Glob,Write,Bash",
+    "permissionMode": "acceptEdits"
+  },
+  "outcome": "ok",
+  "stoppedBecause": null,
+  "error": null,
+  "totalCostUsd": 5.1032,
+  "steps": [
+    {
+      "label": "find:correctness",
+      "phase": "Find",
+      "agentType": "code-reviewer",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 982,
+      "durationMs": 109607,
+      "sessionId": "f40add98-7af1-4e3b-bc59-2f368e20dc48",
+      "costUsd": 0.4934832,
+      "numTurns": 12,
+      "result": {
+        "findings": [
+          {
+            "title": "Theme guard invariant 1 misses the computed-key custom-property idiom the design system itself uses",
+            "file": "src/app/theme-source.test.ts",
+            "line": 19,
+            "severity": "major",
+            "confidence": "high",
+            "evidence": "TOKEN_WRITE is `/--[\\w-]+['\"`]?\\s*:|setProperty\\(\\s*['\"`]--/`, so it needs the colon right after the name or its closing quote. The vendored design system sets tokens with `style: { ['--dk-accent' as string]: color }` (src/design-system/components/core.tsx:40). In app code, `style={{ ['--paper' as string]: '#000' }}` or `style={{ [`--paper`]: x }}` has `as string]` or `]` before the colon, so it does not match. `const v = '--paper'; el.style.setProperty(v, '#000')` does not match either. None of these strings contains dark/light/theme, so invariants 2 and 3 miss them too. The test passes while the spec's 'no app source SHALL … declare or set a CSS custom property' is broken, and the most likely way a feature slice would copy the pattern (from core.tsx) is the one that gets through.",
+            "suggestion": "Match the token name instead of the declaration syntax. In .ts/.tsx, flag any string or template literal that starts with `--` (e.g. /(['\"`])--[\\w-]/). In .css, flag `--name` followed by optional whitespace or comments and then `:`. Add `['--paper' as string]: x`, `[`--paper`]: x` and `const v='--paper'; setProperty(v, …)` to the `forced` list."
+          },
+          {
+            "title": "Scheme-word check cannot see a scheme word inside a multi-line string or template literal",
+            "file": "src/app/theme-source.test.ts",
+            "line": 21,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "SCHEME_WORD's body is `(?:(?!\\1)[^\\n\\\\]|\\\\.)*?`, so a match cannot cross a newline. In a multi-line className template such as `className={`\\n  card\\n  dark\\n`}`, the opening backtick ends its line and `dark` sits on a line with no quote before it, so invariant 3 does not fire. The doc comment says the invariant holds 'however it is built or applied', but this common way of formatting class templates gets through. Invariants 1 and 2 do not cover a plain class name.",
+            "suggestion": "Parse literals with the TypeScript scanner or ts-morph, or at least let template literals span newlines (use `[^\\\\]` instead of `[^\\n\\\\]` when the quote is a backtick). Add a multi-line template case to `forced`."
+          },
+          {
+            "title": "Theme guard scans only .ts/.tsx/.css, not other files Vite bundles",
+            "file": "src/app/theme-source.test.ts",
+            "line": 37,
+            "severity": "minor",
+            "confidence": "low",
+            "evidence": "`sources()` keeps only `/\\.(tsx?|css)$/`. A `.js`/`.jsx`/`.mjs` module, or a `.scss`/`.html` partial under src/ that the app imports, would be bundled but never checked, so a `data-theme` write or `--paper:` override there passes the static backstop. The spec scope is 'no app source outside the vendored design system'.",
+            "suggestion": "Either check every text file under src/ except the vendored and generated trees, or fail the test when src/ has a source file with an extension it does not check."
+          },
+          {
+            "title": "Intl exemption also skips Intl.Segmenter (and other non-ListFormat methods) that take display text",
+            "file": "eslint-rules/no-literal-ui-text.js",
+            "line": 101,
+            "severity": "minor",
+            "confidence": "low",
+            "evidence": "`if (kind && kind !== \"ListFormat\") return [];` exempts every method of every Intl object except ListFormat. `Intl.Segmenter.prototype.segment('Ahoj')` returns the given text in segments, so `{[...new Intl.Segmenter('cs').segment('Ahoj')].map(s => s.segment)}` puts the literal on screen without a report. The rule comment claims only ListFormat formats the strings it is given.",
+            "suggestion": "Turn the logic around: exempt only methods known to take non-text arguments (NumberFormat/DateTimeFormat/RelativeTimeFormat/PluralRules format*, select*, DisplayNames.of) and check the arguments of everything else, including Segmenter.segment. Add a Segmenter case to the invalid list."
+          },
+          {
+            "title": "Container smoke records a clean tree when git status fails",
+            "file": "tools/container-smoke.mjs",
+            "line": 50,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "`dirty: spawnSync('git', ['status', '--porcelain', '--', '.', ':!docs/qa', …]).stdout.trim() !== ''` ignores the exit status. If git exits non-zero (pathspec error, safe.directory refusal, not a repo), stdout is empty, so `dirty` is false and the evidence says 'Tested: commit …' with no uncommitted-changes caveat. If git cannot be spawned, stdout is null and `.trim()` throws before any evidence is written. The evidence-to-commit tie that round 6 added can therefore claim clean without having checked.",
+            "suggestion": "Check `status === 0` (and `error`) for both git calls. If either fails, mark the run as not tied to a commit (e.g. 'unknown') or exit non-zero instead of defaulting to clean."
+          }
+        ]
+      }
+    },
+    {
+      "label": "find:security",
+      "phase": "Find",
+      "agentType": "security-reviewer",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 1010,
+      "durationMs": 115464,
+      "sessionId": "9362e092-1636-429d-9f4e-419da136b915",
+      "costUsd": 0.5843728,
+      "numTurns": 12,
+      "result": {
+        "findings": [
+          {
+            "title": "Theme guard invariant 1 misses a computed-key CSS custom property in a style object",
+            "file": "src/app/theme-source.test.ts",
+            "line": 19,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "TOKEN_WRITE is /--[\\w-]+['\"`]?\\s*:|setProperty\\(\\s*['\"`]--/. With a computed key, `<div style={{ ['--paper']: '#000' } as CSSProperties}>`, the text after `--paper'` is `]:`, not `:`, so the regex does not match. SCHEME_API and SCHEME_WORD don't match either, because no string names a scheme. A later slice could write this to override `--paper` or `--ink` on a wrapper. Both theme-source tests would still pass, while the spec delta says app code SHALL NOT 'declare or set a CSS custom property'. The e2e only checks the background on reachable states, so it won't catch an override on an inner element or on a state it doesn't reach. That gap is exactly what this static check was rebuilt to cover.",
+            "suggestion": "Allow an optional closing bracket before the colon, e.g. /--[\\w-]+['\"`]?\\]?\\s*:/. Simpler: flag any string literal that starts with `--` anywhere in app code, and also flag setProperty with a non-literal first argument. Add `{ ['--paper']: '#000' }` to the `forced` probe list."
+          },
+          {
+            "title": "Theme guard skips any src/ directory whose name starts with 'design-system' or 'api/generated'",
+            "file": "src/app/theme-source.test.ts",
+            "line": 36,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "sources() uses `p.startsWith('src/design-system')` with no trailing slash, so it skips every path with that prefix. That includes app directories such as `src/design-system-overrides/` or `src/design-system-extras/` as well as the vendored folder. A CSS file there with `:root { --paper: #000 }`, or a component that sets `data-theme`, would force a theme while 'no app source or index.html breaks an invariant' still passes. ESLint's globalIgnores('src/design-system') matches only that exact directory, so the two exemptions don't line up, and the check is weaker than the spec's 'outside the vendored design system'.",
+            "suggestion": "Compare whole path segments: `p === 'src/design-system' || p.startsWith('src/design-system/')`, and do the same for src/api/generated. Add a unit probe for a sibling directory with the same prefix."
+          },
+          {
+            "title": "Lint rule exempts every Intl formatter method except ListFormat, including Intl.Segmenter.segment, which returns its input text",
+            "file": "eslint-rules/no-literal-ui-text.js",
+            "line": 105,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "Round 6 skips the arguments of any method on an `Intl.X(...)` / `new Intl.X(...)` receiver unless X is ListFormat. The comment's premise ('methods of an Intl formatter take numbers, dates and identifiers') is wrong for Intl.Segmenter, whose segment(text) returns pieces of the literal it is given. `<p>{[...new Intl.Segmenter('cs', { granularity: 'word' }).segment('Ahoj světe')].map((s) => s.segment)}</p>` puts Czech literal text on screen, and the rule reports nothing. That breaks the spec requirement that the rule refuse literal UI text it can see in call arguments. The pseudo-catalog render only catches it if the code runs on a registered route.",
+            "suggestion": "Use an allow-list of formatter kinds whose methods take no text (NumberFormat, DateTimeFormat, RelativeTimeFormat, PluralRules, DisplayNames, Collator, DurationFormat) instead of a deny-list containing only ListFormat. Any other Intl kind, Segmenter included, then keeps its arguments checked. Add an invalid case for Segmenter.segment('Ahoj')."
+          }
+        ]
+      }
+    },
+    {
+      "label": "find:spec-compliance",
+      "phase": "Find",
+      "agentType": "spec-compliance-auditor",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 953,
+      "durationMs": 110122,
+      "sessionId": "3e74f7e6-e9c2-40f2-9ab3-b14025656f4c",
+      "costUsd": 0.5016106,
+      "numTurns": 9,
+      "result": {
+        "findings": [
+          {
+            "title": "Theme guard invariant 1 ('declares or sets a CSS custom property') misses a token name held in a variable or a computed key",
+            "file": "src/app/theme-source.test.ts",
+            "line": 19,
+            "severity": "major",
+            "confidence": "high",
+            "evidence": "Spec (No toggle / Theme follows the OS): \"No app source outside the vendored design system SHALL … declare or set a CSS custom property\"; the No-toggle scenario says that on a route with no control \"the static source check covers it\" (every current route has no control, so all no-toggle e2e tests skip and this regex is the only check). TOKEN_WRITE = /--[\\w-]+['\"`]?\\s*:|setProperty\\(\\s*['\"`]--/ needs either a colon right after the name (one optional quote allowed) or a quote right after `setProperty(`. These all slip through: `const token = '--paper'; el.style.setProperty(token, '#000')` (`'--paper';` has no colon, and setProperty gets an identifier); `style={{ ['--paper']: '#000' }}` and `style={{ [`--paper`]: x }}` (`']` comes before the colon). Each one overrides the dark/light `--paper` token and so forces a theme, with no scheme word and no scheme API involved, so neither of the other two invariants fires. The 'forced' probe list in the test only has the literal forms the regex already handles.",
+            "suggestion": "Make invariant 1 hold for any string literal that starts with `--`: flag `(['\"`])--[\\w-]` anywhere in app code (the `var(--x)` reads in CSS have no quote, so they stay allowed). In TS/TSX, also reject `setProperty(` with any first argument. Add the variable-name and computed-key cases to the `forced` probes."
+          },
+          {
+            "title": "Invariant 3 (no string literal naming a scheme) cannot see a multi-line template literal",
+            "file": "src/app/theme-source.test.ts",
+            "line": 21,
+            "severity": "major",
+            "confidence": "high",
+            "evidence": "Spec: no app source SHALL \"name a scheme in a string literal\". SCHEME_WORD's body is `(?:(?!\\1)[^\\n\\\\]|\\\\.)*?`, which excludes newlines, so the open and close quote must be on the same line. `const cls = `\\n  dark\\n`; root.className = cls;` is a string literal naming a scheme, but the line holding `dark` has no quote, so nothing matches. It also hits no other invariant (no `--`, no scheme API). The design calls this check 'however it is built or applied', and the test gives no visible sign of the gap.",
+            "suggestion": "Let template-literal bodies span newlines (e.g. allow `\\n` inside the class when the delimiter is a backtick), or tokenize with the TypeScript scanner and test each string or template token. Add a multi-line template to the `forced` probes."
+          },
+          {
+            "title": "Theme guard skips app files that are not .ts/.tsx/.css and everything under public/",
+            "file": "src/app/theme-source.test.ts",
+            "line": 37,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "`sources()` keeps only `/\\.(tsx?|css)$/` under `src/`, plus `index.html`. A `public/override.css` declaring `:root{--paper:#000}` and linked from index.html, or any .js/.jsx/.mjs/.scss file a later slice adds under src/, is never read. Yet the requirement covers \"No app source outside the vendored design system\".",
+            "suggestion": "Scan every text file under `src/` (minus the design system and generated code), `public/` and `index.html`, or state in the spec which file types are covered."
+          },
+          {
+            "title": "Catalog exemption from the scheme-word invariant is in design.md but not in the spec requirement",
+            "file": "openspec/changes/implement-platform-foundation-ui/specs/platform-foundation/spec.md",
+            "line": 7,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "The spec says no app source SHALL \"name a scheme in a string literal\", with no exception. design.md and theme-source.test.ts (`CATALOGS`, `isCatalog` skips invariant 3) exempt src/i18n/cs.ts and en.ts. So a catalog value such as 'dark' fed into `className={t('x')}` passes the static guard.",
+            "suggestion": "Amend the spec to name the catalog exception and its rationale. Or keep the catalogs in scope for values used as attributes, e.g. require that catalog values never equal a bare scheme word."
+          },
+          {
+            "title": "Lint rule exempts every Intl method except ListFormat, including Intl.Segmenter.segment(text), which passes text through",
+            "file": "eslint-rules/no-literal-ui-text.js",
+            "line": 104,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "Spec (Literal text is a lint error): the rule refuses literal UI text in \"call arguments\". The round-6 code is `const kind = intlConstructor(node.callee.object); if (kind && kind !== \"ListFormat\") return [];`. It is a denylist of one, but `Intl.Segmenter#segment('Ahoj')` also returns the input text as segments. So `[...new Intl.Segmenter('cs').segment('Ahoj')].map((s) => s.segment).join('')` renders 'Ahoj' with no lint error.",
+            "suggestion": "Turn the exemption around: exempt only methods known to take non-text input (NumberFormat/DateTimeFormat/RelativeTimeFormat/PluralRules format*/select, DisplayNames.of, Collator.compare). Keep checking ListFormat and Segmenter arguments, and add a Segmenter invalid case."
+          },
+          {
+            "title": "Container-smoke dirty flag ignores gitignored files that are still in the Docker build context",
+            "file": "tools/container-smoke.mjs",
+            "line": 50,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "The comment says \"every other file is an input\", but `git status --porcelain` does not list ignored files. .gitignore ignores `*.log`, `.idea/`, `uploads/`, `storage/`, `**/raw/`, `*.dump` and `src/api/generated/`, and none of these is in .dockerignore, so `COPY . .` puts them in the image. A gitignored file under src/ (e.g. `src/raw/x.ts`) can change the built image while the evidence still says `dirty: false` and ties the result to the commit alone.",
+            "suggestion": "Add `--ignored` (keeping the generated-evidence exclusions and src/api/generated, which the build regenerates), or align .dockerignore with .gitignore so ignored files never reach the build context."
+          },
+          {
+            "title": "Task 4.1 'qa:verify green' is ticked, but the battery evidence predates the round-6 changes",
+            "file": "openspec/changes/implement-platform-foundation-ui/tasks.md",
+            "line": 27,
+            "severity": "major",
+            "confidence": "high",
+            "evidence": "tasks.md: \"- [x] 4.1 `npm run qa:verify` green.\" docs/qa/automated-verification-latest.md was last committed in 4c1aece (round 5). Its run shows 'Started: 2026-10-04T07:50:58Z'. Commit 184ba12 (10:54Z) then rewrote src/app/theme-source.test.ts, eslint-rules/no-literal-ui-text.js and src/test/lint-rule.test.ts. No lint, unit or coverage battery run covers the shipped rule and tests. Only container-smoke (Playwright through nginx) was re-run at 184ba12. Under the done-claims-need-evidence rule, the tick has no fresh evidence.",
+            "suggestion": "Re-run `npm run qa:verify` at HEAD and commit the regenerated docs/qa/automated-verification-latest.md, or untick 4.1 until that is done."
+          }
+        ]
+      }
+    },
+    {
+      "label": "find:visual",
+      "phase": "Find",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1222,
+      "durationMs": 20715,
+      "sessionId": "2551ffcf-c40d-429b-a970-82e3f47851da",
+      "costUsd": 0.0907622,
+      "numTurns": 4,
+      "result": {
+        "findings": []
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1784,
+      "durationMs": 22558,
+      "sessionId": "1eb2a2b7-f6b7-49c2-8105-c32421b11c9d",
+      "costUsd": 0.109984,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "I couldn't refute the mechanism. TOKEN_WRITE (theme-source.test.ts:19) is `/--[\\w-]+['\"`]?\\s*:|setProperty\\(\\s*['\"`]--/`. The first alternative needs a colon right after the token name, with at most one closing quote and some whitespace in between. The second needs a literal quote straight after `setProperty(`.\n\nI checked each case from the finding by reading the regex:\n- `['--paper' as string]: '#000'`: `--paper'` is followed by ` as string]`, so `\\s*:` fails. There is no `setProperty('--`, so neither alternative matches.\n- `` [`--paper`]: x ``: the closing backtick is followed by `]`, so it fails.\n- `const v='--paper'; el.style.setProperty(v,'#000')`: `setProperty(` is followed by `v`, not a quote, so it fails.\n\nNone of these strings contains `data-theme`, `colorScheme` or the other SCHEME_API terms. Their string literals (`'--paper'`, `'#000'`) contain no dark, light or theme word, so SCHEME_WORD misses them too.\n\nThe design system really uses the first idiom: `src/design-system/components/core.tsx:40` has `style: { ['--dk-accent' as string]: color }`. The scan skips that file because it excludes `src/design-system`, but a feature slice copying the pattern into app code would pass the guard. The `forced` list only covers the plain `{ '--paper': … }` form.\n\nSo the claimed gap in invariant 1 is real. On severity: this is a hole in a test guard, not a current product defect. No app source uses these idioms today, and the guard is a tripwire for future slices. I'd lean toward downgrading from major, though under-enforcing a spec SHALL is meaningful.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1817,
+      "durationMs": 24803,
+      "sessionId": "342b8281-bbb2-4443-ba9d-fa3c3cf39f70",
+      "costUsd": 0.10926939999999999,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed this by reading the code. The sandbox blocked my attempt to run the regex in node, so I traced the matching by hand instead. TOKEN_WRITE (theme-source.test.ts:19) is `/--[\\w-]+['\"`]?\\s*:|setProperty\\(\\s*['\"`]--/`.\n\n- `style={{ ['--paper' as string]: '#000' }}`: `--paper` matches, then the optional `'`, but the next characters are ` as string]`, not whitespace followed by `:`. The first branch fails. The second branch fails because there is no `setProperty(`.\n- `` [`--paper`]: x ``: after the closing backtick comes `]`, not `\\s*:`, so it fails.\n- `const v='--paper'; el.style.setProperty(v,'#000')`: the `--paper'` is followed by `;`, and `setProperty(` is followed by `v`, not a quote. Both branches fail.\n- SCHEME_API has nothing to match in any of these.\n- SCHEME_WORD only fires on string literals containing dark, light or theme*, and `'--paper'` and `'#000'` contain none of them.\n\nSo themeViolations returns [] for all three, and the 'no app source' test would pass while app code sets a CSS custom property. That breaks invariant 1 as the file's own header states it.\n\nThe idiom is real and nearby. Grep shows `style: { ['--dk-accent' as string]: color }` at src/design-system/components/core.tsx:40. That is the vendored system's own pattern, and TypeScript's CSSProperties typing pushes developers toward the computed-key form, so a feature slice copying it is plausible.\n\nNone of the forced cases cover computed keys or indirect setProperty. The `'--paper': '#000'` case only catches the plain-key form.\n\nThis isn't a user-facing or runtime exploit, and no app file does this today. It is a gap in a guard test: the bypass reproduces easily, and the test gives false assurance for FR-58.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1325,
+      "durationMs": 20400,
+      "sessionId": "643216a5-9546-43a1-bd99-3788adfd6038",
+      "costUsd": 0.10879540000000001,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "The mechanism is confirmed. At src/app/theme-source.test.ts:21, SCHEME_WORD is `(['\"`])(?:(?!\\1)[^\\n\\\\]|\\\\.)*?\\b(dark|light|theme\\w*)\\b(?:(?!\\1)[^\\n\\\\]|\\\\.)*?\\1`. Both body classes exclude `\\n`, so a match must open and close on the same line. In a multi-line template such as className={`\\n  card\\n  dark\\n`}, the opening backtick can't reach `dark` across the newline. The line holding `dark` has no quote of its own. The closing backtick's line has no scheme word before another backtick. So nothing matches. TOKEN_WRITE and SCHEME_API don't look for a bare `dark` either, so the template passes all three invariants. That contradicts the doc comment's claim that this holds \"however it is built or applied\". None of the `forced` cases is a multi-line literal. I couldn't run the regex: the node command needed approval, which wasn't granted. The conclusion comes from reading the regex. Real-world impact is small. tokens.css switches schemes only through `[data-theme=...]` and `prefers-color-scheme`, and SCHEME_API already catches both. A stray `dark` class wouldn't actually force a theme today. So this is a gap in a guard test, not a live bug. Minor severity fits.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1358,
+      "durationMs": 26922,
+      "sessionId": "5a63b100-fc84-426b-be7a-045ab5db3ed9",
+      "costUsd": 0.1198632,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "The regex gap is real. In SCHEME_WORD (src/app/theme-source.test.ts:21), both the body before the word and the body after it use `[^\\n\\\\]`, so no match can cross a newline. With `className={`\\n  card\\n  dark\\n`}`, the opening backtick is alone at the end of its line. No quote sits on the same line as `dark`, and no other quote pair holds it, so invariant 3 does not fire. Invariants 1 and 2 only look for `--x:`/setProperty and data-theme/colorScheme text, so they do not catch it either. The fixture lists cover no multi-line literals. This is deterministic for anyone who formats a class template across several lines. A Prettier-wrapped long className is a normal way to write one.\n\nExploitability caveat: the design system (src/design-system/tokens.css:3, 50, 84) switches schemes only through `[data-theme=…]` and the media query. It has no `.dark` or `.light` class selector. So a sneaked-in `dark` class would not actually force the theme today. Setting data-theme by any route still needs the literal text `data-theme`/`dataset.theme`, which SCHEME_API catches on any line. The product impact is therefore nil right now. The real problem is that the test is weaker than its doc comment claims (\"however it is built or applied\"), and it would matter if the design system ever added class-based scheme selectors. That fits the existing minor severity. The finding is not refuted, and the severity stays the same.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1087,
+      "durationMs": 17092,
+      "sessionId": "c005a2d4-62f2-45ca-ad9f-cc1e82ec3684",
+      "costUsd": 0.1004262,
+      "numTurns": 6,
+      "result": {
+        "refuted": true,
+        "reasoning": "The filter at `src/app/theme-source.test.ts:37` does keep only `.ts`, `.tsx` and `.css` files. But no file in the checked scope escapes it, so I could not confirm the claimed gap is real.\n\n1. **Nothing is missed today.** I searched `src/` for `js/jsx/mjs/cjs/scss/sass/less/html/svg/json/vue` files. Every match is inside `src/design-system/`, which the spec excludes on purpose. All app source outside it is `.ts`, `.tsx` or `.css`, and the test covers those. `index.html` is checked separately on line 70.\n2. **Adding a `.js` or `.jsx` module would break other checks first.** No tsconfig sets `allowJs` or `checkJs`, and the project is strict TypeScript. Importing a plain JS module from TS would fail `typecheck` with an implicit-any error unless someone also adds a declaration file or changes the config. A `.scss` or `.less` partial would also need a preprocessor dependency added on purpose.\n3. **The `.html` case is mostly covered.** Vite only bundles the root `index.html`, and the test reads it.\n\nSo the finding describes a future change that might add a new file type, not a defect in this code. Its own confidence is \"low\". Under the default-to-refute rule, a speculative hardening suggestion with no reachable case in the current tree does not hold up as a correctness bug.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1120,
+      "durationMs": 15545,
+      "sessionId": "ccbf202f-bbb6-4e1a-91db-459a3565c559",
+      "costUsd": 0.09663179999999999,
+      "numTurns": 6,
+      "result": {
+        "refuted": true,
+        "reasoning": "The code matches the description: `sources()` at src/app/theme-source.test.ts:37 only keeps files ending in `.ts`, `.tsx` or `.css`. But the problem can't happen in this repo today, and it is hard to cause later. Outside the vendored `src/design-system/` and generated trees, `src/` contains no `.js`, `.jsx`, `.mjs`, `.cjs`, `.scss`, `.sass`, `.less`, `.html` or `.svg` files. The only non-TS/CSS files are the design-system SVG icons, which are excluded on purpose. No tsconfig sets `allowJs`, so a `.js`, `.jsx` or `.mjs` module imported from strict TS would fail typecheck with an implicit-any / missing-declaration error, and the qa battery runs typecheck. No sass or less package is installed, so Vite can't compile a `.scss` or `.less` import. `index.html` is scanned explicitly. Getting a theme override past the backstop would take someone deliberately adding a new toolchain or a type shim. That is a speculative future gap, not a reachable defect. Making the test fail on unknown extensions would be optional hardening, not a fix for a real bug.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:eslint-rules/no-literal-ui-text.js",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1308,
+      "durationMs": 14005,
+      "sessionId": "32aa36dc-e164-417b-873b-775ab9d0c75f",
+      "costUsd": 0.0869656,
+      "numTurns": 3,
+      "result": {
+        "refuted": false,
+        "reasoning": "I could not refute the mechanism. In `literalTexts`, for a CallExpression whose callee is a MemberExpression, `intlConstructor(node.callee.object)` returns the Intl property name for any `new Intl.X(...)` or `Intl.X(...)` receiver (lines 59-66). Line 105, `if (kind && kind !== \"ListFormat\") return [];`, then returns early without looking at any arguments.\n\nHere is how the cited example is handled: `{[...new Intl.Segmenter('cs').segment('Ahoj')].map(s => s.segment)}`\n1. The JSXExpressionContainer passes to the `.map(...)` CallExpression.\n2. The receiver is an ArrayExpression. Its SpreadElement argument is `new Intl.Segmenter('cs').segment('Ahoj')`, and its callee object is `new Intl.Segmenter('cs')`. So `kind === \"Segmenter\"` and the result is `[]`, which drops 'Ahoj'.\n3. The `.map` callback returns `s.segment`, a MemberExpression, which falls to the default case and returns `[]`.\n\nSo the rule reports nothing, even though 'Ahoj' ends up on screen. Nothing else guards this path. The comment at lines 99-101 says Intl formatter methods take only numbers, dates and identifiers, and that is wrong for `Segmenter.segment`, which takes text and returns it. The same is true of `Collator.compare('a','b')`, though its result is a number, so that case is harmless.\n\nThe finding is valid but the case is contrived: segmenting a literal and rendering the pieces is unusual. Minor severity with low confidence fits.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:eslint-rules/no-literal-ui-text.js",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1341,
+      "durationMs": 20484,
+      "sessionId": "c8015581-dcc4-4574-a412-afdbb62dff11",
+      "costUsd": 0.11784320000000001,
+      "numTurns": 3,
+      "result": {
+        "refuted": false,
+        "reasoning": "I traced the cited example through `literalTexts` in eslint-rules/no-literal-ui-text.js, and the rule does miss it.\n\nHow the example gets through:\n- `{[...new Intl.Segmenter('cs').segment('Ahoj')].map(s => s.segment)}` is a CallExpression (`.map`). Its receiver is an ArrayExpression, so the rule checks it.\n- The array check follows the SpreadElement to the `.segment('Ahoj')` CallExpression.\n- That call's `callee.object` is `new Intl.Segmenter('cs')`. So `intlConstructor` returns \"Segmenter\", and line 105 (`if (kind && kind !== \"ListFormat\") return [];`) returns [] before the arguments are checked.\n- The `.map` callback `s => s.segment` returns a MemberExpression, which falls to the default case and gives [].\n- Result: nothing is reported, yet `segment()` passes its input text through, so \"Ahoj\" ends up on screen.\n\nThe comment on lines 99–101 is also wrong for Segmenter. It says Intl methods take only numbers, dates and identifiers, but `segment()` takes display text.\n\nWhy this matters little in practice:\n- This is a lint coverage gap, not a runtime bug. A developer would have to write a contrived construct; no user or attacker can trigger it.\n- Nobody splits a hard-coded Czech literal with Segmenter inside JSX by accident.\n- The rule's header already admits static analysis is incomplete and names the pseudo-catalog render test (src/app/i18n-coverage.test.tsx) as the backstop, which would likely catch such text at render time.\n- Collator.compare also takes strings but returns a number, so it can't leak text. Segmenter is the only real case.\n\nVerdict: the finding is confirmed, but it is a lint-only edge case with a test backstop, so I'd lower its severity to nit.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:tools/container-smoke.mjs",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1275,
+      "durationMs": 26702,
+      "sessionId": "a0d0351a-c6ec-440d-8d3f-82d48b5d0cd3",
+      "costUsd": 0.1442184,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "The mechanism is real, but it does less damage than the finding says. At tools/container-smoke.mjs:46-52, both git calls take `.stdout.trim()` from spawnSync and never check `status` or `error`. Nothing else guards them: `tested` is built at module top level and written straight into docs/qa/container-smoke-latest.md at line 175. If `git status` exits non-zero, it prints the error to stderr, so stdout is '' and `dirty` comes out false. The uncommitted-changes caveat is then left out without any check having been done. That part of the finding is correct.\n\nTwo things limit the impact:\n1. Not a repo and a safe.directory refusal (two of the three failures it names) also make `git rev-parse HEAD` exit 128 with empty stdout. The evidence would then read 'Tested: commit , image …'. That blank is visible, and it doesn't name a commit as clean.\n2. If git can't be spawned, stdout is null and `.trim()` throws at module load. The script then stops loudly before it writes anything, so no false evidence is produced. That's acceptable behaviour, not a bug.\n\nThe case that does mislead needs rev-parse to succeed while status fails, for example a corrupt index or some other status-only error. That's rare but possible. In that case the file claims a real commit SHA with no caveat. The code is still wrong to treat a failed git call as a clean tree, which goes against the repo's own rule against claims without evidence. Minor severity fits.\n\nI couldn't run git to confirm the exit behaviour because the command needed approval. The exit codes above are git's standard behaviour, not something I observed here.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:tools/container-smoke.mjs",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1308,
+      "durationMs": 22707,
+      "sessionId": "78fb1444-0184-48d1-8a10-4222fb8408a7",
+      "costUsd": 0.1279672,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "The code matches the finding. At `tools/container-smoke.mjs:46-52`, both git calls use spawnSync and read only `.stdout`. Neither checks `status` or `error`. Nothing after line 52 re-checks `tested.dirty`, and the evidence line at line 175 adds the uncommitted-changes caveat only when `dirty` is true. Any non-zero git exit leaves stdout empty, so `dirty` becomes false and the \"plus uncommitted changes\" caveat is silently left out.\n\nHow likely it is in practice:\n- Pathspec errors can't happen here. The pathspecs are fixed and valid.\n- Several realistic cases make both git calls fail together:\n  - a safe.directory / dubious-ownership refusal, common on Windows when the clone is owned by another account;\n  - running from a non-git export of the tree;\n  - a corrupt index.\n- In those cases `commit` is also empty. The evidence then reads \"Tested: commit , image …\" with no caveat. That blank is a visible clue but not an explicit failure. The file still says PASS while the tie to a commit and clean tree was never checked. This is exactly the gap round 6 was meant to close. Under the repo's own rules (evidence must not claim what it didn't check), this is a real defect.\n- If git can't be spawned at all, `.trim()` on null throws at module load. That fails closed: no false evidence is written, so that part of the finding is a crash rather than a false claim.\n\nConclusion: the mechanism is real but needs an environmental git failure, not attacker input. Minor severity is appropriate.\n\nI couldn't run git outside the repo to check exit codes (the sandbox blocked it), but the reasoning only needs standard git behaviour: a non-zero exit with empty stdout.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1607,
+      "durationMs": 15937,
+      "sessionId": "1033560e-10bc-480c-bc5a-fd87022199e6",
+      "costUsd": 0.09510779999999999,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I couldn't run the regex in node (the command needed approval), so this comes from reading `src/app/theme-source.test.ts:19` and checking the regex by hand.\n\nTOKEN_WRITE is `/--[\\w-]+['\"`]?\\s*:|setProperty\\(\\s*['\"`]--/`. Take `{ ['--paper']: '#000' }`:\n- `--[\\w-]+` matches `--paper`.\n- The optional quote class matches `'`.\n- `\\s*:` then fails, because the next character is `]`.\n- Backtracking doesn't help. A shorter match like `--pape` would need `:` where `r` is, and there is no other `--` in the text.\n- The second branch (`setProperty`) doesn't apply.\n\nSCHEME_API (data-theme / colorScheme / etc.) has nothing to match. SCHEME_WORD only fires on string literals containing dark, light or theme, and `'--paper'` and `'#000'` contain none of them. So `themeViolations` returns `[]`, and the second test (which scans every app source file) would pass on such code.\n\nThe test's own docblock says invariant 1 forbids any `--x:` \"in any rule or style object\" on any element, and that this static check covers states the e2e can't reach. A computed key is a normal, valid way to write a custom-property key in a React style object, so the stated invariant genuinely misses it. No other guard in this file catches it.\n\nSimilar bypasses exist too, such as `const k='--paper'; style={{[k]: …}}`, which strengthens the case that the check is incomplete. Severity stays minor: it's a gap in a test guard, not a defect in shipped code. I found no app code that uses this pattern today.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1640,
+      "durationMs": 17587,
+      "sessionId": "c69f907e-405a-48c6-8544-2ef6c7d93cb6",
+      "costUsd": 0.09712860000000001,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the mechanism by reading src/app/theme-source.test.ts:19. I couldn't execute the regex because the node command needed approval, so this is a by-hand trace. TOKEN_WRITE = /--[\\w-]+['\"`]?\\s*:|setProperty\\(\\s*['\"`]--/. For `{ ['--paper']: '#000' }`, `--paper` matches and the optional quote takes `'`. Then `\\s*:` meets `]` and fails. Backtracking can't help, because `[\\w-]+` cannot consume `'` or `]`. The setProperty branch doesn't apply here.\n\nThe other two invariants don't catch it either. SCHEME_API has nothing to match. SCHEME_WORD needs dark, light or theme inside a string literal, and the only literals are '--paper' and '#000'. So themeViolations returns [] and both tests pass, even though the file states invariant 1 as 'no `--x:` in any rule or style object'. The `forced` probe list has only the non-computed `{ '--paper': '#000' }` form. Nothing else in the file guards against the computed form. A related gap is setProperty with a non-literal key, e.g. `const k='--ink'; el.style.setProperty(k, …)`.\n\nOn reproducibility: no outside user or attacker can trigger this. It's a gap in a static repo guard, so a developer in a later slice could override tokens without the check catching it. The mechanism is real and deterministic. Minor severity fits.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1446,
+      "durationMs": 14392,
+      "sessionId": "04a7706a-8f26-42c3-b716-cd4b1a472503",
+      "costUsd": 0.0886748,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the mechanism. At src/app/theme-source.test.ts:36, sources() normalizes each directory path to forward slashes. It then skips the directory when `p.startsWith('src/design-system') || p.startsWith('src/api/generated')`. Neither check has a trailing slash or segment boundary, so sibling directories such as `src/design-system-overrides/` or `src/api/generated-extras/` would also be skipped silently. Any CSS or TSX in them that forces a theme would get past the 'no app source or index.html breaks an invariant' test.\n\nNothing else guards against this. The prefix check runs only on directories, so a single file like `src/design-system.ts` is still scanned. ESLint (`globalIgnores` with 'src/design-system') and factory.config.json's productCode.exclude both name the exact directory, so the scope of this guard really does differ from the rest of the harness's idea of \"vendored\".\n\nThe impact is latent for now. `src` currently holds only api, app, design-system, i18n, main.tsx and test, and `src/api` holds only generated plus a test file, so no sibling directory with a matching prefix exists today. The finding is still correct as a weakness in the guard that should be fixed by matching whole path segments. Minor severity is right.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1479,
+      "durationMs": 18255,
+      "sessionId": "511f22b7-8001-4665-b523-5ce86f87b6cd",
+      "costUsd": 0.09431780000000001,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "The mechanism is real. In src/app/theme-source.test.ts:36, sources() builds a forward-slash path `p` and skips any directory where `p.startsWith('src/design-system')` or `p.startsWith('src/api/generated')`, with no trailing slash. A sibling such as `src/design-system-overrides/` or `src/api/generated-v2/` would match and be skipped entirely, so its files would never be scanned by the 'no app source or index.html breaks an invariant' test. ESLint's globalIgnores ('src/design-system') and factory.config.json's productCode.exclude also list these as plain strings, so the exemption sets were meant to cover only the exact vendored folders. The finding's claim of a mismatch is correct.\n\nIt is not exploitable today. src/ contains only api/, app/, design-system/, i18n/, test/ and main.tsx. src/api contains only generated/ and one test file. No sibling directory with either prefix exists, so nothing is wrongly skipped right now. No end user or outside attacker can trigger this. It only matters if a developer later adds a directory with one of those prefixes, which the feature-folder convention (src/features/<domain>/) makes unlikely. Then a theme override there would slip past FR-58's guard without anyone noticing.\n\nSo this is a real but latent weakness in test coverage, not a reachable vulnerability. The 'security' label and current impact are overstated. Not refuted, but downgraded.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:eslint-rules/no-literal-ui-text.js",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1670,
+      "durationMs": 15925,
+      "sessionId": "fe79c5cd-ccfa-4630-b496-906f7a116c16",
+      "costUsd": 0.1153626,
+      "numTurns": 3,
+      "result": {
+        "refuted": false,
+        "reasoning": "The mechanism holds. In eslint-rules/no-literal-ui-text.js, lines 103-105 return [] for any CallExpression whose callee is `<Intl.X(...) or new Intl.X(...)>.method(...)` unless X is \"ListFormat\". This skips both the receiver and every argument. I traced the finding's example: `[...new Intl.Segmenter('cs',{granularity:'word'}).segment('Ahoj světe')].map((s) => s.segment)` inside a JSXExpressionContainer.\n1. The JSXExpressionContainer handler (line 207) calls literalTexts on the `.map(...)` CallExpression.\n2. That callee is a MemberExpression, so the receiver (an ArrayExpression) is walked (line 109).\n3. The spread element's argument is the `.segment('Ahoj světe')` CallExpression. intlConstructor of its callee object (NewExpression Intl.Segmenter) returns \"Segmenter\", which is not \"ListFormat\", so line 105 returns [].\n4. The map callback's body `s.segment` is a MemberExpression, which hits the default case and returns [].\nNo other handler catches it either. AssignmentExpression only covers document.title, JSXText doesn't apply, and JSXAttribute doesn't apply. So the rule reports nothing, while Intl.Segmenter.prototype.segment really does return substrings of its input that get rendered.\n\nThe comment's premise on lines 99-101 (\"methods take numbers, dates and identifiers\") is factually wrong for Segmenter. Collator.compare(a, b) also takes strings, though it doesn't render them. Mitigations: the pattern is contrived and unlikely in real code, and the file header says the pseudo-catalog render test is the backstop. Still, that backstop only covers rendered routes, and the rule's own contract (lines 15-16) claims call arguments are checked. The finding is a real but low-impact rule gap, so minor severity is right.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:eslint-rules/no-literal-ui-text.js",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1703,
+      "durationMs": 33830,
+      "sessionId": "6e5ac212-609d-4477-a5f9-0c7c1153329d",
+      "costUsd": 0.13555,
+      "numTurns": 8,
+      "result": {
+        "refuted": false,
+        "reasoning": "The finding is confirmed, and I reproduced it. In eslint-rules/no-literal-ui-text.js:103-106, when a call's receiver is `Intl.X(...)` or `new Intl.X(...)` and X is anything other than ListFormat, the rule returns [] and skips both the receiver and the arguments. Intl.Segmenter is one of those X values, so `.segment('Ahoj světe')` is never checked.\n\nReproduction: I wrote a temporary file `src/__tmpseg/X.tsx`. Line 2 was `<p>{[...new Intl.Segmenter('cs', { granularity: 'word' }).segment('Ahoj světe')].map((s) => s.segment)}</p>`. Line 5 was a control: `<p>{['Ahoj světe'].map((s) => s)}</p>`. The repo's post-edit hook ran eslint on the file. It reported doucko/no-literal-ui-text only on 5:13 (the control). Line 2 produced nothing, so the literal Czech text gets past the rule. I deleted the temp file afterwards, and git status matches the starting state.\n\nWhy it gets through: the outer `.map()` receiver is an ArrayExpression, so the rule walks into the spread argument and reaches the Segmenter `.segment()` CallExpression. There, `intlConstructor(callee.object)` returns 'Segmenter', which is not 'ListFormat', so the rule returns []. The callback returns `s.segment`, a MemberExpression, which the rule also ignores. The comment's premise is false for Segmenter, since segment(text) returns pieces of its input.\n\nImpact is low. A developer would be unlikely to write this pattern by accident, and it is a gap in a lint rule, not a runtime security hole. Severity minor still fits.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 2000,
+      "durationMs": 20015,
+      "sessionId": "e0ac29ed-3944-43da-b117-d62283ba1fd0",
+      "costUsd": 0.110153,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I traced the regexes at src/app/theme-source.test.ts:19-21 by hand. I tried to run them in node, but that command needed approval and wasn't run.\n\nTOKEN_WRITE = /--[\\w-]+['\"`]?\\s*:|setProperty\\(\\s*['\"`]--/\n- `const token = '--paper'; el.style.setProperty(token, '#000')`: `--paper` and then the optional `'` match, but the next character is `;`, not `:`. The only other path needs a quote right after `setProperty(`, and here it gets the identifier `token`, so TOKEN_WRITE does not match. SCHEME_API has nothing to match. SCHEME_WORD looks at the string literals '--paper' and '#000', and neither contains dark, light or theme. All three invariants pass, so the bypass is real.\n- `style={{ ['--paper']: '#000' }}` and the backtick version: after `--paper` and the optional quote, the next character is `]`, so `\\s*:` fails and there is no setProperty. Both slip through.\n\nNothing else guards this. The `sources()` walker sends every app .ts/.tsx/.css file through themeViolations, which is the only static check. The doc comment (lines 10-11) states invariant 1 as \"never declares or sets a CSS custom property … on any element\", but the regex only implements the literal forms, and the `forced` probes (lines 49-53) only cover those forms. So the finding is right: the mechanism doesn't match its stated invariant.\n\nI'm downgrading the severity. No current source has the problem, since the repo test passes on today's code. Getting past the check takes deliberately indirect code, such as a computed key or a token name held in a variable, not an ordinary mistake. This is a hole in a guard test rather than a defect that reaches users.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 2033,
+      "durationMs": 23670,
+      "sessionId": "f242797e-fae8-4bac-b9d0-edc0c61c7c98",
+      "costUsd": 0.119461,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the mechanism by tracing the regex at src/app/theme-source.test.ts:19 by hand. My attempt to run it in node needed approval and didn't run, so this is reasoning, not an executed test.\n\nHow the bypasses get through:\n- `const token = '--paper'; el.style.setProperty(token, '#000')`: in `'--paper';` the quote is followed by `;`, not a colon, so the first branch fails. The second branch needs a quote right after `setProperty(`, but here it gets the identifier `token`. SCHEME_API and SCHEME_WORD find nothing (the only strings are '--paper' and '#000'). Result: zero violations.\n- `style={{ ['--paper']: '#000' }}` and the template-literal version: after `--paper'` comes `]`, which `\\s*:` cannot match. Zero violations.\n\nThis is a realistic idiom, not a made-up one. The vendored design system uses exactly this pattern at src/design-system/components/core.tsx:40: `style: { ['--dk-accent' as string]: color }`. TypeScript pushes developers toward a computed key with a cast, so someone copying it into app code would slip past invariant 1. The `forced` probes (lines 43-56) only test the literal forms the regex already catches. The file's comment claims the guard checks invariants \"instead of a list of known tricks\", which is not true here.\n\nOn impact: I grepped src/ outside the design system and found no setProperty calls and no computed `--` keys. So no theme is forced today and no real user sees a wrong theme now. The problem is a false-negative gap in a guard that the spec names as the only check for the no-toggle requirement on routes without a control. It can be reproduced, but it is latent, not a live defect, so I recommend downgrading from major.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1388,
+      "durationMs": 16681,
+      "sessionId": "a0e79050-3ee4-4898-b208-0f25efe86fad",
+      "costUsd": 0.0943508,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the mechanism by reading the code. I couldn't run the regex because the Bash call needed approval, so this rests on reading the pattern. At src/app/theme-source.test.ts:21, SCHEME_WORD has two places that can consume characters between the quotes. One is `(?!\\1)[^\\n\\\\]`, which excludes a literal newline. The other is `\\\\.`, and with no `s` flag its `.` doesn't match a newline either. So the opening and closing delimiter have to sit on the same line. Take \"const cls = `\\n  dark\\n`; root.className = cls;\". The backticks are on different lines and there's no other quote on the line holding `dark`, so SCHEME_WORD can't match. TOKEN_WRITE (no `--`) and SCHEME_API (no data-theme/colorScheme/etc.) don't match either. themeViolations returns [] for code that the header comment and spec say must be caught (\"however it is built or applied\"). Nothing else compensates: the `forced` probes are all single-line, and the scanner applies the same function to whole files. The comment says e2e covers some screens, but it also says this test exists for states e2e can't reach. The gap is real. Severity is arguable, since it takes an unusual multi-line literal to slip past, but it's a genuine false negative in a check the spec treats as exhaustive.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1421,
+      "durationMs": 19537,
+      "sessionId": "0befb136-a509-48d6-9dc5-449ad5fe5b3a",
+      "costUsd": 0.10221859999999999,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "The mechanism is real. I traced it by hand against `src/app/theme-source.test.ts:21`. I couldn't run node because the command needed approval. SCHEME_WORD's body pieces are `(?:(?!\\1)[^\\n\\\\]|\\\\.)*?`, which never match a newline. Take the input \"const cls = `\\n  dark\\n`; root.className = cls;\". It holds only two backtick delimiters and no ' or \". A match that starts at the first backtick has to cross the `\\n` to reach `dark`, so it fails. A match that starts at the second backtick has no closing backtick after it. TOKEN_WRITE doesn't fire because the text has no `--`, and SCHEME_API doesn't fire because the text calls no scheme API. So themeViolations returns [] for a string literal that names a scheme. That breaks invariant 3 as the doc comment (lines 14-15) and the spec state it. None of the `forced` probes is multi-line, and nothing else guards this case. The file scan at line 72 runs the same regex over whole files, so this exact code shape in real app source would pass.\n\nI'm downgrading the severity. This is a gap in a static guard, not a runtime defect: no end user or attacker can trigger it, and it only matters if a developer writes theme-forcing code in this shape. A regex can't deliver \"however it is built\" anyway. For example, `'da' + 'rk'` or `String.fromCharCode` would also get past it. So the multi-line template is one of several bypasses, not a unique hole. The e2e theme check named in the doc comment is a second safeguard. It's a valid finding but minor in impact.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1103,
+      "durationMs": 14348,
+      "sessionId": "cf927087-3cd7-4d26-a121-a0932822a60f",
+      "costUsd": 0.09172319999999999,
+      "numTurns": 6,
+      "result": {
+        "refuted": false,
+        "reasoning": "The mechanism is real. At `src/app/theme-source.test.ts:37`, `sources()` only keeps files that match `/\\.(tsx?|css)$/`. The file list is `[...sources('src'), 'index.html']` (line 70), so the test never walks `public/` or reads any other file type under `src/` (.js, .jsx, .mjs, .scss). The header comment (lines 7-8) says the rule covers all \"app code (everything outside the vendored design system)\". So a token override in `public/x.css` linked from index.html, or in a .scss or .jsx file, would get past the guard. Nothing else covers this: tsconfig has no `allowJs`, and there is no other source scan. Two things limit the impact. First, there is no `public/` directory and no non-.ts/.tsx/.css app file today, so nothing is currently being missed. Second, the docstring says an e2e test also checks the theme at runtime, which would likely catch a stylesheet forced through index.html. This is a guard gap that matters later, not a live bug, so minor severity fits.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1136,
+      "durationMs": 15747,
+      "sessionId": "93343d43-75f4-4b03-9505-8145b8379899",
+      "costUsd": 0.1003472,
+      "numTurns": 7,
+      "result": {
+        "refuted": true,
+        "reasoning": "The filter is real: `sources()` at src/app/theme-source.test.ts:37 only keeps .ts/.tsx/.css files, plus index.html. But no file the guard misses exists in the repo today. There is no `public/` directory, and the only non-.ts/.tsx/.css files under `src/` are design-system assets (tokens.json, icons/*.svg). Those are excluded on purpose because the design system owns the tokens and both colour schemes.\n\nSo the theme guard has no bypass in the current codebase, and no user or attacker can reach this: forcing a theme this way means a developer commits new source files. The finding is a hypothetical test-coverage gap that only matters if a later slice adds .js/.scss files or a `public/` override stylesheet.\n\nThose changes are also partly caught elsewhere. Linking a stylesheet from `public/` requires editing index.html, which this test scans and which goes through review. Lint and typecheck would also flag .js/.jsx files under `src/` in a strict TS project.\n\nAt most this is a hardening note for future slices, not a reproducible defect.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:openspec/changes/implement-platform-foundation-ui/specs/platform-foundation/spec.md",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1174,
+      "durationMs": 17276,
+      "sessionId": "6a8a5cca-06af-4159-b9ef-15c71716ca67",
+      "costUsd": 0.1360214,
+      "numTurns": 6,
+      "result": {
+        "refuted": false,
+        "reasoning": "I could not refute this finding; the mismatch is real. Lines 8–10 of spec.md say no app source outside the vendored design system SHALL \"name a scheme in a string literal\", and they give no exception. The code is stricter in one way and looser in another. src/app/theme-source.test.ts:22 lists `CATALOGS = ['src/i18n/cs.ts', 'src/i18n/en.ts']`. Line 29 then skips invariant 3 for those files (`!isCatalog && SCHEME_WORD.test(text)`), and line 72 passes `CATALOGS.includes(f)`. The catalogs are .ts files under src/, so the walker at lines 33–38 counts them as app source, and the spec's wording covers them. Only design.md:136 states the exemption (\"catalogs excepted\"), along with the test's own comment at line 16 (\"catalogs are not code\"). The spec requirement does not.\n\nThe bypass the finding describes is possible. A catalog value 'dark' used as a class name or other attribute would pass the static check. Invariants 1 and 2 still apply to the catalogs, so `data-theme`, `color-scheme` and token writes are still caught there. The escape route is narrow: a scheme word used as a class name, which only matters if some CSS targets that class. No catalog contains dark, light or theme today (grep of src/i18n finds nothing), so nothing is broken right now. This is a gap between the spec and the code, not a live defect. \"Minor\" severity is right.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:openspec/changes/implement-platform-foundation-ui/specs/platform-foundation/spec.md",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1207,
+      "durationMs": 31930,
+      "sessionId": "3edc4aca-aaa6-4384-ad4d-c1e063132227",
+      "costUsd": 0.11293520000000001,
+      "numTurns": 5,
+      "result": {
+        "refuted": true,
+        "reasoning": "The wording gap is real. The spec (spec.md:7-9) says no app source may \"name a scheme in a string literal\" and gives no exception. theme-source.test.ts:22-29 skips that check (invariant 3) for src/i18n/cs.ts and en.ts, and design.md:136 records this (\"catalogs excepted\").\n\nThe claimed failure can't actually happen, though:\n1. The design system switches themes only through `[data-theme=\"light\"|\"dark\"]` and `prefers-color-scheme` (tokens.css:3, 50, 83-84). It has no `.dark` or `.light` class rule, so `className={t('x')}` resolving to 'dark' changes nothing on screen.\n2. Flipping the theme needs `data-theme`, `dataset.theme`, `colorScheme` or `color-scheme` somewhere. The SCHEME_API check (invariant 2) still runs on the catalogs, because only SCHEME_WORD is skipped. So it catches those strings in app code and in the catalogs alike. Putting the attribute name in the catalog and spreading it as a prop would still be flagged.\n3. TOKEN_WRITE also still runs on the catalogs, so a catalog can't inject a custom property either.\n4. The catalogs currently contain no 'dark' or 'light' value (grep found nothing).\n\nNo user or attacker can get a theme override past the guard through the catalog exemption. What's left is a spec-text mismatch that design.md and the test both already document. At most it is a doc-wording nit, not a reproducible defect.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:eslint-rules/no-literal-ui-text.js",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1376,
+      "durationMs": 15433,
+      "sessionId": "60a57aab-68ee-4d57-bbd5-8cf682d91fda",
+      "costUsd": 0.1149508,
+      "numTurns": 3,
+      "result": {
+        "refuted": false,
+        "reasoning": "I could not refute it. The mechanism holds when I trace the code by hand.\n\n**The exemption.** At eslint-rules/no-literal-ui-text.js:103-106, a call whose callee is `<Intl.X(...) or new Intl.X(...)>.method(...)` returns [] for every X except \"ListFormat\". So `new Intl.Segmenter('cs').segment('Ahoj')` hits the early return: the callee object is a NewExpression on Intl.Segmenter, so kind is \"Segmenter\", and that is not \"ListFormat\". The 'Ahoj' argument is never checked.\n\n**The finding's full example.** `{[...new Intl.Segmenter('cs').segment('Ahoj')].map((s) => s.segment).join('')}` goes through `JSXExpressionContainer`, then `literalTexts`:\n1. The `.join('')` call: its argument '' has no letter, so it is not flagged. The receiver is the `.map(...)` call.\n2. The `.map` call: the arrow callback returns `s.segment`, a MemberExpression, which hits default and gives []. The receiver is an ArrayExpression with a SpreadElement, and line 85 unwraps the spread to the Segmenter call.\n3. The Segmenter call is exempted at line 105, so it gives [].\n\nNo report. Segmenter's `segment` returns the input text as segments, so this literal text would render with no lint error.\n\n**Nothing else catches it in the rule.** No visitor other than `literalTexts` walks these call arguments. The header comment lists \"call arguments\" among the places the rule checks, and the line 99-101 comment assumes every Intl formatter method except ListFormat takes non-text input. That assumption is wrong for Segmenter.\n\n**Why minor is right.** The pattern is contrived. Header lines 20-22 name the pseudo-catalog render test (src/app/i18n-coverage.test.tsx) as the backstop for what static analysis misses, which may catch it at runtime. Still, it is a real gap in the rule's own coverage of call arguments: a denylist of one where an allowlist was needed.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:eslint-rules/no-literal-ui-text.js",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1409,
+      "durationMs": 24317,
+      "sessionId": "21da617a-bffc-4fc5-a738-6860276edd35",
+      "costUsd": 0.1170118,
+      "numTurns": 3,
+      "result": {
+        "refuted": false,
+        "reasoning": "I traced the finding's example through literalTexts and the gap is real. In `{[...new Intl.Segmenter('cs').segment('Ahoj')].map((s) => s.segment).join('')}`, the JSXExpressionContainer handler calls literalTexts on the outer `join('')` call. It then follows the receiver: first the `.map(...)` call, then the ArrayExpression, then the spread argument `new Intl.Segmenter('cs').segment('Ahoj')`. For that call, line 104 runs intlConstructor(callee.object). The callee object is a NewExpression for Intl.Segmenter, so kind is \"Segmenter\". That is not \"ListFormat\", so line 105 returns [] and the literal 'Ahoj' is never checked. The map callback returns `s.segment`, a MemberExpression, which hits the default branch and returns []. The join argument '' has no letter. So the rule reports nothing, while Intl.Segmenter really does give back substrings of its input, so 'Ahoj' shows on screen. Nothing else in the rule catches it: CATALOG_LOOKUPS and isLocaleFormatting don't apply, and the comment at lines 99-101 says outright that only ListFormat's arguments are checked. The file header (lines 20-22) says the pseudo-catalog render test (src/app/i18n-coverage.test.tsx) is the backstop for text the rule can't follow. That backstop may catch this at runtime, but it doesn't change the fact that the rule claims to check call arguments and misses this one. The impact is small. You can only hit this with contrived code, nobody external can exploit it, and it's an NFR-9 lint coverage gap rather than a product defect. So minor is still the right severity, and the mechanism is confirmed.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:tools/container-smoke.mjs",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1291,
+      "durationMs": 22253,
+      "sessionId": "c9504652-25d4-46dd-b3f2-e7749b044e2c",
+      "costUsd": 0.1147996,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I could not refute this. The mechanism holds in this code.\n\n1. The dirty check at tools/container-smoke.mjs:48-51 runs `git status --porcelain -- . :!docs/qa ...` without `--ignored`. Git leaves ignored paths out of that output.\n2. .gitignore ignores `*.log`, `.idea/`, `.vscode/`, `uploads/`, `storage/`, `pgdata/`, `backups/`, `*.dump`, `**/raw/` and `src/api/generated/`. .dockerignore excludes none of these; it only lists node_modules, dist, coverage, playwright-report, test-results, .git, docs, trace, retro, openspec and .env*.\n3. The Dockerfile runs `COPY . .` and then `npm run build`, which is `api:generate && tsc -b && vite build`. So ignored files reach the build stage.\n\nThe reachable ways this changes what gets tested:\n- Vite copies `public/` into dist as-is, so a file such as `public/raw/x` or `public/foo.log` would end up in the nginx image.\n- A gitignored `src/raw/*.ts` is seen by `tsc -b` and can break the build.\n- The script's own comment says the e2e specs \"run from the working tree\". Playwright's testDir is `./e2e`, so a gitignored `e2e/raw/x.spec.ts` would run under `--e2e` and change the result.\n\nIn each case the evidence still records `dirty: false` and ties the result to the commit alone. That contradicts the comment that \"every other file is an input\".\n\nTwo things soften this but don't refute it:\n- `tested.image` records the image ID. That ID would differ, but nothing links it back to the working tree.\n- `src/api/generated` is regenerated during the build, so that one exclusion doesn't matter.\n\nThe trigger is hypothetical: today `git status --ignored` shows only build outputs and src/api/generated. That fits the minor severity and medium confidence, so I'd keep the severity as is.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:tools/container-smoke.mjs",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1324,
+      "durationMs": 33754,
+      "sessionId": "a6b01789-9b14-4f15-a09e-eac3c837058b",
+      "costUsd": 0.1413344,
+      "numTurns": 6,
+      "result": {
+        "refuted": false,
+        "severityAdjustment": "downgrade",
+        "reasoning": "The mechanism is real. `tools/container-smoke.mjs:50` runs `git status --porcelain` without `--ignored`, so gitignored files never set `dirty`. `.dockerignore` excludes only node_modules, dist, coverage, playwright-report, test-results, .git, docs, trace, retro, openspec and .env*. It does not exclude `**/raw/`, `uploads/`, `storage/`, `*.log`, `*.dump` or `.idea/`, so `COPY . .` in the Dockerfile puts them in the build stage.\n\nHow far it reaches in practice is much narrower than the finding says:\n- Only `/app/dist` and `nginx.conf` reach the final image. `vite build` bundles only the import graph from index.html. A stray ignored file such as `src/raw/x.ts` that nothing imports leaves dist and the image unchanged. If tracked code imports it, that edit makes the tree dirty unless it was committed pointing at an untracked file.\n- `tsc -b` covers all of `src/` (tsconfig.app.json `include: [\"src\"]`). An ignored file can therefore break the build, which shows up as FAIL, not a silent pass. It could only hide a type error through a contrived ambient `.d.ts`.\n- Real ways it can change the image: `public/raw/*`, which Vite copies verbatim into dist, or an ignored ambient declaration. In the e2e run, `e2e/raw/*.spec.ts` would be picked up by Playwright (`testDir: './e2e'`). That can only add tests, not hide failures.\n- The evidence does not tie the result to the commit alone. It also records `tested.image` (the built image ID) and the nginx.conf sha256 (line 175). So the actual artifact that was tested is identified, even if the dirty flag misses ignored inputs.\n\nNobody can exploit this from outside. It needs a developer to place gitignored files that change the output on their own machine. It is a real but low-impact provenance gap: the claim holds, but the severity should be lowered to a nit. Aligning `.dockerignore` with the NFR-3/NFR-4 entries (`uploads/`, `storage/`, `**/raw/`, `*.dump`, `backups/`, `pgdata/`) is still worth doing, mainly so that workbook or runtime data never enters the build context. That is a stronger reason than the dirty flag."
+      }
+    },
+    {
+      "label": "verify:openspec/changes/implement-platform-foundation-ui/tasks.md",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1332,
+      "durationMs": 26629,
+      "sessionId": "eeef9dcc-7086-47ec-84eb-950e5a720198",
+      "costUsd": 0.15204700000000002,
+      "numTurns": 11,
+      "result": {
+        "refuted": false,
+        "reasoning": "The finding holds. tasks.md:27 ticks \"4.1 `npm run qa:verify` green\". The only battery report, docs/qa/automated-verification-latest.md, says \"Started: 2026-10-04T07:50:58.754Z / Overall result: Pass\". `git show --stat 184ba12` shows a later commit (2026-10-04T12:54:25+02:00, which is 10:54Z, round 6). That commit changed product and test code the battery covers: eslint-rules/no-literal-ui-text.js (+22/-), src/app/theme-source.test.ts (+76) and src/test/lint-rule.test.ts (+4). I found no newer battery evidence. The only artifact that names 184ba12 is docs/qa/container-smoke-latest.md (Started 10:54:44Z, \"Tested: commit 184ba12…\"), and that covers container/Playwright through nginx, not lint, typecheck, Vitest or coverage. The \"Green\" section in docs/qa/evidence/slice1-review-fixes.md has no timestamp or commit and describes an earlier round's fixes, so it doesn't back the round-6 code either. So the changed lint rule and its tests have no recorded lint, unit or coverage run, and under the done-claims-need-evidence rule the 4.1 tick is unbacked. One limit: I could not show that those suites actually fail at HEAD. The defect is stale evidence, not proven broken code. Keeping severity, since the project rules treat this as a correction event.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:openspec/changes/implement-platform-foundation-ui/tasks.md",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1365,
+      "durationMs": 26497,
+      "sessionId": "3b1993c9-e1a6-4fe8-8bc4-589c7e7207fb",
+      "costUsd": 0.17746599999999998,
+      "numTurns": 11,
+      "result": {
+        "refuted": false,
+        "reasoning": "The finding holds. Task 4.1 in tasks.md:27 is ticked as \"`npm run qa:verify` green\". The battery report docs/qa/automated-verification-latest.md shows Started 07:50:58Z and Finished 07:53:31Z. The trace ledger (trace/ledger.jsonl:226) confirms that this was the last qa-verify battery-run, at 07:53:31Z. It ran on gitHead b1972e0 (round 4) with a dirty tree. After that, the ledger records only the following:\n- two review-gate workflow runs on 4c1aece (09:43Z and 10:52Z)\n- pre-commit/commit-msg hooks at 10:54Z, which created 184ba12\n- the same hooks again at 10:56Z, which created 5e9e43e\n\nNo qa-verify battery-run was recorded after round 6. The only evidence for 184ba12 is docs/qa/container-smoke-latest.md, which covers the container and Playwright through nginx. It does not cover lint, typecheck, unit tests or coverage. So the \"green\" tick has no fresh battery evidence for HEAD.\n\nAGENTS.md's done-claims-need-evidence lesson requires a fresh, resolvable evidence pointer for a claim like this. This is a process and spec-compliance gap, not a runtime bug. No user or attacker is affected. But it is real and reproducible: anyone can compare the ledger with the commit history and see it.\n\nI could not run git show to confirm which files 184ba12 touched, because the commands needed approval. Even so, the gap does not depend on that. The ledger shows no battery run at or after round 6, whatever that commit changed. Severity \"major\" is reasonable for this repo's gate rules, so I'm keeping it.",
+        "severityAdjustment": "keep"
+      }
+    }
+  ],
+  "logs": [
+    {
+      "phase": "Find",
+      "message": "15 unique findings across 4 dimensions"
+    },
+    {
+      "phase": "Report",
+      "message": "confirmed: 12, contested: 2, rejected: 1"
+    }
+  ],
+  "persisted": [
+    "openspec/changes/implement-platform-foundation-ui/review-findings.json"
+  ],
+  "returned": {
+    "scope": "slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui",
+    "summary": "Review gate for slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui: 12 confirmed, 2 contested (treat as confirmed unless trivially wrong), 1 rejected.",
+    "confirmed": [
+      {
+        "title": "Theme guard invariant 1 misses the computed-key custom-property idiom the design system itself uses",
+        "file": "src/app/theme-source.test.ts",
+        "line": 19,
+        "severity": "major",
+        "confidence": "high",
+        "evidence": "TOKEN_WRITE is `/--[\\w-]+['\"`]?\\s*:|setProperty\\(\\s*['\"`]--/`, so it needs the colon right after the name or its closing quote. The vendored design system sets tokens with `style: { ['--dk-accent' as string]: color }` (src/design-system/components/core.tsx:40). In app code, `style={{ ['--paper' as string]: '#000' }}` or `style={{ [`--paper`]: x }}` has `as string]` or `]` before the colon, so it does not match. `const v = '--paper'; el.style.setProperty(v, '#000')` does not match either. None of these strings contains dark/light/theme, so invariants 2 and 3 miss them too. The test passes while the spec's 'no app source SHALL … declare or set a CSS custom property' is broken, and the most likely way a feature slice would copy the pattern (from core.tsx) is the one that gets through.",
+        "suggestion": "Match the token name instead of the declaration syntax. In .ts/.tsx, flag any string or template literal that starts with `--` (e.g. /(['\"`])--[\\w-]/). In .css, flag `--name` followed by optional whitespace or comments and then `:`. Add `['--paper' as string]: x`, `[`--paper`]: x` and `const v='--paper'; setProperty(v, …)` to the `forced` list.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I couldn't refute the mechanism. TOKEN_WRITE (theme-source.test.ts:19) is `/--[\\w-]+['\"`]?\\s*:|setProperty\\(\\s*['\"`]--/`. The first alternative needs a colon right after the token name, with at most one closing quote and some whitespace in between. The second needs a literal quote straight after `setProperty(`.\n\nI checked each case from the finding by reading the regex:\n- `['--paper' as string]: '#000'`: `--paper'` is followed by ` as string]`, so `\\s*:` fails. There is no `setProperty('--`, so neither alternative matches.\n- `` [`--paper`]: x ``: the closing backtick is followed by `]`, so it fails.\n- `const v='--paper'; el.style.setProperty(v,'#000')`: `setProperty(` is followed by `v`, not a quote, so it fails.\n\nNone of these strings contains `data-theme`, `colorScheme` or the other SCHEME_API terms. Their string literals (`'--paper'`, `'#000'`) contain no dark, light or theme word, so SCHEME_WORD misses them too.\n\nThe design system really uses the first idiom: `src/design-system/components/core.tsx:40` has `style: { ['--dk-accent' as string]: color }`. The scan skips that file because it excludes `src/design-system`, but a feature slice copying the pattern into app code would pass the guard. The `forced` list only covers the plain `{ '--paper': … }` form.\n\nSo the claimed gap in invariant 1 is real. On severity: this is a hole in a test guard, not a current product defect. No app source uses these idioms today, and the guard is a tripwire for future slices. I'd lean toward downgrading from major, though under-enforcing a spec SHALL is meaningful.",
+          "I confirmed this by reading the code. The sandbox blocked my attempt to run the regex in node, so I traced the matching by hand instead. TOKEN_WRITE (theme-source.test.ts:19) is `/--[\\w-]+['\"`]?\\s*:|setProperty\\(\\s*['\"`]--/`.\n\n- `style={{ ['--paper' as string]: '#000' }}`: `--paper` matches, then the optional `'`, but the next characters are ` as string]`, not whitespace followed by `:`. The first branch fails. The second branch fails because there is no `setProperty(`.\n- `` [`--paper`]: x ``: after the closing backtick comes `]`, not `\\s*:`, so it fails.\n- `const v='--paper'; el.style.setProperty(v,'#000')`: the `--paper'` is followed by `;`, and `setProperty(` is followed by `v`, not a quote. Both branches fail.\n- SCHEME_API has nothing to match in any of these.\n- SCHEME_WORD only fires on string literals containing dark, light or theme*, and `'--paper'` and `'#000'` contain none of them.\n\nSo themeViolations returns [] for all three, and the 'no app source' test would pass while app code sets a CSS custom property. That breaks invariant 1 as the file's own header states it.\n\nThe idiom is real and nearby. Grep shows `style: { ['--dk-accent' as string]: color }` at src/design-system/components/core.tsx:40. That is the vendored system's own pattern, and TypeScript's CSSProperties typing pushes developers toward the computed-key form, so a feature slice copying it is plausible.\n\nNone of the forced cases cover computed keys or indirect setProperty. The `'--paper': '#000'` case only catches the plain-key form.\n\nThis isn't a user-facing or runtime exploit, and no app file does this today. It is a gap in a guard test: the bypass reproduces easily, and the test gives false assurance for FR-58."
+        ]
+      },
+      {
+        "title": "Scheme-word check cannot see a scheme word inside a multi-line string or template literal",
+        "file": "src/app/theme-source.test.ts",
+        "line": 21,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "SCHEME_WORD's body is `(?:(?!\\1)[^\\n\\\\]|\\\\.)*?`, so a match cannot cross a newline. In a multi-line className template such as `className={`\\n  card\\n  dark\\n`}`, the opening backtick ends its line and `dark` sits on a line with no quote before it, so invariant 3 does not fire. The doc comment says the invariant holds 'however it is built or applied', but this common way of formatting class templates gets through. Invariants 1 and 2 do not cover a plain class name.",
+        "suggestion": "Parse literals with the TypeScript scanner or ts-morph, or at least let template literals span newlines (use `[^\\\\]` instead of `[^\\n\\\\]` when the quote is a backtick). Add a multi-line template case to `forced`.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "The mechanism is confirmed. At src/app/theme-source.test.ts:21, SCHEME_WORD is `(['\"`])(?:(?!\\1)[^\\n\\\\]|\\\\.)*?\\b(dark|light|theme\\w*)\\b(?:(?!\\1)[^\\n\\\\]|\\\\.)*?\\1`. Both body classes exclude `\\n`, so a match must open and close on the same line. In a multi-line template such as className={`\\n  card\\n  dark\\n`}, the opening backtick can't reach `dark` across the newline. The line holding `dark` has no quote of its own. The closing backtick's line has no scheme word before another backtick. So nothing matches. TOKEN_WRITE and SCHEME_API don't look for a bare `dark` either, so the template passes all three invariants. That contradicts the doc comment's claim that this holds \"however it is built or applied\". None of the `forced` cases is a multi-line literal. I couldn't run the regex: the node command needed approval, which wasn't granted. The conclusion comes from reading the regex. Real-world impact is small. tokens.css switches schemes only through `[data-theme=...]` and `prefers-color-scheme`, and SCHEME_API already catches both. A stray `dark` class wouldn't actually force a theme today. So this is a gap in a guard test, not a live bug. Minor severity fits.",
+          "The regex gap is real. In SCHEME_WORD (src/app/theme-source.test.ts:21), both the body before the word and the body after it use `[^\\n\\\\]`, so no match can cross a newline. With `className={`\\n  card\\n  dark\\n`}`, the opening backtick is alone at the end of its line. No quote sits on the same line as `dark`, and no other quote pair holds it, so invariant 3 does not fire. Invariants 1 and 2 only look for `--x:`/setProperty and data-theme/colorScheme text, so they do not catch it either. The fixture lists cover no multi-line literals. This is deterministic for anyone who formats a class template across several lines. A Prettier-wrapped long className is a normal way to write one.\n\nExploitability caveat: the design system (src/design-system/tokens.css:3, 50, 84) switches schemes only through `[data-theme=…]` and the media query. It has no `.dark` or `.light` class selector. So a sneaked-in `dark` class would not actually force the theme today. Setting data-theme by any route still needs the literal text `data-theme`/`dataset.theme`, which SCHEME_API catches on any line. The product impact is therefore nil right now. The real problem is that the test is weaker than its doc comment claims (\"however it is built or applied\"), and it would matter if the design system ever added class-based scheme selectors. That fits the existing minor severity. The finding is not refuted, and the severity stays the same."
+        ]
+      },
+      {
+        "title": "Intl exemption also skips Intl.Segmenter (and other non-ListFormat methods) that take display text",
+        "file": "eslint-rules/no-literal-ui-text.js",
+        "line": 101,
+        "severity": "minor",
+        "confidence": "low",
+        "evidence": "`if (kind && kind !== \"ListFormat\") return [];` exempts every method of every Intl object except ListFormat. `Intl.Segmenter.prototype.segment('Ahoj')` returns the given text in segments, so `{[...new Intl.Segmenter('cs').segment('Ahoj')].map(s => s.segment)}` puts the literal on screen without a report. The rule comment claims only ListFormat formats the strings it is given.",
+        "suggestion": "Turn the logic around: exempt only methods known to take non-text arguments (NumberFormat/DateTimeFormat/RelativeTimeFormat/PluralRules format*, select*, DisplayNames.of) and check the arguments of everything else, including Segmenter.segment. Add a Segmenter case to the invalid list.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I could not refute the mechanism. In `literalTexts`, for a CallExpression whose callee is a MemberExpression, `intlConstructor(node.callee.object)` returns the Intl property name for any `new Intl.X(...)` or `Intl.X(...)` receiver (lines 59-66). Line 105, `if (kind && kind !== \"ListFormat\") return [];`, then returns early without looking at any arguments.\n\nHere is how the cited example is handled: `{[...new Intl.Segmenter('cs').segment('Ahoj')].map(s => s.segment)}`\n1. The JSXExpressionContainer passes to the `.map(...)` CallExpression.\n2. The receiver is an ArrayExpression. Its SpreadElement argument is `new Intl.Segmenter('cs').segment('Ahoj')`, and its callee object is `new Intl.Segmenter('cs')`. So `kind === \"Segmenter\"` and the result is `[]`, which drops 'Ahoj'.\n3. The `.map` callback returns `s.segment`, a MemberExpression, which falls to the default case and returns `[]`.\n\nSo the rule reports nothing, even though 'Ahoj' ends up on screen. Nothing else guards this path. The comment at lines 99-101 says Intl formatter methods take only numbers, dates and identifiers, and that is wrong for `Segmenter.segment`, which takes text and returns it. The same is true of `Collator.compare('a','b')`, though its result is a number, so that case is harmless.\n\nThe finding is valid but the case is contrived: segmenting a literal and rendering the pieces is unusual. Minor severity with low confidence fits.",
+          "I traced the cited example through `literalTexts` in eslint-rules/no-literal-ui-text.js, and the rule does miss it.\n\nHow the example gets through:\n- `{[...new Intl.Segmenter('cs').segment('Ahoj')].map(s => s.segment)}` is a CallExpression (`.map`). Its receiver is an ArrayExpression, so the rule checks it.\n- The array check follows the SpreadElement to the `.segment('Ahoj')` CallExpression.\n- That call's `callee.object` is `new Intl.Segmenter('cs')`. So `intlConstructor` returns \"Segmenter\", and line 105 (`if (kind && kind !== \"ListFormat\") return [];`) returns [] before the arguments are checked.\n- The `.map` callback `s => s.segment` returns a MemberExpression, which falls to the default case and gives [].\n- Result: nothing is reported, yet `segment()` passes its input text through, so \"Ahoj\" ends up on screen.\n\nThe comment on lines 99–101 is also wrong for Segmenter. It says Intl methods take only numbers, dates and identifiers, but `segment()` takes display text.\n\nWhy this matters little in practice:\n- This is a lint coverage gap, not a runtime bug. A developer would have to write a contrived construct; no user or attacker can trigger it.\n- Nobody splits a hard-coded Czech literal with Segmenter inside JSX by accident.\n- The rule's header already admits static analysis is incomplete and names the pseudo-catalog render test (src/app/i18n-coverage.test.tsx) as the backstop, which would likely catch such text at render time.\n- Collator.compare also takes strings but returns a number, so it can't leak text. Segmenter is the only real case.\n\nVerdict: the finding is confirmed, but it is a lint-only edge case with a test backstop, so I'd lower its severity to nit."
+        ]
+      },
+      {
+        "title": "Container smoke records a clean tree when git status fails",
+        "file": "tools/container-smoke.mjs",
+        "line": 50,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "`dirty: spawnSync('git', ['status', '--porcelain', '--', '.', ':!docs/qa', …]).stdout.trim() !== ''` ignores the exit status. If git exits non-zero (pathspec error, safe.directory refusal, not a repo), stdout is empty, so `dirty` is false and the evidence says 'Tested: commit …' with no uncommitted-changes caveat. If git cannot be spawned, stdout is null and `.trim()` throws before any evidence is written. The evidence-to-commit tie that round 6 added can therefore claim clean without having checked.",
+        "suggestion": "Check `status === 0` (and `error`) for both git calls. If either fails, mark the run as not tied to a commit (e.g. 'unknown') or exit non-zero instead of defaulting to clean.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "The mechanism is real, but it does less damage than the finding says. At tools/container-smoke.mjs:46-52, both git calls take `.stdout.trim()` from spawnSync and never check `status` or `error`. Nothing else guards them: `tested` is built at module top level and written straight into docs/qa/container-smoke-latest.md at line 175. If `git status` exits non-zero, it prints the error to stderr, so stdout is '' and `dirty` comes out false. The uncommitted-changes caveat is then left out without any check having been done. That part of the finding is correct.\n\nTwo things limit the impact:\n1. Not a repo and a safe.directory refusal (two of the three failures it names) also make `git rev-parse HEAD` exit 128 with empty stdout. The evidence would then read 'Tested: commit , image …'. That blank is visible, and it doesn't name a commit as clean.\n2. If git can't be spawned, stdout is null and `.trim()` throws at module load. The script then stops loudly before it writes anything, so no false evidence is produced. That's acceptable behaviour, not a bug.\n\nThe case that does mislead needs rev-parse to succeed while status fails, for example a corrupt index or some other status-only error. That's rare but possible. In that case the file claims a real commit SHA with no caveat. The code is still wrong to treat a failed git call as a clean tree, which goes against the repo's own rule against claims without evidence. Minor severity fits.\n\nI couldn't run git to confirm the exit behaviour because the command needed approval. The exit codes above are git's standard behaviour, not something I observed here.",
+          "The code matches the finding. At `tools/container-smoke.mjs:46-52`, both git calls use spawnSync and read only `.stdout`. Neither checks `status` or `error`. Nothing after line 52 re-checks `tested.dirty`, and the evidence line at line 175 adds the uncommitted-changes caveat only when `dirty` is true. Any non-zero git exit leaves stdout empty, so `dirty` becomes false and the \"plus uncommitted changes\" caveat is silently left out.\n\nHow likely it is in practice:\n- Pathspec errors can't happen here. The pathspecs are fixed and valid.\n- Several realistic cases make both git calls fail together:\n  - a safe.directory / dubious-ownership refusal, common on Windows when the clone is owned by another account;\n  - running from a non-git export of the tree;\n  - a corrupt index.\n- In those cases `commit` is also empty. The evidence then reads \"Tested: commit , image …\" with no caveat. That blank is a visible clue but not an explicit failure. The file still says PASS while the tie to a commit and clean tree was never checked. This is exactly the gap round 6 was meant to close. Under the repo's own rules (evidence must not claim what it didn't check), this is a real defect.\n- If git can't be spawned at all, `.trim()` on null throws at module load. That fails closed: no false evidence is written, so that part of the finding is a crash rather than a false claim.\n\nConclusion: the mechanism is real but needs an environmental git failure, not attacker input. Minor severity is appropriate.\n\nI couldn't run git outside the repo to check exit codes (the sandbox blocked it), but the reasoning only needs standard git behaviour: a non-zero exit with empty stdout."
+        ]
+      },
+      {
+        "title": "Theme guard invariant 1 misses a computed-key CSS custom property in a style object",
+        "file": "src/app/theme-source.test.ts",
+        "line": 19,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "TOKEN_WRITE is /--[\\w-]+['\"`]?\\s*:|setProperty\\(\\s*['\"`]--/. With a computed key, `<div style={{ ['--paper']: '#000' } as CSSProperties}>`, the text after `--paper'` is `]:`, not `:`, so the regex does not match. SCHEME_API and SCHEME_WORD don't match either, because no string names a scheme. A later slice could write this to override `--paper` or `--ink` on a wrapper. Both theme-source tests would still pass, while the spec delta says app code SHALL NOT 'declare or set a CSS custom property'. The e2e only checks the background on reachable states, so it won't catch an override on an inner element or on a state it doesn't reach. That gap is exactly what this static check was rebuilt to cover.",
+        "suggestion": "Allow an optional closing bracket before the colon, e.g. /--[\\w-]+['\"`]?\\]?\\s*:/. Simpler: flag any string literal that starts with `--` anywhere in app code, and also flag setProperty with a non-literal first argument. Add `{ ['--paper']: '#000' }` to the `forced` probe list.",
+        "dimension": "security",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I couldn't run the regex in node (the command needed approval), so this comes from reading `src/app/theme-source.test.ts:19` and checking the regex by hand.\n\nTOKEN_WRITE is `/--[\\w-]+['\"`]?\\s*:|setProperty\\(\\s*['\"`]--/`. Take `{ ['--paper']: '#000' }`:\n- `--[\\w-]+` matches `--paper`.\n- The optional quote class matches `'`.\n- `\\s*:` then fails, because the next character is `]`.\n- Backtracking doesn't help. A shorter match like `--pape` would need `:` where `r` is, and there is no other `--` in the text.\n- The second branch (`setProperty`) doesn't apply.\n\nSCHEME_API (data-theme / colorScheme / etc.) has nothing to match. SCHEME_WORD only fires on string literals containing dark, light or theme, and `'--paper'` and `'#000'` contain none of them. So `themeViolations` returns `[]`, and the second test (which scans every app source file) would pass on such code.\n\nThe test's own docblock says invariant 1 forbids any `--x:` \"in any rule or style object\" on any element, and that this static check covers states the e2e can't reach. A computed key is a normal, valid way to write a custom-property key in a React style object, so the stated invariant genuinely misses it. No other guard in this file catches it.\n\nSimilar bypasses exist too, such as `const k='--paper'; style={{[k]: …}}`, which strengthens the case that the check is incomplete. Severity stays minor: it's a gap in a test guard, not a defect in shipped code. I found no app code that uses this pattern today.",
+          "I confirmed the mechanism by reading src/app/theme-source.test.ts:19. I couldn't execute the regex because the node command needed approval, so this is a by-hand trace. TOKEN_WRITE = /--[\\w-]+['\"`]?\\s*:|setProperty\\(\\s*['\"`]--/. For `{ ['--paper']: '#000' }`, `--paper` matches and the optional quote takes `'`. Then `\\s*:` meets `]` and fails. Backtracking can't help, because `[\\w-]+` cannot consume `'` or `]`. The setProperty branch doesn't apply here.\n\nThe other two invariants don't catch it either. SCHEME_API has nothing to match. SCHEME_WORD needs dark, light or theme inside a string literal, and the only literals are '--paper' and '#000'. So themeViolations returns [] and both tests pass, even though the file states invariant 1 as 'no `--x:` in any rule or style object'. The `forced` probe list has only the non-computed `{ '--paper': '#000' }` form. Nothing else in the file guards against the computed form. A related gap is setProperty with a non-literal key, e.g. `const k='--ink'; el.style.setProperty(k, …)`.\n\nOn reproducibility: no outside user or attacker can trigger this. It's a gap in a static repo guard, so a developer in a later slice could override tokens without the check catching it. The mechanism is real and deterministic. Minor severity fits."
+        ]
+      },
+      {
+        "title": "Theme guard skips any src/ directory whose name starts with 'design-system' or 'api/generated'",
+        "file": "src/app/theme-source.test.ts",
+        "line": 36,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "sources() uses `p.startsWith('src/design-system')` with no trailing slash, so it skips every path with that prefix. That includes app directories such as `src/design-system-overrides/` or `src/design-system-extras/` as well as the vendored folder. A CSS file there with `:root { --paper: #000 }`, or a component that sets `data-theme`, would force a theme while 'no app source or index.html breaks an invariant' still passes. ESLint's globalIgnores('src/design-system') matches only that exact directory, so the two exemptions don't line up, and the check is weaker than the spec's 'outside the vendored design system'.",
+        "suggestion": "Compare whole path segments: `p === 'src/design-system' || p.startsWith('src/design-system/')`, and do the same for src/api/generated. Add a unit probe for a sibling directory with the same prefix.",
+        "dimension": "security",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I confirmed the mechanism. At src/app/theme-source.test.ts:36, sources() normalizes each directory path to forward slashes. It then skips the directory when `p.startsWith('src/design-system') || p.startsWith('src/api/generated')`. Neither check has a trailing slash or segment boundary, so sibling directories such as `src/design-system-overrides/` or `src/api/generated-extras/` would also be skipped silently. Any CSS or TSX in them that forces a theme would get past the 'no app source or index.html breaks an invariant' test.\n\nNothing else guards against this. The prefix check runs only on directories, so a single file like `src/design-system.ts` is still scanned. ESLint (`globalIgnores` with 'src/design-system') and factory.config.json's productCode.exclude both name the exact directory, so the scope of this guard really does differ from the rest of the harness's idea of \"vendored\".\n\nThe impact is latent for now. `src` currently holds only api, app, design-system, i18n, main.tsx and test, and `src/api` holds only generated plus a test file, so no sibling directory with a matching prefix exists today. The finding is still correct as a weakness in the guard that should be fixed by matching whole path segments. Minor severity is right.",
+          "The mechanism is real. In src/app/theme-source.test.ts:36, sources() builds a forward-slash path `p` and skips any directory where `p.startsWith('src/design-system')` or `p.startsWith('src/api/generated')`, with no trailing slash. A sibling such as `src/design-system-overrides/` or `src/api/generated-v2/` would match and be skipped entirely, so its files would never be scanned by the 'no app source or index.html breaks an invariant' test. ESLint's globalIgnores ('src/design-system') and factory.config.json's productCode.exclude also list these as plain strings, so the exemption sets were meant to cover only the exact vendored folders. The finding's claim of a mismatch is correct.\n\nIt is not exploitable today. src/ contains only api/, app/, design-system/, i18n/, test/ and main.tsx. src/api contains only generated/ and one test file. No sibling directory with either prefix exists, so nothing is wrongly skipped right now. No end user or outside attacker can trigger this. It only matters if a developer later adds a directory with one of those prefixes, which the feature-folder convention (src/features/<domain>/) makes unlikely. Then a theme override there would slip past FR-58's guard without anyone noticing.\n\nSo this is a real but latent weakness in test coverage, not a reachable vulnerability. The 'security' label and current impact are overstated. Not refuted, but downgraded."
+        ]
+      },
+      {
+        "title": "Lint rule exempts every Intl formatter method except ListFormat, including Intl.Segmenter.segment, which returns its input text",
+        "file": "eslint-rules/no-literal-ui-text.js",
+        "line": 105,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "Round 6 skips the arguments of any method on an `Intl.X(...)` / `new Intl.X(...)` receiver unless X is ListFormat. The comment's premise ('methods of an Intl formatter take numbers, dates and identifiers') is wrong for Intl.Segmenter, whose segment(text) returns pieces of the literal it is given. `<p>{[...new Intl.Segmenter('cs', { granularity: 'word' }).segment('Ahoj světe')].map((s) => s.segment)}</p>` puts Czech literal text on screen, and the rule reports nothing. That breaks the spec requirement that the rule refuse literal UI text it can see in call arguments. The pseudo-catalog render only catches it if the code runs on a registered route.",
+        "suggestion": "Use an allow-list of formatter kinds whose methods take no text (NumberFormat, DateTimeFormat, RelativeTimeFormat, PluralRules, DisplayNames, Collator, DurationFormat) instead of a deny-list containing only ListFormat. Any other Intl kind, Segmenter included, then keeps its arguments checked. Add an invalid case for Segmenter.segment('Ahoj').",
+        "dimension": "security",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "The mechanism holds. In eslint-rules/no-literal-ui-text.js, lines 103-105 return [] for any CallExpression whose callee is `<Intl.X(...) or new Intl.X(...)>.method(...)` unless X is \"ListFormat\". This skips both the receiver and every argument. I traced the finding's example: `[...new Intl.Segmenter('cs',{granularity:'word'}).segment('Ahoj světe')].map((s) => s.segment)` inside a JSXExpressionContainer.\n1. The JSXExpressionContainer handler (line 207) calls literalTexts on the `.map(...)` CallExpression.\n2. That callee is a MemberExpression, so the receiver (an ArrayExpression) is walked (line 109).\n3. The spread element's argument is the `.segment('Ahoj světe')` CallExpression. intlConstructor of its callee object (NewExpression Intl.Segmenter) returns \"Segmenter\", which is not \"ListFormat\", so line 105 returns [].\n4. The map callback's body `s.segment` is a MemberExpression, which hits the default case and returns [].\nNo other handler catches it either. AssignmentExpression only covers document.title, JSXText doesn't apply, and JSXAttribute doesn't apply. So the rule reports nothing, while Intl.Segmenter.prototype.segment really does return substrings of its input that get rendered.\n\nThe comment's premise on lines 99-101 (\"methods take numbers, dates and identifiers\") is factually wrong for Segmenter. Collator.compare(a, b) also takes strings, though it doesn't render them. Mitigations: the pattern is contrived and unlikely in real code, and the file header says the pseudo-catalog render test is the backstop. Still, that backstop only covers rendered routes, and the rule's own contract (lines 15-16) claims call arguments are checked. The finding is a real but low-impact rule gap, so minor severity is right.",
+          "The finding is confirmed, and I reproduced it. In eslint-rules/no-literal-ui-text.js:103-106, when a call's receiver is `Intl.X(...)` or `new Intl.X(...)` and X is anything other than ListFormat, the rule returns [] and skips both the receiver and the arguments. Intl.Segmenter is one of those X values, so `.segment('Ahoj světe')` is never checked.\n\nReproduction: I wrote a temporary file `src/__tmpseg/X.tsx`. Line 2 was `<p>{[...new Intl.Segmenter('cs', { granularity: 'word' }).segment('Ahoj světe')].map((s) => s.segment)}</p>`. Line 5 was a control: `<p>{['Ahoj světe'].map((s) => s)}</p>`. The repo's post-edit hook ran eslint on the file. It reported doucko/no-literal-ui-text only on 5:13 (the control). Line 2 produced nothing, so the literal Czech text gets past the rule. I deleted the temp file afterwards, and git status matches the starting state.\n\nWhy it gets through: the outer `.map()` receiver is an ArrayExpression, so the rule walks into the spread argument and reaches the Segmenter `.segment()` CallExpression. There, `intlConstructor(callee.object)` returns 'Segmenter', which is not 'ListFormat', so the rule returns []. The callback returns `s.segment`, a MemberExpression, which the rule also ignores. The comment's premise is false for Segmenter, since segment(text) returns pieces of its input.\n\nImpact is low. A developer would be unlikely to write this pattern by accident, and it is a gap in a lint rule, not a runtime security hole. Severity minor still fits."
+        ]
+      },
+      {
+        "title": "Theme guard invariant 1 ('declares or sets a CSS custom property') misses a token name held in a variable or a computed key",
+        "file": "src/app/theme-source.test.ts",
+        "line": 19,
+        "severity": "major",
+        "confidence": "high",
+        "evidence": "Spec (No toggle / Theme follows the OS): \"No app source outside the vendored design system SHALL … declare or set a CSS custom property\"; the No-toggle scenario says that on a route with no control \"the static source check covers it\" (every current route has no control, so all no-toggle e2e tests skip and this regex is the only check). TOKEN_WRITE = /--[\\w-]+['\"`]?\\s*:|setProperty\\(\\s*['\"`]--/ needs either a colon right after the name (one optional quote allowed) or a quote right after `setProperty(`. These all slip through: `const token = '--paper'; el.style.setProperty(token, '#000')` (`'--paper';` has no colon, and setProperty gets an identifier); `style={{ ['--paper']: '#000' }}` and `style={{ [`--paper`]: x }}` (`']` comes before the colon). Each one overrides the dark/light `--paper` token and so forces a theme, with no scheme word and no scheme API involved, so neither of the other two invariants fires. The 'forced' probe list in the test only has the literal forms the regex already handles.",
+        "suggestion": "Make invariant 1 hold for any string literal that starts with `--`: flag `(['\"`])--[\\w-]` anywhere in app code (the `var(--x)` reads in CSS have no quote, so they stay allowed). In TS/TSX, also reject `setProperty(` with any first argument. Add the variable-name and computed-key cases to the `forced` probes.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I traced the regexes at src/app/theme-source.test.ts:19-21 by hand. I tried to run them in node, but that command needed approval and wasn't run.\n\nTOKEN_WRITE = /--[\\w-]+['\"`]?\\s*:|setProperty\\(\\s*['\"`]--/\n- `const token = '--paper'; el.style.setProperty(token, '#000')`: `--paper` and then the optional `'` match, but the next character is `;`, not `:`. The only other path needs a quote right after `setProperty(`, and here it gets the identifier `token`, so TOKEN_WRITE does not match. SCHEME_API has nothing to match. SCHEME_WORD looks at the string literals '--paper' and '#000', and neither contains dark, light or theme. All three invariants pass, so the bypass is real.\n- `style={{ ['--paper']: '#000' }}` and the backtick version: after `--paper` and the optional quote, the next character is `]`, so `\\s*:` fails and there is no setProperty. Both slip through.\n\nNothing else guards this. The `sources()` walker sends every app .ts/.tsx/.css file through themeViolations, which is the only static check. The doc comment (lines 10-11) states invariant 1 as \"never declares or sets a CSS custom property … on any element\", but the regex only implements the literal forms, and the `forced` probes (lines 49-53) only cover those forms. So the finding is right: the mechanism doesn't match its stated invariant.\n\nI'm downgrading the severity. No current source has the problem, since the repo test passes on today's code. Getting past the check takes deliberately indirect code, such as a computed key or a token name held in a variable, not an ordinary mistake. This is a hole in a guard test rather than a defect that reaches users.",
+          "I confirmed the mechanism by tracing the regex at src/app/theme-source.test.ts:19 by hand. My attempt to run it in node needed approval and didn't run, so this is reasoning, not an executed test.\n\nHow the bypasses get through:\n- `const token = '--paper'; el.style.setProperty(token, '#000')`: in `'--paper';` the quote is followed by `;`, not a colon, so the first branch fails. The second branch needs a quote right after `setProperty(`, but here it gets the identifier `token`. SCHEME_API and SCHEME_WORD find nothing (the only strings are '--paper' and '#000'). Result: zero violations.\n- `style={{ ['--paper']: '#000' }}` and the template-literal version: after `--paper'` comes `]`, which `\\s*:` cannot match. Zero violations.\n\nThis is a realistic idiom, not a made-up one. The vendored design system uses exactly this pattern at src/design-system/components/core.tsx:40: `style: { ['--dk-accent' as string]: color }`. TypeScript pushes developers toward a computed key with a cast, so someone copying it into app code would slip past invariant 1. The `forced` probes (lines 43-56) only test the literal forms the regex already catches. The file's comment claims the guard checks invariants \"instead of a list of known tricks\", which is not true here.\n\nOn impact: I grepped src/ outside the design system and found no setProperty calls and no computed `--` keys. So no theme is forced today and no real user sees a wrong theme now. The problem is a false-negative gap in a guard that the spec names as the only check for the no-toggle requirement on routes without a control. It can be reproduced, but it is latent, not a live defect, so I recommend downgrading from major."
+        ]
+      },
+      {
+        "title": "Invariant 3 (no string literal naming a scheme) cannot see a multi-line template literal",
+        "file": "src/app/theme-source.test.ts",
+        "line": 21,
+        "severity": "major",
+        "confidence": "high",
+        "evidence": "Spec: no app source SHALL \"name a scheme in a string literal\". SCHEME_WORD's body is `(?:(?!\\1)[^\\n\\\\]|\\\\.)*?`, which excludes newlines, so the open and close quote must be on the same line. `const cls = `\\n  dark\\n`; root.className = cls;` is a string literal naming a scheme, but the line holding `dark` has no quote, so nothing matches. It also hits no other invariant (no `--`, no scheme API). The design calls this check 'however it is built or applied', and the test gives no visible sign of the gap.",
+        "suggestion": "Let template-literal bodies span newlines (e.g. allow `\\n` inside the class when the delimiter is a backtick), or tokenize with the TypeScript scanner and test each string or template token. Add a multi-line template to the `forced` probes.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I confirmed the mechanism by reading the code. I couldn't run the regex because the Bash call needed approval, so this rests on reading the pattern. At src/app/theme-source.test.ts:21, SCHEME_WORD has two places that can consume characters between the quotes. One is `(?!\\1)[^\\n\\\\]`, which excludes a literal newline. The other is `\\\\.`, and with no `s` flag its `.` doesn't match a newline either. So the opening and closing delimiter have to sit on the same line. Take \"const cls = `\\n  dark\\n`; root.className = cls;\". The backticks are on different lines and there's no other quote on the line holding `dark`, so SCHEME_WORD can't match. TOKEN_WRITE (no `--`) and SCHEME_API (no data-theme/colorScheme/etc.) don't match either. themeViolations returns [] for code that the header comment and spec say must be caught (\"however it is built or applied\"). Nothing else compensates: the `forced` probes are all single-line, and the scanner applies the same function to whole files. The comment says e2e covers some screens, but it also says this test exists for states e2e can't reach. The gap is real. Severity is arguable, since it takes an unusual multi-line literal to slip past, but it's a genuine false negative in a check the spec treats as exhaustive.",
+          "The mechanism is real. I traced it by hand against `src/app/theme-source.test.ts:21`. I couldn't run node because the command needed approval. SCHEME_WORD's body pieces are `(?:(?!\\1)[^\\n\\\\]|\\\\.)*?`, which never match a newline. Take the input \"const cls = `\\n  dark\\n`; root.className = cls;\". It holds only two backtick delimiters and no ' or \". A match that starts at the first backtick has to cross the `\\n` to reach `dark`, so it fails. A match that starts at the second backtick has no closing backtick after it. TOKEN_WRITE doesn't fire because the text has no `--`, and SCHEME_API doesn't fire because the text calls no scheme API. So themeViolations returns [] for a string literal that names a scheme. That breaks invariant 3 as the doc comment (lines 14-15) and the spec state it. None of the `forced` probes is multi-line, and nothing else guards this case. The file scan at line 72 runs the same regex over whole files, so this exact code shape in real app source would pass.\n\nI'm downgrading the severity. This is a gap in a static guard, not a runtime defect: no end user or attacker can trigger it, and it only matters if a developer writes theme-forcing code in this shape. A regex can't deliver \"however it is built\" anyway. For example, `'da' + 'rk'` or `String.fromCharCode` would also get past it. So the multi-line template is one of several bypasses, not a unique hole. The e2e theme check named in the doc comment is a second safeguard. It's a valid finding but minor in impact."
+        ]
+      },
+      {
+        "title": "Lint rule exempts every Intl method except ListFormat, including Intl.Segmenter.segment(text), which passes text through",
+        "file": "eslint-rules/no-literal-ui-text.js",
+        "line": 104,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "Spec (Literal text is a lint error): the rule refuses literal UI text in \"call arguments\". The round-6 code is `const kind = intlConstructor(node.callee.object); if (kind && kind !== \"ListFormat\") return [];`. It is a denylist of one, but `Intl.Segmenter#segment('Ahoj')` also returns the input text as segments. So `[...new Intl.Segmenter('cs').segment('Ahoj')].map((s) => s.segment).join('')` renders 'Ahoj' with no lint error.",
+        "suggestion": "Turn the exemption around: exempt only methods known to take non-text input (NumberFormat/DateTimeFormat/RelativeTimeFormat/PluralRules format*/select, DisplayNames.of, Collator.compare). Keep checking ListFormat and Segmenter arguments, and add a Segmenter invalid case.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I could not refute it. The mechanism holds when I trace the code by hand.\n\n**The exemption.** At eslint-rules/no-literal-ui-text.js:103-106, a call whose callee is `<Intl.X(...) or new Intl.X(...)>.method(...)` returns [] for every X except \"ListFormat\". So `new Intl.Segmenter('cs').segment('Ahoj')` hits the early return: the callee object is a NewExpression on Intl.Segmenter, so kind is \"Segmenter\", and that is not \"ListFormat\". The 'Ahoj' argument is never checked.\n\n**The finding's full example.** `{[...new Intl.Segmenter('cs').segment('Ahoj')].map((s) => s.segment).join('')}` goes through `JSXExpressionContainer`, then `literalTexts`:\n1. The `.join('')` call: its argument '' has no letter, so it is not flagged. The receiver is the `.map(...)` call.\n2. The `.map` call: the arrow callback returns `s.segment`, a MemberExpression, which hits default and gives []. The receiver is an ArrayExpression with a SpreadElement, and line 85 unwraps the spread to the Segmenter call.\n3. The Segmenter call is exempted at line 105, so it gives [].\n\nNo report. Segmenter's `segment` returns the input text as segments, so this literal text would render with no lint error.\n\n**Nothing else catches it in the rule.** No visitor other than `literalTexts` walks these call arguments. The header comment lists \"call arguments\" among the places the rule checks, and the line 99-101 comment assumes every Intl formatter method except ListFormat takes non-text input. That assumption is wrong for Segmenter.\n\n**Why minor is right.** The pattern is contrived. Header lines 20-22 name the pseudo-catalog render test (src/app/i18n-coverage.test.tsx) as the backstop for what static analysis misses, which may catch it at runtime. Still, it is a real gap in the rule's own coverage of call arguments: a denylist of one where an allowlist was needed.",
+          "I traced the finding's example through literalTexts and the gap is real. In `{[...new Intl.Segmenter('cs').segment('Ahoj')].map((s) => s.segment).join('')}`, the JSXExpressionContainer handler calls literalTexts on the outer `join('')` call. It then follows the receiver: first the `.map(...)` call, then the ArrayExpression, then the spread argument `new Intl.Segmenter('cs').segment('Ahoj')`. For that call, line 104 runs intlConstructor(callee.object). The callee object is a NewExpression for Intl.Segmenter, so kind is \"Segmenter\". That is not \"ListFormat\", so line 105 returns [] and the literal 'Ahoj' is never checked. The map callback returns `s.segment`, a MemberExpression, which hits the default branch and returns []. The join argument '' has no letter. So the rule reports nothing, while Intl.Segmenter really does give back substrings of its input, so 'Ahoj' shows on screen. Nothing else in the rule catches it: CATALOG_LOOKUPS and isLocaleFormatting don't apply, and the comment at lines 99-101 says outright that only ListFormat's arguments are checked. The file header (lines 20-22) says the pseudo-catalog render test (src/app/i18n-coverage.test.tsx) is the backstop for text the rule can't follow. That backstop may catch this at runtime, but it doesn't change the fact that the rule claims to check call arguments and misses this one. The impact is small. You can only hit this with contrived code, nobody external can exploit it, and it's an NFR-9 lint coverage gap rather than a product defect. So minor is still the right severity, and the mechanism is confirmed."
+        ]
+      },
+      {
+        "title": "Container-smoke dirty flag ignores gitignored files that are still in the Docker build context",
+        "file": "tools/container-smoke.mjs",
+        "line": 50,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "The comment says \"every other file is an input\", but `git status --porcelain` does not list ignored files. .gitignore ignores `*.log`, `.idea/`, `uploads/`, `storage/`, `**/raw/`, `*.dump` and `src/api/generated/`, and none of these is in .dockerignore, so `COPY . .` puts them in the image. A gitignored file under src/ (e.g. `src/raw/x.ts`) can change the built image while the evidence still says `dirty: false` and ties the result to the commit alone.",
+        "suggestion": "Add `--ignored` (keeping the generated-evidence exclusions and src/api/generated, which the build regenerates), or align .dockerignore with .gitignore so ignored files never reach the build context.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I could not refute this. The mechanism holds in this code.\n\n1. The dirty check at tools/container-smoke.mjs:48-51 runs `git status --porcelain -- . :!docs/qa ...` without `--ignored`. Git leaves ignored paths out of that output.\n2. .gitignore ignores `*.log`, `.idea/`, `.vscode/`, `uploads/`, `storage/`, `pgdata/`, `backups/`, `*.dump`, `**/raw/` and `src/api/generated/`. .dockerignore excludes none of these; it only lists node_modules, dist, coverage, playwright-report, test-results, .git, docs, trace, retro, openspec and .env*.\n3. The Dockerfile runs `COPY . .` and then `npm run build`, which is `api:generate && tsc -b && vite build`. So ignored files reach the build stage.\n\nThe reachable ways this changes what gets tested:\n- Vite copies `public/` into dist as-is, so a file such as `public/raw/x` or `public/foo.log` would end up in the nginx image.\n- A gitignored `src/raw/*.ts` is seen by `tsc -b` and can break the build.\n- The script's own comment says the e2e specs \"run from the working tree\". Playwright's testDir is `./e2e`, so a gitignored `e2e/raw/x.spec.ts` would run under `--e2e` and change the result.\n\nIn each case the evidence still records `dirty: false` and ties the result to the commit alone. That contradicts the comment that \"every other file is an input\".\n\nTwo things soften this but don't refute it:\n- `tested.image` records the image ID. That ID would differ, but nothing links it back to the working tree.\n- `src/api/generated` is regenerated during the build, so that one exclusion doesn't matter.\n\nThe trigger is hypothetical: today `git status --ignored` shows only build outputs and src/api/generated. That fits the minor severity and medium confidence, so I'd keep the severity as is.",
+          "The mechanism is real. `tools/container-smoke.mjs:50` runs `git status --porcelain` without `--ignored`, so gitignored files never set `dirty`. `.dockerignore` excludes only node_modules, dist, coverage, playwright-report, test-results, .git, docs, trace, retro, openspec and .env*. It does not exclude `**/raw/`, `uploads/`, `storage/`, `*.log`, `*.dump` or `.idea/`, so `COPY . .` in the Dockerfile puts them in the build stage.\n\nHow far it reaches in practice is much narrower than the finding says:\n- Only `/app/dist` and `nginx.conf` reach the final image. `vite build` bundles only the import graph from index.html. A stray ignored file such as `src/raw/x.ts` that nothing imports leaves dist and the image unchanged. If tracked code imports it, that edit makes the tree dirty unless it was committed pointing at an untracked file.\n- `tsc -b` covers all of `src/` (tsconfig.app.json `include: [\"src\"]`). An ignored file can therefore break the build, which shows up as FAIL, not a silent pass. It could only hide a type error through a contrived ambient `.d.ts`.\n- Real ways it can change the image: `public/raw/*`, which Vite copies verbatim into dist, or an ignored ambient declaration. In the e2e run, `e2e/raw/*.spec.ts` would be picked up by Playwright (`testDir: './e2e'`). That can only add tests, not hide failures.\n- The evidence does not tie the result to the commit alone. It also records `tested.image` (the built image ID) and the nginx.conf sha256 (line 175). So the actual artifact that was tested is identified, even if the dirty flag misses ignored inputs.\n\nNobody can exploit this from outside. It needs a developer to place gitignored files that change the output on their own machine. It is a real but low-impact provenance gap: the claim holds, but the severity should be lowered to a nit. Aligning `.dockerignore` with the NFR-3/NFR-4 entries (`uploads/`, `storage/`, `**/raw/`, `*.dump`, `backups/`, `pgdata/`) is still worth doing, mainly so that workbook or runtime data never enters the build context. That is a stronger reason than the dirty flag."
+        ]
+      },
+      {
+        "title": "Task 4.1 'qa:verify green' is ticked, but the battery evidence predates the round-6 changes",
+        "file": "openspec/changes/implement-platform-foundation-ui/tasks.md",
+        "line": 27,
+        "severity": "major",
+        "confidence": "high",
+        "evidence": "tasks.md: \"- [x] 4.1 `npm run qa:verify` green.\" docs/qa/automated-verification-latest.md was last committed in 4c1aece (round 5). Its run shows 'Started: 2026-10-04T07:50:58Z'. Commit 184ba12 (10:54Z) then rewrote src/app/theme-source.test.ts, eslint-rules/no-literal-ui-text.js and src/test/lint-rule.test.ts. No lint, unit or coverage battery run covers the shipped rule and tests. Only container-smoke (Playwright through nginx) was re-run at 184ba12. Under the done-claims-need-evidence rule, the tick has no fresh evidence.",
+        "suggestion": "Re-run `npm run qa:verify` at HEAD and commit the regenerated docs/qa/automated-verification-latest.md, or untick 4.1 until that is done.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "The finding holds. tasks.md:27 ticks \"4.1 `npm run qa:verify` green\". The only battery report, docs/qa/automated-verification-latest.md, says \"Started: 2026-10-04T07:50:58.754Z / Overall result: Pass\". `git show --stat 184ba12` shows a later commit (2026-10-04T12:54:25+02:00, which is 10:54Z, round 6). That commit changed product and test code the battery covers: eslint-rules/no-literal-ui-text.js (+22/-), src/app/theme-source.test.ts (+76) and src/test/lint-rule.test.ts (+4). I found no newer battery evidence. The only artifact that names 184ba12 is docs/qa/container-smoke-latest.md (Started 10:54:44Z, \"Tested: commit 184ba12…\"), and that covers container/Playwright through nginx, not lint, typecheck, Vitest or coverage. The \"Green\" section in docs/qa/evidence/slice1-review-fixes.md has no timestamp or commit and describes an earlier round's fixes, so it doesn't back the round-6 code either. So the changed lint rule and its tests have no recorded lint, unit or coverage run, and under the done-claims-need-evidence rule the 4.1 tick is unbacked. One limit: I could not show that those suites actually fail at HEAD. The defect is stale evidence, not proven broken code. Keeping severity, since the project rules treat this as a correction event.",
+          "The finding holds. Task 4.1 in tasks.md:27 is ticked as \"`npm run qa:verify` green\". The battery report docs/qa/automated-verification-latest.md shows Started 07:50:58Z and Finished 07:53:31Z. The trace ledger (trace/ledger.jsonl:226) confirms that this was the last qa-verify battery-run, at 07:53:31Z. It ran on gitHead b1972e0 (round 4) with a dirty tree. After that, the ledger records only the following:\n- two review-gate workflow runs on 4c1aece (09:43Z and 10:52Z)\n- pre-commit/commit-msg hooks at 10:54Z, which created 184ba12\n- the same hooks again at 10:56Z, which created 5e9e43e\n\nNo qa-verify battery-run was recorded after round 6. The only evidence for 184ba12 is docs/qa/container-smoke-latest.md, which covers the container and Playwright through nginx. It does not cover lint, typecheck, unit tests or coverage. So the \"green\" tick has no fresh battery evidence for HEAD.\n\nAGENTS.md's done-claims-need-evidence lesson requires a fresh, resolvable evidence pointer for a claim like this. This is a process and spec-compliance gap, not a runtime bug. No user or attacker is affected. But it is real and reproducible: anyone can compare the ledger with the commit history and see it.\n\nI could not run git show to confirm which files 184ba12 touched, because the commands needed approval. Even so, the gap does not depend on that. The ledger shows no battery run at or after round 6, whatever that commit changed. Severity \"major\" is reasonable for this repo's gate rules, so I'm keeping it."
+        ]
+      }
+    ],
+    "contested": [
+      {
+        "title": "Theme guard skips app files that are not .ts/.tsx/.css and everything under public/",
+        "file": "src/app/theme-source.test.ts",
+        "line": 37,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "`sources()` keeps only `/\\.(tsx?|css)$/` under `src/`, plus `index.html`. A `public/override.css` declaring `:root{--paper:#000}` and linked from index.html, or any .js/.jsx/.mjs/.scss file a later slice adds under src/, is never read. Yet the requirement covers \"No app source outside the vendored design system\".",
+        "suggestion": "Scan every text file under `src/` (minus the design system and generated code), `public/` and `index.html`, or state in the spec which file types are covered.",
+        "dimension": "spec-compliance",
+        "verdict": "contested",
+        "verifierNotes": [
+          "The mechanism is real. At `src/app/theme-source.test.ts:37`, `sources()` only keeps files that match `/\\.(tsx?|css)$/`. The file list is `[...sources('src'), 'index.html']` (line 70), so the test never walks `public/` or reads any other file type under `src/` (.js, .jsx, .mjs, .scss). The header comment (lines 7-8) says the rule covers all \"app code (everything outside the vendored design system)\". So a token override in `public/x.css` linked from index.html, or in a .scss or .jsx file, would get past the guard. Nothing else covers this: tsconfig has no `allowJs`, and there is no other source scan. Two things limit the impact. First, there is no `public/` directory and no non-.ts/.tsx/.css app file today, so nothing is currently being missed. Second, the docstring says an e2e test also checks the theme at runtime, which would likely catch a stylesheet forced through index.html. This is a guard gap that matters later, not a live bug, so minor severity fits.",
+          "The filter is real: `sources()` at src/app/theme-source.test.ts:37 only keeps .ts/.tsx/.css files, plus index.html. But no file the guard misses exists in the repo today. There is no `public/` directory, and the only non-.ts/.tsx/.css files under `src/` are design-system assets (tokens.json, icons/*.svg). Those are excluded on purpose because the design system owns the tokens and both colour schemes.\n\nSo the theme guard has no bypass in the current codebase, and no user or attacker can reach this: forcing a theme this way means a developer commits new source files. The finding is a hypothetical test-coverage gap that only matters if a later slice adds .js/.scss files or a `public/` override stylesheet.\n\nThose changes are also partly caught elsewhere. Linking a stylesheet from `public/` requires editing index.html, which this test scans and which goes through review. Lint and typecheck would also flag .js/.jsx files under `src/` in a strict TS project.\n\nAt most this is a hardening note for future slices, not a reproducible defect."
+        ]
+      },
+      {
+        "title": "Catalog exemption from the scheme-word invariant is in design.md but not in the spec requirement",
+        "file": "openspec/changes/implement-platform-foundation-ui/specs/platform-foundation/spec.md",
+        "line": 7,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "The spec says no app source SHALL \"name a scheme in a string literal\", with no exception. design.md and theme-source.test.ts (`CATALOGS`, `isCatalog` skips invariant 3) exempt src/i18n/cs.ts and en.ts. So a catalog value such as 'dark' fed into `className={t('x')}` passes the static guard.",
+        "suggestion": "Amend the spec to name the catalog exception and its rationale. Or keep the catalogs in scope for values used as attributes, e.g. require that catalog values never equal a bare scheme word.",
+        "dimension": "spec-compliance",
+        "verdict": "contested",
+        "verifierNotes": [
+          "I could not refute this finding; the mismatch is real. Lines 8–10 of spec.md say no app source outside the vendored design system SHALL \"name a scheme in a string literal\", and they give no exception. The code is stricter in one way and looser in another. src/app/theme-source.test.ts:22 lists `CATALOGS = ['src/i18n/cs.ts', 'src/i18n/en.ts']`. Line 29 then skips invariant 3 for those files (`!isCatalog && SCHEME_WORD.test(text)`), and line 72 passes `CATALOGS.includes(f)`. The catalogs are .ts files under src/, so the walker at lines 33–38 counts them as app source, and the spec's wording covers them. Only design.md:136 states the exemption (\"catalogs excepted\"), along with the test's own comment at line 16 (\"catalogs are not code\"). The spec requirement does not.\n\nThe bypass the finding describes is possible. A catalog value 'dark' used as a class name or other attribute would pass the static check. Invariants 1 and 2 still apply to the catalogs, so `data-theme`, `color-scheme` and token writes are still caught there. The escape route is narrow: a scheme word used as a class name, which only matters if some CSS targets that class. No catalog contains dark, light or theme today (grep of src/i18n finds nothing), so nothing is broken right now. This is a gap between the spec and the code, not a live defect. \"Minor\" severity is right.",
+          "The wording gap is real. The spec (spec.md:7-9) says no app source may \"name a scheme in a string literal\" and gives no exception. theme-source.test.ts:22-29 skips that check (invariant 3) for src/i18n/cs.ts and en.ts, and design.md:136 records this (\"catalogs excepted\").\n\nThe claimed failure can't actually happen, though:\n1. The design system switches themes only through `[data-theme=\"light\"|\"dark\"]` and `prefers-color-scheme` (tokens.css:3, 50, 83-84). It has no `.dark` or `.light` class rule, so `className={t('x')}` resolving to 'dark' changes nothing on screen.\n2. Flipping the theme needs `data-theme`, `dataset.theme`, `colorScheme` or `color-scheme` somewhere. The SCHEME_API check (invariant 2) still runs on the catalogs, because only SCHEME_WORD is skipped. So it catches those strings in app code and in the catalogs alike. Putting the attribute name in the catalog and spreading it as a prop would still be flagged.\n3. TOKEN_WRITE also still runs on the catalogs, so a catalog can't inject a custom property either.\n4. The catalogs currently contain no 'dark' or 'light' value (grep found nothing).\n\nNo user or attacker can get a theme override past the guard through the catalog exemption. What's left is a spec-text mismatch that design.md and the test both already document. At most it is a doc-wording nit, not a reproducible defect."
+        ]
+      }
+    ],
+    "rejected": [
+      {
+        "title": "Theme guard scans only .ts/.tsx/.css, not other files Vite bundles",
+        "file": "src/app/theme-source.test.ts",
+        "line": 37,
+        "severity": "minor",
+        "confidence": "low",
+        "evidence": "`sources()` keeps only `/\\.(tsx?|css)$/`. A `.js`/`.jsx`/`.mjs` module, or a `.scss`/`.html` partial under src/ that the app imports, would be bundled but never checked, so a `data-theme` write or `--paper:` override there passes the static backstop. The spec scope is 'no app source outside the vendored design system'.",
+        "suggestion": "Either check every text file under src/ except the vendored and generated trees, or fail the test when src/ has a source file with an extension it does not check.",
+        "dimension": "correctness",
+        "verdict": "rejected",
+        "verifierNotes": [
+          "The filter at `src/app/theme-source.test.ts:37` does keep only `.ts`, `.tsx` and `.css` files. But no file in the checked scope escapes it, so I could not confirm the claimed gap is real.\n\n1. **Nothing is missed today.** I searched `src/` for `js/jsx/mjs/cjs/scss/sass/less/html/svg/json/vue` files. Every match is inside `src/design-system/`, which the spec excludes on purpose. All app source outside it is `.ts`, `.tsx` or `.css`, and the test covers those. `index.html` is checked separately on line 70.\n2. **Adding a `.js` or `.jsx` module would break other checks first.** No tsconfig sets `allowJs` or `checkJs`, and the project is strict TypeScript. Importing a plain JS module from TS would fail `typecheck` with an implicit-any error unless someone also adds a declaration file or changes the config. A `.scss` or `.less` partial would also need a preprocessor dependency added on purpose.\n3. **The `.html` case is mostly covered.** Vite only bundles the root `index.html`, and the test reads it.\n\nSo the finding describes a future change that might add a new file type, not a defect in this code. Its own confidence is \"low\". Under the default-to-refute rule, a speculative hardening suggestion with no reachable case in the current tree does not hold up as a correctness bug.",
+          "The code matches the description: `sources()` at src/app/theme-source.test.ts:37 only keeps files ending in `.ts`, `.tsx` or `.css`. But the problem can't happen in this repo today, and it is hard to cause later. Outside the vendored `src/design-system/` and generated trees, `src/` contains no `.js`, `.jsx`, `.mjs`, `.cjs`, `.scss`, `.sass`, `.less`, `.html` or `.svg` files. The only non-TS/CSS files are the design-system SVG icons, which are excluded on purpose. No tsconfig sets `allowJs`, so a `.js`, `.jsx` or `.mjs` module imported from strict TS would fail typecheck with an implicit-any / missing-declaration error, and the qa battery runs typecheck. No sass or less package is installed, so Vite can't compile a `.scss` or `.less` import. `index.html` is scanned explicitly. Getting a theme override past the backstop would take someone deliberately adding a new toolchain or a type shim. That is a speculative future gap, not a reachable defect. Making the test fail on unknown extensions would be optional hardening, not a fix for a real bug."
+        ]
+      }
+    ],
+    "reviewEvidence": "openspec/changes/implement-platform-foundation-ui/review-findings.json"
+  }
+}
