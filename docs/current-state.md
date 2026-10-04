@@ -16,8 +16,9 @@
   the OS only (static invariants + e2e), axe and reduced-motion e2e in Chrome, Edge and Firefox,
   generated API client from the pinned contract, nginx image (one origin, security headers, DNS
   rebinding guard 421, no-cache shell), fixture/asset provenance test, real-name guard for e2e.
-- **Next task:** merge slice 5 (with the backend half), then run the real-stack smoke `docs/qa/evidence/slice5-compose-smoke.md`; then slice 6 (authoring-missions).
+- **Next task:** slice 6 (authoring-missions) per the capability plan.
 - **Claims:**
+  - Slice 5 real-stack smoke PASS after the merge (2026-10-04) — evidence: `docs/qa/evidence/slice5-compose-smoke.md`
   - Slice 5 authoring screens (`/admin/sources`, `/admin/sources/view`, `/admin/tasks`, `/admin/tasks/edit`, `/admin/tasks/preview`): QA battery passes (347 unit tests, coverage 100%, 219 e2e in chromium, msedge and firefox incl. the authoring routes signed in in the a11y and theme gates, `⟦` test signed in) — evidence: `docs/qa/automated-verification-latest.md` (2026-10-04)
   - Slice 5 review gate clean (6 majors and 11 minors fixed in `37534ca`, 5 minors waived) — evidence: `openspec/changes/archive/2026-10-04-implement-authoring-tasks-ui/review-findings.json`
   - Slice 5 RED run — evidence: `docs/qa/evidence/slice5-red-run.md`; NFR-8 recording (asserted, 8.6 s against the contract stub) — evidence: `docs/qa/demo-recordings/nfr8-task-entry/manifest.json`
@@ -30,7 +31,7 @@
     `openspec/changes/archive/*implement-platform-foundation-ui/review-findings.json`
   - G0, G2, G4, G5, G8 PASS (G4 audits the archived slice); G1 and G3 need the owner's sign-off; G6 is SKIP-planned; G7
     (release) fails until every MVP slice is archived. Evidence: `npm run gate:status`
-- **Scope NOT delivered:** slice 5 real-stack smoke (NOT RUN: the running stack has no slice 5 backend; click path in `docs/qa/evidence/slice5-compose-smoke.md`); the preview-vs-child-screen pixel comparison (needs the slice 7 child task screen); admin screens of slices 6 and 9; eval cases for the sign-in copy (evals SKIP-planned); the child and admin feature screens (later slices); recordings and evals
+- **Scope NOT delivered:** the preview-vs-child-screen pixel comparison (needs the slice 7 child task screen); admin screens of slices 6 and 9; eval cases for the sign-in copy (evals SKIP-planned); the child and admin feature screens (later slices); recordings and evals
   (planned with their slices); task 2.8's original RED run (waived:
   `docs/qa/waivers/slice1-task-2.8-red-run.md`).
 
