@@ -28,6 +28,6 @@
 - [x] 4.2 `npx openspec validate implement-platform-foundation-ui --strict`.
 - [ ] 4.3 review-gate workflow; fix confirmed findings; `review-findings.json` (clean: true).
 - [ ] 4.4 Smoke against the compose stack: `npm run stack:up` in backend; open `http://127.0.0.1:8081/` in light and dark; `/api/child/nope` through nginx is 404 problem+json.
-  - Partly automated: `npm run test:container` checks the image over HTTP against a stub backend (all PASS 2026-10-04); its e2e-through-nginx step and this real-stack smoke wait for `DOUCKO_CHILD_DISPLAY_NAME` in `../backend/.env`.
+  - Partly automated: `npm run test:container` builds the image and checks it over HTTP beside a stub backend, then runs Playwright through nginx (evidence: `docs/qa/container-smoke-latest.md`). Still open: the real compose stack (`/api/child/nope` from the real backend as problem+json).
 - [ ] 4.5 Update `docs/current-state.md`.
 - [ ] 4.6 Archive; commit with `Slice: implement-platform-foundation-ui` + `Refs: FR-58, NFR-3, NFR-4, NFR-6, NFR-9, NFR-12, NFR-13`.

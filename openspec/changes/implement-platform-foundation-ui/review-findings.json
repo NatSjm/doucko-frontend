@@ -6,22 +6,22 @@
   "headRef": "HEAD",
   "dimensions": {
     "correctness": {
-      "confirmed": 6,
-      "contested": 2,
-      "rejected": 2
+      "confirmed": 5,
+      "contested": 1,
+      "rejected": 0
     },
     "security": {
-      "confirmed": 3,
+      "confirmed": 1,
       "contested": 1,
       "rejected": 1
     },
     "spec-compliance": {
-      "confirmed": 7,
-      "contested": 3,
+      "confirmed": 3,
+      "contested": 0,
       "rejected": 2
     },
     "visual": {
-      "confirmed": 7,
+      "confirmed": 0,
       "contested": 0,
       "rejected": 0
     }
@@ -32,9 +32,9 @@
       "severity": "major",
       "dimension": "correctness",
       "verdict": "confirmed",
-      "title": "Literal value on a text input/textarea is missed by both the lint rule and the pseudo-catalog render",
-      "file": "eslint-rules/no-literal-ui-text.js",
-      "line": 112,
+      "title": "docs/qa recordings exemption still covers PDFs, fonts and images named in any key of any manifest",
+      "file": "src/test/provenance.test.ts",
+      "line": 84,
       "status": "open"
     },
     {
@@ -42,9 +42,9 @@
       "severity": "minor",
       "dimension": "correctness",
       "verdict": "confirmed",
-      "title": "Lint rule misses literals in method-call arguments, callbacks and createElement",
-      "file": "eslint-rules/no-literal-ui-text.js",
-      "line": 74,
+      "title": "No-toggle e2e only clicks a select/combobox, so a theme picker built as a select is never switched",
+      "file": "e2e/theme.spec.ts",
+      "line": 33,
       "status": "open"
     },
     {
@@ -52,9 +52,9 @@
       "severity": "minor",
       "dimension": "correctness",
       "verdict": "confirmed",
-      "title": "Pseudo-catalog test only checks the first render of each route, so text in later states bypasses it",
-      "file": "src/app/i18n-coverage.test.tsx",
-      "line": 60,
+      "title": "Lint rule exempts the `name` key in nested objects, though `name` is display text on most components",
+      "file": "eslint-rules/no-literal-ui-text.js",
+      "line": 50,
       "status": "open"
     },
     {
@@ -62,9 +62,9 @@
       "severity": "minor",
       "dimension": "correctness",
       "verdict": "confirmed",
-      "title": "'No control switches the theme' e2e passes while activating zero controls",
-      "file": "e2e/theme.spec.ts",
-      "line": 39,
+      "title": "Call-argument coverage flags locale and format arguments, so idiomatic Intl formatting fails lint",
+      "file": "eslint-rules/no-literal-ui-text.js",
+      "line": 84,
       "status": "open"
     },
     {
@@ -72,252 +72,72 @@
       "severity": "minor",
       "dimension": "correctness",
       "verdict": "confirmed",
-      "title": "Provenance scope misses TS/JS data modules and common archive and markup formats outside the fixture roots",
-      "file": "src/test/provenance.test.ts",
-      "line": 20,
+      "title": "Container smoke PASS is claimed with no evidence file, and the Host guard has no static test",
+      "file": "openspec/changes/implement-platform-foundation-ui/tasks.md",
+      "line": 31,
       "status": "open"
     },
     {
       "id": "F06",
       "severity": "minor",
-      "dimension": "correctness",
+      "dimension": "security",
       "verdict": "confirmed",
-      "title": "Route matching uses exact pathname, so '/index.html' and trailing-slash variants show not-found",
-      "file": "src/app/App.tsx",
-      "line": 19,
+      "title": "docs/qa recordings exemption also covers PDFs, photos and fonts listed in any docs/qa manifest.json",
+      "file": "src/test/provenance.test.ts",
+      "line": 84,
       "status": "open"
     },
     {
       "id": "F07",
-      "severity": "minor",
-      "dimension": "security",
+      "severity": "major",
+      "dimension": "spec-compliance",
       "verdict": "confirmed",
-      "title": "nginx answers any Host header, so DNS rebinding exposes the unauthenticated child API to any website",
-      "file": "nginx.conf",
-      "line": 31,
+      "title": "The provenance exemption covers PDFs, e-books and fonts listed in a docs/qa manifest, not just recordings",
+      "file": "src/test/provenance.test.ts",
+      "line": 84,
       "status": "open"
     },
     {
       "id": "F08",
-      "severity": "minor",
-      "dimension": "security",
-      "verdict": "confirmed",
-      "title": "Lint rule and pseudo-catalog backstop both miss `value` on text inputs and textareas",
-      "file": "eslint-rules/no-literal-ui-text.js",
-      "line": 112,
-      "status": "open"
-    },
-    {
-      "id": "F09",
-      "severity": "minor",
-      "dimension": "security",
-      "verdict": "confirmed",
-      "title": "Provenance check misses workbook content stored as TS/JS modules or in uncovered formats",
-      "file": "src/test/provenance.test.ts",
-      "line": 20,
-      "status": "open"
-    },
-    {
-      "id": "F10",
       "severity": "major",
       "dimension": "spec-compliance",
       "verdict": "confirmed",
-      "title": "Lint rule misses literal text returned from callbacks and passed as call arguments",
-      "file": "eslint-rules/no-literal-ui-text.js",
-      "line": 57,
-      "status": "open"
-    },
-    {
-      "id": "F11",
-      "severity": "minor",
-      "dimension": "spec-compliance",
-      "verdict": "confirmed",
-      "title": "Document-title lint check only matches the bare `document.title`",
-      "file": "eslint-rules/no-literal-ui-text.js",
-      "line": 121,
-      "status": "open"
-    },
-    {
-      "id": "F12",
-      "severity": "major",
-      "dimension": "spec-compliance",
-      "verdict": "confirmed",
-      "title": "Pseudo-catalog test can pass while a string bypasses the catalog",
-      "file": "src/app/i18n-coverage.test.tsx",
-      "line": 21,
-      "status": "open"
-    },
-    {
-      "id": "F13",
-      "severity": "major",
-      "dimension": "spec-compliance",
-      "verdict": "confirmed",
-      "title": "Recorded e2e evidence covers only '/', not the not-found screen the spec requires",
-      "file": "docs/qa/automated-verification-latest.md",
-      "line": 291,
-      "status": "open"
-    },
-    {
-      "id": "F14",
-      "severity": "major",
-      "dimension": "spec-compliance",
-      "verdict": "confirmed",
-      "title": "Served-behind-one-origin scenarios are only checked as config text, never executed",
-      "file": "src/test/container-config.test.ts",
-      "line": 17,
-      "status": "open"
-    },
-    {
-      "id": "F15",
-      "severity": "minor",
-      "dimension": "spec-compliance",
-      "verdict": "confirmed",
-      "title": "Provenance check exempts contract/ and docs/qa recordings, which the spec does not document",
-      "file": "src/test/provenance.test.ts",
-      "line": 24,
-      "status": "open"
-    },
-    {
-      "id": "F16",
-      "severity": "minor",
-      "dimension": "spec-compliance",
-      "verdict": "confirmed",
-      "title": "Task 2.1 description does not match the implemented pseudo-catalog",
-      "file": "openspec/changes/implement-platform-foundation-ui/tasks.md",
+      "title": "The 421 response from the Host guard has no security headers",
+      "file": "nginx.conf",
       "line": 7,
       "status": "open"
     },
     {
-      "id": "F17",
+      "id": "F09",
       "severity": "major",
-      "dimension": "visual",
+      "dimension": "spec-compliance",
       "verdict": "confirmed",
-      "title": "Literal arguments to method calls slip past both NFR-9 layers (lint and pseudo-catalog)",
-      "file": "eslint-rules/no-literal-ui-text.js",
-      "line": 80,
+      "title": "The Host guard (421) has no check in the qa:verify battery",
+      "file": "src/test/container-config.test.ts",
+      "line": 50,
       "status": "open"
     },
     {
-      "id": "F18",
+      "id": "F10",
       "severity": "minor",
-      "dimension": "visual",
-      "verdict": "confirmed",
-      "title": "Lint rule and pseudo test both skip `value` on text inputs and textareas",
-      "file": "eslint-rules/no-literal-ui-text.js",
-      "line": 105,
-      "status": "open"
-    },
-    {
-      "id": "F19",
-      "severity": "minor",
-      "dimension": "visual",
-      "verdict": "confirmed",
-      "title": "Pseudo-catalog test only checks the first render of each route",
-      "file": "src/app/i18n-coverage.test.tsx",
-      "line": 82,
-      "status": "open"
-    },
-    {
-      "id": "F20",
-      "severity": "minor",
-      "dimension": "visual",
-      "verdict": "confirmed",
-      "title": "Theme source guard misses index.html and other ways to force a theme",
+      "dimension": "correctness",
+      "verdict": "contested",
+      "title": "Static theme guard misses dynamic theme classes and token overrides",
       "file": "src/app/theme-source.test.ts",
       "line": 12,
       "status": "open"
     },
     {
-      "id": "F21",
-      "severity": "minor",
-      "dimension": "visual",
-      "verdict": "confirmed",
-      "title": "No-toggle e2e misses some control types and changes that land after its check",
-      "file": "e2e/theme.spec.ts",
-      "line": 10,
-      "status": "open"
-    },
-    {
-      "id": "F22",
-      "severity": "minor",
-      "dimension": "visual",
-      "verdict": "confirmed",
-      "title": "Default e2e runs against vite preview, so nginx, the CSP and the SPA fallback are untested end to end",
-      "file": "playwright.config.ts",
-      "line": 31,
-      "status": "open"
-    },
-    {
-      "id": "F23",
-      "severity": "minor",
-      "dimension": "visual",
-      "verdict": "confirmed",
-      "title": "Provenance roots miss fixtures written as code and other data or archive files",
-      "file": "src/test/provenance.test.ts",
-      "line": 15,
-      "status": "open"
-    },
-    {
-      "id": "F24",
-      "severity": "minor",
-      "dimension": "correctness",
-      "verdict": "contested",
-      "title": "Docker docs/qa exemption accepts any string in any manifest.json, not just recording paths",
-      "file": "src/test/provenance.test.ts",
-      "line": 585,
-      "status": "open"
-    },
-    {
-      "id": "F25",
-      "severity": "minor",
-      "dimension": "correctness",
-      "verdict": "contested",
-      "title": "SPA fallback returns index.html (200) for /api without trailing slash and for missing non-asset files",
-      "file": "nginx.conf",
-      "line": 44,
-      "status": "open"
-    },
-    {
-      "id": "F26",
+      "id": "F11",
       "severity": "minor",
       "dimension": "security",
       "verdict": "contested",
-      "title": "51 MB request bodies are allowed on every /api/ path, including the unauthenticated child endpoints",
-      "file": "nginx.conf",
-      "line": 42,
-      "status": "open"
-    },
-    {
-      "id": "F27",
-      "severity": "minor",
-      "dimension": "spec-compliance",
-      "verdict": "contested",
-      "title": "Coverage summary: 16 scenarios: 10 implemented, 6 partial, 0 missing, 0 contradicted",
-      "file": "openspec/changes/implement-platform-foundation-ui/specs/platform-foundation/spec.md",
-      "line": 1,
-      "status": "open"
-    },
-    {
-      "id": "F28",
-      "severity": "major",
-      "dimension": "spec-compliance",
-      "verdict": "contested",
-      "title": "'No toggle' e2e passes without activating any control; the static backstop has gaps",
+      "title": "The theme no-toggle checks miss a native <select> theme picker and className-based theme switches",
       "file": "e2e/theme.spec.ts",
-      "line": 24,
-      "status": "open"
-    },
-    {
-      "id": "F29",
-      "severity": "minor",
-      "dimension": "spec-compliance",
-      "verdict": "contested",
-      "title": "Real-name guard only reads body innerText",
-      "file": "e2e/fixtures/profile.ts",
-      "line": 28,
+      "line": 33,
       "status": "open"
     }
   ],
   "clean": false,
-  "generatedAt": "2026-10-04T06:59:32Z"
+  "generatedAt": "2026-10-04T07:24:48Z"
 }

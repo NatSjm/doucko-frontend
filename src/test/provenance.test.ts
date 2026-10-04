@@ -74,19 +74,23 @@ export function provenanceProblems(
   return problems;
 }
 
-/** Files a recording manifest under docs/qa/ lists (written by scripts/record-demos.mjs). */
+/** What scripts/record-demos.mjs writes per clip: `results[].video` (.webm) and `results[].screenshot` (.png). */
+const RECORDING = { video: /\.webm$/i, screenshot: /\.png$/i } as const;
+
+/** The recordings a docs/qa recording manifest lists; nothing else in it is exempt. */
 export function recordedFiles(files: string[], read = (f: string) => readFileSync(f, 'utf8')): Set<string> {
   const listed = new Set<string>();
   for (const m of files.filter((f) => f.startsWith('docs/qa/') && f.endsWith('/manifest.json'))) {
-    const walk = (v: unknown): void => {
-      if (typeof v === 'string') {
-        // Only a recording: a media file under docs/qa/, named relative to the manifest or to the repo.
-        if (!MEDIA.test(v)) return;
+    const results: unknown = (JSON.parse(read(m)) as { results?: unknown }).results;
+    if (!Array.isArray(results)) continue;
+    for (const r of results) {
+      for (const [key, ext] of Object.entries(RECORDING)) {
+        const v: unknown = (r as Record<string, unknown> | null)?.[key];
+        if (typeof v !== 'string' || !ext.test(v)) continue;
         const p = v.startsWith('docs/') ? v : `${dirOf(m)}${v.replace(/^\.\//, '')}`;
         if (p.startsWith('docs/qa/') && !p.includes('..')) listed.add(p);
-      } else if (v && typeof v === 'object') Object.values(v).forEach(walk);
-    };
-    walk(JSON.parse(read(m)));
+      }
+    }
   }
   return listed;
 }
@@ -133,10 +137,19 @@ describe('fixture and asset provenance (NFR-4)', () => {
     ]);
   });
 
-  it('only media files a docs/qa manifest lists under docs/qa/ count as recordings', () => {
-    const manifest = JSON.stringify({ clips: [{ file: 'clip.webm', frs: ['FR-1'] }, 'docs/qa/demo/b.png'], note: 'scan.pdf is fine', other: ['../../fixtures/x.png', 'src/a.png', 'notes.md'] });
+  it("only a docs/qa recording manifest's results[].video (.webm) and .screenshot (.png) count as recordings", () => {
+    const manifest = JSON.stringify({
+      kind: 'demo',
+      results: [
+        { id: 'a', video: 'a.webm', screenshot: 'a.png', explainer: 'a.md' },
+        { id: 'b', video: 'docs/qa/demo/b.webm', screenshot: 'scan.pdf' },
+        { id: 'c', video: 'font.woff2', screenshot: '../../fixtures/x.png' },
+      ],
+      other: { video: 'x.webm', screenshot: 'y.png' },
+      extra: ['photo.png', 'book.epub'],
+    });
     const listed = recordedFiles(['docs/qa/demo/manifest.json', 'src/manifest.json'], () => manifest);
-    expect([...listed].sort()).toEqual(['docs/qa/demo/b.png', 'docs/qa/demo/clip.webm', 'docs/qa/demo/src/a.png']);
+    expect([...listed].sort()).toEqual(['docs/qa/demo/a.png', 'docs/qa/demo/a.webm', 'docs/qa/demo/b.webm']);
   });
 
   it('a licensed asset needs its licence file listed beside it; fixtures must be self-authored', () => {

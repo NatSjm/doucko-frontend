@@ -118,7 +118,12 @@ origin and author) listed beside it (the two OFL fonts).
   runs the Playwright suite through nginx (`E2E_BASE_URL`). That last step
   needs `DOUCKO_CHILD_DISPLAY_NAME` (env or `../backend/.env`) for the
   real-name guard; without it the step is reported NOT RUN and the command
-  fails.
+  fails. Each run writes `docs/qa/container-smoke-latest.md`.
+- The security headers and `server_tokens off` sit at http level (before the
+  servers), so the 421 refusal carries them too; no server or location
+  declares its own `add_header`.
+- Recordings exempt from provenance are exactly `results[].video` (.webm)
+  and `results[].screenshot` (.png) of a `docs/qa/**/manifest.json`.
 - Screens: the a11y and theme e2e iterate `e2e/screens.ts`: every registered
   route plus the not-found screen, each with its `data-route` marker.
   `routePath` maps `/index.html` and a trailing slash to the registered path.

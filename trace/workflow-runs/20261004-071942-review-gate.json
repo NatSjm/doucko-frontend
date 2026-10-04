@@ -1,0 +1,961 @@
+{
+  "workflow": "review-gate",
+  "file": "./.claude/workflows/review-gate.js",
+  "description": "Multi-dimensional adversarial review of a diff or capability: correctness, security, and spec compliance, with every finding adversarially verified before it is reported.",
+  "dryRun": false,
+  "startedAt": "2026-10-04T07:19:42.028Z",
+  "finishedAt": "2026-10-04T07:24:48.621Z",
+  "args": {
+    "scope": "slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui",
+    "baseRef": "93e81cd",
+    "headRef": "HEAD",
+    "focus": "Round 4. Verify the round-3 fixes (commit 2c7c6b5): lint rule value/call-argument/callback coverage, pseudo-catalog field values, theme no-toggle e2e skip semantics, nginx Host guard (421) and /api 404, X-Forwarded-For overwrite and hidden backend headers, tools/container-smoke.mjs, routePath, the docs/qa recordings exemption. Check against the spec delta and design.md. Do NOT re-report what design.md lists under \"Accepted limits (review round 3)\" or the documented backend-port and DOUCKO_CHILD_DISPLAY_NAME follow-ups; report only defects in shipped behaviour or tests that can pass while the spec is violated.",
+    "change": "implement-platform-foundation-ui"
+  },
+  "settings": {
+    "allowedTools": null,
+    "concurrency": 4,
+    "model": null,
+    "budgetPerAgentUsd": 2,
+    "maxTotalUsd": 15,
+    "untypedTools": "Read,Grep,Glob,Write,Bash",
+    "permissionMode": "acceptEdits"
+  },
+  "outcome": "ok",
+  "stoppedBecause": null,
+  "error": null,
+  "totalCostUsd": 6.1922,
+  "steps": [
+    {
+      "label": "find:correctness",
+      "phase": "Find",
+      "agentType": "code-reviewer",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 1089,
+      "durationMs": 157904,
+      "sessionId": "7485a5f2-945f-425c-a24b-06226b23538b",
+      "costUsd": 0.9513892000000002,
+      "numTurns": 17,
+      "result": {
+        "findings": [
+          {
+            "title": "docs/qa recordings exemption still covers PDFs, fonts and images named in any key of any manifest",
+            "file": "src/test/provenance.test.ts",
+            "line": 84,
+            "severity": "major",
+            "confidence": "medium",
+            "evidence": "`recordedFiles` walks every string value in every `docs/qa/**/manifest.json` and exempts it if `MEDIA.test(v)`. MEDIA includes pdf, djvu, epub, fonts and every image type, not just recording formats. So `{\"note\": \"scan.pdf\"}` in a hand-written manifest exempts `docs/qa/x/scan.pdf`, which could be a workbook scan (NFR-4). The spec only exempts files a manifest \"lists as recordings\". The round-3 fix narrowed this from \"any string\" to \"any media string\" but did not limit it to recordings.",
+            "suggestion": "Accept only the recorder's clip/screenshot field (e.g. `clips[].file`), and only recording types (webm/mp4/png). Add a test case where a `.pdf` listed in a manifest is still reported."
+          },
+          {
+            "title": "No-toggle e2e only clicks a select/combobox, so a theme picker built as a select is never switched",
+            "file": "e2e/theme.spec.ts",
+            "line": 33,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "CONTROLS includes `select` and `[role=combobox]`, but the loop only calls `control.click(...)`. Clicking a native `<select>` opens its popup and changes no value, so a Light/Dark/System select passes the check without its options ever being chosen. The spec scenario says every select on a route is \"activated\". Only the static source regex would catch such a picker.",
+            "suggestion": "For `select`, call `selectOption` for each option and check the theme after each one. For comboboxes and listboxes, open them and click each `[role=option]` that appears."
+          },
+          {
+            "title": "Static theme guard misses dynamic theme classes and token overrides",
+            "file": "src/app/theme-source.test.ts",
+            "line": 12,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "`THEME_WRITE` only matches `classList.x(` when a quote follows right away (`['\"`](dark|light|theme)`). It misses `classList.toggle(isDark ? 'dark' : 'light')`, `documentElement.className = 'dark'`, and an app.css rule that redefines `--paper` under `@media (prefers-color-scheme)` or a class. The e2e defers to this test for every screen with no control, which today is all of them, so it is the only FR-58 guard that actually runs.",
+            "suggestion": "Also match `className\\s*=`, `setAttribute('class'` and any `classList.*(...)` containing dark/light/theme. Fail when an app `.css` file redefines a design-system colour token (`--paper`, `--ink`, …)."
+          },
+          {
+            "title": "Lint rule exempts the `name` key in nested objects, though `name` is display text on most components",
+            "file": "eslint-rules/no-literal-ui-text.js",
+            "line": 50,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "`NON_TEXT_KEYS = new Set([...NON_TEXT_PROPS, \"value\", \"name\"])` skips the `name` key in every object literal. As a prop, `name` is treated as text except on Icon and ChoiceGroup, and `SubjectTile` shows `name` (game.tsx:54). So `<SubjectList items={[{ name: 'Matematika' }]} />` passes lint, while `<SubjectTile name=\"Matematika\" />` is reported. The two cases contradict each other.",
+            "suggestion": "Remove `name` from NON_TEXT_KEYS, or exempt it only where `value`/`id` sits beside it (ChoiceOption-style objects). Add an invalid case for `{ name: 'Matematika' }` inside a component prop."
+          },
+          {
+            "title": "Call-argument coverage flags locale and format arguments, so idiomatic Intl formatting fails lint",
+            "file": "eslint-rules/no-literal-ui-text.js",
+            "line": 84,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "Every literal argument of any call is now reported (`...node.arguments.flatMap(literalTexts)`). Only `t()` is exempt. So `{n.toLocaleString('cs-CZ')}`, `{d.toLocaleDateString('cs', { month: 'long' })}` and `<Stat value={x.toFixed(1)} unit=... />`-style formatting all fail with `error`. Locale tags and Intl options are not UI text. This pushes later slices (admin stats) toward eslint-disable comments, which turn the rule off for real literals too.",
+            "suggestion": "Skip arguments of known formatting methods (`toLocaleString`, `toLocaleDateString`, `toLocaleTimeString`, `Intl.*` constructors), or skip BCP-47-shaped strings and the values of Intl option objects. Add valid test cases for both."
+          },
+          {
+            "title": "Container smoke PASS is claimed with no evidence file, and the Host guard has no static test",
+            "file": "openspec/changes/implement-platform-foundation-ui/tasks.md",
+            "line": 31,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "tasks.md says \"`npm run test:container` … (all PASS 2026-10-04)\". But `tools/container-smoke.mjs` only prints to the console and writes no report under docs/qa. `test:container` is also not run by qa:verify. container-config.test.ts checks XFF and the hidden headers, but has no assertion for the `default_server` `return 421`, the `server_name` allow-list or `location = /api { return 404; }`. A regression in the DNS-rebinding guard would pass the whole battery. AGENTS.md requires done-claims to carry a resolvable evidence pointer.",
+            "suggestion": "Have container-smoke write its PASS/FAIL lines to `docs/qa/container-smoke-latest.md` and cite that file in tasks.md. Add static assertions to container-config.test.ts for the 421 default server, the server_name pattern and the `/api` 404 location."
+          }
+        ]
+      }
+    },
+    {
+      "label": "find:security",
+      "phase": "Find",
+      "agentType": "security-reviewer",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 1117,
+      "durationMs": 133161,
+      "sessionId": "798b8057-2901-4e61-8240-2e2871d67c63",
+      "costUsd": 0.8456692000000001,
+      "numTurns": 15,
+      "result": {
+        "findings": [
+          {
+            "title": "nginx passes client-supplied Forwarded / X-Real-IP / X-Forwarded-Host / X-Forwarded-Port headers to the backend",
+            "file": "nginx.conf",
+            "line": 36,
+            "severity": "major",
+            "confidence": "medium",
+            "evidence": "The round-3 fix overwrites X-Forwarded-For and X-Forwarded-Proto. The `location /api/` block still passes every other client header to the backend unchanged. That includes RFC 7239 `Forwarded: for=6.6.6.6`, `X-Real-IP`, `X-Forwarded-Host` and `X-Forwarded-Port`. With Spring's `server.forward-headers-strategy=framework` (ForwardedHeaderFilter), `Forwarded` takes precedence over X-Forwarded-For. A LAN attacker could then send a new `Forwarded: for=<random>` on each admin login attempt and get past the per-IP login throttle that this fix was meant to protect. That allows unlimited password guessing against the bcrypt admin account. A spoofed X-Forwarded-Host/Port also flows into Tomcat RemoteIpValve and Spring absolute-URL and redirect building. I could not read ../backend (permission denied), so I could not confirm which forward-headers strategy it uses. That is why confidence is medium. `tools/container-smoke.mjs` sends only a spoofed X-Forwarded-For, so it passes while this path is open.",
+            "suggestion": "Make nginx the only source of forwarding headers. In `location /api/`, add `proxy_set_header Forwarded \"\";`, `proxy_set_header X-Real-IP $remote_addr;`, `proxy_set_header X-Forwarded-Host \"\";` (or `$host`) and `proxy_set_header X-Forwarded-Port \"\";` (or `$server_port`). In container-smoke.mjs, also send `Forwarded: for=6.6.6.6` and `X-Real-IP: 6.6.6.6`, and assert that the stub's echo contains neither. Extend the spec scenario 'Spoofed client address' to cover all of these headers."
+          },
+          {
+            "title": "docs/qa recordings exemption also covers PDFs, photos and fonts listed in any docs/qa manifest.json",
+            "file": "src/test/provenance.test.ts",
+            "line": 84,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "`recordedFiles` exempts any string in any `docs/qa/**/manifest.json` that matches MEDIA. MEDIA includes pdf, jpg, heic, psd, woff2 and djvu, not only the clip and screenshot formats the recorder writes. A contributor or agent could commit a workbook scan (`docs/qa/demo/page.pdf` or `scan.jpg`) together with a hand-written `docs/qa/demo/manifest.json` that names it. The NFR-4 provenance test would then report nothing, and workbook content would enter git unchecked. Nothing requires the manifest to come from scripts/record-demos.mjs.",
+            "suggestion": "Limit the exemption to the formats the recorder actually produces, for example `/\\.(webm|mp4|png|gif)$/i`. Also require the manifest entry to have the recorder's shape (for example `clips[].file` with `frs`), not any string anywhere in the JSON. Add a negative test with `docs/qa/demo/page.pdf` listed in a manifest."
+          },
+          {
+            "title": "The theme no-toggle checks miss a native <select> theme picker and className-based theme switches",
+            "file": "e2e/theme.spec.ts",
+            "line": 33,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "The spec says every select on a route is activated. The e2e only calls `click()` on `select`. That opens the native dropdown but never changes the value, so `onChange` never runs. A 'Light/Dark' `<select>` that writes a theme class would pass the e2e. The static backstop (src/app/theme-source.test.ts:12, THEME_WRITE) catches `data-theme`, `dataset.theme`, `colorScheme` and `classList.x('dark'|'light'|'theme…')`. It does not catch `document.documentElement.className = 'dark'`, `setAttribute('class', 'theme-dark')` or `classList.toggle(isDark ? 'dark' : 'light')`. So both layers can pass while the FR-58 'no in-app toggle' requirement is broken.",
+            "suggestion": "In the e2e, handle `select` (and `[role=combobox]` listboxes) by calling `selectOption` for each option, then re-check `[data-theme]` and the body `--paper`. Extend THEME_WRITE to also match `className\\s*=` and `setAttribute\\(\\s*['\"]class` when combined with dark/light/theme, and conditional `classList` arguments that contain those words."
+          }
+        ]
+      }
+    },
+    {
+      "label": "find:spec-compliance",
+      "phase": "Find",
+      "agentType": "spec-compliance-auditor",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 1060,
+      "durationMs": 112990,
+      "sessionId": "64677697-cfec-475d-92fb-e888592f955f",
+      "costUsd": 0.638409,
+      "numTurns": 20,
+      "result": {
+        "findings": [
+          {
+            "title": "The provenance exemption covers PDFs, e-books and fonts listed in a docs/qa manifest, not just recordings",
+            "file": "src/test/provenance.test.ts",
+            "line": 84,
+            "severity": "major",
+            "confidence": "high",
+            "evidence": "Coverage summary: 18 scenarios: 15 implemented, 3 partial, 0 missing, 0 contradicted.\n\nSpec (Unlisted asset fails): the only exemptions are `contract/` and \"the media files a `docs/qa/**/manifest.json` lists as recordings\". The spec counts PDFs as documents, not media (\"a media, document or data file\"). Code: `recordedFiles` exempts any string that matches `MEDIA`, and `MEDIA` (line 17-18) includes `pdf|djvu|epub|woff2?|ttf|otf|psd|ai|eps|svg`. So a manifest under docs/qa that lists `\"workbook.pdf\"` makes `docs/qa/<dir>/workbook.pdf` exempt from the manifest check. That is exactly the workbook content NFR-4 forbids, and the provenance test still passes.",
+            "suggestion": "Limit the recording exemption to what scripts/record-demos.mjs writes: a RECORDINGS regex such as /\\.(webm|mp4|png|jpe?g|gif)$/i, or better, only the manifest's clip/file fields. Add a unit case where a manifest lists `scan.pdf` and the file is still reported."
+          },
+          {
+            "title": "The 421 response from the Host guard has no security headers",
+            "file": "nginx.conf",
+            "line": 7,
+            "severity": "major",
+            "confidence": "high",
+            "evidence": "Spec (Served behind one origin): \"Every response SHALL carry `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer` and a Content-Security-Policy with … `frame-ancestors 'none'`\". The `default_server` block (lines 7-11) has only `server_tokens off; return 421;`. The three `add_header … always` directives sit in the second server block, so the 421 page (nginx's default HTML error body) is sent without nosniff, a Referrer-Policy or a CSP. container-smoke.mjs:115 checks only the status, so the gap is never caught.",
+            "suggestion": "Add the same three `add_header … always` lines to the default_server block, or move them into a shared include. Extend container-smoke so the 421 response is checked for all three headers."
+          },
+          {
+            "title": "The Host guard (421) has no check in the qa:verify battery",
+            "file": "src/test/container-config.test.ts",
+            "line": 50,
+            "severity": "major",
+            "confidence": "high",
+            "evidence": "Spec scenario (Foreign host name): \"/api/health with Host: evil.example → 421 and the backend is not reached\". container-config.test.ts asserts X-Forwarded-For, proxy_hide_header and X-Forwarded-Proto (lines 50-59) but nothing about `default_server`, `return 421` or the `server_name` allow-list. A grep for 421, default_server and server_name in that file finds nothing. The only check is tools/container-smoke.mjs:115, run by `npm run test:container`. That script is not referenced from package.json's battery, scripts/ or trace/acceptance-contracts.json, and with `--e2e` it exits 1 until the documented DOUCKO_CHILD_DISPLAY_NAME follow-up lands. Deleting the guard or widening `server_name` to `_` would leave `npm run qa:verify` green.",
+            "suggestion": "Add static assertions to container-config.test.ts: a `listen 80 default_server` block that returns 421, a server_name limited to localhost and the IPv4 regex, and no `_`/catch-all name in the serving block. Alternatively, wire the container smoke's HTTP checks (without --e2e) into an acceptance contract."
+          },
+          {
+            "title": "Client-supplied Forwarded and X-Forwarded-Host/Port headers still reach the backend",
+            "file": "nginx.conf",
+            "line": 39,
+            "severity": "minor",
+            "confidence": "low",
+            "evidence": "The spec requires forwarding \"the connecting client address (never a client-supplied `X-Forwarded-For`)\" so the per-IP login throttle cannot be spoofed. nginx overwrites X-Forwarded-For and X-Forwarded-Proto but passes a client's `Forwarded: for=6.6.6.6`, `X-Real-IP`, `X-Forwarded-Host` and `X-Forwarded-Port` through unchanged. If the backend honours RFC 7239 `Forwarded` (Spring's ForwardedHeaderFilter / forward-headers-strategy=framework prefers it over X-Forwarded-For), the spoof the scenario forbids comes back through another header. I could not verify the backend's setting (no read access to ../backend/src/main).",
+            "suggestion": "Add `proxy_set_header Forwarded \"\";`, `proxy_set_header X-Real-IP $remote_addr;`, `proxy_set_header X-Forwarded-Host $host;` and `proxy_set_header X-Forwarded-Port $server_port;`, plus a container-smoke check that a client `Forwarded: for=6.6.6.6` does not reach the stub."
+          },
+          {
+            "title": "The lint rule exempts every argument of t(), so literal interpolation values pass",
+            "file": "eslint-rules/no-literal-ui-text.js",
+            "line": 80,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "Spec: the rule SHALL refuse literal UI text in \"call arguments\" (tasks 2.2: \"accepts catalog calls\"). Code: `if (node.callee.type === \"Identifier\" && CATALOG_LOOKUPS.has(node.callee.name)) return [];` returns before any argument is inspected. So `{t('greeting', { name: 'Ahoj' })}` or `{t('x', { unit: 'bodů' })}` renders literal Czech text with no lint error. Only the first argument is a key; the params object is shown text. A related gap: an immediately invoked callee, `{(() => 'Ahoj')()}`, is not inspected either, because only a MemberExpression callee's receiver is checked.",
+            "suggestion": "Exempt only `node.arguments[0]` of t() and run literalTexts over the remaining arguments (honouring NON_TEXT_KEYS such as `count`). Also inspect function-expression callees. Add an invalid case `<p>{t('x', { name: 'Ahoj' })}</p>` to lint-rule.test.ts."
+          }
+        ]
+      }
+    },
+    {
+      "label": "find:visual",
+      "phase": "Find",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1329,
+      "durationMs": 17329,
+      "sessionId": "476be0b8-735c-4952-97cf-c5d670ce41a2",
+      "costUsd": 0.141846,
+      "numTurns": 4,
+      "result": {
+        "findings": []
+      }
+    },
+    {
+      "label": "verify:src/test/provenance.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1320,
+      "durationMs": 16586,
+      "sessionId": "8fe24b75-aa0f-4081-8416-7bebca9748a1",
+      "costUsd": 0.107308,
+      "numTurns": 3,
+      "result": {
+        "refuted": false,
+        "reasoning": "I could not refute the mechanism; it is in the code as described. `recordedFiles` (src/test/provenance.test.ts:78-92) walks every value of every `docs/qa/**/manifest.json`, whatever key it sits under. At line 84 the only filter is `MEDIA.test(v)`. MEDIA (line 17-18) includes pdf, djvu, epub, fonts, psd/ai/eps and every image type, not just recording formats. Any string that ends in `.pdf` is therefore resolved against the manifest's folder and added to `listed`. `inScope` (line 32) then drops that path, so a workbook scan at `docs/qa/x/scan.pdf` would never be reported if a manifest has e.g. `{\"note\":\"scan.pdf\"}`.\n\nNothing else guards against this:\n- The manifest.json files are not checked themselves. They are not MEDIA or DOCUMENTS, and SOURCE_DATA only covers src/ and e2e/. A hand-written or edited manifest is never validated.\n- The test at line 137 passes only because the note is `'scan.pdf is fine'`, which does not end in `.pdf`, so the regex fails. It does not cover a bare `\"scan.pdf\"`.\n- The module doc (line 12) says only \"recordings a manifest lists are exempt\", so exempting any media string under any key is broader than intended.\n\nThe bug is real, but triggering it takes a manifest.json under docs/qa that names a non-recording file in some field. That is an unusual misuse or a deliberate bypass, not a normal workflow, so I'd downgrade the severity from major to minor/moderate.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/test/provenance.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1353,
+      "durationMs": 20408,
+      "sessionId": "936c4e8f-262c-4acf-8f32-8c94762aa67d",
+      "costUsd": 0.12328700000000001,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "The mechanism is real. In src/test/provenance.test.ts:78-92, `recordedFiles` walks every string value at any depth of every `docs/qa/**/manifest.json`. The only filter is `MEDIA.test(v)` (line 84), and MEDIA (line 18) includes pdf, djvu, epub, fonts and all image types, not just recording formats. So a manifest containing `{\"note\":\"scan.pdf\"}` at docs/qa/x/manifest.json puts `docs/qa/x/scan.pdf` into the exemption set. `inScope` (line 32) then drops it, and an unlisted workbook PDF passes the NFR-4 check. The existing test (line 137) only shows that `'scan.pdf is fine'` is rejected, and that is only because the string doesn't end in `.pdf`. A bare `'scan.pdf'` in `note` would be accepted. The real recorder (scripts/record-demos.mjs:19,105) writes `{kind, results:[{id, proof, video, screenshot, explainer, asserted}]}`, so the check could be limited to `results[].video` / `results[].screenshot` with webm/mp4/png types, as the finding suggests. The spec comment (line 12) says only \"recordings a manifest lists\" are exempt, so this does diverge from the stated contract.\n\nExploitability: this is a hole in a CI guard, not a runtime bug a user can hit. To trigger it, someone has to commit a PDF under docs/qa/ and also add a manifest.json beside it that names the PDF. A normal recorder run never does this, because it only writes clip and screenshot paths. So it can't happen by accident in the normal flow. It needs a hand-written or edited manifest, for example an agent trying to get a failing provenance check to pass. That can happen, but it's a deliberate step, which is why I'd downgrade from major to minor. The mechanism itself is confirmed and easy to reproduce with a single JSON key.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:e2e/theme.spec.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1167,
+      "durationMs": 13976,
+      "sessionId": "117764cf-b951-42aa-9407-fc4834bd7dec",
+      "costUsd": 0.0825178,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "The finding holds. `e2e/theme.spec.ts:9-12` lists `select` and `[role=combobox]` in CONTROLS, but the loop at lines 30-40 only calls `control.click()` before checking the theme. In Playwright, clicking a native `<select>` focuses it and may open its popup, but it never changes the selected value. A Light/Dark/System `<select>` (the default is usually System or OS) would therefore pass with no option ever chosen. A custom combobox is the same: one click opens the listbox, and the `[role=option]` items that appear afterwards are not picked up, because `count()` is re-read each loop and `nth(i)` indices shift. The test therefore doesn't really cover selects. The spec scenario (`openspec/changes/implement-platform-foundation-ui/specs/platform-foundation/spec.md:25`) says every \"select on a route is activated\", which this code doesn't do for selects. Nothing else in the e2e covers it. The comment in `src/app/theme-source.test.ts` says the e2e \"activates every control\", so the static test doesn't make up for the gap. It is only a regex backstop, as the finding says. The severity stays minor: there is probably no theme select today, so this is a hole in a guard test, not a defect users would see.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:e2e/theme.spec.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1200,
+      "durationMs": 18680,
+      "sessionId": "b8e9ff4c-3122-4d7e-9dd7-df2667a0724c",
+      "costUsd": 0.1005598,
+      "numTurns": 6,
+      "result": {
+        "refuted": false,
+        "severityAdjustment": "downgrade",
+        "reasoning": "The mechanism holds. At e2e/theme.spec.ts:33 the loop only calls `control.click()` on every match of CONTROLS, and CONTROLS includes `select` and `[role=combobox]`. In Playwright, clicking a native `<select>` does not choose an option, and clicking a combobox only opens it, so a Light/Dark select would pass the check without being switched. As an e2e check it really is incomplete.\n\nIt is only a latent test gap, though, not something a user or attacker can hit today:\n1. No app source under src/ has a `<select>` or a combobox, so no theme picker exists for this check to miss.\n2. src/app/theme-source.test.ts statically rejects any app source that contains `data-theme`, `dataset.theme`, `colorScheme`, `color-scheme`, or a `classList.*('dark'|'light'|'theme'…)` call. A select-based picker would almost certainly use one of these to write the theme, so this unit test would fail on it. The finding admits this backstop exists.\n\nA regression would need both a new select picker and a way of applying the theme that the regex does not match (for example, setting inline style variables directly). That makes this a hardening suggestion.\n\nVerdict: the claim is technically correct, so it is not refuted. Downgrade it to nit/low."
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1241,
+      "durationMs": 19723,
+      "sessionId": "bf547eeb-1742-4755-8f94-55155cd38b47",
+      "costUsd": 0.0996856,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "Partly right. `THEME_WRITE` (src/app/theme-source.test.ts:12) is `/data-theme|dataset\\.theme|colorScheme|color-scheme|classList\\.\\w+\\(\\s*['\"`](dark|light|theme)/`, and some of the finding's examples are overstated:\n- **`@media (prefers-color-scheme)` is caught.** The literal `color-scheme` matches it, so that example is wrong.\n- **A `dark` or `light` class does nothing on its own.** `classList.toggle(isDark ? 'dark' : 'light')` and `className = 'dark'` are missed by the regex. But the design system switches themes only through `[data-theme=...]` and the `prefers-color-scheme` media query (tokens.css:3, 50, 83-84). It has no `.dark` or `.light` selectors, so those writes would not change the theme.\n\nThe real gap is the one the finding names last. An app `.css` rule that redefines a design-system colour token under a class, such as `.night { --paper: …; --ink: … }`, matches none of the alternatives. A JS call like `document.documentElement.style.setProperty('--paper', …)` also slips through. Pair either with any class toggle and a control can switch the theme while this test stays green, which breaks FR-58.\n\nThis test is the only guard for screens with no controls: e2e/theme.spec.ts:43 skips those and points to it. So the token-override hole matters. The suggested fix (fail when app CSS or JS redefines a design-system colour token) is the meaningful part. Widening the class-name matching would add little.\n\nThe mechanism is confirmed for token overrides but overstated for class names and media queries, so the severity stays minor.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1274,
+      "durationMs": 21741,
+      "sessionId": "0eb28e99-b781-47af-8e6b-631de7bde8f6",
+      "costUsd": 0.17497259999999998,
+      "numTurns": 6,
+      "result": {
+        "refuted": true,
+        "reasoning": "The regex reading is accurate: `classList\\.\\w+\\(\\s*['\"`](dark|light|theme)` only matches a quoted literal right after the paren. But the evasions the finding lists would not switch the theme in this codebase. `src/design-system/tokens.css` picks the theme in only two ways: `[data-theme=\"light\"|\"dark\"]` (lines 3 and 50) and `@media (prefers-color-scheme: dark) :root:not([data-theme=\"light\"])` (lines 83–84). It has no `.dark`, `.light` or `.theme-*` selector. So `classList.toggle(isDark ? 'dark' : 'light')` or `documentElement.className = 'dark'` would do nothing to colours, and there is nothing for the guard to catch. Any route that does work goes through `data-theme`, and the regex matches that string anywhere, including `setAttribute('data-theme', …)` and `dataset.theme`. An app.css rule that redefines `--paper` under `@media (prefers-color-scheme)` still follows the OS, so it is not an FR-58 violation either.\n\nThe one theoretical gap needs two new pieces of code: an app CSS class that redefines several design-system tokens, plus a control that toggles that class. Nothing like that exists today. A grep of `src/` outside the design system finds no `classList`, no `className =` assignment and no `--paper`/`--ink` definitions. The only `className` uses are static JSX strings in `App.tsx`, `Shell.tsx` and `NotFound.tsx`. AGENTS.md also forbids raw hex in app styles (tokens only), and code review would reject it. Neither a user nor an attacker can trigger this now. It is a speculative hardening idea for a test, not a correctness defect.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:eslint-rules/no-literal-ui-text.js",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1225,
+      "durationMs": 17707,
+      "sessionId": "cb22bf70-37b7-4f63-9535-22fc17fe4b56",
+      "costUsd": 0.14513399999999999,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the mechanism in the code. At eslint-rules/no-literal-ui-text.js:50, NON_TEXT_KEYS contains \"name\". The ObjectExpression branch at line 71 skips every property whose key is in that set, with no check on which component or context the object belongs to. So in `<X items={[{ name: 'Matematika' }]} />`, literalTexts never sees the string 'Matematika'.\n\nThe prop path behaves differently. isTextAttribute (lines 136-138) treats `name` as text on every PascalCase component except Icon and ChoiceGroup. SubjectTile (game.tsx:54) and SubjectChip (core.tsx:107) take `name` as a display name. So `<SubjectTile name=\"Matematika\"/>` is reported, but the same string under a `name` key in an object literal is not. That is the inconsistency the finding describes.\n\nI tried to refute it and couldn't. The `name` key exemption doesn't seem to protect any real identifier-object shape in the design system. ChoiceOption is `{ value, label }` (practice.tsx:84), with no `name` key. SubjectDef (core.tsx:15) is the one design-system type with a `name` field, and there it is a display name. So the exemption hides display text and doesn't cover an actual identifier case.\n\nThe documented backstop for things the rule can't see (src/app/i18n-coverage.test.tsx) is meant for text reached through variables and other modules. It doesn't explain a hole inside an inline literal that the rule already walks.\n\nMinor severity fits. It is a lint false negative, not a runtime bug, and the pseudo-catalog render test may still catch the visible string.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:eslint-rules/no-literal-ui-text.js",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1258,
+      "durationMs": 24677,
+      "sessionId": "8804c7e4-64a3-41df-93a6-d5fe94cf40f6",
+      "costUsd": 0.18210180000000004,
+      "numTurns": 6,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the mechanism in the code. At eslint-rules/no-literal-ui-text.js:50, `NON_TEXT_KEYS` includes `\"name\"`. At line 71, `literalTexts` skips any object property whose key is in `NON_TEXT_KEYS`. So `<Comp items={[{ name: 'Matematika' }]} />` produces no report. Meanwhile `isTextAttribute` (lines 136-138) treats a `name` prop as text on every PascalCase component except Icon and ChoiceGroup, so `<SubjectTile name=\"Matematika\" />` is reported. The two cases are handled inconsistently, as the finding says.\n\nI tried to refute it and could not:\n- **Is `name` really an identifier key in the design system?** No. The comment on line 49 justifies the exemption with ChoiceOption-style objects, but `ChoiceOption` is `{ value: string; label: React.ReactNode }` (practice.tsx:84). It has no `name` key, so the exemption protects no real identifier case.\n- **Where does a `name` key appear?** The only design-system object type with one is `SubjectDef` (core.tsx:15-23), and there `name` is display text: 'Matematika', 'Český jazyk', and so on. `SubjectChip` and `SubjectTile` render it through `resolveSubject` (core.tsx:38, game.tsx:61).\n- **Do the rule's tests cover it?** No test in eslint-rules mentions `name`, so no test pins either behaviour.\n\nHow likely it is in practice: today no component takes an array of `{name}` objects (`SubjectList` is hypothetical), and a `subject={{ name: … }}` prop is skipped anyway because `subject` is in `NON_TEXT_PROPS`. Still, a feature component that takes items with a display `name` is a plausible thing to write (for example admin source or subject lists, and the API schema has `name: string` fields). That code would get past the NFR-9 lint without a report. The only backstop is the pseudo-catalog render test, and it only sees paths that actually render.\n\nThis is a developer-tooling gap with no runtime or security impact, so minor severity is right.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:eslint-rules/no-literal-ui-text.js",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1323,
+      "durationMs": 12989,
+      "sessionId": "8a958bcf-9af6-4bb0-b610-c789b46f43bb",
+      "costUsd": 0.12013200000000002,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the mechanism by reading the code. In `literalTexts`, the `CallExpression` case (lines 78–85) exempts only `t(...)`. For every other call, it returns any literal containing a letter from both the receiver and all arguments. `JSXExpressionContainer` (line 181) reports every such literal, and `eslint.config.js:51` sets the rule to `'error'`. Two cases fail:\n\n- `{n.toLocaleString('cs-CZ')}`: the argument `'cs-CZ'` contains letters, so it is reported.\n- `{d.toLocaleDateString('cs', { month: 'long' })}`: `'cs'` is reported. The rule also recurses into the object (line 71), and `month` is not in `NON_TEXT_KEYS`, so `'long'` is reported too.\n\nNothing exempts locale tags, Intl option values or format methods. The repo's own e2e code already uses `toLocaleLowerCase('cs')` (outside the rule's JSX scope). That shows the idiom is real and that a future `{x.toLocaleString('cs')}` in a component would be flagged.\n\nOne example in the finding is wrong. `x.toFixed(1)` passes a number with no letters, so it is not flagged. The core claim still holds. Minor severity fits: it's a false positive that slows development, not a correctness hole in shipped UI.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:eslint-rules/no-literal-ui-text.js",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1356,
+      "durationMs": 26642,
+      "sessionId": "e9e61cc4-b98b-49cc-b584-f3de1501e22a",
+      "costUsd": 0.1644726,
+      "numTurns": 9,
+      "result": {
+        "refuted": false,
+        "reasoning": "Confirmed by running it. In eslint-rules/no-literal-ui-text.js:78-85, the CallExpression branch only skips `t()`. For every other call it collects literal strings from both the receiver and all arguments. ObjectExpression values are collected too, unless the key is in NON_TEXT_KEYS, and `month`, `weekday` and the other Intl option keys are not. eslint.config.js:51 sets the rule to 'error'.\n\nI wrote a temporary src file with `<p>{n.toLocaleString('cs-CZ')} {d.toLocaleDateString('cs', { month: 'long' })}</p>`. The post-edit lint hook reported 3 errors: \"cs-CZ\", \"cs\" and \"long\", all as doucko/no-literal-ui-text. I then deleted the file; the working tree is back to its original state.\n\nOne part of the evidence is wrong: `x.toFixed(1)` passes a number, so it is not flagged. That doesn't change the core finding. There is no runtime or user impact; the cost is to developers. Idiomatic locale formatting in JSX fails lint, which pushes people toward workarounds such as eslint-disable comments. The minor severity fits.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:openspec/changes/implement-platform-foundation-ui/tasks.md",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1446,
+      "durationMs": 37276,
+      "sessionId": "2725f56e-55f4-46dc-bff6-3bf84f4d7777",
+      "costUsd": 0.1160496,
+      "numTurns": 6,
+      "result": {
+        "refuted": false,
+        "reasoning": "I checked each part of the finding against the code, and it holds.\n\n1. **The PASS claim has no evidence file.** tasks.md:31 says \"`npm run test:container` … (all PASS 2026-10-04)\". The only file `tools/container-smoke.mjs` writes is the stub nginx config (line 88, `writeFileSync(join(stubDir,'default.conf'), STUB)`). It writes nothing under `docs/qa`, and no container-smoke file exists in `docs/qa`.\n\n2. **The battery never runs it.** `test:container` is defined in package.json, but `scripts/qa-verify.mjs` never mentions \"container\". So `qa:verify` does not run it.\n\n3. **The Host guard has no static test.** `src/test/container-config.test.ts` covers server_tokens, the security headers, `/assets/` 404, the resolver, XFF and proxy_hide_header. It has no assertion for:\n   - the `return 421` default server (nginx.conf:10)\n   - the `server_name` allow-list (nginx.conf:15)\n   - `location = /api` (nginx.conf:48)\n\n   Its `location()` helper only matches `location <path> {`, so the exact-match `= /api` block is not covered by accident either. The live smoke does check 421 and `/api` 404 (lines 100 and 115), but that smoke is outside the battery. A regression in the DNS-rebinding guard would therefore pass `qa:verify`.\n\nSeverity stays minor. The task is a sub-bullet of an unchecked item (4.4), and it says \"Partly automated\", so this is not a release claim. Still, the \"all PASS\" wording has no evidence pointer behind it, and AGENTS.md requires one for done-claims.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:openspec/changes/implement-platform-foundation-ui/tasks.md",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1479,
+      "durationMs": 22238,
+      "sessionId": "1b1fd733-bb13-4ce8-a2d7-52f73e2f5e15",
+      "costUsd": 0.13903279999999998,
+      "numTurns": 11,
+      "result": {
+        "refuted": false,
+        "reasoning": "Confirmed against the code. (1) tasks.md:31 claims \"`npm run test:container` … (all PASS 2026-10-04)\". tools/container-smoke.mjs uses writeFileSync only to write the stub nginx default.conf (line 88). It writes no report under docs/qa, so nothing on disk backs the PASS claim. That breaks the AGENTS.md done-claims-need-evidence rule. Task 4.4 is still unchecked, which softens this a little, but the dated PASS claim itself has no evidence behind it. (2) package.json:36 defines test:container, but nothing under scripts/ references it, so qa:verify does not run it. (3) nginx.conf has the guard: `listen 80 default_server` with `return 421` (lines 8–10), the server_name allow-list (line 15) and `location = /api` (line 48). But src/test/container-config.test.ts asserts none of them. It checks only server_tokens, headers, /assets/, /, resolver, XFF/Host and proxy_hide_header. The only check of the 421 path is container-smoke.mjs:115, which is outside the battery. So someone could delete the default_server 421 block or loosen server_name, which would bring back DNS-rebinding exposure on the LAN-bound stack, and the whole qa:verify battery would still pass. Minor severity fits: today's config is correct, so this is a test-coverage and evidence gap, not a live hole.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:nginx.conf",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 2125,
+      "durationMs": 28168,
+      "sessionId": "112465b8-1325-4e17-9fc7-8cac72151753",
+      "costUsd": 0.19385880000000003,
+      "numTurns": 8,
+      "result": {
+        "refuted": true,
+        "reasoning": "The nginx part of the finding is accurate. `nginx.conf:33-45` overwrites only Host, X-Forwarded-For and X-Forwarded-Proto. Client-supplied `Forwarded`, `X-Real-IP`, `X-Forwarded-Host` and `X-Forwarded-Port` reach the backend unchanged.\n\nThe claimed major impact does not hold, because the security control it says can be bypassed is ruled out by the product contract:\n- `contract/openspec/specs/admin-access/spec.md:227-237` (\"No sign-in lockout\") says failed sign-ins SHALL NOT lock the account or block the client. Its scenario requires a successful sign-in after 20 straight failures.\n- Line 326 lists \"No account lockout, rate limiting, CAPTCHA or two-factor sign-in\" as out of scope (decision OQ-23, LAN-only per NFR-2).\n\nSo unlimited password guessing is already the specified behaviour; spoofing `Forwarded` gives an attacker nothing new. The \"per-IP login throttle\" the finding builds on is not a product requirement. It appears only in an nginx comment, and the reviewer admits they could not read `../backend` to confirm it exists or which forward-headers strategy is used.\n\nThe impact also depends on Spring's `framework` strategy. Under Spring Boot's default `native` strategy, Tomcat's RemoteIpValve reads X-Forwarded-For (which nginx overwrites) and ignores RFC 7239 `Forwarded`. Spring does not read `X-Real-IP` at all without custom code.\n\nThe remaining part, X-Forwarded-Host/Port affecting absolute URL or redirect building, is speculative for a same-origin JSON API behind a Host-allowlisted nginx. Lines 7-15 serve only localhost and bare IPv4 Hosts. No redirect or absolute-URL code is shown.\n\nClearing these headers at the edge would be reasonable hardening. But the stated mechanism (bypassing the throttle, then unlimited guessing) cannot be confirmed and conflicts with the spec, so this is not a major correctness or security defect.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:nginx.conf",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 2158,
+      "durationMs": 25687,
+      "sessionId": "60a7580f-c71d-4737-ad79-6291ef623de5",
+      "costUsd": 0.1407854,
+      "numTurns": 8,
+      "result": {
+        "refuted": true,
+        "reasoning": "The nginx behaviour described is accurate. `location /api/` (nginx.conf:33-45) only sets Host, X-Forwarded-For and X-Forwarded-Proto. nginx forwards every other client header unchanged, including `Forwarded`, `X-Real-IP`, `X-Forwarded-Host` and `X-Forwarded-Port`.\n\nThe claimed exploit, unlimited login guessing past the throttle, only works if the backend reads one of those headers to get the client IP. I could not confirm that it does:\n- Reading ../backend and ../docs was denied for me too.\n- The contract/ submodule has no mention of a forward-headers strategy, ForwardedHeaderFilter, RemoteIpValve or throttling.\n- The finding itself admits it never saw the backend config.\n\nWhether the bypass works depends entirely on that config:\n- **`server.forward-headers-strategy=native` (Tomcat RemoteIpValve):** the valve reads X-Forwarded-For and X-Forwarded-Proto/Host/Port by default. It does not read `Forwarded` or `X-Real-IP`. nginx overwrites X-Forwarded-For, so the throttle key cannot be spoofed.\n- **No strategy:** getRemoteAddr is the nginx container's IP. That would mean one shared throttle bucket, which is a different problem and not a spoof bypass.\n- **`framework` (ForwardedHeaderFilter), or a hand-written X-Real-IP lookup:** only in these cases does the claimed bypass work.\n\nEarlier review rounds in trace/workflow-runs suggested the native strategy. That suggests, but does not prove, the non-exploitable case.\n\nSo the mechanism is plausible but not shown to happen for a real user or attacker. The X-Forwarded-Host/Port remark is speculative too: no redirect or absolute-URL building is shown.\n\nClearing these headers at the edge is still cheap defence-in-depth and worth doing, but as a hardening note rather than a confirmed major issue. Following the instruction to default to refuted when the mechanism can't be positively confirmed, I mark it refuted. If it is kept, it should be downgraded.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/test/provenance.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1488,
+      "durationMs": 15229,
+      "sessionId": "eac5ae76-7f5e-4646-b0b5-d068d017f028",
+      "costUsd": 0.1205858,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I could not refute this finding. The code works the way it describes.\n\nHow the exemption works:\n- `recordedFiles` (src/test/provenance.test.ts:78-92) loads every `docs/qa/**/manifest.json`. It walks all string values in the JSON, whatever their key or position.\n- Any string that matches `MEDIA` (line 18) and resolves under `docs/qa/` without `..` goes into the exemption set. `MEDIA` includes pdf, jpe?g, heic, psd, woff2, djvu, epub and others.\n- `inScope` (line 32) then drops every path in that set from the check. The repo-wide test passes this set at line 103.\n\nA concrete case: `docs/qa/demo/page.pdf` plus a hand-written `docs/qa/demo/manifest.json` containing `{\"x\":\"page.pdf\"}`. The PDF would not be checked, and no \"not listed in fixtures/PROVENANCE.md\" problem would be reported. The tests never cover this. The test at 136-140 only checks `..`, the `src/` path and non-media strings. Its `\"scan.pdf is fine\"` string escapes only because the text after `.pdf` stops the regex matching, not because PDFs are rejected.\n\nNothing else stops it:\n- Nothing checks that the manifest came from the recorder.\n- The recorder (scripts/record-demos.mjs:16-19, 88-105) writes only `<id>.webm` and `<id>.png`, in the shape `{kind:\"demo\", results:[{video, screenshot, …}]}`. So the exemption is much broader than the recorder's real output.\n\nOne small correction to the suggestion: the recorder's manifest uses `results[].video` / `results[].screenshot`, not `clips[].file` / `frs`. The shape check should match that.\n\nSeverity stays minor. Exploiting it needs a deliberately crafted manifest committed with the file. But this test is the NFR-4 guard meant to catch exactly that, and here it fails silently.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/test/provenance.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1521,
+      "durationMs": 15247,
+      "sessionId": "31838440-fbb4-4d2c-a74e-15df2804a7e6",
+      "costUsd": 0.1286894,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "The mechanism is confirmed in the code. In `recordedFiles` (src/test/provenance.test.ts:78-92), the code reads every `docs/qa/**/manifest.json`, walks every JSON string value at any depth, and keeps any value that matches MEDIA (line 84). MEDIA (line 18) includes pdf, jpe?g, heic, psd, woff2, djvu and so on. A kept value resolves to a path under docs/qa/, and that path is then excluded by `inScope` (line 32). So a commit with `docs/qa/demo/page.pdf` and a `docs/qa/demo/manifest.json` containing `{\"x\":\"page.pdf\"}` passes the NFR-4 test with no problems reported.\n\nNothing else blocks this. The recorder (scripts/record-demos.mjs:16) and check-recordings.mjs only produce or expect `.webm` video and `.png` screenshots. check-recordings would complain about a manifest that has no valid clips, but it is a separate gate and does not block this unit test. A manifest that also lists a real clip passes both. The existing test at line 136 even confirms that keys don't matter (`other: [...]` entries are accepted when they resolve under docs/qa).\n\nOn exploitability: there is no external attacker path. This only happens if a contributor or agent deliberately or carelessly writes such a manifest. That makes it a bypass of a guardrail check, not a runtime vulnerability, so the \"minor\" severity is right. The fix suggested in the finding (allow only webm/png and require the recorder's manifest shape) is reasonable.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:e2e/theme.spec.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1618,
+      "durationMs": 22189,
+      "sessionId": "e9885719-0516-481b-95f0-4e3c6b080582",
+      "costUsd": 0.1088066,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "I could not refute the mechanism. Both claimed gaps are real in the code.\n\n1. **The e2e never changes a select's value.** In e2e/theme.spec.ts:33, every match of CONTROLS, `select` and `[role=combobox]` included, only gets `control.click()`. Clicking a native `<select>` opens the browser's dropdown but does not change the value, so `onChange` never runs. A theme picker built as a select would never be exercised, even though the comment at line 8 says selects are covered.\n\n2. **The static regex misses class-based writes.** THEME_WRITE in src/app/theme-source.test.ts:12 is `/data-theme|dataset\\.theme|colorScheme|color-scheme|classList\\.\\w+\\(\\s*['\"`](dark|light|theme)/`. It does not match:\n   - `document.documentElement.className = 'dark'`\n   - `setAttribute('class', 'theme-dark')`\n   - `classList.toggle(isDark ? 'dark' : 'light')`, because the argument starts with an identifier, not a quote.\n\n**What weakens it, but doesn't refute it:**\n- The design system in tokens.css switches theme only through `[data-theme]` and `prefers-color-scheme`. A `.dark` class does nothing by itself. A working class-based toggle would also need app CSS that redefines tokens, e.g. `.dark { --paper: … }`.\n- That CSS would not trip the regex either. It contains no data-theme or color-scheme, unless the author adds `color-scheme`.\n- Any select that writes `data-theme` is still caught by the static check, so only the className path slips through both layers.\n\n**Conclusion:** This is a hypothetical gap in test coverage, not a current product bug. No such toggle exists today. Still, the claim that both FR-58 guards can pass while a toggle exists is mechanically correct. Minor severity is appropriate.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:e2e/theme.spec.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1651,
+      "durationMs": 19985,
+      "sessionId": "bee142f3-11f9-48ef-b337-7a6268fd221c",
+      "costUsd": 0.106899,
+      "numTurns": 5,
+      "result": {
+        "refuted": true,
+        "reasoning": "Nobody can trigger this today. No current code breaks FR-58, and the bypass described only works with extra code that the design system doesn't support.\n\n1. The design system switches theme only through `data-theme`. `src/design-system/tokens.css` changes theme only on `[data-theme=\"dark\"|\"light\"]` and `prefers-color-scheme`. It has no `.dark`, `.light` or `.theme-*` class rules. So `document.documentElement.className = 'dark'`, `setAttribute('class','theme-dark')` or `classList.toggle(isDark?'dark':'light')` change nothing a user can see. For the className route to work, a developer would also have to write their own CSS that overrides `--paper` and the other tokens under a `.dark` selector. That means building a second theme system alongside the DS, which AGENTS.md forbids (\"use only its CSS variables\", don't fork the design system). The supported write paths are `data-theme` and `dataset.theme`, which the DS INSTALL.md documents, and THEME_WRITE (`src/app/theme-source.test.ts:12`) already catches both. It also catches `colorScheme` and `color-scheme`.\n\n2. The `select` point is technically true: `click()` on a native `<select>` doesn't change its value. But a select whose `onChange` writes `data-theme` or `dataset.theme` still fails the static test. Only the made-up case of a select plus a className write plus a custom token-override stylesheet gets past both layers.\n\n3. No `select`, theme picker or class-based theming exists anywhere in `src/` (grep found only the DS files and the test itself). So nothing reachable by a user or attacker breaks FR-58.\n\n4. Calling this a \"security\" problem is wrong. A theme toggle has no exploit impact. At most this is a test-hardening suggestion against a deliberate future rule violation, not a defect that can be reproduced.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/test/provenance.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1577,
+      "durationMs": 16103,
+      "sessionId": "145a1106-f7a5-47b8-ad15-efd9c51bf49e",
+      "costUsd": 0.1232322,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the mechanism in the code. `recordedFiles` (src/test/provenance.test.ts:78-92) adds any string value in a `docs/qa/**/manifest.json` that matches `MEDIA` (line 84). `MEDIA` (lines 17-18) includes pdf, djvu, epub, fonts, psd/ai/eps and svg. `inScope` (line 32) then skips any docs/qa path in that set. So a manifest value such as `\"workbook.pdf\"` or `\"docs/qa/x/scan.epub\"` exempts that file from the PROVENANCE.md check. The real-repo test (line 103) passes `recordedFiles(files)`, so this path is live.\n\nNothing else guards it:\n- Line 84 only checks the file extension.\n- Line 86 only checks the path prefix and `..`.\n- The unit test at line 137 uses `'scan.pdf is fine'`. That string does not end in `.pdf`, so it never tests the case where a manifest lists a real PDF.\n\nscripts/record-demos.mjs writes only `<id>.webm` and `<id>.png` into the manifest (lines 16-19, 88, 93, 105). The exemption is therefore much wider than what the recorder produces. That contradicts the header comment (\"only recordings a manifest lists are exempt\") and the spec, which treats PDFs as documents, not recordings.\n\nExploiting this needs a manifest entry naming the file, written by hand or by mistake. But this test is the NFR-4 guard against committing workbook content, and the gap lets exactly that content through while the test stays green. Narrowing the exemption to webm/png (the recorder's output), or to the manifest's `video`/`screenshot` fields, is a correct fix.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/test/provenance.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1610,
+      "durationMs": 19310,
+      "sessionId": "b6bf414b-0572-4c0c-9b43-998252d6210c",
+      "costUsd": 0.123955,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "The mechanism is real. `recordedFiles` (src/test/provenance.test.ts:78-92) walks every string value in any `docs/qa/**/manifest.json`. It exempts a value only by checking it against `MEDIA` (line 84), and that regex (lines 17-18) includes pdf, djvu, epub, woff, ttf, otf, psd, ai, eps and svg. `inScope` (line 32) then skips any docs/qa path in that set. So a manifest at docs/qa/x/manifest.json that holds the string \"workbook.pdf\" anywhere exempts docs/qa/x/workbook.pdf, and the 'this repository' test passes without a PROVENANCE row. No other guard catches it.\n\nThe exemption is broader than what the recorder writes. scripts/record-demos.mjs:19,105 writes `{kind, results:[{id, proof, video, screenshot, explainer, asserted}]}`, which is only video and screenshot files. The unit test at line 137 only shows that a string like 'scan.pdf is fine' is not matched; a bare 'scan.pdf' would be exempted, and no test checks that case.\n\nExploitability is limited. This is a CI/test guard, not something a runtime user or remote attacker can reach. To bypass it, a contributor has to commit the PDF and also add its name to a docs/qa manifest by hand, or a future recorder field would have to emit such names. It is a real gap in NFR-4 enforcement, but it needs deliberate or unusual action and does not by itself leak data. I'm confirming the finding and downgrading it from major to minor/moderate.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:nginx.conf",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1301,
+      "durationMs": 18232,
+      "sessionId": "8e504faf-76d1-446b-bf55-0cc3995c1c34",
+      "costUsd": 0.1024194,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "The finding is correct. The `default_server` block at nginx.conf:7-11 contains only `listen 80 default_server; server_tokens off; return 421;`. The three `add_header … always` lines are at server level inside the second block (lines 29-31). nginx only passes `add_header` down to that block's own locations, never to a sibling server block. Nothing else adds them: the Dockerfile copies this file to `/etc/nginx/conf.d/default.conf`, so it is included inside the stock nginx:stable-alpine `http {}` block, and that stock config has no `add_header` at http level. So any request whose Host is not localhost or a bare IPv4 address gets nginx's built-in 421 HTML page with no nosniff, no Referrer-Policy and no CSP. That breaks the spec's \"Every response SHALL carry…\" wording. tools/container-smoke.mjs:115 checks only `status === 421`, so the smoke test never catches it.\n\nI recommend downgrading the severity. The 421 body is nginx's fixed error page: it has no attacker-controlled content, no script and no app state. Framing it or MIME-sniffing it gets an attacker nothing, and DNS rebinding is still blocked. This is a real gap against the spec's literal wording, and the fix is cheap (copy the headers or use a shared include, and extend the smoke test). But the security risk is minimal, so \"major\" is too high.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:nginx.conf",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1334,
+      "durationMs": 12775,
+      "sessionId": "33500aba-b4a2-489a-a03e-1f00be00f46e",
+      "costUsd": 0.0773174,
+      "numTurns": 3,
+      "result": {
+        "refuted": false,
+        "reasoning": "The mechanism is real and easy to reproduce. In nginx.conf, the default_server block (lines 7-11) has only `server_tokens off; return 421;`. The three `add_header … always` directives (lines 29-31) are scoped to the second server block, and nginx does not inherit add_header across server blocks. So `curl -H 'Host: evil.example' http://<bind>/` returns 421 with nginx's built-in HTML error body and no nosniff, Referrer-Policy or CSP header. The quoted spec says \"Every response SHALL carry…\", so this is a literal spec-compliance gap, and the smoke test checks only the status code, so nothing catches it.\n\nHowever, it can't be exploited in practice. The 421 body is nginx's fixed error page. It reflects no user input, so MIME sniffing gives an attacker nothing. It holds no links or subresources, so there is no referrer to leak. It has no interactive UI, so framing it (no frame-ancestors) is no clickjacking target. The block exists to reject rebinding hosts, and it still does that, because the attacker's origin only ever gets a static 421. So I confirm the finding as a spec deviation, but its real security impact is close to zero. Downgrade from major to minor. The fix (a shared include, or repeating the headers in the default server, plus a smoke-test assertion) is still cheap and worth doing to satisfy \"every response\".",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/test/container-config.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1653,
+      "durationMs": 16782,
+      "sessionId": "11c9d366-4edc-4a92-86ae-c33ed92201f7",
+      "costUsd": 0.1091454,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I could not refute the finding. The mechanism it describes is correct.\n\n1. **The guard exists, but the unit test never checks it.** nginx.conf:6-15 holds the guard: a `listen 80 default_server` block that does `return 421`, and an app server limited to `server_name localhost \"~^[0-9]{1,3}(\\.[0-9]{1,3}){3}$\"`. src/test/container-config.test.ts (lines 1-90) tests server_tokens, the security headers, try_files, the resolver, expires, X-Forwarded-For, proxy_hide_header and X-Forwarded-Proto. It never mentions default_server, 421 or server_name.\n\n2. **The only check sits outside the battery.** I searched the whole repo for `421|default_server|server_name|container-smoke|test:container`, excluding node_modules. There is no hit in e2e/, scripts/, trace/acceptance-contracts.json or any other test. The only check is tools/container-smoke.mjs:115, and the only thing that runs it is package.json:36 `test:container`. That is not one of the qa:verify battery scripts listed in AGENTS.md (lint, typecheck, test:run, test:coverage, test:e2e, build).\n\n3. **The project admits the smoke isn't fully runnable yet.** openspec tasks.md:31 says the e2e step of `test:container` waits for DOUCKO_CHILD_DISPLAY_NAME.\n\nSo if someone deleted the default_server block or widened server_name to `_`, every battery check would still pass, even though spec scenario spec.md:160 requires a 421. This is a real spec-compliance gap, and \"major\" severity fits for a guard against DNS rebinding.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/test/container-config.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1686,
+      "durationMs": 18753,
+      "sessionId": "dff46323-ee44-4e2c-9d4e-54d4918d4911",
+      "costUsd": 0.1330354,
+      "numTurns": 6,
+      "result": {
+        "refuted": false,
+        "reasoning": "The finding holds. src/test/container-config.test.ts has no assertion about `default_server`, `return 421` or `server_name`. I grepped e2e/, src/, scripts/, evals/ and trace/ for 421, evil.example and default_server, and none of them check it. The only check is tools/container-smoke.mjs:115, which runs only through `npm run test:container` (package.json:36, with `--e2e`). Neither scripts/qa-verify.mjs nor trace/acceptance-contracts.json mentions it. So deleting the first server block in nginx.conf (lines 7-11) or widening server_name would leave the qa:verify battery green, as the finding says.\n\nOn exploitability: the guard is in place and correct today (nginx.conf:7-15), so no user or attacker can exploit anything right now. The finding is a missing regression check, not a live vulnerability. A future edit would have to remove the guard before the DNS-rebinding exposure (judged minor in the earlier review round) came back. For that reason I recommend a downgrade from major to minor.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:nginx.conf",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1507,
+      "durationMs": 21336,
+      "sessionId": "7f0a71c0-1005-4f99-a88d-2ef3b7275428",
+      "costUsd": 0.16776839999999998,
+      "numTurns": 7,
+      "result": {
+        "refuted": true,
+        "reasoning": "The nginx fact is correct. `nginx.conf:33-45` only sets Host, X-Forwarded-For (overwritten with $remote_addr) and X-Forwarded-Proto, so nginx passes a client's `Forwarded`, `X-Real-IP`, `X-Forwarded-Host` and `X-Forwarded-Port` through unchanged. That alone is not a defect. It only becomes an IP-spoofing bug if the backend uses one of those headers as the client address, and I could not confirm that:\n\n(1) I cannot read the backend; access to ../backend was denied. The contract/docs store says nothing about forward-headers-strategy or how the login throttle picks its key. The finding itself says it \"could not verify the backend's setting\".\n\n(2) The finding assumes a backend that relies on these headers, but Spring Boot's common setups don't. The default `server.forward-headers-strategy` is NONE outside cloud platforms, so the throttle would see getRemoteAddr, which is the nginx container. The `native` strategy uses Tomcat's RemoteIpValve, which reads X-Forwarded-For and X-Forwarded-Proto and ignores RFC 7239 `Forwarded`. Only the `framework` strategy (ForwardedHeaderFilter) prefers `Forwarded`, and there is no evidence the backend uses it. X-Real-IP is not read by Spring at all. X-Forwarded-Host and X-Forwarded-Port affect URL building, not the client address, so they have nothing to do with the throttle-spoofing claim.\n\n(3) The requirement as written (\"never a client-supplied `X-Forwarded-For`\"; spec.md:137 and the scenario at :164) is met: the header is overwritten, and both container-config.test.ts:51 and container-smoke.mjs:102-105 check this.\n\nThe bug depends on a backend configuration nobody has verified, so the mechanism is not positively confirmed. Stripping `Forwarded` would still be a cheap hardening step, and the backend review should check which forward-headers strategy it uses.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:nginx.conf",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1540,
+      "durationMs": 29438,
+      "sessionId": "f5e78b3a-aa91-4bfc-8c47-9b938c259960",
+      "costUsd": 0.16486660000000003,
+      "numTurns": 10,
+      "result": {
+        "refuted": true,
+        "reasoning": "I couldn't confirm the attack works. nginx.conf:39 does overwrite X-Forwarded-For with $remote_addr. The spec scenario (spec.md:162-165) only covers a client-supplied X-Forwarded-For, and that is handled. It is true that Forwarded, X-Real-IP, X-Forwarded-Host and X-Forwarded-Port pass through unchanged, but that only matters if the backend trusts them. The finding admits it never checked that, and I couldn't either: the read was denied for ../backend and ../docs, and the contract submodule doesn't mention forward-headers or how the throttle is keyed.\n\nIn Spring Boot, server.forward-headers-strategy defaults to NONE outside cloud platforms. With NONE, getRemoteAddr is the nginx peer, so no forwarded header has any effect. With NATIVE (Tomcat RemoteIpValve), only X-Forwarded-For and X-Forwarded-Proto are read for the client address, not RFC 7239 Forwarded or X-Real-IP. Only FRAMEWORK (ForwardedHeaderFilter) honours Forwarded. Nothing shows the backend opts into FRAMEWORK, or reads X-Real-IP or Forwarded by hand.\n\nX-Forwarded-Host and X-Forwarded-Port don't affect the client address at all, so they can't fool the per-IP login throttle. Also, nginx returns 421 for any Host other than localhost or a bare IPv4 address, which limits who can reach it.\n\nThe fix is cheap hardening: clear Forwarded and set X-Real-IP to $remote_addr. But the claimed spoof depends on a backend setting nobody has shown exists, so I'm defaulting to refuted.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:eslint-rules/no-literal-ui-text.js",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1469,
+      "durationMs": 18623,
+      "sessionId": "e737ef8b-ee14-4c5d-b49c-75fb1eeeb6a3",
+      "costUsd": 0.12803260000000002,
+      "numTurns": 6,
+      "result": {
+        "refuted": true,
+        "reasoning": "The line is quoted correctly: `no-literal-ui-text.js:80` returns `[]` for any `t(...)` call without looking at its arguments. But the harm the finding claims can't happen in this codebase. The only `t` is the one returned by `useT()` in `src/i18n/messages.ts:13-16`, and its type is `(key: MessageKey) => string`. It takes exactly one argument and simply returns `catalog[key]`. There is no params object and no interpolation.\n\nSo `t('greeting', { name: 'Ahoj' })` fails `npm run typecheck` (strict TS: \"Expected 1 arguments, but got 2\"). Even if it got past the type checker, `t` would ignore the second argument and never show it. The finding's premise, \"the params object is shown text\", is false here, and exempting all of `t()`'s arguments is correct for a key-only lookup.\n\nThe side note about an immediately invoked function (`{(() => 'Ahoj')()}`) is a real but tiny gap: a function-expression callee isn't inspected. It's a contrived pattern, though, and the file header already says the pseudo-catalog render test (`src/app/i18n-coverage.test.tsx`) is the backstop for what static analysis misses. It doesn't support the headline claim.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:eslint-rules/no-literal-ui-text.js",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1502,
+      "durationMs": 20491,
+      "sessionId": "14147cfe-9bc9-469f-b553-0ffe80cac770",
+      "costUsd": 0.1302006,
+      "numTurns": 6,
+      "result": {
+        "refuted": true,
+        "reasoning": "The rule code does what the finding says: line 80 returns [] for any `t(...)` call without looking at its arguments. But the main harm it claims can't happen. The only `t` in the app comes from `useT()` in src/i18n/messages.ts:13, and its type is `(key: MessageKey) => string`. It takes exactly one argument and does no interpolation; it just returns `catalog[key]`. Under strict TypeScript, `t('greeting', { name: 'Ahoj' })` fails the typecheck with \"Expected 1 arguments, but got 2\", and the typecheck is part of the qa:verify battery. Even if that error were ignored, the second argument is thrown away at runtime, so 'Ahoj' never reaches the screen or the accessibility tree. No params object exists that could carry shown text, so exempting all of t()'s arguments lets no visible literal through. The side note is a real but contrived gap: an immediately invoked function such as `{(() => 'Ahoj')()}` isn't inspected, because only a MemberExpression callee is checked. That's an unusual way to write code, and the rule's own header says static gaps are covered by the pseudo-catalog render test (src/app/i18n-coverage.test.tsx). It's also not the finding's main claim. Since the headline mechanism (literal interpolation values passing through t()) can't occur with this codebase's t signature, the finding is refuted.",
+        "severityAdjustment": "downgrade"
+      }
+    }
+  ],
+  "logs": [
+    {
+      "phase": "Find",
+      "message": "14 unique findings across 4 dimensions"
+    },
+    {
+      "phase": "Report",
+      "message": "confirmed: 9, contested: 2, rejected: 3"
+    }
+  ],
+  "persisted": [
+    "openspec/changes/implement-platform-foundation-ui/review-findings.json"
+  ],
+  "returned": {
+    "scope": "slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui",
+    "summary": "Review gate for slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui: 9 confirmed, 2 contested (treat as confirmed unless trivially wrong), 3 rejected.",
+    "confirmed": [
+      {
+        "title": "docs/qa recordings exemption still covers PDFs, fonts and images named in any key of any manifest",
+        "file": "src/test/provenance.test.ts",
+        "line": 84,
+        "severity": "major",
+        "confidence": "medium",
+        "evidence": "`recordedFiles` walks every string value in every `docs/qa/**/manifest.json` and exempts it if `MEDIA.test(v)`. MEDIA includes pdf, djvu, epub, fonts and every image type, not just recording formats. So `{\"note\": \"scan.pdf\"}` in a hand-written manifest exempts `docs/qa/x/scan.pdf`, which could be a workbook scan (NFR-4). The spec only exempts files a manifest \"lists as recordings\". The round-3 fix narrowed this from \"any string\" to \"any media string\" but did not limit it to recordings.",
+        "suggestion": "Accept only the recorder's clip/screenshot field (e.g. `clips[].file`), and only recording types (webm/mp4/png). Add a test case where a `.pdf` listed in a manifest is still reported.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I could not refute the mechanism; it is in the code as described. `recordedFiles` (src/test/provenance.test.ts:78-92) walks every value of every `docs/qa/**/manifest.json`, whatever key it sits under. At line 84 the only filter is `MEDIA.test(v)`. MEDIA (line 17-18) includes pdf, djvu, epub, fonts, psd/ai/eps and every image type, not just recording formats. Any string that ends in `.pdf` is therefore resolved against the manifest's folder and added to `listed`. `inScope` (line 32) then drops that path, so a workbook scan at `docs/qa/x/scan.pdf` would never be reported if a manifest has e.g. `{\"note\":\"scan.pdf\"}`.\n\nNothing else guards against this:\n- The manifest.json files are not checked themselves. They are not MEDIA or DOCUMENTS, and SOURCE_DATA only covers src/ and e2e/. A hand-written or edited manifest is never validated.\n- The test at line 137 passes only because the note is `'scan.pdf is fine'`, which does not end in `.pdf`, so the regex fails. It does not cover a bare `\"scan.pdf\"`.\n- The module doc (line 12) says only \"recordings a manifest lists are exempt\", so exempting any media string under any key is broader than intended.\n\nThe bug is real, but triggering it takes a manifest.json under docs/qa that names a non-recording file in some field. That is an unusual misuse or a deliberate bypass, not a normal workflow, so I'd downgrade the severity from major to minor/moderate.",
+          "The mechanism is real. In src/test/provenance.test.ts:78-92, `recordedFiles` walks every string value at any depth of every `docs/qa/**/manifest.json`. The only filter is `MEDIA.test(v)` (line 84), and MEDIA (line 18) includes pdf, djvu, epub, fonts and all image types, not just recording formats. So a manifest containing `{\"note\":\"scan.pdf\"}` at docs/qa/x/manifest.json puts `docs/qa/x/scan.pdf` into the exemption set. `inScope` (line 32) then drops it, and an unlisted workbook PDF passes the NFR-4 check. The existing test (line 137) only shows that `'scan.pdf is fine'` is rejected, and that is only because the string doesn't end in `.pdf`. A bare `'scan.pdf'` in `note` would be accepted. The real recorder (scripts/record-demos.mjs:19,105) writes `{kind, results:[{id, proof, video, screenshot, explainer, asserted}]}`, so the check could be limited to `results[].video` / `results[].screenshot` with webm/mp4/png types, as the finding suggests. The spec comment (line 12) says only \"recordings a manifest lists\" are exempt, so this does diverge from the stated contract.\n\nExploitability: this is a hole in a CI guard, not a runtime bug a user can hit. To trigger it, someone has to commit a PDF under docs/qa/ and also add a manifest.json beside it that names the PDF. A normal recorder run never does this, because it only writes clip and screenshot paths. So it can't happen by accident in the normal flow. It needs a hand-written or edited manifest, for example an agent trying to get a failing provenance check to pass. That can happen, but it's a deliberate step, which is why I'd downgrade from major to minor. The mechanism itself is confirmed and easy to reproduce with a single JSON key."
+        ]
+      },
+      {
+        "title": "No-toggle e2e only clicks a select/combobox, so a theme picker built as a select is never switched",
+        "file": "e2e/theme.spec.ts",
+        "line": 33,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "CONTROLS includes `select` and `[role=combobox]`, but the loop only calls `control.click(...)`. Clicking a native `<select>` opens its popup and changes no value, so a Light/Dark/System select passes the check without its options ever being chosen. The spec scenario says every select on a route is \"activated\". Only the static source regex would catch such a picker.",
+        "suggestion": "For `select`, call `selectOption` for each option and check the theme after each one. For comboboxes and listboxes, open them and click each `[role=option]` that appears.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "The finding holds. `e2e/theme.spec.ts:9-12` lists `select` and `[role=combobox]` in CONTROLS, but the loop at lines 30-40 only calls `control.click()` before checking the theme. In Playwright, clicking a native `<select>` focuses it and may open its popup, but it never changes the selected value. A Light/Dark/System `<select>` (the default is usually System or OS) would therefore pass with no option ever chosen. A custom combobox is the same: one click opens the listbox, and the `[role=option]` items that appear afterwards are not picked up, because `count()` is re-read each loop and `nth(i)` indices shift. The test therefore doesn't really cover selects. The spec scenario (`openspec/changes/implement-platform-foundation-ui/specs/platform-foundation/spec.md:25`) says every \"select on a route is activated\", which this code doesn't do for selects. Nothing else in the e2e covers it. The comment in `src/app/theme-source.test.ts` says the e2e \"activates every control\", so the static test doesn't make up for the gap. It is only a regex backstop, as the finding says. The severity stays minor: there is probably no theme select today, so this is a hole in a guard test, not a defect users would see.",
+          "The mechanism holds. At e2e/theme.spec.ts:33 the loop only calls `control.click()` on every match of CONTROLS, and CONTROLS includes `select` and `[role=combobox]`. In Playwright, clicking a native `<select>` does not choose an option, and clicking a combobox only opens it, so a Light/Dark select would pass the check without being switched. As an e2e check it really is incomplete.\n\nIt is only a latent test gap, though, not something a user or attacker can hit today:\n1. No app source under src/ has a `<select>` or a combobox, so no theme picker exists for this check to miss.\n2. src/app/theme-source.test.ts statically rejects any app source that contains `data-theme`, `dataset.theme`, `colorScheme`, `color-scheme`, or a `classList.*('dark'|'light'|'theme'…)` call. A select-based picker would almost certainly use one of these to write the theme, so this unit test would fail on it. The finding admits this backstop exists.\n\nA regression would need both a new select picker and a way of applying the theme that the regex does not match (for example, setting inline style variables directly). That makes this a hardening suggestion.\n\nVerdict: the claim is technically correct, so it is not refuted. Downgrade it to nit/low."
+        ]
+      },
+      {
+        "title": "Lint rule exempts the `name` key in nested objects, though `name` is display text on most components",
+        "file": "eslint-rules/no-literal-ui-text.js",
+        "line": 50,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "`NON_TEXT_KEYS = new Set([...NON_TEXT_PROPS, \"value\", \"name\"])` skips the `name` key in every object literal. As a prop, `name` is treated as text except on Icon and ChoiceGroup, and `SubjectTile` shows `name` (game.tsx:54). So `<SubjectList items={[{ name: 'Matematika' }]} />` passes lint, while `<SubjectTile name=\"Matematika\" />` is reported. The two cases contradict each other.",
+        "suggestion": "Remove `name` from NON_TEXT_KEYS, or exempt it only where `value`/`id` sits beside it (ChoiceOption-style objects). Add an invalid case for `{ name: 'Matematika' }` inside a component prop.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I confirmed the mechanism in the code. At eslint-rules/no-literal-ui-text.js:50, NON_TEXT_KEYS contains \"name\". The ObjectExpression branch at line 71 skips every property whose key is in that set, with no check on which component or context the object belongs to. So in `<X items={[{ name: 'Matematika' }]} />`, literalTexts never sees the string 'Matematika'.\n\nThe prop path behaves differently. isTextAttribute (lines 136-138) treats `name` as text on every PascalCase component except Icon and ChoiceGroup. SubjectTile (game.tsx:54) and SubjectChip (core.tsx:107) take `name` as a display name. So `<SubjectTile name=\"Matematika\"/>` is reported, but the same string under a `name` key in an object literal is not. That is the inconsistency the finding describes.\n\nI tried to refute it and couldn't. The `name` key exemption doesn't seem to protect any real identifier-object shape in the design system. ChoiceOption is `{ value, label }` (practice.tsx:84), with no `name` key. SubjectDef (core.tsx:15) is the one design-system type with a `name` field, and there it is a display name. So the exemption hides display text and doesn't cover an actual identifier case.\n\nThe documented backstop for things the rule can't see (src/app/i18n-coverage.test.tsx) is meant for text reached through variables and other modules. It doesn't explain a hole inside an inline literal that the rule already walks.\n\nMinor severity fits. It is a lint false negative, not a runtime bug, and the pseudo-catalog render test may still catch the visible string.",
+          "I confirmed the mechanism in the code. At eslint-rules/no-literal-ui-text.js:50, `NON_TEXT_KEYS` includes `\"name\"`. At line 71, `literalTexts` skips any object property whose key is in `NON_TEXT_KEYS`. So `<Comp items={[{ name: 'Matematika' }]} />` produces no report. Meanwhile `isTextAttribute` (lines 136-138) treats a `name` prop as text on every PascalCase component except Icon and ChoiceGroup, so `<SubjectTile name=\"Matematika\" />` is reported. The two cases are handled inconsistently, as the finding says.\n\nI tried to refute it and could not:\n- **Is `name` really an identifier key in the design system?** No. The comment on line 49 justifies the exemption with ChoiceOption-style objects, but `ChoiceOption` is `{ value: string; label: React.ReactNode }` (practice.tsx:84). It has no `name` key, so the exemption protects no real identifier case.\n- **Where does a `name` key appear?** The only design-system object type with one is `SubjectDef` (core.tsx:15-23), and there `name` is display text: 'Matematika', 'Český jazyk', and so on. `SubjectChip` and `SubjectTile` render it through `resolveSubject` (core.tsx:38, game.tsx:61).\n- **Do the rule's tests cover it?** No test in eslint-rules mentions `name`, so no test pins either behaviour.\n\nHow likely it is in practice: today no component takes an array of `{name}` objects (`SubjectList` is hypothetical), and a `subject={{ name: … }}` prop is skipped anyway because `subject` is in `NON_TEXT_PROPS`. Still, a feature component that takes items with a display `name` is a plausible thing to write (for example admin source or subject lists, and the API schema has `name: string` fields). That code would get past the NFR-9 lint without a report. The only backstop is the pseudo-catalog render test, and it only sees paths that actually render.\n\nThis is a developer-tooling gap with no runtime or security impact, so minor severity is right."
+        ]
+      },
+      {
+        "title": "Call-argument coverage flags locale and format arguments, so idiomatic Intl formatting fails lint",
+        "file": "eslint-rules/no-literal-ui-text.js",
+        "line": 84,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "Every literal argument of any call is now reported (`...node.arguments.flatMap(literalTexts)`). Only `t()` is exempt. So `{n.toLocaleString('cs-CZ')}`, `{d.toLocaleDateString('cs', { month: 'long' })}` and `<Stat value={x.toFixed(1)} unit=... />`-style formatting all fail with `error`. Locale tags and Intl options are not UI text. This pushes later slices (admin stats) toward eslint-disable comments, which turn the rule off for real literals too.",
+        "suggestion": "Skip arguments of known formatting methods (`toLocaleString`, `toLocaleDateString`, `toLocaleTimeString`, `Intl.*` constructors), or skip BCP-47-shaped strings and the values of Intl option objects. Add valid test cases for both.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I confirmed the mechanism by reading the code. In `literalTexts`, the `CallExpression` case (lines 78–85) exempts only `t(...)`. For every other call, it returns any literal containing a letter from both the receiver and all arguments. `JSXExpressionContainer` (line 181) reports every such literal, and `eslint.config.js:51` sets the rule to `'error'`. Two cases fail:\n\n- `{n.toLocaleString('cs-CZ')}`: the argument `'cs-CZ'` contains letters, so it is reported.\n- `{d.toLocaleDateString('cs', { month: 'long' })}`: `'cs'` is reported. The rule also recurses into the object (line 71), and `month` is not in `NON_TEXT_KEYS`, so `'long'` is reported too.\n\nNothing exempts locale tags, Intl option values or format methods. The repo's own e2e code already uses `toLocaleLowerCase('cs')` (outside the rule's JSX scope). That shows the idiom is real and that a future `{x.toLocaleString('cs')}` in a component would be flagged.\n\nOne example in the finding is wrong. `x.toFixed(1)` passes a number with no letters, so it is not flagged. The core claim still holds. Minor severity fits: it's a false positive that slows development, not a correctness hole in shipped UI.",
+          "Confirmed by running it. In eslint-rules/no-literal-ui-text.js:78-85, the CallExpression branch only skips `t()`. For every other call it collects literal strings from both the receiver and all arguments. ObjectExpression values are collected too, unless the key is in NON_TEXT_KEYS, and `month`, `weekday` and the other Intl option keys are not. eslint.config.js:51 sets the rule to 'error'.\n\nI wrote a temporary src file with `<p>{n.toLocaleString('cs-CZ')} {d.toLocaleDateString('cs', { month: 'long' })}</p>`. The post-edit lint hook reported 3 errors: \"cs-CZ\", \"cs\" and \"long\", all as doucko/no-literal-ui-text. I then deleted the file; the working tree is back to its original state.\n\nOne part of the evidence is wrong: `x.toFixed(1)` passes a number, so it is not flagged. That doesn't change the core finding. There is no runtime or user impact; the cost is to developers. Idiomatic locale formatting in JSX fails lint, which pushes people toward workarounds such as eslint-disable comments. The minor severity fits."
+        ]
+      },
+      {
+        "title": "Container smoke PASS is claimed with no evidence file, and the Host guard has no static test",
+        "file": "openspec/changes/implement-platform-foundation-ui/tasks.md",
+        "line": 31,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "tasks.md says \"`npm run test:container` … (all PASS 2026-10-04)\". But `tools/container-smoke.mjs` only prints to the console and writes no report under docs/qa. `test:container` is also not run by qa:verify. container-config.test.ts checks XFF and the hidden headers, but has no assertion for the `default_server` `return 421`, the `server_name` allow-list or `location = /api { return 404; }`. A regression in the DNS-rebinding guard would pass the whole battery. AGENTS.md requires done-claims to carry a resolvable evidence pointer.",
+        "suggestion": "Have container-smoke write its PASS/FAIL lines to `docs/qa/container-smoke-latest.md` and cite that file in tasks.md. Add static assertions to container-config.test.ts for the 421 default server, the server_name pattern and the `/api` 404 location.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I checked each part of the finding against the code, and it holds.\n\n1. **The PASS claim has no evidence file.** tasks.md:31 says \"`npm run test:container` … (all PASS 2026-10-04)\". The only file `tools/container-smoke.mjs` writes is the stub nginx config (line 88, `writeFileSync(join(stubDir,'default.conf'), STUB)`). It writes nothing under `docs/qa`, and no container-smoke file exists in `docs/qa`.\n\n2. **The battery never runs it.** `test:container` is defined in package.json, but `scripts/qa-verify.mjs` never mentions \"container\". So `qa:verify` does not run it.\n\n3. **The Host guard has no static test.** `src/test/container-config.test.ts` covers server_tokens, the security headers, `/assets/` 404, the resolver, XFF and proxy_hide_header. It has no assertion for:\n   - the `return 421` default server (nginx.conf:10)\n   - the `server_name` allow-list (nginx.conf:15)\n   - `location = /api` (nginx.conf:48)\n\n   Its `location()` helper only matches `location <path> {`, so the exact-match `= /api` block is not covered by accident either. The live smoke does check 421 and `/api` 404 (lines 100 and 115), but that smoke is outside the battery. A regression in the DNS-rebinding guard would therefore pass `qa:verify`.\n\nSeverity stays minor. The task is a sub-bullet of an unchecked item (4.4), and it says \"Partly automated\", so this is not a release claim. Still, the \"all PASS\" wording has no evidence pointer behind it, and AGENTS.md requires one for done-claims.",
+          "Confirmed against the code. (1) tasks.md:31 claims \"`npm run test:container` … (all PASS 2026-10-04)\". tools/container-smoke.mjs uses writeFileSync only to write the stub nginx default.conf (line 88). It writes no report under docs/qa, so nothing on disk backs the PASS claim. That breaks the AGENTS.md done-claims-need-evidence rule. Task 4.4 is still unchecked, which softens this a little, but the dated PASS claim itself has no evidence behind it. (2) package.json:36 defines test:container, but nothing under scripts/ references it, so qa:verify does not run it. (3) nginx.conf has the guard: `listen 80 default_server` with `return 421` (lines 8–10), the server_name allow-list (line 15) and `location = /api` (line 48). But src/test/container-config.test.ts asserts none of them. It checks only server_tokens, headers, /assets/, /, resolver, XFF/Host and proxy_hide_header. The only check of the 421 path is container-smoke.mjs:115, which is outside the battery. So someone could delete the default_server 421 block or loosen server_name, which would bring back DNS-rebinding exposure on the LAN-bound stack, and the whole qa:verify battery would still pass. Minor severity fits: today's config is correct, so this is a test-coverage and evidence gap, not a live hole."
+        ]
+      },
+      {
+        "title": "docs/qa recordings exemption also covers PDFs, photos and fonts listed in any docs/qa manifest.json",
+        "file": "src/test/provenance.test.ts",
+        "line": 84,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "`recordedFiles` exempts any string in any `docs/qa/**/manifest.json` that matches MEDIA. MEDIA includes pdf, jpg, heic, psd, woff2 and djvu, not only the clip and screenshot formats the recorder writes. A contributor or agent could commit a workbook scan (`docs/qa/demo/page.pdf` or `scan.jpg`) together with a hand-written `docs/qa/demo/manifest.json` that names it. The NFR-4 provenance test would then report nothing, and workbook content would enter git unchecked. Nothing requires the manifest to come from scripts/record-demos.mjs.",
+        "suggestion": "Limit the exemption to the formats the recorder actually produces, for example `/\\.(webm|mp4|png|gif)$/i`. Also require the manifest entry to have the recorder's shape (for example `clips[].file` with `frs`), not any string anywhere in the JSON. Add a negative test with `docs/qa/demo/page.pdf` listed in a manifest.",
+        "dimension": "security",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I could not refute this finding. The code works the way it describes.\n\nHow the exemption works:\n- `recordedFiles` (src/test/provenance.test.ts:78-92) loads every `docs/qa/**/manifest.json`. It walks all string values in the JSON, whatever their key or position.\n- Any string that matches `MEDIA` (line 18) and resolves under `docs/qa/` without `..` goes into the exemption set. `MEDIA` includes pdf, jpe?g, heic, psd, woff2, djvu, epub and others.\n- `inScope` (line 32) then drops every path in that set from the check. The repo-wide test passes this set at line 103.\n\nA concrete case: `docs/qa/demo/page.pdf` plus a hand-written `docs/qa/demo/manifest.json` containing `{\"x\":\"page.pdf\"}`. The PDF would not be checked, and no \"not listed in fixtures/PROVENANCE.md\" problem would be reported. The tests never cover this. The test at 136-140 only checks `..`, the `src/` path and non-media strings. Its `\"scan.pdf is fine\"` string escapes only because the text after `.pdf` stops the regex matching, not because PDFs are rejected.\n\nNothing else stops it:\n- Nothing checks that the manifest came from the recorder.\n- The recorder (scripts/record-demos.mjs:16-19, 88-105) writes only `<id>.webm` and `<id>.png`, in the shape `{kind:\"demo\", results:[{video, screenshot, …}]}`. So the exemption is much broader than the recorder's real output.\n\nOne small correction to the suggestion: the recorder's manifest uses `results[].video` / `results[].screenshot`, not `clips[].file` / `frs`. The shape check should match that.\n\nSeverity stays minor. Exploiting it needs a deliberately crafted manifest committed with the file. But this test is the NFR-4 guard meant to catch exactly that, and here it fails silently.",
+          "The mechanism is confirmed in the code. In `recordedFiles` (src/test/provenance.test.ts:78-92), the code reads every `docs/qa/**/manifest.json`, walks every JSON string value at any depth, and keeps any value that matches MEDIA (line 84). MEDIA (line 18) includes pdf, jpe?g, heic, psd, woff2, djvu and so on. A kept value resolves to a path under docs/qa/, and that path is then excluded by `inScope` (line 32). So a commit with `docs/qa/demo/page.pdf` and a `docs/qa/demo/manifest.json` containing `{\"x\":\"page.pdf\"}` passes the NFR-4 test with no problems reported.\n\nNothing else blocks this. The recorder (scripts/record-demos.mjs:16) and check-recordings.mjs only produce or expect `.webm` video and `.png` screenshots. check-recordings would complain about a manifest that has no valid clips, but it is a separate gate and does not block this unit test. A manifest that also lists a real clip passes both. The existing test at line 136 even confirms that keys don't matter (`other: [...]` entries are accepted when they resolve under docs/qa).\n\nOn exploitability: there is no external attacker path. This only happens if a contributor or agent deliberately or carelessly writes such a manifest. That makes it a bypass of a guardrail check, not a runtime vulnerability, so the \"minor\" severity is right. The fix suggested in the finding (allow only webm/png and require the recorder's manifest shape) is reasonable."
+        ]
+      },
+      {
+        "title": "The provenance exemption covers PDFs, e-books and fonts listed in a docs/qa manifest, not just recordings",
+        "file": "src/test/provenance.test.ts",
+        "line": 84,
+        "severity": "major",
+        "confidence": "high",
+        "evidence": "Coverage summary: 18 scenarios: 15 implemented, 3 partial, 0 missing, 0 contradicted.\n\nSpec (Unlisted asset fails): the only exemptions are `contract/` and \"the media files a `docs/qa/**/manifest.json` lists as recordings\". The spec counts PDFs as documents, not media (\"a media, document or data file\"). Code: `recordedFiles` exempts any string that matches `MEDIA`, and `MEDIA` (line 17-18) includes `pdf|djvu|epub|woff2?|ttf|otf|psd|ai|eps|svg`. So a manifest under docs/qa that lists `\"workbook.pdf\"` makes `docs/qa/<dir>/workbook.pdf` exempt from the manifest check. That is exactly the workbook content NFR-4 forbids, and the provenance test still passes.",
+        "suggestion": "Limit the recording exemption to what scripts/record-demos.mjs writes: a RECORDINGS regex such as /\\.(webm|mp4|png|jpe?g|gif)$/i, or better, only the manifest's clip/file fields. Add a unit case where a manifest lists `scan.pdf` and the file is still reported.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I confirmed the mechanism in the code. `recordedFiles` (src/test/provenance.test.ts:78-92) adds any string value in a `docs/qa/**/manifest.json` that matches `MEDIA` (line 84). `MEDIA` (lines 17-18) includes pdf, djvu, epub, fonts, psd/ai/eps and svg. `inScope` (line 32) then skips any docs/qa path in that set. So a manifest value such as `\"workbook.pdf\"` or `\"docs/qa/x/scan.epub\"` exempts that file from the PROVENANCE.md check. The real-repo test (line 103) passes `recordedFiles(files)`, so this path is live.\n\nNothing else guards it:\n- Line 84 only checks the file extension.\n- Line 86 only checks the path prefix and `..`.\n- The unit test at line 137 uses `'scan.pdf is fine'`. That string does not end in `.pdf`, so it never tests the case where a manifest lists a real PDF.\n\nscripts/record-demos.mjs writes only `<id>.webm` and `<id>.png` into the manifest (lines 16-19, 88, 93, 105). The exemption is therefore much wider than what the recorder produces. That contradicts the header comment (\"only recordings a manifest lists are exempt\") and the spec, which treats PDFs as documents, not recordings.\n\nExploiting this needs a manifest entry naming the file, written by hand or by mistake. But this test is the NFR-4 guard against committing workbook content, and the gap lets exactly that content through while the test stays green. Narrowing the exemption to webm/png (the recorder's output), or to the manifest's `video`/`screenshot` fields, is a correct fix.",
+          "The mechanism is real. `recordedFiles` (src/test/provenance.test.ts:78-92) walks every string value in any `docs/qa/**/manifest.json`. It exempts a value only by checking it against `MEDIA` (line 84), and that regex (lines 17-18) includes pdf, djvu, epub, woff, ttf, otf, psd, ai, eps and svg. `inScope` (line 32) then skips any docs/qa path in that set. So a manifest at docs/qa/x/manifest.json that holds the string \"workbook.pdf\" anywhere exempts docs/qa/x/workbook.pdf, and the 'this repository' test passes without a PROVENANCE row. No other guard catches it.\n\nThe exemption is broader than what the recorder writes. scripts/record-demos.mjs:19,105 writes `{kind, results:[{id, proof, video, screenshot, explainer, asserted}]}`, which is only video and screenshot files. The unit test at line 137 only shows that a string like 'scan.pdf is fine' is not matched; a bare 'scan.pdf' would be exempted, and no test checks that case.\n\nExploitability is limited. This is a CI/test guard, not something a runtime user or remote attacker can reach. To bypass it, a contributor has to commit the PDF and also add its name to a docs/qa manifest by hand, or a future recorder field would have to emit such names. It is a real gap in NFR-4 enforcement, but it needs deliberate or unusual action and does not by itself leak data. I'm confirming the finding and downgrading it from major to minor/moderate."
+        ]
+      },
+      {
+        "title": "The 421 response from the Host guard has no security headers",
+        "file": "nginx.conf",
+        "line": 7,
+        "severity": "major",
+        "confidence": "high",
+        "evidence": "Spec (Served behind one origin): \"Every response SHALL carry `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer` and a Content-Security-Policy with … `frame-ancestors 'none'`\". The `default_server` block (lines 7-11) has only `server_tokens off; return 421;`. The three `add_header … always` directives sit in the second server block, so the 421 page (nginx's default HTML error body) is sent without nosniff, a Referrer-Policy or a CSP. container-smoke.mjs:115 checks only the status, so the gap is never caught.",
+        "suggestion": "Add the same three `add_header … always` lines to the default_server block, or move them into a shared include. Extend container-smoke so the 421 response is checked for all three headers.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "The finding is correct. The `default_server` block at nginx.conf:7-11 contains only `listen 80 default_server; server_tokens off; return 421;`. The three `add_header … always` lines are at server level inside the second block (lines 29-31). nginx only passes `add_header` down to that block's own locations, never to a sibling server block. Nothing else adds them: the Dockerfile copies this file to `/etc/nginx/conf.d/default.conf`, so it is included inside the stock nginx:stable-alpine `http {}` block, and that stock config has no `add_header` at http level. So any request whose Host is not localhost or a bare IPv4 address gets nginx's built-in 421 HTML page with no nosniff, no Referrer-Policy and no CSP. That breaks the spec's \"Every response SHALL carry…\" wording. tools/container-smoke.mjs:115 checks only `status === 421`, so the smoke test never catches it.\n\nI recommend downgrading the severity. The 421 body is nginx's fixed error page: it has no attacker-controlled content, no script and no app state. Framing it or MIME-sniffing it gets an attacker nothing, and DNS rebinding is still blocked. This is a real gap against the spec's literal wording, and the fix is cheap (copy the headers or use a shared include, and extend the smoke test). But the security risk is minimal, so \"major\" is too high.",
+          "The mechanism is real and easy to reproduce. In nginx.conf, the default_server block (lines 7-11) has only `server_tokens off; return 421;`. The three `add_header … always` directives (lines 29-31) are scoped to the second server block, and nginx does not inherit add_header across server blocks. So `curl -H 'Host: evil.example' http://<bind>/` returns 421 with nginx's built-in HTML error body and no nosniff, Referrer-Policy or CSP header. The quoted spec says \"Every response SHALL carry…\", so this is a literal spec-compliance gap, and the smoke test checks only the status code, so nothing catches it.\n\nHowever, it can't be exploited in practice. The 421 body is nginx's fixed error page. It reflects no user input, so MIME sniffing gives an attacker nothing. It holds no links or subresources, so there is no referrer to leak. It has no interactive UI, so framing it (no frame-ancestors) is no clickjacking target. The block exists to reject rebinding hosts, and it still does that, because the attacker's origin only ever gets a static 421. So I confirm the finding as a spec deviation, but its real security impact is close to zero. Downgrade from major to minor. The fix (a shared include, or repeating the headers in the default server, plus a smoke-test assertion) is still cheap and worth doing to satisfy \"every response\"."
+        ]
+      },
+      {
+        "title": "The Host guard (421) has no check in the qa:verify battery",
+        "file": "src/test/container-config.test.ts",
+        "line": 50,
+        "severity": "major",
+        "confidence": "high",
+        "evidence": "Spec scenario (Foreign host name): \"/api/health with Host: evil.example → 421 and the backend is not reached\". container-config.test.ts asserts X-Forwarded-For, proxy_hide_header and X-Forwarded-Proto (lines 50-59) but nothing about `default_server`, `return 421` or the `server_name` allow-list. A grep for 421, default_server and server_name in that file finds nothing. The only check is tools/container-smoke.mjs:115, run by `npm run test:container`. That script is not referenced from package.json's battery, scripts/ or trace/acceptance-contracts.json, and with `--e2e` it exits 1 until the documented DOUCKO_CHILD_DISPLAY_NAME follow-up lands. Deleting the guard or widening `server_name` to `_` would leave `npm run qa:verify` green.",
+        "suggestion": "Add static assertions to container-config.test.ts: a `listen 80 default_server` block that returns 421, a server_name limited to localhost and the IPv4 regex, and no `_`/catch-all name in the serving block. Alternatively, wire the container smoke's HTTP checks (without --e2e) into an acceptance contract.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I could not refute the finding. The mechanism it describes is correct.\n\n1. **The guard exists, but the unit test never checks it.** nginx.conf:6-15 holds the guard: a `listen 80 default_server` block that does `return 421`, and an app server limited to `server_name localhost \"~^[0-9]{1,3}(\\.[0-9]{1,3}){3}$\"`. src/test/container-config.test.ts (lines 1-90) tests server_tokens, the security headers, try_files, the resolver, expires, X-Forwarded-For, proxy_hide_header and X-Forwarded-Proto. It never mentions default_server, 421 or server_name.\n\n2. **The only check sits outside the battery.** I searched the whole repo for `421|default_server|server_name|container-smoke|test:container`, excluding node_modules. There is no hit in e2e/, scripts/, trace/acceptance-contracts.json or any other test. The only check is tools/container-smoke.mjs:115, and the only thing that runs it is package.json:36 `test:container`. That is not one of the qa:verify battery scripts listed in AGENTS.md (lint, typecheck, test:run, test:coverage, test:e2e, build).\n\n3. **The project admits the smoke isn't fully runnable yet.** openspec tasks.md:31 says the e2e step of `test:container` waits for DOUCKO_CHILD_DISPLAY_NAME.\n\nSo if someone deleted the default_server block or widened server_name to `_`, every battery check would still pass, even though spec scenario spec.md:160 requires a 421. This is a real spec-compliance gap, and \"major\" severity fits for a guard against DNS rebinding.",
+          "The finding holds. src/test/container-config.test.ts has no assertion about `default_server`, `return 421` or `server_name`. I grepped e2e/, src/, scripts/, evals/ and trace/ for 421, evil.example and default_server, and none of them check it. The only check is tools/container-smoke.mjs:115, which runs only through `npm run test:container` (package.json:36, with `--e2e`). Neither scripts/qa-verify.mjs nor trace/acceptance-contracts.json mentions it. So deleting the first server block in nginx.conf (lines 7-11) or widening server_name would leave the qa:verify battery green, as the finding says.\n\nOn exploitability: the guard is in place and correct today (nginx.conf:7-15), so no user or attacker can exploit anything right now. The finding is a missing regression check, not a live vulnerability. A future edit would have to remove the guard before the DNS-rebinding exposure (judged minor in the earlier review round) came back. For that reason I recommend a downgrade from major to minor."
+        ]
+      }
+    ],
+    "contested": [
+      {
+        "title": "Static theme guard misses dynamic theme classes and token overrides",
+        "file": "src/app/theme-source.test.ts",
+        "line": 12,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "`THEME_WRITE` only matches `classList.x(` when a quote follows right away (`['\"`](dark|light|theme)`). It misses `classList.toggle(isDark ? 'dark' : 'light')`, `documentElement.className = 'dark'`, and an app.css rule that redefines `--paper` under `@media (prefers-color-scheme)` or a class. The e2e defers to this test for every screen with no control, which today is all of them, so it is the only FR-58 guard that actually runs.",
+        "suggestion": "Also match `className\\s*=`, `setAttribute('class'` and any `classList.*(...)` containing dark/light/theme. Fail when an app `.css` file redefines a design-system colour token (`--paper`, `--ink`, …).",
+        "dimension": "correctness",
+        "verdict": "contested",
+        "verifierNotes": [
+          "Partly right. `THEME_WRITE` (src/app/theme-source.test.ts:12) is `/data-theme|dataset\\.theme|colorScheme|color-scheme|classList\\.\\w+\\(\\s*['\"`](dark|light|theme)/`, and some of the finding's examples are overstated:\n- **`@media (prefers-color-scheme)` is caught.** The literal `color-scheme` matches it, so that example is wrong.\n- **A `dark` or `light` class does nothing on its own.** `classList.toggle(isDark ? 'dark' : 'light')` and `className = 'dark'` are missed by the regex. But the design system switches themes only through `[data-theme=...]` and the `prefers-color-scheme` media query (tokens.css:3, 50, 83-84). It has no `.dark` or `.light` selectors, so those writes would not change the theme.\n\nThe real gap is the one the finding names last. An app `.css` rule that redefines a design-system colour token under a class, such as `.night { --paper: …; --ink: … }`, matches none of the alternatives. A JS call like `document.documentElement.style.setProperty('--paper', …)` also slips through. Pair either with any class toggle and a control can switch the theme while this test stays green, which breaks FR-58.\n\nThis test is the only guard for screens with no controls: e2e/theme.spec.ts:43 skips those and points to it. So the token-override hole matters. The suggested fix (fail when app CSS or JS redefines a design-system colour token) is the meaningful part. Widening the class-name matching would add little.\n\nThe mechanism is confirmed for token overrides but overstated for class names and media queries, so the severity stays minor.",
+          "The regex reading is accurate: `classList\\.\\w+\\(\\s*['\"`](dark|light|theme)` only matches a quoted literal right after the paren. But the evasions the finding lists would not switch the theme in this codebase. `src/design-system/tokens.css` picks the theme in only two ways: `[data-theme=\"light\"|\"dark\"]` (lines 3 and 50) and `@media (prefers-color-scheme: dark) :root:not([data-theme=\"light\"])` (lines 83–84). It has no `.dark`, `.light` or `.theme-*` selector. So `classList.toggle(isDark ? 'dark' : 'light')` or `documentElement.className = 'dark'` would do nothing to colours, and there is nothing for the guard to catch. Any route that does work goes through `data-theme`, and the regex matches that string anywhere, including `setAttribute('data-theme', …)` and `dataset.theme`. An app.css rule that redefines `--paper` under `@media (prefers-color-scheme)` still follows the OS, so it is not an FR-58 violation either.\n\nThe one theoretical gap needs two new pieces of code: an app CSS class that redefines several design-system tokens, plus a control that toggles that class. Nothing like that exists today. A grep of `src/` outside the design system finds no `classList`, no `className =` assignment and no `--paper`/`--ink` definitions. The only `className` uses are static JSX strings in `App.tsx`, `Shell.tsx` and `NotFound.tsx`. AGENTS.md also forbids raw hex in app styles (tokens only), and code review would reject it. Neither a user nor an attacker can trigger this now. It is a speculative hardening idea for a test, not a correctness defect."
+        ]
+      },
+      {
+        "title": "The theme no-toggle checks miss a native <select> theme picker and className-based theme switches",
+        "file": "e2e/theme.spec.ts",
+        "line": 33,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "The spec says every select on a route is activated. The e2e only calls `click()` on `select`. That opens the native dropdown but never changes the value, so `onChange` never runs. A 'Light/Dark' `<select>` that writes a theme class would pass the e2e. The static backstop (src/app/theme-source.test.ts:12, THEME_WRITE) catches `data-theme`, `dataset.theme`, `colorScheme` and `classList.x('dark'|'light'|'theme…')`. It does not catch `document.documentElement.className = 'dark'`, `setAttribute('class', 'theme-dark')` or `classList.toggle(isDark ? 'dark' : 'light')`. So both layers can pass while the FR-58 'no in-app toggle' requirement is broken.",
+        "suggestion": "In the e2e, handle `select` (and `[role=combobox]` listboxes) by calling `selectOption` for each option, then re-check `[data-theme]` and the body `--paper`. Extend THEME_WRITE to also match `className\\s*=` and `setAttribute\\(\\s*['\"]class` when combined with dark/light/theme, and conditional `classList` arguments that contain those words.",
+        "dimension": "security",
+        "verdict": "contested",
+        "verifierNotes": [
+          "I could not refute the mechanism. Both claimed gaps are real in the code.\n\n1. **The e2e never changes a select's value.** In e2e/theme.spec.ts:33, every match of CONTROLS, `select` and `[role=combobox]` included, only gets `control.click()`. Clicking a native `<select>` opens the browser's dropdown but does not change the value, so `onChange` never runs. A theme picker built as a select would never be exercised, even though the comment at line 8 says selects are covered.\n\n2. **The static regex misses class-based writes.** THEME_WRITE in src/app/theme-source.test.ts:12 is `/data-theme|dataset\\.theme|colorScheme|color-scheme|classList\\.\\w+\\(\\s*['\"`](dark|light|theme)/`. It does not match:\n   - `document.documentElement.className = 'dark'`\n   - `setAttribute('class', 'theme-dark')`\n   - `classList.toggle(isDark ? 'dark' : 'light')`, because the argument starts with an identifier, not a quote.\n\n**What weakens it, but doesn't refute it:**\n- The design system in tokens.css switches theme only through `[data-theme]` and `prefers-color-scheme`. A `.dark` class does nothing by itself. A working class-based toggle would also need app CSS that redefines tokens, e.g. `.dark { --paper: … }`.\n- That CSS would not trip the regex either. It contains no data-theme or color-scheme, unless the author adds `color-scheme`.\n- Any select that writes `data-theme` is still caught by the static check, so only the className path slips through both layers.\n\n**Conclusion:** This is a hypothetical gap in test coverage, not a current product bug. No such toggle exists today. Still, the claim that both FR-58 guards can pass while a toggle exists is mechanically correct. Minor severity is appropriate.",
+          "Nobody can trigger this today. No current code breaks FR-58, and the bypass described only works with extra code that the design system doesn't support.\n\n1. The design system switches theme only through `data-theme`. `src/design-system/tokens.css` changes theme only on `[data-theme=\"dark\"|\"light\"]` and `prefers-color-scheme`. It has no `.dark`, `.light` or `.theme-*` class rules. So `document.documentElement.className = 'dark'`, `setAttribute('class','theme-dark')` or `classList.toggle(isDark?'dark':'light')` change nothing a user can see. For the className route to work, a developer would also have to write their own CSS that overrides `--paper` and the other tokens under a `.dark` selector. That means building a second theme system alongside the DS, which AGENTS.md forbids (\"use only its CSS variables\", don't fork the design system). The supported write paths are `data-theme` and `dataset.theme`, which the DS INSTALL.md documents, and THEME_WRITE (`src/app/theme-source.test.ts:12`) already catches both. It also catches `colorScheme` and `color-scheme`.\n\n2. The `select` point is technically true: `click()` on a native `<select>` doesn't change its value. But a select whose `onChange` writes `data-theme` or `dataset.theme` still fails the static test. Only the made-up case of a select plus a className write plus a custom token-override stylesheet gets past both layers.\n\n3. No `select`, theme picker or class-based theming exists anywhere in `src/` (grep found only the DS files and the test itself). So nothing reachable by a user or attacker breaks FR-58.\n\n4. Calling this a \"security\" problem is wrong. A theme toggle has no exploit impact. At most this is a test-hardening suggestion against a deliberate future rule violation, not a defect that can be reproduced."
+        ]
+      }
+    ],
+    "rejected": [
+      {
+        "title": "nginx passes client-supplied Forwarded / X-Real-IP / X-Forwarded-Host / X-Forwarded-Port headers to the backend",
+        "file": "nginx.conf",
+        "line": 36,
+        "severity": "major",
+        "confidence": "medium",
+        "evidence": "The round-3 fix overwrites X-Forwarded-For and X-Forwarded-Proto. The `location /api/` block still passes every other client header to the backend unchanged. That includes RFC 7239 `Forwarded: for=6.6.6.6`, `X-Real-IP`, `X-Forwarded-Host` and `X-Forwarded-Port`. With Spring's `server.forward-headers-strategy=framework` (ForwardedHeaderFilter), `Forwarded` takes precedence over X-Forwarded-For. A LAN attacker could then send a new `Forwarded: for=<random>` on each admin login attempt and get past the per-IP login throttle that this fix was meant to protect. That allows unlimited password guessing against the bcrypt admin account. A spoofed X-Forwarded-Host/Port also flows into Tomcat RemoteIpValve and Spring absolute-URL and redirect building. I could not read ../backend (permission denied), so I could not confirm which forward-headers strategy it uses. That is why confidence is medium. `tools/container-smoke.mjs` sends only a spoofed X-Forwarded-For, so it passes while this path is open.",
+        "suggestion": "Make nginx the only source of forwarding headers. In `location /api/`, add `proxy_set_header Forwarded \"\";`, `proxy_set_header X-Real-IP $remote_addr;`, `proxy_set_header X-Forwarded-Host \"\";` (or `$host`) and `proxy_set_header X-Forwarded-Port \"\";` (or `$server_port`). In container-smoke.mjs, also send `Forwarded: for=6.6.6.6` and `X-Real-IP: 6.6.6.6`, and assert that the stub's echo contains neither. Extend the spec scenario 'Spoofed client address' to cover all of these headers.",
+        "dimension": "security",
+        "verdict": "rejected",
+        "verifierNotes": [
+          "The nginx part of the finding is accurate. `nginx.conf:33-45` overwrites only Host, X-Forwarded-For and X-Forwarded-Proto. Client-supplied `Forwarded`, `X-Real-IP`, `X-Forwarded-Host` and `X-Forwarded-Port` reach the backend unchanged.\n\nThe claimed major impact does not hold, because the security control it says can be bypassed is ruled out by the product contract:\n- `contract/openspec/specs/admin-access/spec.md:227-237` (\"No sign-in lockout\") says failed sign-ins SHALL NOT lock the account or block the client. Its scenario requires a successful sign-in after 20 straight failures.\n- Line 326 lists \"No account lockout, rate limiting, CAPTCHA or two-factor sign-in\" as out of scope (decision OQ-23, LAN-only per NFR-2).\n\nSo unlimited password guessing is already the specified behaviour; spoofing `Forwarded` gives an attacker nothing new. The \"per-IP login throttle\" the finding builds on is not a product requirement. It appears only in an nginx comment, and the reviewer admits they could not read `../backend` to confirm it exists or which forward-headers strategy is used.\n\nThe impact also depends on Spring's `framework` strategy. Under Spring Boot's default `native` strategy, Tomcat's RemoteIpValve reads X-Forwarded-For (which nginx overwrites) and ignores RFC 7239 `Forwarded`. Spring does not read `X-Real-IP` at all without custom code.\n\nThe remaining part, X-Forwarded-Host/Port affecting absolute URL or redirect building, is speculative for a same-origin JSON API behind a Host-allowlisted nginx. Lines 7-15 serve only localhost and bare IPv4 Hosts. No redirect or absolute-URL code is shown.\n\nClearing these headers at the edge would be reasonable hardening. But the stated mechanism (bypassing the throttle, then unlimited guessing) cannot be confirmed and conflicts with the spec, so this is not a major correctness or security defect.",
+          "The nginx behaviour described is accurate. `location /api/` (nginx.conf:33-45) only sets Host, X-Forwarded-For and X-Forwarded-Proto. nginx forwards every other client header unchanged, including `Forwarded`, `X-Real-IP`, `X-Forwarded-Host` and `X-Forwarded-Port`.\n\nThe claimed exploit, unlimited login guessing past the throttle, only works if the backend reads one of those headers to get the client IP. I could not confirm that it does:\n- Reading ../backend and ../docs was denied for me too.\n- The contract/ submodule has no mention of a forward-headers strategy, ForwardedHeaderFilter, RemoteIpValve or throttling.\n- The finding itself admits it never saw the backend config.\n\nWhether the bypass works depends entirely on that config:\n- **`server.forward-headers-strategy=native` (Tomcat RemoteIpValve):** the valve reads X-Forwarded-For and X-Forwarded-Proto/Host/Port by default. It does not read `Forwarded` or `X-Real-IP`. nginx overwrites X-Forwarded-For, so the throttle key cannot be spoofed.\n- **No strategy:** getRemoteAddr is the nginx container's IP. That would mean one shared throttle bucket, which is a different problem and not a spoof bypass.\n- **`framework` (ForwardedHeaderFilter), or a hand-written X-Real-IP lookup:** only in these cases does the claimed bypass work.\n\nEarlier review rounds in trace/workflow-runs suggested the native strategy. That suggests, but does not prove, the non-exploitable case.\n\nSo the mechanism is plausible but not shown to happen for a real user or attacker. The X-Forwarded-Host/Port remark is speculative too: no redirect or absolute-URL building is shown.\n\nClearing these headers at the edge is still cheap defence-in-depth and worth doing, but as a hardening note rather than a confirmed major issue. Following the instruction to default to refuted when the mechanism can't be positively confirmed, I mark it refuted. If it is kept, it should be downgraded."
+        ]
+      },
+      {
+        "title": "Client-supplied Forwarded and X-Forwarded-Host/Port headers still reach the backend",
+        "file": "nginx.conf",
+        "line": 39,
+        "severity": "minor",
+        "confidence": "low",
+        "evidence": "The spec requires forwarding \"the connecting client address (never a client-supplied `X-Forwarded-For`)\" so the per-IP login throttle cannot be spoofed. nginx overwrites X-Forwarded-For and X-Forwarded-Proto but passes a client's `Forwarded: for=6.6.6.6`, `X-Real-IP`, `X-Forwarded-Host` and `X-Forwarded-Port` through unchanged. If the backend honours RFC 7239 `Forwarded` (Spring's ForwardedHeaderFilter / forward-headers-strategy=framework prefers it over X-Forwarded-For), the spoof the scenario forbids comes back through another header. I could not verify the backend's setting (no read access to ../backend/src/main).",
+        "suggestion": "Add `proxy_set_header Forwarded \"\";`, `proxy_set_header X-Real-IP $remote_addr;`, `proxy_set_header X-Forwarded-Host $host;` and `proxy_set_header X-Forwarded-Port $server_port;`, plus a container-smoke check that a client `Forwarded: for=6.6.6.6` does not reach the stub.",
+        "dimension": "spec-compliance",
+        "verdict": "rejected",
+        "verifierNotes": [
+          "The nginx fact is correct. `nginx.conf:33-45` only sets Host, X-Forwarded-For (overwritten with $remote_addr) and X-Forwarded-Proto, so nginx passes a client's `Forwarded`, `X-Real-IP`, `X-Forwarded-Host` and `X-Forwarded-Port` through unchanged. That alone is not a defect. It only becomes an IP-spoofing bug if the backend uses one of those headers as the client address, and I could not confirm that:\n\n(1) I cannot read the backend; access to ../backend was denied. The contract/docs store says nothing about forward-headers-strategy or how the login throttle picks its key. The finding itself says it \"could not verify the backend's setting\".\n\n(2) The finding assumes a backend that relies on these headers, but Spring Boot's common setups don't. The default `server.forward-headers-strategy` is NONE outside cloud platforms, so the throttle would see getRemoteAddr, which is the nginx container. The `native` strategy uses Tomcat's RemoteIpValve, which reads X-Forwarded-For and X-Forwarded-Proto and ignores RFC 7239 `Forwarded`. Only the `framework` strategy (ForwardedHeaderFilter) prefers `Forwarded`, and there is no evidence the backend uses it. X-Real-IP is not read by Spring at all. X-Forwarded-Host and X-Forwarded-Port affect URL building, not the client address, so they have nothing to do with the throttle-spoofing claim.\n\n(3) The requirement as written (\"never a client-supplied `X-Forwarded-For`\"; spec.md:137 and the scenario at :164) is met: the header is overwritten, and both container-config.test.ts:51 and container-smoke.mjs:102-105 check this.\n\nThe bug depends on a backend configuration nobody has verified, so the mechanism is not positively confirmed. Stripping `Forwarded` would still be a cheap hardening step, and the backend review should check which forward-headers strategy it uses.",
+          "I couldn't confirm the attack works. nginx.conf:39 does overwrite X-Forwarded-For with $remote_addr. The spec scenario (spec.md:162-165) only covers a client-supplied X-Forwarded-For, and that is handled. It is true that Forwarded, X-Real-IP, X-Forwarded-Host and X-Forwarded-Port pass through unchanged, but that only matters if the backend trusts them. The finding admits it never checked that, and I couldn't either: the read was denied for ../backend and ../docs, and the contract submodule doesn't mention forward-headers or how the throttle is keyed.\n\nIn Spring Boot, server.forward-headers-strategy defaults to NONE outside cloud platforms. With NONE, getRemoteAddr is the nginx peer, so no forwarded header has any effect. With NATIVE (Tomcat RemoteIpValve), only X-Forwarded-For and X-Forwarded-Proto are read for the client address, not RFC 7239 Forwarded or X-Real-IP. Only FRAMEWORK (ForwardedHeaderFilter) honours Forwarded. Nothing shows the backend opts into FRAMEWORK, or reads X-Real-IP or Forwarded by hand.\n\nX-Forwarded-Host and X-Forwarded-Port don't affect the client address at all, so they can't fool the per-IP login throttle. Also, nginx returns 421 for any Host other than localhost or a bare IPv4 address, which limits who can reach it.\n\nThe fix is cheap hardening: clear Forwarded and set X-Real-IP to $remote_addr. But the claimed spoof depends on a backend setting nobody has shown exists, so I'm defaulting to refuted."
+        ]
+      },
+      {
+        "title": "The lint rule exempts every argument of t(), so literal interpolation values pass",
+        "file": "eslint-rules/no-literal-ui-text.js",
+        "line": 80,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "Spec: the rule SHALL refuse literal UI text in \"call arguments\" (tasks 2.2: \"accepts catalog calls\"). Code: `if (node.callee.type === \"Identifier\" && CATALOG_LOOKUPS.has(node.callee.name)) return [];` returns before any argument is inspected. So `{t('greeting', { name: 'Ahoj' })}` or `{t('x', { unit: 'bodů' })}` renders literal Czech text with no lint error. Only the first argument is a key; the params object is shown text. A related gap: an immediately invoked callee, `{(() => 'Ahoj')()}`, is not inspected either, because only a MemberExpression callee's receiver is checked.",
+        "suggestion": "Exempt only `node.arguments[0]` of t() and run literalTexts over the remaining arguments (honouring NON_TEXT_KEYS such as `count`). Also inspect function-expression callees. Add an invalid case `<p>{t('x', { name: 'Ahoj' })}</p>` to lint-rule.test.ts.",
+        "dimension": "spec-compliance",
+        "verdict": "rejected",
+        "verifierNotes": [
+          "The line is quoted correctly: `no-literal-ui-text.js:80` returns `[]` for any `t(...)` call without looking at its arguments. But the harm the finding claims can't happen in this codebase. The only `t` is the one returned by `useT()` in `src/i18n/messages.ts:13-16`, and its type is `(key: MessageKey) => string`. It takes exactly one argument and simply returns `catalog[key]`. There is no params object and no interpolation.\n\nSo `t('greeting', { name: 'Ahoj' })` fails `npm run typecheck` (strict TS: \"Expected 1 arguments, but got 2\"). Even if it got past the type checker, `t` would ignore the second argument and never show it. The finding's premise, \"the params object is shown text\", is false here, and exempting all of `t()`'s arguments is correct for a key-only lookup.\n\nThe side note about an immediately invoked function (`{(() => 'Ahoj')()}`) is a real but tiny gap: a function-expression callee isn't inspected. It's a contrived pattern, though, and the file header already says the pseudo-catalog render test (`src/app/i18n-coverage.test.tsx`) is the backstop for what static analysis misses. It doesn't support the headline claim.",
+          "The rule code does what the finding says: line 80 returns [] for any `t(...)` call without looking at its arguments. But the main harm it claims can't happen. The only `t` in the app comes from `useT()` in src/i18n/messages.ts:13, and its type is `(key: MessageKey) => string`. It takes exactly one argument and does no interpolation; it just returns `catalog[key]`. Under strict TypeScript, `t('greeting', { name: 'Ahoj' })` fails the typecheck with \"Expected 1 arguments, but got 2\", and the typecheck is part of the qa:verify battery. Even if that error were ignored, the second argument is thrown away at runtime, so 'Ahoj' never reaches the screen or the accessibility tree. No params object exists that could carry shown text, so exempting all of t()'s arguments lets no visible literal through. The side note is a real but contrived gap: an immediately invoked function such as `{(() => 'Ahoj')()}` isn't inspected, because only a MemberExpression callee is checked. That's an unusual way to write code, and the rule's own header says static gaps are covered by the pseudo-catalog render test (src/app/i18n-coverage.test.tsx). It's also not the finding's main claim. Since the headline mechanism (literal interpolation values passing through t()) can't occur with this codebase's t signature, the finding is refuted."
+        ]
+      }
+    ],
+    "reviewEvidence": "openspec/changes/implement-platform-foundation-ui/review-findings.json"
+  }
+}

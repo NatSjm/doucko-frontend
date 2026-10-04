@@ -30,13 +30,25 @@ for (const scheme of ['light', 'dark'] as const) {
         for (let i = 0; i < (await controls.count()); i++) {
           const control = controls.nth(i);
           if (!(await control.isVisible()) || !(await control.isEnabled())) continue;
-          await control.click({ timeout: 2_000 }); // a control that cannot be clicked fails the test
-          activated += 1;
-          // Let a switch that applies asynchronously (effect, timer, transition) land before checking.
-          await page.waitForTimeout(300);
-          if (new URL(page.url()).pathname !== new URL(screen.path, page.url()).pathname) await page.goto(screen.path);
-          await expect(page.locator('[data-theme]')).toHaveCount(0);
-          await expect(page.locator('body')).toHaveCSS('background-color', PAPER[scheme]);
+          // A native select (a theme picker built as one) is switched to each of its options; anything
+          // else is clicked. A control that cannot be operated fails the test.
+          const isSelect = await control.evaluate((el) => el instanceof HTMLSelectElement);
+          const choices = isSelect
+            ? await control.locator('option:not([disabled])').evaluateAll((os) => os.map((o) => (o as HTMLOptionElement).value))
+            : [null];
+          for (const choice of choices) {
+            if (choice === null) await control.click({ timeout: 2_000 });
+            else await control.selectOption(choice, { timeout: 2_000 });
+            activated += 1;
+            // Let a switch that applies asynchronously (effect, timer, transition) land before checking.
+            await page.waitForTimeout(300);
+            await expect(page.locator('[data-theme]')).toHaveCount(0);
+            await expect(page.locator('body')).toHaveCSS('background-color', PAPER[scheme]);
+            if (new URL(page.url()).pathname !== new URL(screen.path, page.url()).pathname) {
+              await page.goto(screen.path);
+              break;
+            }
+          }
         }
         // A screen without controls has nothing to activate: that is a skip, never a vacuous pass.
         // src/app/theme-source.test.ts covers it statically.

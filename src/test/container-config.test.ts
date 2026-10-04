@@ -15,17 +15,33 @@ const json = (f: string) => JSON.parse(readFileSync(f, 'utf8').replace(/^\s*\/\*
 const location = (path: string) => new RegExp(`location ${path.replace(/\//g, '\\/')} \\{([^}]*)\\}`).exec(nginx)?.[1] ?? '';
 
 describe('nginx.conf', () => {
-  it('hides its version and sends security headers on every response', () => {
-    expect(nginx).toMatch(/^\s*server_tokens off;/m);
-    expect(nginx).toMatch(/add_header X-Content-Type-Options "?nosniff"? always;/);
-    expect(nginx).toMatch(/add_header Referrer-Policy "?no-referrer"? always;/);
-    const csp = /add_header Content-Security-Policy "([^"]+)" always;/.exec(nginx)?.[1] ?? '';
+  it('hides its version and sends security headers on every response, the 421 refusal included', () => {
+    // Before the first server block, i.e. at http level, so every server inherits them.
+    const httpLevel = nginx.slice(0, nginx.search(/^server \{/m));
+    expect(httpLevel).toMatch(/^server_tokens off;/m);
+    expect(httpLevel).toMatch(/^add_header X-Content-Type-Options "?nosniff"? always;/m);
+    expect(httpLevel).toMatch(/^add_header Referrer-Policy "?no-referrer"? always;/m);
+    const csp = /^add_header Content-Security-Policy "([^"]+)" always;/m.exec(httpLevel)?.[1] ?? '';
     for (const directive of ["default-src 'self'", "script-src 'self'", "object-src 'none'", "frame-ancestors 'none'", "base-uri 'self'"])
       expect(csp).toContain(directive);
   });
 
-  it('declares no add_header inside a location (that would drop the server-level headers there)', () => {
-    for (const block of nginx.matchAll(/location [^{]+\{([^}]*)\}/g)) expect(block[1]).not.toMatch(/add_header/);
+  it('declares no add_header inside a server or location (that would drop the http-level headers there)', () => {
+    const servers = nginx.slice(nginx.search(/^server \{/m));
+    expect(servers).not.toMatch(/add_header/);
+  });
+
+  it('refuses every Host but localhost and an IPv4 address with 421 (DNS rebinding)', () => {
+    const blocks = [...nginx.matchAll(/^server \{\n([\s\S]*?)^\}/gm)].map((m) => m[1]);
+    const fallback = blocks.find((b) => /listen 80 default_server;/.test(b)) ?? '';
+    expect(fallback).toMatch(/return 421;/);
+    const app = blocks.find((b) => /server_name /.test(b)) ?? '';
+    const names = /server_name ([^;]+);/.exec(app)?.[1].split(/\s+/) ?? [];
+    expect(names[0]).toBe('localhost');
+    const ipv4 = new RegExp(names[1].replace(/^"~|"$/g, ''));
+    expect(['127.0.0.1', '192.168.1.20'].every((h) => ipv4.test(h))).toBe(true);
+    expect(['evil.example', '127.0.0.1.evil.example', 'localhost.evil.example'].some((h) => ipv4.test(h))).toBe(false);
+    expect(names).toHaveLength(2);
   });
 
   it('answers a missing built asset 404, not the SPA page', () => {

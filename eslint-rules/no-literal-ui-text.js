@@ -47,7 +47,14 @@ const NON_TEXT_PROPS = new Set([
 const NAME_IS_IDENTIFIER = new Set(["Icon", "ChoiceGroup"]);
 
 /** Object keys inside a text prop that hold identifiers, not text ({ value: 'a', label: t('yes') }). */
-const NON_TEXT_KEYS = new Set([...NON_TEXT_PROPS, "value", "name"]);
+const NON_TEXT_KEYS = new Set([...NON_TEXT_PROPS, "value"]);
+
+/** Locale formatting: n.toLocaleString('cs-CZ', { style: 'percent' }) and Intl.* take locales and options, not text. */
+const isLocaleFormatting = (callee) =>
+  callee.type === "MemberExpression" &&
+  ((callee.property.type === "Identifier" && /^(toLocale\w*|localeCompare)$/.test(callee.property.name)) ||
+    (callee.object.type === "NewExpression" && callee.object.callee.type === "MemberExpression" &&
+      callee.object.callee.object.type === "Identifier" && callee.object.callee.object.name === "Intl"));
 
 /** Functions whose string argument is a catalog key. */
 const CATALOG_LOOKUPS = new Set(["t"]);
@@ -78,6 +85,8 @@ function literalTexts(node) {
     case "CallExpression": {
       // t('key') is the catalog lookup; its argument is a key, not text.
       if (node.callee.type === "Identifier" && CATALOG_LOOKUPS.has(node.callee.name)) return [];
+      // Locale and format options are not text; a literal receiver ('Ahoj'.toLocaleUpperCase()) still is.
+      if (isLocaleFormatting(node.callee)) return literalTexts(node.callee.object);
       // 'Ahoj'.toUpperCase(), items.join(' a '), format('Ahoj {n}', n), items.map(() => 'Ahoj'):
       // the receiver, the arguments and what a callback argument returns.
       const receiver = node.callee.type === "MemberExpression" ? literalTexts(node.callee.object) : [];
