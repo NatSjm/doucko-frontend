@@ -5,7 +5,7 @@ requirements/spec/test/recording change; CI runs `--check-fresh`.
 
 Repo: frontend (contract: submodule).
 Scope: 48 MVP functional requirements, 30 owned by frontend.
-Result: PASS, 49 warning(s)
+Result: PASS, 48 warning(s)
 
 | FR | Spec | Plan | Owner repo(s) | Test trace here | Recording here |
 |---|---|---|---|---|---|
@@ -145,4 +145,3 @@ None.
 - **recording-evidence**: FR-58 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-40 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-41 is not referenced by any recording manifest under docs/qa/
-- **active-changes**: active change "implement-authoring-tasks-ui" is not archived
