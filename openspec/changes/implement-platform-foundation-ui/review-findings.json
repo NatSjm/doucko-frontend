@@ -6,18 +6,18 @@
   "headRef": "HEAD",
   "dimensions": {
     "correctness": {
-      "confirmed": 2,
-      "contested": 0,
+      "confirmed": 0,
+      "contested": 1,
       "rejected": 0
     },
     "security": {
-      "confirmed": 1,
+      "confirmed": 0,
       "contested": 0,
       "rejected": 0
     },
     "spec-compliance": {
-      "confirmed": 1,
-      "contested": 2,
+      "confirmed": 0,
+      "contested": 1,
       "rejected": 0
     },
     "visual": {
@@ -31,63 +31,23 @@
       "id": "F01",
       "severity": "minor",
       "dimension": "correctness",
-      "verdict": "confirmed",
-      "title": "Scheme-word pattern misses `theme…` prefixes and all-lowercase compounds that the spec forbids",
+      "verdict": "contested",
+      "title": "Scheme-word pattern still misses lowercase compounds with a prefix or plural (`isdark`, `appdark`, `nodark`, `darkmodes`)",
       "file": "src/app/theme-source.test.ts",
-      "line": 27,
+      "line": 32,
       "status": "open"
     },
     {
       "id": "F02",
       "severity": "minor",
-      "dimension": "correctness",
-      "verdict": "confirmed",
-      "title": "Build context and the 'clean commit' check both miss local and global git excludes",
-      "file": ".dockerignore",
-      "line": 5,
-      "status": "open"
-    },
-    {
-      "id": "F03",
-      "severity": "minor",
-      "dimension": "security",
-      "verdict": "confirmed",
-      "title": "Theme guard (invariant 3) misses all-lowercase compound scheme names such as 'darkmode', 'darktheme', 'lightmode'",
+      "dimension": "spec-compliance",
+      "verdict": "contested",
+      "title": "Scheme-name pattern still misses lowercase compounds with a prefix (isdark, appdark) and plural suffix compounds (darkmodes, darkthemes)",
       "file": "src/app/theme-source.test.ts",
       "line": 27,
-      "status": "open"
-    },
-    {
-      "id": "F04",
-      "severity": "minor",
-      "dimension": "spec-compliance",
-      "verdict": "confirmed",
-      "title": ".dockerignore mirror test checks that patterns exist but not that they take effect: a later `!` negation in .dockerignore passes the test",
-      "file": "src/test/container-config.test.ts",
-      "line": 119,
-      "status": "open"
-    },
-    {
-      "id": "F05",
-      "severity": "minor",
-      "dimension": "spec-compliance",
-      "verdict": "contested",
-      "title": "Coverage summary (round 9): 18 scenarios: 18 implemented, 0 partial, 0 missing, 0 contradicted. The round-8 fixes hold: TS-printer comment stripping, camelCase/underscore scheme matching, the root-anchored .dockerignore with its mapping and mirror tests, and Firefox test.slow. Two minor test-strength gaps remain.",
-      "file": "openspec/changes/implement-platform-foundation-ui/specs/platform-foundation/spec.md",
-      "line": 1,
-      "status": "open"
-    },
-    {
-      "id": "F06",
-      "severity": "minor",
-      "dimension": "spec-compliance",
-      "verdict": "contested",
-      "title": "Theme guard: the known-bad (`forced`) cases never go through the TypeScript-printer path that real .ts/.tsx files use",
-      "file": "src/app/theme-source.test.ts",
-      "line": 76,
       "status": "open"
     }
   ],
   "clean": false,
-  "generatedAt": "2026-10-04T11:25:35Z"
+  "generatedAt": "2026-10-04T11:40:49Z"
 }

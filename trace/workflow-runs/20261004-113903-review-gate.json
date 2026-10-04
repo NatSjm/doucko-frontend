@@ -1,0 +1,238 @@
+{
+  "workflow": "review-gate",
+  "file": "./.claude/workflows/review-gate.js",
+  "description": "Multi-dimensional adversarial review of a diff or capability: correctness, security, and spec compliance, with every finding adversarially verified before it is reported.",
+  "dryRun": false,
+  "startedAt": "2026-10-04T11:39:03.037Z",
+  "finishedAt": "2026-10-04T11:40:49.435Z",
+  "args": {
+    "scope": "slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui",
+    "baseRef": "93e81cd",
+    "headRef": "HEAD",
+    "focus": "Round 10. Verify the round-9 fixes (commit 43f1267): theme… prefixes and lowercase compounds in the scheme-name pattern, forced/fine cases routed through the TypeScript-printer and CSS paths, the no-! rule for .dockerignore, and the git-excludes accepted limit in design.md.dockerignore with its mapping test.dockerignore/.gitignore mirror test, the Firefox axe slow timeout. Check against the spec delta and design.md. Do NOT re-report what design.md lists under \"Accepted limits (review round 3)\" or the documented real-compose-stack follow-up; static checks are heuristics backed by e2e, so do not report further obfuscation patterns (eval, string concatenation across variables, encoded strings) as defects; report only defects in shipped behaviour or tests that can pass while the spec is violated by ordinary code.",
+    "change": "implement-platform-foundation-ui"
+  },
+  "settings": {
+    "allowedTools": null,
+    "concurrency": 4,
+    "model": null,
+    "budgetPerAgentUsd": 2,
+    "maxTotalUsd": 15,
+    "untypedTools": "Read,Grep,Glob,Write,Bash",
+    "permissionMode": "acceptEdits"
+  },
+  "outcome": "ok",
+  "stoppedBecause": null,
+  "error": null,
+  "totalCostUsd": 1.7218,
+  "steps": [
+    {
+      "label": "find:correctness",
+      "phase": "Find",
+      "agentType": "code-reviewer",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 1293,
+      "durationMs": 58662,
+      "sessionId": "d6fc066f-e6be-49d5-846f-2e5bf59f7770",
+      "costUsd": 0.3069406,
+      "numTurns": 8,
+      "result": {
+        "findings": [
+          {
+            "title": "Scheme-word pattern still misses lowercase compounds with a prefix or plural (`isdark`, `appdark`, `nodark`, `darkmodes`)",
+            "file": "src/app/theme-source.test.ts",
+            "line": 32,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "Round 9 added lowercase compounds only as a fixed suffix list after a non-letter: `(?<![A-Za-z])(?:dark|light|…)(?:mode|theme|scheme|ui|bg)?(?![a-z])`. So `cls('isdark')` and `cls('appdark')` fail the `(?<![A-Za-z])` lookbehind, and `'darkmodes'` / `'lightmodeon'` fail the trailing `(?![a-z])`. The camelCase forms of the same names (`isDark`, `appDark`) are caught by the `(?<=[a-z0-9])(?:Dark|Light)` alternative. That leaves the all-lowercase spelling of a common class name as a string literal that names a scheme and still passes invariant 3, which the spec forbids (\"name a scheme (`dark`, `light`, `theme…`) in a string literal\"). The `named` known-bad list only checks suffix forms (`darkmode`, `lighttheme`), so nothing flags this gap.",
+            "suggestion": "Treat `dark`/`light` as a scheme word anywhere inside a string token, and allow-list the English words that contain them (`darken`, `highlight`, `lightning`, `delight`, `flight`, `slight`, …). Do not keep extending the prefix and suffix lists. Add `cls('isdark')`, `cls('appdark')` and `cls('darkmodes')` to the `named` known-bad cases, and keep `highlight`/`darken-on-hover` in the known-good list."
+          }
+        ]
+      }
+    },
+    {
+      "label": "find:security",
+      "phase": "Find",
+      "agentType": "security-reviewer",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 1321,
+      "durationMs": 56409,
+      "sessionId": "0fdb9e2d-d26e-4ee6-bf4b-285c78536b0b",
+      "costUsd": 0.2767738,
+      "numTurns": 9,
+      "result": {
+        "findings": []
+      }
+    },
+    {
+      "label": "find:spec-compliance",
+      "phase": "Find",
+      "agentType": "spec-compliance-auditor",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 1264,
+      "durationMs": 61381,
+      "sessionId": "dfb40cbb-f6c8-49bc-92c5-fecd08167768",
+      "costUsd": 0.41044280000000005,
+      "numTurns": 8,
+      "result": {
+        "findings": [
+          {
+            "title": "Scheme-name pattern still misses lowercase compounds with a prefix (isdark, appdark) and plural suffix compounds (darkmodes, darkthemes)",
+            "file": "src/app/theme-source.test.ts",
+            "line": 27,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "Spec (Theme follows the operating system): no app source SHALL 'name a scheme (`dark`, `light`, `theme…`) in a string literal'. Round 9 added lowercase compounds, but only as a fixed suffix list: `(?<![A-Za-z])(?:dark|light|…)(?:mode|theme|scheme|ui|bg)?(?![a-z])`. A lowercase prefix compound such as `'isdark'` or `'appdark'` fails `(?<![A-Za-z])` and the camelCase branch `(?<=[a-z0-9])(?:Dark|Light)`. A pluralised suffix compound such as `'darkmodes'` or `'darkthemes'` fails `(?![a-z])` after the suffix, and the `theme` branch's `(?<![A-Za-z])` rejects it after `dark`. So `el.classList.add('appdark')` passes all three invariants. The `named` cases (lines ~117-126) cover only suffix compounds. The e2e no-toggle check still covers reachable controls, so this gap only matters for states that test cannot reach. Coverage for this round: 18 scenarios: 18 implemented, 0 partial, 0 missing, 0 contradicted. The other round-9 fixes are verified: the `theme…` prefix catches themed/themes; forced and fine cases go through the TSX-printer path ('a.tsx') and the CSS path ('a.css'); the no-`!` .dockerignore assertion is at container-config.test.ts:127; the git-excludes accepted limit is in design.md; the Firefox `test.slow` is at e2e/a11y.spec.ts:13.",
+            "suggestion": "Either allow a common lowercase prefix (`(?<![A-Za-z])(?:is|app|mode|use|has)(?:dark|light)`) and an optional plural `s?` after the suffix list, with `'appdark'`, `'isdark'` and `'darkmodes'` added to the `named` cases and `'highlight'`/`'spotlight'` kept in the fine cases; or record lowercase prefix compounds as an accepted limit in design.md. They cannot be told apart from real words like `highlight` without a word list."
+          }
+        ]
+      }
+    },
+    {
+      "label": "find:visual",
+      "phase": "Find",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1533,
+      "durationMs": 20492,
+      "sessionId": "b7c115f2-d5e5-41b7-a0bc-42729782afd6",
+      "costUsd": 0.12690880000000002,
+      "numTurns": 5,
+      "result": {
+        "findings": []
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1808,
+      "durationMs": 39935,
+      "sessionId": "6a49ac8f-bd39-480e-8765-c9b00de6536c",
+      "costUsd": 0.1493626,
+      "numTurns": 6,
+      "result": {
+        "refuted": false,
+        "reasoning": "I checked the regex at src/app/theme-source.test.ts:27-37 by hand. I couldn't run node because the sandbox blocked the command. The SCHEME pattern has four alternatives:\n(a) `(?<![A-Za-z])theme…`\n(b) `(?<=[a-z0-9])Theme`\n(c) `(?<![A-Za-z])(dark|light|…)(mode|theme|scheme|ui|bg)?(?![a-z])`\n(d) `(?<=[a-z0-9])(Dark|Light)(?![a-z])`\n\n- `'isdark'`, `'appdark'` and `'nodark'`: here `dark` follows a lowercase letter, so (c)'s lookbehind fails. (d) only matches capitalised `Dark`. (a) and (b) need `theme`. None of the four matches, so QUOTED_SCHEME (line 38) does not fire.\n- `'darkmodes'`: (c) matches `dark` plus the suffix `mode`, then hits `s`, so `(?![a-z])` fails. Backtracking to bare `dark` doesn't help, because `m` follows and fails the same check. Not matched. `'lightmodeon'` fails the same way.\n- `isDark` and `appDark` are caught by (d), as the finding says.\n\nComments and catalogs are not involved, so the guard really is a string-literal scan, and nothing else in the file closes this gap. The `named` known-bad list (lines 117-126) only covers `darkmode`/`lighttheme`-style suffix forms. The module doc (lines 16-17) says no string literal may name a scheme, so these all-lowercase names are a real false negative of invariant 3.\n\nThe mechanism is correct. Severity stays minor: this is a heuristic guard in a test, and the e2e covers the runtime behaviour.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1841,
+      "durationMs": 39307,
+      "sessionId": "8cf777ca-7ef2-4a7a-a5f2-533e7ea89c86",
+      "costUsd": 0.1254106,
+      "numTurns": 4,
+      "result": {
+        "refuted": true,
+        "reasoning": "The regex gap is real. In `theme-source.test.ts:32`, `isdark`/`appdark` fail the `(?<![A-Za-z])` lookbehind. The camelCase alternative on line 33 needs an uppercase `D`/`L`, so it does not catch them either. `darkmodes` fails the trailing `(?![a-z])` with or without the optional suffix. None of these are in the `named` list.\n\nThe lens here is whether a real user or attacker hits a problem, and they cannot. The finding only shows that an all-lowercase class name containing \"dark\" gets past a defence-in-depth lint. It does not show that the theme can be forced.\n\n- The design system switches schemes only through `[data-theme=\"dark\"|\"light\"]` and `@media (prefers-color-scheme: dark)` (`src/design-system/tokens.css:3,50,83-84`). No class-based scheme selector exists, so a class string like `isdark` or `darkmodes` has nothing to act on.\n- Invariant 2 (`SCHEME_API`) already blocks every real switch in app code: `data-theme`, `dataset.theme`, `colorScheme`, `color-scheme` and `prefers-color-scheme`.\n- Invariant 1 (`TOKEN_WRITE`) blocks app code from redefining tokens under any selector, so `.isdark { --paper: … }` is caught however the class is named.\n- Any other override, such as raw colours on a class, works the same whatever the class is called (`.foo` as well as `.isdark`). Invariant 3's word list has no bearing on whether that is possible.\n\nSo the unflagged spellings cannot cause the FR-58 failure (a theme that doesn't follow the OS). The finding is at most a mismatch between the lint and the spec's literal wording about string literals, with no reachable behavioural effect. No current source triggers it either: the full-repo scan passes. The suggested fix (match the word anywhere, plus an allow-list of English words) would trade this gap for false-positive churn on words like `highlight` and `darken`, and still gain no protection.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 2363,
+      "durationMs": 44893,
+      "sessionId": "84d74256-dcf2-4bb6-92ee-0d83b75bca3a",
+      "costUsd": 0.18316259999999998,
+      "numTurns": 9,
+      "result": {
+        "refuted": false,
+        "reasoning": "I couldn't run the script, so I traced the SCHEME regex in src/app/theme-source.test.ts:27-37 by hand. The gap is real.\n- 'appdark' and 'isdark': the dark/light branch needs `(?<![A-Za-z])` before the word, and here 'p' or 's' comes first, so it fails. The camelCase branch `(?<=[a-z0-9])(?:Dark|Light)` only matches capitalised Dark or Light. Neither theme branch applies. No branch matches.\n- 'darkmodes': the dark branch matches 'dark' plus the optional 'mode', then `(?![a-z])` fails on 's'. Backtracking to drop the suffix fails on 'm'. Nothing else matches.\n- 'darkthemes': `(?<![A-Za-z])theme` fails because 'k' comes before it, and `(?<=[a-z0-9])Theme` needs a capital T. The dark+theme suffix path then fails on the trailing 's'.\nSo QUOTED_SCHEME and TEMPLATE_SCHEME don't flag these strings. The other two invariants don't help: TOKEN_WRITE looks for `--` and SCHEME_API for data-theme or color-scheme names. That means `el.classList.add('appdark')` passes themeViolations.\nThe `named` cases (lines 117-126) only test suffix compounds and camelCase. The accepted-limits section of design.md (lines 140-159) doesn't mention this gap.\nSeverity stays minor. It is a hole in a static backstop for FR-58, not a product bug. The design system owns the schemes, and the e2e no-toggle check covers reachable controls.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 2396,
+      "durationMs": 39796,
+      "sessionId": "68b5280c-1647-408d-92f5-47def99fa2a4",
+      "costUsd": 0.1428436,
+      "numTurns": 5,
+      "result": {
+        "refuted": true,
+        "reasoning": "The regex claim itself is correct. In `SCHEME` (theme-source.test.ts:27-37), `'appdark'` and `'isdark'` fail the `(?<![A-Za-z])` lookbehind, and the camelCase branch needs a capital `Dark`/`Light`. `'darkmodes'` fails the `(?![a-z])` check after the suffix, and backtracking to a bare `dark` fails on the `m` that follows.\n\nIt still can't happen for a real user, and it isn't a spec violation today:\n1. It's a static lint heuristic over source. No current app file contains such a string: the `no app source … breaks an invariant` test passes, and a grep for `dark` under src/ only finds hits inside src/design-system. No shipped code reaches this gap.\n2. A class like `appdark` can't force the theme. The vendored design system switches schemes only through `[data-theme=\"dark\"|\"light\"]` and `@media (prefers-color-scheme: dark)` (tokens.css:3, 50, 83-84). Nothing styles a class called `appdark` or `darkmodes`. To actually force a scheme, code has to touch `data-theme`/`dataset.theme`/`color-scheme`, which `SCHEME_API` catches. Or it has to redeclare tokens, which `TOKEN_WRITE` catches. The class name is harmless unless someone also writes custom CSS that swaps whole colour sets, which is contrived.\n3. Any word-pattern check can be dodged by building the string at runtime (`'da'+'rk'`, `dataset['the'+'me']`). An extra spelling the check misses is not a new kind of problem. As the finding itself says, prefix compounds can't be told apart from `highlight`/`spotlight` without a word list, so this is a known limit of the approach, not a defect.\n\nAt most this is a nice-to-have extra test case for a future developer's mistake, not a problem a user can reproduce.",
+        "severityAdjustment": "downgrade"
+      }
+    }
+  ],
+  "logs": [
+    {
+      "phase": "Find",
+      "message": "2 unique findings across 4 dimensions"
+    },
+    {
+      "phase": "Report",
+      "message": "confirmed: 0, contested: 2, rejected: 0"
+    }
+  ],
+  "persisted": [
+    "openspec/changes/implement-platform-foundation-ui/review-findings.json"
+  ],
+  "returned": {
+    "scope": "slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui",
+    "summary": "Review gate for slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui: 0 confirmed, 2 contested (treat as confirmed unless trivially wrong), 0 rejected.",
+    "confirmed": [],
+    "contested": [
+      {
+        "title": "Scheme-word pattern still misses lowercase compounds with a prefix or plural (`isdark`, `appdark`, `nodark`, `darkmodes`)",
+        "file": "src/app/theme-source.test.ts",
+        "line": 32,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "Round 9 added lowercase compounds only as a fixed suffix list after a non-letter: `(?<![A-Za-z])(?:dark|light|…)(?:mode|theme|scheme|ui|bg)?(?![a-z])`. So `cls('isdark')` and `cls('appdark')` fail the `(?<![A-Za-z])` lookbehind, and `'darkmodes'` / `'lightmodeon'` fail the trailing `(?![a-z])`. The camelCase forms of the same names (`isDark`, `appDark`) are caught by the `(?<=[a-z0-9])(?:Dark|Light)` alternative. That leaves the all-lowercase spelling of a common class name as a string literal that names a scheme and still passes invariant 3, which the spec forbids (\"name a scheme (`dark`, `light`, `theme…`) in a string literal\"). The `named` known-bad list only checks suffix forms (`darkmode`, `lighttheme`), so nothing flags this gap.",
+        "suggestion": "Treat `dark`/`light` as a scheme word anywhere inside a string token, and allow-list the English words that contain them (`darken`, `highlight`, `lightning`, `delight`, `flight`, `slight`, …). Do not keep extending the prefix and suffix lists. Add `cls('isdark')`, `cls('appdark')` and `cls('darkmodes')` to the `named` known-bad cases, and keep `highlight`/`darken-on-hover` in the known-good list.",
+        "dimension": "correctness",
+        "verdict": "contested",
+        "verifierNotes": [
+          "I checked the regex at src/app/theme-source.test.ts:27-37 by hand. I couldn't run node because the sandbox blocked the command. The SCHEME pattern has four alternatives:\n(a) `(?<![A-Za-z])theme…`\n(b) `(?<=[a-z0-9])Theme`\n(c) `(?<![A-Za-z])(dark|light|…)(mode|theme|scheme|ui|bg)?(?![a-z])`\n(d) `(?<=[a-z0-9])(Dark|Light)(?![a-z])`\n\n- `'isdark'`, `'appdark'` and `'nodark'`: here `dark` follows a lowercase letter, so (c)'s lookbehind fails. (d) only matches capitalised `Dark`. (a) and (b) need `theme`. None of the four matches, so QUOTED_SCHEME (line 38) does not fire.\n- `'darkmodes'`: (c) matches `dark` plus the suffix `mode`, then hits `s`, so `(?![a-z])` fails. Backtracking to bare `dark` doesn't help, because `m` follows and fails the same check. Not matched. `'lightmodeon'` fails the same way.\n- `isDark` and `appDark` are caught by (d), as the finding says.\n\nComments and catalogs are not involved, so the guard really is a string-literal scan, and nothing else in the file closes this gap. The `named` known-bad list (lines 117-126) only covers `darkmode`/`lighttheme`-style suffix forms. The module doc (lines 16-17) says no string literal may name a scheme, so these all-lowercase names are a real false negative of invariant 3.\n\nThe mechanism is correct. Severity stays minor: this is a heuristic guard in a test, and the e2e covers the runtime behaviour.",
+          "The regex gap is real. In `theme-source.test.ts:32`, `isdark`/`appdark` fail the `(?<![A-Za-z])` lookbehind. The camelCase alternative on line 33 needs an uppercase `D`/`L`, so it does not catch them either. `darkmodes` fails the trailing `(?![a-z])` with or without the optional suffix. None of these are in the `named` list.\n\nThe lens here is whether a real user or attacker hits a problem, and they cannot. The finding only shows that an all-lowercase class name containing \"dark\" gets past a defence-in-depth lint. It does not show that the theme can be forced.\n\n- The design system switches schemes only through `[data-theme=\"dark\"|\"light\"]` and `@media (prefers-color-scheme: dark)` (`src/design-system/tokens.css:3,50,83-84`). No class-based scheme selector exists, so a class string like `isdark` or `darkmodes` has nothing to act on.\n- Invariant 2 (`SCHEME_API`) already blocks every real switch in app code: `data-theme`, `dataset.theme`, `colorScheme`, `color-scheme` and `prefers-color-scheme`.\n- Invariant 1 (`TOKEN_WRITE`) blocks app code from redefining tokens under any selector, so `.isdark { --paper: … }` is caught however the class is named.\n- Any other override, such as raw colours on a class, works the same whatever the class is called (`.foo` as well as `.isdark`). Invariant 3's word list has no bearing on whether that is possible.\n\nSo the unflagged spellings cannot cause the FR-58 failure (a theme that doesn't follow the OS). The finding is at most a mismatch between the lint and the spec's literal wording about string literals, with no reachable behavioural effect. No current source triggers it either: the full-repo scan passes. The suggested fix (match the word anywhere, plus an allow-list of English words) would trade this gap for false-positive churn on words like `highlight` and `darken`, and still gain no protection."
+        ]
+      },
+      {
+        "title": "Scheme-name pattern still misses lowercase compounds with a prefix (isdark, appdark) and plural suffix compounds (darkmodes, darkthemes)",
+        "file": "src/app/theme-source.test.ts",
+        "line": 27,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "Spec (Theme follows the operating system): no app source SHALL 'name a scheme (`dark`, `light`, `theme…`) in a string literal'. Round 9 added lowercase compounds, but only as a fixed suffix list: `(?<![A-Za-z])(?:dark|light|…)(?:mode|theme|scheme|ui|bg)?(?![a-z])`. A lowercase prefix compound such as `'isdark'` or `'appdark'` fails `(?<![A-Za-z])` and the camelCase branch `(?<=[a-z0-9])(?:Dark|Light)`. A pluralised suffix compound such as `'darkmodes'` or `'darkthemes'` fails `(?![a-z])` after the suffix, and the `theme` branch's `(?<![A-Za-z])` rejects it after `dark`. So `el.classList.add('appdark')` passes all three invariants. The `named` cases (lines ~117-126) cover only suffix compounds. The e2e no-toggle check still covers reachable controls, so this gap only matters for states that test cannot reach. Coverage for this round: 18 scenarios: 18 implemented, 0 partial, 0 missing, 0 contradicted. The other round-9 fixes are verified: the `theme…` prefix catches themed/themes; forced and fine cases go through the TSX-printer path ('a.tsx') and the CSS path ('a.css'); the no-`!` .dockerignore assertion is at container-config.test.ts:127; the git-excludes accepted limit is in design.md; the Firefox `test.slow` is at e2e/a11y.spec.ts:13.",
+        "suggestion": "Either allow a common lowercase prefix (`(?<![A-Za-z])(?:is|app|mode|use|has)(?:dark|light)`) and an optional plural `s?` after the suffix list, with `'appdark'`, `'isdark'` and `'darkmodes'` added to the `named` cases and `'highlight'`/`'spotlight'` kept in the fine cases; or record lowercase prefix compounds as an accepted limit in design.md. They cannot be told apart from real words like `highlight` without a word list.",
+        "dimension": "spec-compliance",
+        "verdict": "contested",
+        "verifierNotes": [
+          "I couldn't run the script, so I traced the SCHEME regex in src/app/theme-source.test.ts:27-37 by hand. The gap is real.\n- 'appdark' and 'isdark': the dark/light branch needs `(?<![A-Za-z])` before the word, and here 'p' or 's' comes first, so it fails. The camelCase branch `(?<=[a-z0-9])(?:Dark|Light)` only matches capitalised Dark or Light. Neither theme branch applies. No branch matches.\n- 'darkmodes': the dark branch matches 'dark' plus the optional 'mode', then `(?![a-z])` fails on 's'. Backtracking to drop the suffix fails on 'm'. Nothing else matches.\n- 'darkthemes': `(?<![A-Za-z])theme` fails because 'k' comes before it, and `(?<=[a-z0-9])Theme` needs a capital T. The dark+theme suffix path then fails on the trailing 's'.\nSo QUOTED_SCHEME and TEMPLATE_SCHEME don't flag these strings. The other two invariants don't help: TOKEN_WRITE looks for `--` and SCHEME_API for data-theme or color-scheme names. That means `el.classList.add('appdark')` passes themeViolations.\nThe `named` cases (lines 117-126) only test suffix compounds and camelCase. The accepted-limits section of design.md (lines 140-159) doesn't mention this gap.\nSeverity stays minor. It is a hole in a static backstop for FR-58, not a product bug. The design system owns the schemes, and the e2e no-toggle check covers reachable controls.",
+          "The regex claim itself is correct. In `SCHEME` (theme-source.test.ts:27-37), `'appdark'` and `'isdark'` fail the `(?<![A-Za-z])` lookbehind, and the camelCase branch needs a capital `Dark`/`Light`. `'darkmodes'` fails the `(?![a-z])` check after the suffix, and backtracking to a bare `dark` fails on the `m` that follows.\n\nIt still can't happen for a real user, and it isn't a spec violation today:\n1. It's a static lint heuristic over source. No current app file contains such a string: the `no app source … breaks an invariant` test passes, and a grep for `dark` under src/ only finds hits inside src/design-system. No shipped code reaches this gap.\n2. A class like `appdark` can't force the theme. The vendored design system switches schemes only through `[data-theme=\"dark\"|\"light\"]` and `@media (prefers-color-scheme: dark)` (tokens.css:3, 50, 83-84). Nothing styles a class called `appdark` or `darkmodes`. To actually force a scheme, code has to touch `data-theme`/`dataset.theme`/`color-scheme`, which `SCHEME_API` catches. Or it has to redeclare tokens, which `TOKEN_WRITE` catches. The class name is harmless unless someone also writes custom CSS that swaps whole colour sets, which is contrived.\n3. Any word-pattern check can be dodged by building the string at runtime (`'da'+'rk'`, `dataset['the'+'me']`). An extra spelling the check misses is not a new kind of problem. As the finding itself says, prefix compounds can't be told apart from `highlight`/`spotlight` without a word list, so this is a known limit of the approach, not a defect.\n\nAt most this is a nice-to-have extra test case for a future developer's mistake, not a problem a user can reproduce."
+        ]
+      }
+    ],
+    "rejected": [],
+    "reviewEvidence": "openspec/changes/implement-platform-foundation-ui/review-findings.json"
+  }
+}

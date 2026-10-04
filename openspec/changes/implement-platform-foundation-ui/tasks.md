@@ -27,7 +27,7 @@
 - [x] 4.1 `npm run qa:verify` green.
 - [x] 4.2 `npx openspec validate implement-platform-foundation-ui --strict`.
 - [ ] 4.3 review-gate workflow; fix confirmed findings; `review-findings.json` (clean: true).
-- [ ] 4.4 Smoke against the compose stack: `npm run stack:up` in backend; open `http://127.0.0.1:8081/` in light and dark; `/api/child/nope` through nginx is 404 problem+json.
-  - Partly automated: `npm run test:container` builds the image and checks it over HTTP beside a stub backend, then runs Playwright through nginx (evidence: `docs/qa/container-smoke-latest.md`). Still open: the real compose stack (`/api/child/nope` from the real backend as problem+json).
+- [x] 4.4 Smoke against the compose stack: `npm run stack:up` in backend; open `http://127.0.0.1:8081/` in light and dark; `/api/child/nope` through nginx is 404 problem+json.
+  - Done 2026-10-04 against the real stack (only 8081 published; 404 problem+json through nginx; 421 for a foreign host; e2e 42 passed, 12 skipped): `docs/qa/evidence/slice1-compose-smoke.md`. `npm run test:container` repeats the nginx checks against a stub backend (`docs/qa/container-smoke-latest.md`).
 - [ ] 4.5 Update `docs/current-state.md`.
 - [ ] 4.6 Archive; commit with `Slice: implement-platform-foundation-ui` + `Refs: FR-58, NFR-3, NFR-4, NFR-6, NFR-9, NFR-12, NFR-13`.

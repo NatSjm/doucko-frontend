@@ -28,8 +28,10 @@ const SCHEME = [
   // theme, themes, themed, theme-x, themeMode, isTheme: any word or name part starting with theme
   String.raw`(?<![A-Za-z])(?:theme|Theme|THEME)`,
   String.raw`(?<=[a-z0-9])Theme`,
-  // dark/light alone or with a scheme suffix, also run together in lowercase (darkmode, lighttheme)
-  String.raw`(?<![A-Za-z])(?:dark|light|Dark|Light|DARK|LIGHT)(?:mode|theme|scheme|ui|bg)?(?![a-z])`,
+  // dark/light alone or run together in lowercase with a flag-style prefix and a scheme suffix,
+  // plural included (isdark, appdark, darkmode, lightthemes). A free prefix would also match words
+  // that only end in "light" (highlight, flight), so the prefixes are the usual flag and owner words.
+  String.raw`(?<![A-Za-z])(?:is|has|use|set|get|no|app|ui|my|to|on)?(?:dark|light|Dark|Light|DARK|LIGHT)(?:mode|theme|scheme|ui|bg)?s?(?![a-z])`,
   String.raw`(?<=[a-z0-9])(?:Dark|Light)(?![a-z])`,
 ]
   .map((alt) => `(?:${alt})`)
@@ -123,9 +125,14 @@ describe('theme follows the OS (FR-58)', () => {
       "cls('lighttheme')",
       "cls('themed')",
       "cls('themes-x')",
+      "cls('isdark')",
+      "cls('appdark')",
+      "cls('nodark')",
+      "cls('darkmodes')",
+      "cls('lightthemes')",
     ];
     expect(named.filter((s) => themeViolations(s, false, 'a.tsx').length === 0)).toEqual([]);
-    expect(["<mark className=\"highlight\">", "const c = 'darken-on-hover';"].filter((s) => themeViolations(s, false, 'a.tsx').length > 0)).toEqual([]);
+    expect(["<mark className=\"highlight\">", "const c = 'darken-on-hover';", "cls('flight spotlight delight')", "cls('nolightbox')"].filter((s) => themeViolations(s, false, 'a.tsx').length > 0)).toEqual([]);
     // '/*' or '//' inside a string is not a comment: the code after it is still checked
     const slashStar = ['const a = <input accept="image/*" />;', "const b = 'dark';", "const c = '*/';"].join('\n');
     expect(themeViolations(slashStar, false, 'a.tsx')).toEqual([
