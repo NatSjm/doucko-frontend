@@ -7,7 +7,10 @@ for (const scheme of ['light', 'dark'] as const) {
   test.describe(`axe, ${scheme}`, () => {
     test.use({ colorScheme: scheme });
     for (const screen of SCREENS) {
-      test(`${screen.name} has no serious or critical WCAG A/AA violation`, async ({ page }) => {
+      test(`${screen.name} has no serious or critical WCAG A/AA violation`, async ({ page, browserName }) => {
+        // An axe scan in Firefox takes 10–25 s and passed the 30 s limit under load; triple the time,
+        // never the assertions.
+        test.slow(browserName === 'firefox');
         await page.goto(screen.path);
         await expect(page.locator(screen.marker)).toBeAttached();
         const { violations } = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
