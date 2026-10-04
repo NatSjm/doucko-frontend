@@ -11,7 +11,7 @@
 - [x] 2.5 `e2e/theme.spec.ts` (FR-58): dark OS → dark tokens, light OS → light tokens; no theme toggle on any route.
 - [x] 2.6 `e2e/a11y.spec.ts` (NFR-13): axe serious/critical = 0 on every route in light and dark; no running animation under reduced motion.
 - [x] 2.7 `e2e/app-shell.spec.ts` (NFR-3, NFR-6): smoke in chromium, msedge and firefox at 1280×720; the real display name never appears.
-- [ ] 2.8 Run them and confirm RED on assertions. **Open:** no recorded RED run for the original tests; the review-fix tests have one (`docs/qa/evidence/slice1-review-fixes.md`).
+- [x] 2.8 Run them and confirm RED on assertions. **Waived** by the project owner on 2026-10-04 (`docs/qa/waivers/slice1-task-2.8-red-run.md`): no recorded RED run for the original tests; the review-fix tests have one (`docs/qa/evidence/slice1-review-fixes.md`).
 
 ## 3. Implementation (green)
 
@@ -26,8 +26,8 @@
 
 - [x] 4.1 `npm run qa:verify` green.
 - [x] 4.2 `npx openspec validate implement-platform-foundation-ui --strict`.
-- [ ] 4.3 review-gate workflow; fix confirmed findings; `review-findings.json` (clean: true).
+- [x] 4.3 review-gate workflow; fix confirmed findings; `review-findings.json` (clean: true). Rounds 1–10; findings dispositioned, owner sign-off (`design.md` "Review sign-off").
 - [x] 4.4 Smoke against the compose stack: `npm run stack:up` in backend; open `http://127.0.0.1:8081/` in light and dark; `/api/child/nope` through nginx is 404 problem+json.
   - Done 2026-10-04 against the real stack (only 8081 published; 404 problem+json through nginx; 421 for a foreign host; e2e 42 passed, 12 skipped): `docs/qa/evidence/slice1-compose-smoke.md`. `npm run test:container` repeats the nginx checks against a stub backend (`docs/qa/container-smoke-latest.md`).
-- [ ] 4.5 Update `docs/current-state.md`.
-- [ ] 4.6 Archive; commit with `Slice: implement-platform-foundation-ui` + `Refs: FR-58, NFR-3, NFR-4, NFR-6, NFR-9, NFR-12, NFR-13`.
+- [x] 4.5 Update `docs/current-state.md`.
+- [x] 4.6 Archive; commit with `Slice: implement-platform-foundation-ui` + `Refs: FR-58, NFR-3, NFR-4, NFR-6, NFR-9, NFR-12, NFR-13`.

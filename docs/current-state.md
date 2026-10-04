@@ -5,26 +5,30 @@
 
 ## Last Updated
 
-- **Date and time:** 2026-10-03 (Europe/Prague)
+- **Date and time:** 2026-10-04 (Europe/Prague)
 - **Current phase:** Phase 4
 - **Last completed gate:** G3
-- **Active change:** `implement-platform-foundation-ui` (slice 1, in progress)
+- **Active change:** none. Slice 1 `implement-platform-foundation-ui` archived 2026-10-04
+  (branch `slice1-platform-foundation`, not pushed or merged).
 - **Contract pin:** `contract/` submodule (`url = ../docs`) at docs `4c87d67`, API 0.5.1
-- **Progress:** Harness installed; design system vendored at `src/design-system/`. Vite 8 +
-  React 19 + TypeScript 5.9 strict scaffold (ADR-0003): `@` alias, app shell `src/app/` with a
-  TanStack Query provider, ESLint 10 flat config (ignores the design system, generated client and
-  harness dirs), Vitest 5 + Testing Library (jsdom, v8 coverage with `json-summary`), Playwright
-  (chromium; `E2E_BASE_URL` or a built `vite preview`). API types: `npm run api:generate` →
-  openapi-typescript → gitignored `src/api/generated/schema.d.ts` (SKIP-pending until
-  `api/openapi.yaml` exists); runtime client openapi-fetch + openapi-react-query.
-- **Next task:** Phase 0 step 5, pin `contract/` once the docs repo has a remote. Then Phase 1 in docs.
+- **Progress:** Vite 8 / React 19 / TypeScript 5.9 scaffold (ADR-0003) plus slice 1 platform
+  foundation: app shell with route registry and not-found screen, message catalogs (cs child, en
+  admin) with the `doucko/no-literal-ui-text` lint rule and a pseudo-catalog render test, theme from
+  the OS only (static invariants + e2e), axe and reduced-motion e2e in Chrome, Edge and Firefox,
+  generated API client from the pinned contract, nginx image (one origin, security headers, DNS
+  rebinding guard 421, no-cache shell), fixture/asset provenance test, real-name guard for e2e.
+- **Next task:** slice 2 per the capability plan (`contract/docs/mvp-capability-plan.md`).
 - **Claims:**
-  - Harness installed and not drifted — evidence: `npm run factory:check`
-  - Battery scripts exist and pass on the scaffold: `npm run lint`, `typecheck`, `test:run`,
-    `test:coverage`, `test:e2e` (1 Playwright smoke), `build`. All exited 0 on 2026-09-28.
-  - G0 PASS, G1+ not started. Evidence: `npm run gate:status`
-- **Scope NOT delivered:** `contract/` submodule, routes/child and admin apps, i18n setup (NFR-9,
-  first UI slice), e2e against docker compose (Phase 5).
+  - QA battery passes — evidence: `docs/qa/automated-verification-latest.md` (2026-10-04)
+  - Image smoke against a stub backend, Playwright through nginx — evidence: `docs/qa/container-smoke-latest.md`
+  - Real-stack smoke (task 4.4) — evidence: `docs/qa/evidence/slice1-compose-smoke.md`
+  - Review gate clean after 10 rounds and the owner's sign-off — evidence:
+    `openspec/changes/archive/*implement-platform-foundation-ui/review-findings.json`
+  - G0, G2, G5, G8 PASS; G1 and G3 need the owner's sign-off; G4 and G6 are SKIP-planned; G7
+    (release) fails until every MVP slice is archived. Evidence: `npm run gate:status`
+- **Scope NOT delivered:** the child and admin feature screens (later slices); recordings and evals
+  (planned with their slices); task 2.8's original RED run (waived:
+  `docs/qa/waivers/slice1-task-2.8-red-run.md`).
 
 ## Validation
 
