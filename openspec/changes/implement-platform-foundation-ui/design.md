@@ -43,9 +43,13 @@ a Vitest check confirms that every contract path is in it.
   the accessibility tree: JSX text; literals inside child expressions
   (conditional, logical, template, `+`); the same in DOM text attributes;
   and the same in any prop of a component except identifier/styling props
-  (`NON_TEXT_PROPS`, `name` on `Icon`/`ChoiceGroup`). A unit test lints a
-  probe file through `eslint.config.js` to prove the wiring. Tests, the
-  vendored design system and generated code are exempt.
+  (`NON_TEXT_PROPS`, `name` on `Icon`/`ChoiceGroup`); literals nested in arrays,
+  objects (except identifier keys such as `value`), template expressions, TS
+  wrappers, `String('…')` and method calls on a literal; and a literal assigned
+  to `document.title` in `.ts` and `.tsx`. Unit tests lint probe files through
+  `eslint.config.js` to prove the wiring. Tests, the catalogs, the vendored
+  design system and generated code are exempt. It cannot follow a variable or
+  another module; the pseudo-catalog render is the backstop there.
 - Known gap (out of scope here): components in the vendored design system
   carry default Czech strings (e.g. `AnswerPart` placeholder, `Feedback`
   labels). The design system is linted nowhere, so feature slices must pass
@@ -67,8 +71,11 @@ a Vitest check confirms that every contract path is in it.
 `fixtures/PROVENANCE.md` lists every file under `fixtures/`, `e2e/fixtures/`,
 `evals/cases/` and the asset roots (`public/`, `src/assets/`,
 `src/design-system/fonts`, `src/design-system/icons`), and every image,
-font, audio, video or PDF file anywhere in git (generated `docs/qa/`
-evidence and `contract/` excepted). Fixtures must be `self-authored`. A
+font, audio, video, PDF, office or plain-text data file anywhere in git, and
+JSON/Markdown/YAML data under `src/` (outside the design system) and `e2e/`.
+Only `contract/` and the recordings a `docs/qa/**/manifest.json` lists are
+exempt. Open (harness, recordings slice): `scripts/record-demos.mjs` does not
+run the real-name guard yet; it must before the first recording is committed. Fixtures must be `self-authored`. A
 skin asset may also be `licensed: <SPDX>` with its licence file (same
 origin and author) listed beside it (the two OFL fonts).
 
@@ -89,12 +96,23 @@ origin and author) listed beside it (the two OFL fonts).
   if `contract/api/openapi.yaml` is missing, so the image is always built
   from the pinned contract (NFR-12).
 - nginx: one origin for SPA and `/api/` (proxied with the original
-  `Host` and `X-Forwarded-For`); a missing `/assets/` file is 404, not the
-  SPA page; `server_tokens off`; `X-Content-Type-Options`,
+  `Host`, and `X-Forwarded-For` overwritten with `$remote_addr` so a client
+  cannot spoof its address to the login throttle; the backend's copies of
+  the server-level security headers are hidden); `backend` is re-resolved through Docker's
+  DNS (`resolver 127.0.0.11`, variable `proxy_pass`), so a recreated backend
+  is found and nginx starts before it; a missing `/assets/` file is 404, not
+  the SPA page; the shell is sent with `expires -1`; `server_tokens off`; `X-Content-Type-Options`,
   `Referrer-Policy` and a CSP (`script-src 'self'`, `frame-ancestors
   'none'`, `object-src 'none'`) on every response. nginx still runs as
   root inside the container; an unprivileged image would change the
-  Compose port mapping and is left to Phase 5.
+  Compose port mapping and is left to Phase 5. `client_max_body_size 51m`
+  follows NFR-17's 50 MB upload cap; the CSP allows inline styles because
+  React `style` props need them (scripts stay `'self'`).
+- Screens: the a11y and theme e2e iterate `e2e/screens.ts`: every registered
+  route plus the not-found screen, each with its `data-route` marker. The
+  no-toggle e2e clicks every control (a failed click fails) and records how
+  many it activated; `src/app/theme-source.test.ts` proves statically that no
+  app source sets `data-theme`.
 - `tsconfig.e2e.json` gives only the e2e specs DOM types; Node-side config
   files have none.
 

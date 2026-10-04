@@ -1,15 +1,15 @@
 // @trace NFR-13
 import AxeBuilder from '@axe-core/playwright';
-import { ROUTE_PATHS } from '../src/app/route-paths';
+import { SCREENS } from './screens';
 import { expect, test } from './fixtures/test';
 
 for (const scheme of ['light', 'dark'] as const) {
   test.describe(`axe, ${scheme}`, () => {
     test.use({ colorScheme: scheme });
-    for (const path of ROUTE_PATHS) {
-      test(`${path} has no serious or critical WCAG A/AA violation`, async ({ page }) => {
-        await page.goto(path);
-        await expect(page.locator(`[data-route="${path}"]`)).toBeAttached();
+    for (const screen of SCREENS) {
+      test(`${screen.name} has no serious or critical WCAG A/AA violation`, async ({ page }) => {
+        await page.goto(screen.path);
+        await expect(page.locator(screen.marker)).toBeAttached();
         const { violations } = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
         const severe = violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
         expect(severe.map((v) => `${v.id}: ${v.help} (${v.nodes.length})`)).toEqual([]);
@@ -20,11 +20,11 @@ for (const scheme of ['light', 'dark'] as const) {
 
 test.describe('reduced motion', () => {
   test.use({ reducedMotion: 'reduce' });
-  for (const path of ROUTE_PATHS) {
-    test(`${path} runs no animation`, async ({ page }) => {
-      await page.goto(path);
+  for (const screen of SCREENS) {
+    test(`${screen.name} runs no animation`, async ({ page }) => {
+      await page.goto(screen.path);
       await page.waitForLoadState('networkidle');
-      await expect(page.locator(`[data-route="${path}"]`)).toBeAttached();
+      await expect(page.locator(screen.marker)).toBeAttached();
       // Sampled after load and again later, counting animations that are pending (delayed) as well
       // as running, so motion started after hydration or by a delay is seen too.
       for (const waitMs of [0, 500]) {

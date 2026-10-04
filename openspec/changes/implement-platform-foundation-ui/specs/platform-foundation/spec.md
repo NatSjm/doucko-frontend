@@ -4,7 +4,9 @@
 
 The app SHALL show the light theme when the OS asks for light and the dark
 theme when it asks for dark, and SHALL offer no in-app theme toggle (FR-58;
-store spec gamification, "Light and dark theme").
+store spec gamification, "Light and dark theme"). No app source outside the
+vendored design system SHALL set `data-theme` or a colour scheme. "Any
+route" includes the not-found screen.
 
 #### Scenario: Dark OS
 
@@ -27,7 +29,9 @@ store spec gamification, "Light and dark theme").
 
 Every visible string and accessible name SHALL come from a message catalog:
 Czech for the child UI and English for the admin UI (NFR-9). A lint rule
-SHALL refuse literal UI text in `src/`.
+SHALL refuse literal UI text that it can see in `src/` (JSX, props, nested
+collections, the document title); text reached through a variable or another
+module is caught by the pseudo-catalog render.
 
 #### Scenario: Pseudo-catalog render
 
@@ -42,8 +46,8 @@ SHALL refuse literal UI text in `src/`.
 
 ### Requirement: Accessible in light and dark
 
-Every route SHALL have no serious or critical axe-core (WCAG 2 A/AA)
-violation in either colour scheme (NFR-13).
+Every route, and the not-found screen, SHALL have no serious or critical
+axe-core (WCAG 2 A/AA) violation in either colour scheme (NFR-13).
 
 #### Scenario: axe on every route
 
@@ -68,8 +72,10 @@ The e2e suite SHALL run in Chrome, Edge and Firefox at a 1280×720 viewport (NFR
 ### Requirement: Provenance of fixtures and skin assets
 
 Every fixture file SHALL be listed in `fixtures/PROVENANCE.md` as
-`self-authored` with an author. Every skin asset, and every image, font,
-audio, video or PDF file anywhere in the repository, SHALL be listed as
+`self-authored` with an author. Every skin asset, every image, font, audio,
+video, PDF, office or plain-text data file anywhere in the repository, and
+every JSON, Markdown or YAML data file under `src/` (outside the vendored
+design system) or `e2e/`, SHALL be listed as
 `self-authored` or `licensed: <SPDX id>`, with its licence file (same
 origin and author) listed beside it (NFR-4, CA-D21).
 
@@ -124,9 +130,10 @@ stop when the pinned contract is missing (NFR-12).
 ### Requirement: Served behind one origin
 
 The image SHALL serve the SPA and proxy `/api/` to the backend on the same
-origin, forwarding the original `Host` and client address. A path that is
+origin, forwarding the original `Host` and client address, and SHALL find a
+recreated backend container without a restart. A path that is
 not a built file SHALL get the SPA, except under `/assets/`, where a missing
-file is 404. Every response SHALL carry `X-Content-Type-Options: nosniff`,
+file is 404; the SPA shell is never cached. Every response SHALL carry `X-Content-Type-Options: nosniff`,
 `Referrer-Policy: no-referrer` and a Content-Security-Policy with
 `script-src 'self'`, `object-src 'none'` and `frame-ancestors 'none'`, and
 no server version. Base images SHALL be pinned by digest.

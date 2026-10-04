@@ -23,7 +23,8 @@ describe('App shell', () => {
     window.history.pushState({}, '', '/no-such-route');
     const { container } = render(<App />);
     expect(messages['app.notFound']).toBeTruthy();
-    expect(container.querySelector('[data-route]')).toBeNull();
+    expect(container.querySelector('[data-route="not-found"]')).not.toBeNull();
+    expect(container.querySelector('[data-route="/"]')).toBeNull();
     expect(screen.queryByRole('heading', { level: 1, name: messages['app.name'] })).toBeNull();
     expect(screen.getByRole('heading', { level: 1, name: messages['app.notFound'] })).toBeInTheDocument();
   });

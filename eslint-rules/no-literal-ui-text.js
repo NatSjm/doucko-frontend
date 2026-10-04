@@ -10,7 +10,14 @@
 //     placeholder, children, and value on <input type="submit|button|reset">
 //   - the same inside any prop of a component (PascalCase), except props that never carry text
 //     (NON_TEXT_PROPS, plus `name` on components where it is an identifier)
+//   - literals nested in arrays and objects ({ label: 'Ano' }, except identifier keys such as
+//     `value`), template expressions, TS wrappers (`as`, `satisfies`, `!`), String('…') and
+//     method calls on a literal ('Ahoj'.toUpperCase())
+//   - a literal assigned to document.title, in .ts and .tsx files
 // Allows punctuation-only text (" · ", "/"), whitespace, and every expression ({t('key')}).
+// Not seen (static analysis cannot follow them): text reached through a variable or another module,
+// and spread attributes. The pseudo-catalog render test (src/app/i18n-coverage.test.tsx) is the
+// backstop for those.
 
 const DOM_TEXT_ATTRIBUTES = new Set([
   "aria-label",
@@ -24,7 +31,10 @@ const DOM_TEXT_ATTRIBUTES = new Set([
   "alt",
   "placeholder",
   "children",
+  "label",
 ]);
+/** Elements whose `defaultValue` is shown in the field. */
+const DEFAULT_VALUE_ELEMENTS = new Set(["input", "textarea"]);
 const VISIBLE_VALUE_INPUT_TYPES = new Set(["submit", "button", "reset"]);
 /** Component props that hold identifiers, styling or behaviour, never UI text. */
 const NON_TEXT_PROPS = new Set([
@@ -35,16 +45,35 @@ const NON_TEXT_PROPS = new Set([
 /** Components whose `name` is an identifier (icon name, form-field name), not a display name. */
 const NAME_IS_IDENTIFIER = new Set(["Icon", "ChoiceGroup"]);
 
-const hasLetter = (s) => /\p{L}/u.test(s);
+/** Object keys inside a text prop that hold identifiers, not text ({ value: 'a', label: t('yes') }). */
+const NON_TEXT_KEYS = new Set([...NON_TEXT_PROPS, "value", "name"]);
 
-/** Literal strings with a letter that `node` can evaluate to (or contain, for templates and +). */
+const hasLetter = (s) => /\p{L}/u.test(s);
+const propertyKey = (p) => (p.key?.type === "Identifier" ? p.key.name : p.key?.type === "Literal" ? String(p.key.value) : null);
+
+/** Literal strings with a letter that `node` can evaluate to (or contain, for templates, + and collections). */
 function literalTexts(node) {
   if (!node) return [];
   switch (node.type) {
     case "Literal":
       return typeof node.value === "string" && hasLetter(node.value) ? [node.value] : [];
     case "TemplateLiteral":
-      return node.quasis.map((q) => q.value.cooked ?? "").filter(hasLetter);
+      return [...node.quasis.map((q) => q.value.cooked ?? "").filter(hasLetter), ...node.expressions.flatMap(literalTexts)];
+    case "ArrayExpression":
+      return node.elements.flatMap((e) => literalTexts(e?.type === "SpreadElement" ? e.argument : e));
+    case "ObjectExpression":
+      return node.properties.flatMap((p) => (p.type === "Property" && !NON_TEXT_KEYS.has(propertyKey(p)) ? literalTexts(p.value) : []));
+    case "TSAsExpression":
+    case "TSSatisfiesExpression":
+    case "TSNonNullExpression":
+    case "TSTypeAssertion":
+    case "ChainExpression":
+      return literalTexts(node.expression);
+    case "CallExpression":
+      // 'Ahoj'.toUpperCase() / `…`.trim(): the text is the receiver; String('Ahoj'): the argument.
+      if (node.callee.type === "MemberExpression") return literalTexts(node.callee.object);
+      if (node.callee.type === "Identifier" && node.callee.name === "String") return node.arguments.flatMap(literalTexts);
+      return [];
     case "ConditionalExpression":
       return [...literalTexts(node.consequent), ...literalTexts(node.alternate)];
     case "LogicalExpression":
@@ -67,7 +96,8 @@ function elementName(opening) {
 
 function staticAttribute(opening, name) {
   const attr = opening.attributes.find((a) => a.type === "JSXAttribute" && a.name.name === name);
-  return attr?.value?.type === "Literal" ? attr.value.value : null;
+  const value = attr?.value?.type === "JSXExpressionContainer" ? attr.value.expression : attr?.value;
+  return value?.type === "Literal" ? value.value : null;
 }
 
 function isTextAttribute(opening, prop) {
@@ -78,6 +108,7 @@ function isTextAttribute(opening, prop) {
     return !(prop === "name" && NAME_IS_IDENTIFIER.has(element));
   }
   if (DOM_TEXT_ATTRIBUTES.has(prop)) return true;
+  if (prop === "defaultValue") return DEFAULT_VALUE_ELEMENTS.has(element);
   return prop === "value" && element === "input" && VISIBLE_VALUE_INPUT_TYPES.has(staticAttribute(opening, "type"));
 }
 
@@ -89,10 +120,20 @@ export default {
     messages: {
       text: "Literal UI text {{text}}: put it in the message catalog (src/i18n) and render t('<key>') (NFR-9).",
       attr: "Literal {{name}} {{text}}: put it in the message catalog (src/i18n) and pass t('<key>') (NFR-9).",
+      title: "Literal document title {{text}}: put it in the message catalog (src/i18n) and assign t('<key>') (NFR-9).",
     },
   },
   create(context) {
     return {
+      AssignmentExpression(node) {
+        const left = node.left;
+        const isTitle =
+          left.type === "MemberExpression" &&
+          left.object.type === "Identifier" &&
+          left.object.name === "document" &&
+          ((left.property.type === "Identifier" && left.property.name === "title") || left.property.value === "title");
+        if (isTitle) for (const text of literalTexts(node.right)) context.report({ node, messageId: "title", data: { text: JSON.stringify(text) } });
+      },
       JSXText(node) {
         if (hasLetter(node.value)) context.report({ node, messageId: "text", data: { text: JSON.stringify(node.value.trim()) } });
       },

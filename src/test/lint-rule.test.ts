@@ -27,6 +27,9 @@ tester.run('doucko/no-literal-ui-text', rule, {
     { code: 'const a = <Button variant="primary" type="submit" icon="bolt">{t("go")}</Button>;' },
     { code: 'const a = <Panel tone="hero" subject="math" accent="#ff0000" className="x" />;' },
     { code: 'const a = <a href="/admin" rel="noopener" target="_blank">{t("a")}</a>;' },
+    { code: 'const a = <ChoiceGroup options={[{ value: "a", id: "q1-a", label: t("yes") }]} />;' },
+    { code: 'const a = <input type="number" defaultValue={3} />;' },
+    { code: 'document.title = t("app.name");' },
   ],
   invalid: [
     { code: 'const a = <h1>Doučko</h1>;', errors: [{ messageId: 'text' }] },
@@ -54,6 +57,20 @@ tester.run('doucko/no-literal-ui-text', rule, {
     { code: 'const a = <Panel ariaLabel="Mise" kicker="Dnes" />;', errors: [{ messageId: 'attr' }, { messageId: 'attr' }] },
     { code: 'const a = <SubjectTile name="Matematika" meta={`${n} úloh`} />;', errors: [{ messageId: 'attr' }, { messageId: 'attr' }] },
     { code: 'const a = <AnswerPart unit="cm" placeholder="Tvoje odpověď" />;', errors: [{ messageId: 'attr' }, { messageId: 'attr' }] },
+    // Literals inside arrays, objects, TS wrappers, method calls and template expressions
+    { code: 'const a = <ChoiceGroup options={[{ value: "a", label: "Ano" }]} />;', errors: [{ messageId: 'attr' }] },
+    { code: 'const a = <p>{["Ahoj"]}</p>;', errors: [{ messageId: 'text' }] },
+    { code: 'const a = <p>{"Ahoj".toUpperCase()}</p>;', errors: [{ messageId: 'text' }] },
+    { code: 'const a = <p>{String("Ahoj")}</p>;', errors: [{ messageId: 'text' }] },
+    { code: 'const a = <p>{`${ok ? "Ano" : t("x")}`}</p>;', errors: [{ messageId: 'text' }] },
+    // More attributes that show text
+    { code: 'const a = <input type={"submit"} value="Odeslat" />;', errors: [{ messageId: 'attr' }] },
+    { code: 'const a = <optgroup label="Možnosti" />;', errors: [{ messageId: 'attr' }] },
+    { code: 'const a = <input defaultValue="Ahoj" />;', errors: [{ messageId: 'attr' }] },
+    { code: 'const a = <textarea defaultValue="Ahoj" />;', errors: [{ messageId: 'attr' }] },
+    // The document title
+    { code: 'document.title = "Doučko";', errors: [{ messageId: 'title' }] },
+    { code: 'document.title = ok ? "A" : t("x");', errors: [{ messageId: 'title' }] },
   ],
 });
 
@@ -65,5 +82,10 @@ describe('lint wiring (NFR-9)', () => {
     });
     const hits = result.messages.filter((m) => m.ruleId === 'doucko/no-literal-ui-text');
     expect(hits.map((m) => m.severity)).toEqual([2]);
+  });
+
+  it('npm run lint reports a literal document title in a src/ .ts module', async () => {
+    const [result] = await new ESLint().lintText('document.title = "Doučko";\n', { filePath: 'src/features/probe/title.ts' });
+    expect(result.messages.filter((m) => m.ruleId === 'doucko/no-literal-ui-text').map((m) => m.severity)).toEqual([2]);
   });
 });

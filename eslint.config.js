@@ -42,10 +42,11 @@ export default defineConfig([
     files: ['e2e/**/*.ts', '*.config.ts', 'tools/**/*.mjs', 'eslint-rules/**/*.js'],
     languageOptions: { globals: globals.node },
   },
-  // NFR-9: UI text only from the message catalog. Tests may use literals (they assert on them).
+  // NFR-9: UI text only from the message catalog. Tests may use literals (they assert on them);
+  // the catalogs themselves are where the literals live.
   {
-    files: ['src/**/*.tsx'],
-    ignores: ['src/**/*.test.tsx'],
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/**/*.test.{ts,tsx}', 'src/test/**', 'src/i18n/cs.ts', 'src/i18n/en.ts'],
     plugins: { doucko: { rules: { 'no-literal-ui-text': noLiteralUiText } } },
     rules: { 'doucko/no-literal-ui-text': 'error' },
   },

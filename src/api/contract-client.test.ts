@@ -9,15 +9,27 @@ import { describe, expect, it } from 'vitest';
 const CONTRACT = 'contract/api/openapi.yaml';
 const GENERATED = 'src/api/generated/schema.d.ts';
 
+/** Keys of the contract's top-level `paths:` map (two-space indented, up to the next top-level key). */
+function contractPaths(yaml: string): string[] {
+  const block = /^paths:\s*\n([\s\S]*?)(?=^\S)/m.exec(yaml)?.[1] ?? '';
+  return [...block.matchAll(/^ {2}(\/[^:\s]*):\s*$/gm)].map((m) => m[1]);
+}
+
+/** Keys of the generated `paths` interface. */
+function generatedPaths(dts: string): string[] {
+  const block = /^export interface paths \{\n([\s\S]*?)^\}/m.exec(dts)?.[1] ?? '';
+  return [...block.matchAll(/^ {4}"(\/[^"]*)": \{/gm)].map((m) => m[1]);
+}
+
 describe('generated contract client (NFR-12)', () => {
   it('reads the pinned contract submodule', () => {
     expect(existsSync(CONTRACT)).toBe(true);
   });
 
-  it('declares every contract path', () => {
-    const paths = [...readFileSync(CONTRACT, 'utf8').matchAll(/^ {2}(\/api\/[^:\s]+):\s*$/gm)].map((m) => m[1]);
-    expect(paths.length).toBeGreaterThan(30);
-    const schema = readFileSync(GENERATED, 'utf8');
-    expect(paths.filter((p) => !schema.includes(`"${p}"`))).toEqual([]);
+  it('the generated paths type has exactly the contract paths', () => {
+    expect(existsSync(GENERATED), `${GENERATED} is missing: run npm run api:generate (typecheck and build run it)`).toBe(true);
+    const contract = contractPaths(readFileSync(CONTRACT, 'utf8'));
+    expect(contract.length).toBeGreaterThan(30);
+    expect(generatedPaths(readFileSync(GENERATED, 'utf8')).sort()).toEqual([...contract].sort());
   });
 });

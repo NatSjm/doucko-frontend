@@ -8,7 +8,8 @@ import { describe, expect, it } from 'vitest';
  */
 const nginx = readFileSync('nginx.conf', 'utf8');
 const dockerfile = readFileSync('Dockerfile', 'utf8');
-const json = (f: string) => JSON.parse(readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, ''));
+/** tsconfig files carry whole-line block comments; a `/*` inside a string (the `@/*` alias) is not one. */
+const json = (f: string) => JSON.parse(readFileSync(f, 'utf8').replace(/^\s*\/\*.*?\*\/\s*$/gm, ''));
 
 /** Body of the first `location <path> { ... }` block (no nested blocks in this config). */
 const location = (path: string) => new RegExp(`location ${path.replace(/\//g, '\\/')} \\{([^}]*)\\}`).exec(nginx)?.[1] ?? '';
@@ -32,11 +33,29 @@ describe('nginx.conf', () => {
     expect(location('/')).toMatch(/try_files \$uri \/index\.html;/);
   });
 
+  it('re-resolves the backend through Docker DNS, so a recreated backend container is found', () => {
+    expect(nginx).toMatch(/^\s*resolver 127\.0\.0\.11 valid=\d+s( ipv6=off)?;/m);
+    const api = location('/api/');
+    expect(api).toMatch(/set \$backend http:\/\/backend:8080;/);
+    expect(api).toMatch(/proxy_pass \$backend;/);
+  });
+
+  it('never lets a client cache the SPA shell', () => {
+    expect(location('/')).toMatch(/expires -1;/);
+  });
+
   it('proxies the API with the original host and client address', () => {
     const api = location('/api/');
-    expect(api).toMatch(/proxy_pass http:\/\/backend:8080;/);
     expect(api).toMatch(/proxy_set_header Host \$http_host;/);
-    expect(api).toMatch(/proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;/);
+    // Overwritten, not appended: a client-supplied X-Forwarded-For must not reach the login throttle.
+    expect(api).toMatch(/proxy_set_header X-Forwarded-For \$remote_addr;/);
+    expect(api).not.toMatch(/proxy_add_x_forwarded_for/);
+  });
+
+  it("drops the backend's copies of the server-level security headers", () => {
+    const api = location('/api/');
+    for (const h of ['X-Content-Type-Options', 'Referrer-Policy', 'Content-Security-Policy'])
+      expect(api).toContain(`proxy_hide_header ${h};`);
     expect(api).toMatch(/proxy_set_header X-Forwarded-Proto \$scheme;/);
   });
 });
@@ -61,5 +80,11 @@ describe('tsconfig split', () => {
     expect(json('tsconfig.node.json').include).not.toContain('e2e');
     expect(json('tsconfig.e2e.json').include).toContain('e2e');
     expect(json('tsconfig.json').references).toContainEqual({ path: './tsconfig.e2e.json' });
+  });
+
+  it('keeps Node types out of app code; tests are typed separately', () => {
+    const app = json('tsconfig.app.json');
+    expect(app.compilerOptions.types).not.toContain('node');
+    expect(app.exclude).toEqual(expect.arrayContaining(['src/**/*.test.ts', 'src/**/*.test.tsx', 'src/test']));
   });
 });

@@ -6,27 +6,41 @@ import { describe, expect, it } from 'vitest';
 /**
  * CA-D21 (content-authoring "Copyright-safe content"): every fixture is self-authored; every skin
  * asset is self-authored or openly licensed with its licence file (same origin and author) listed
- * beside it; listed files
- * exist. Scope: every file under a fixture or asset root, plus every image, font, audio, video or
- * PDF anywhere in the repository (git-tracked or new), wherever it was dropped.
+ * beside it; listed files exist. Scope: every file under a fixture or asset root; every image, font,
+ * audio, video, PDF, office or plain-text data file anywhere in the repository (git-tracked or new);
+ * and JSON, Markdown or YAML data under src/ (outside the vendored design system) and e2e/. Under
+ * docs/qa/ only recordings a manifest lists are exempt (the recorder writes them).
  */
 const MANIFEST = 'fixtures/PROVENANCE.md';
 const FIXTURE_ROOTS = ['fixtures/', 'e2e/fixtures/', 'evals/cases/'];
 const ASSET_ROOTS = ['public/', 'src/assets/', 'src/design-system/fonts/', 'src/design-system/icons/'];
-const MEDIA = /\.(png|jpe?g|gif|webp|avif|svg|ico|bmp|tiff?|woff2?|ttf|otf|eot|pdf|mp3|wav|ogg|m4a|mp4|webm|mov)$/i;
-/** Generated QA evidence (recordings of the app over self-authored fixtures) and the pinned contract. */
-const OUT_OF_SCOPE = ['docs/qa/', 'contract/'];
+const MEDIA =
+  /\.(png|jpe?g|jfif|gif|webp|avif|heic|heif|svg|ico|bmp|tiff?|psd|ai|eps|woff2?|ttf|otf|eot|pdf|djvu|epub|mp3|wav|ogg|opus|flac|aac|m4a|mp4|m4v|webm|mov|mkv|avi)$/i;
+const DOCUMENTS = /\.(csv|tsv|txt|rtf|docx?|xlsx?|pptx?|odt|ods|odp)$/i;
+const SOURCE_DATA = /^(src\/(?!design-system\/)|e2e\/).*\.(json|md|ya?ml)$/i;
+/** The pinned contract belongs to the docs store, which checks its own provenance. */
+const OUT_OF_SCOPE = ['contract/'];
 const EXEMPT = (p: string) => p === MANIFEST || p.endsWith('/.gitkeep');
-const LICENCE_TEXT = /licen[cs]e|OFL|COPYING/i;
+/** A licence text: a .txt/.md (or bare) file named LICENSE/LICENCE/COPYING, or ending in -OFL / -LICENSE. */
+const LICENCE_TEXT = /(^|[-_.])(licen[cs]e|OFL|COPYING)(\.(txt|md))?$/i;
 const ROW = /^\|\s*`([^`]+)`\s*\|([^|]*)\|([^|]*)\|([^|]*)\|$/;
 
 const isFixture = (p: string) => FIXTURE_ROOTS.some((r) => p.startsWith(r));
-const inScope = (p: string) =>
-  !EXEMPT(p) && !OUT_OF_SCOPE.some((r) => p.startsWith(r)) && (isFixture(p) || ASSET_ROOTS.some((r) => p.startsWith(r)) || MEDIA.test(p));
+const inScope = (p: string, recordings: Set<string>) =>
+  !EXEMPT(p) &&
+  !OUT_OF_SCOPE.some((r) => p.startsWith(r)) &&
+  !(p.startsWith('docs/qa/') && recordings.has(p)) &&
+  (isFixture(p) || ASSET_ROOTS.some((r) => p.startsWith(r)) || MEDIA.test(p) || DOCUMENTS.test(p) || SOURCE_DATA.test(p));
 const dirOf = (p: string) => p.slice(0, p.lastIndexOf('/') + 1);
+const baseName = (p: string) => p.slice(p.lastIndexOf('/') + 1);
 
 /** Every provenance problem for a repository with these files and this manifest; empty when complete. */
-export function provenanceProblems(files: string[], manifest: string, exists: (p: string) => boolean): string[] {
+export function provenanceProblems(
+  files: string[],
+  manifest: string,
+  exists: (p: string) => boolean,
+  recordings: Set<string> = new Set(),
+): string[] {
   const problems: string[] = [];
   const rows = manifest
     .split(/\r?\n/)
@@ -49,15 +63,28 @@ export function provenanceProblems(files: string[], manifest: string, exists: (p
       problems.push(`${path}: origin '${origin}' is not allowed${isFixture(path) ? ' for a fixture' : ''}`);
   }
   for (const e of entries) {
-    if (!e.origin.startsWith('licensed:') || LICENCE_TEXT.test(e.path.slice(dirOf(e.path).length))) continue;
+    if (!e.origin.startsWith('licensed:') || LICENCE_TEXT.test(baseName(e.path))) continue;
     const licence = entries.find(
-      (o) => o.origin === e.origin && o.author === e.author && dirOf(o.path) === dirOf(e.path) && LICENCE_TEXT.test(o.path.slice(dirOf(o.path).length)),
+      (o) => o.origin === e.origin && o.author === e.author && dirOf(o.path) === dirOf(e.path) && LICENCE_TEXT.test(baseName(o.path)),
     );
     if (!licence) problems.push(`${e.path}: '${e.origin}' has no licence file listed beside it`);
   }
   const listed = new Set(entries.map((e) => e.path));
-  for (const f of files.filter(inScope)) if (!listed.has(f)) problems.push(`${f}: not listed in ${MANIFEST}`);
+  for (const f of files.filter((p) => inScope(p, recordings))) if (!listed.has(f)) problems.push(`${f}: not listed in ${MANIFEST}`);
   return problems;
+}
+
+/** Files a recording manifest under docs/qa/ lists (written by scripts/record-demos.mjs). */
+function recordedFiles(files: string[]): Set<string> {
+  const listed = new Set<string>();
+  for (const m of files.filter((f) => f.startsWith('docs/qa/') && f.endsWith('/manifest.json'))) {
+    const walk = (v: unknown): void => {
+      if (typeof v === 'string') listed.add(`${dirOf(m)}${v.replace(/^\.\//, '')}`).add(v);
+      else if (v && typeof v === 'object') Object.values(v).forEach(walk);
+    };
+    walk(JSON.parse(readFileSync(m, 'utf8')));
+  }
+  return listed;
 }
 
 const manifestWith = (rows: string) => `# x\n\n| Path | Origin | Author | What |\n|---|---|---|---|\n${rows}`;
@@ -69,17 +96,36 @@ describe('fixture and asset provenance (NFR-4)', () => {
       .filter(Boolean)
       .filter(existsSync);
     expect(files.length).toBeGreaterThan(0);
-    expect(provenanceProblems(files, readFileSync(MANIFEST, 'utf8'), existsSync)).toEqual([]);
+    expect(provenanceProblems(files, readFileSync(MANIFEST, 'utf8'), existsSync, recordedFiles(files))).toEqual([]);
   });
 
-  it('an unlisted fixture, asset or media file anywhere fails the check and is named', () => {
-    const files = ['fixtures/answers.json', 'e2e/fixtures/x.ts', 'evals/cases/c1.json', 'public/scan.png', 'src/features/a/page.pdf', 'src/app/App.tsx', 'docs/qa/demo.png'];
-    expect(provenanceProblems(files, manifestWith(''), () => true)).toEqual([
+  it('an unlisted fixture, asset, media, document or data file fails the check and is named', () => {
+    const files = [
+      'fixtures/answers.json',
+      'e2e/fixtures/x.ts',
+      'evals/cases/c1.json',
+      'public/scan.png',
+      'src/features/a/page.pdf',
+      'src/features/task/__fixtures__/tasks.json',
+      'e2e/data/answers.csv',
+      'src/features/task/scan.heic',
+      'docs/qa/scan.pdf',
+      'docs/qa/demo/clip.webm',
+      'src/app/App.tsx',
+      'src/design-system/tokens.json',
+      'package.json',
+      'README.md',
+    ];
+    expect(provenanceProblems(files, manifestWith(''), () => true, new Set(['docs/qa/demo/clip.webm']))).toEqual([
       'fixtures/answers.json: not listed in fixtures/PROVENANCE.md',
       'e2e/fixtures/x.ts: not listed in fixtures/PROVENANCE.md',
       'evals/cases/c1.json: not listed in fixtures/PROVENANCE.md',
       'public/scan.png: not listed in fixtures/PROVENANCE.md',
       'src/features/a/page.pdf: not listed in fixtures/PROVENANCE.md',
+      'src/features/task/__fixtures__/tasks.json: not listed in fixtures/PROVENANCE.md',
+      'e2e/data/answers.csv: not listed in fixtures/PROVENANCE.md',
+      'src/features/task/scan.heic: not listed in fixtures/PROVENANCE.md',
+      'docs/qa/scan.pdf: not listed in fixtures/PROVENANCE.md',
     ]);
   });
 
@@ -88,6 +134,7 @@ describe('fixture and asset provenance (NFR-4)', () => {
       '| `src/design-system/fonts/A.woff2` | licensed: OFL-1.1 | A Authors | font |',
       '| `src/design-system/fonts/B.woff2` | licensed: OFL-1.1 | B Authors | font |',
       '| `src/design-system/fonts/B-OFL.txt` | licensed: OFL-1.1 | B Authors | licence |',
+      '| `src/design-system/fonts/C-OFL.woff2` | licensed: OFL-1.1 | C Authors | font named like a licence |',
       '| `fixtures/f.json` | licensed: MIT | someone | fixture |',
       '| `fixtures/g.json` | self-authored |  | fixture |',
       '| `fixtures/gone.json` | self-authored | me | fixture |',
@@ -100,6 +147,7 @@ describe('fixture and asset provenance (NFR-4)', () => {
       'fixtures/gone.json: listed but does not exist',
       'malformed manifest row: | fixtures/h.json | self-authored | me | no backticks |',
       "src/design-system/fonts/A.woff2: 'licensed: OFL-1.1' has no licence file listed beside it",
+      "src/design-system/fonts/C-OFL.woff2: 'licensed: OFL-1.1' has no licence file listed beside it",
       "fixtures/f.json: 'licensed: MIT' has no licence file listed beside it",
     ]);
   });

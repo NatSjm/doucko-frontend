@@ -679,6 +679,7 @@
       ],
       "planned": true,
       "tests": [
+        "src/app/theme-source.test.ts",
         "e2e/theme.spec.ts"
       ],
       "recordings": []

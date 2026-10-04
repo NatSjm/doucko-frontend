@@ -9,7 +9,7 @@ import './app.css';
 /**
  * Renders the route registered for the current path (no client-side navigation until a slice has
  * a second route), marked with `data-route` so the e2e checks prove they reached that screen.
- * Any other path shows the not-found screen.
+ * Any other path shows the not-found screen, marked `data-route="not-found"`.
  */
 function CurrentRoute() {
   const t = useT();
@@ -17,7 +17,12 @@ function CurrentRoute() {
     document.title = t('app.name');
   }, [t]);
   const route = routes.find((r) => r.path === window.location.pathname);
-  if (!route) return <NotFound />;
+  if (!route)
+    return (
+      <div className="app-route" data-route="not-found">
+        <NotFound />
+      </div>
+    );
   return (
     <div className="app-route" data-route={route.path}>
       {route.element}
