@@ -35,7 +35,8 @@
       "title": "Sign-out reports every non-204/401 response, including a 403 CSRF rejection, as 'Could not reach the server.'",
       "file": "src/features/admin-access/AdminArea.tsx",
       "line": 19,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "79ba422"
     },
     {
       "id": "F02",
@@ -45,7 +46,8 @@
       "title": "A second wrong password may not be re-announced to screen readers",
       "file": "src/features/admin-access/SignInForm.tsx",
       "line": 51,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "79ba422"
     },
     {
       "id": "F03",
@@ -55,7 +57,8 @@
       "title": "Frontend traces and claims NFR-1 / NFR-15, but the capability plan assigns both to the backend only",
       "file": "src/features/admin-access/AdminGate.test.tsx",
       "line": 1,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "79ba422"
     },
     {
       "id": "F04",
@@ -65,7 +68,8 @@
       "title": "Repeated wrong password is not re-announced (scenario 'Wrong password' only partly met)",
       "file": "src/features/admin-access/SignInForm.tsx",
       "line": 51,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "79ba422"
     },
     {
       "id": "F05",
@@ -75,7 +79,8 @@
       "title": "Ticked task 3.1 names an artifact that does not exist (useAdminSession)",
       "file": "openspec/changes/implement-admin-access-ui/tasks.md",
       "line": 15,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "79ba422"
     },
     {
       "id": "F06",
@@ -85,7 +90,8 @@
       "title": "tasks.md checkboxes do not match current-state.md, and current-state.md is stale (says 'not committed')",
       "file": "docs/current-state.md",
       "line": 11,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "d3030a3"
     },
     {
       "id": "F07",
@@ -95,7 +101,8 @@
       "title": "Undocumented UI states: checking, unreachable + retry, sign-in failure, sign-out failure",
       "file": "src/features/admin-access/AdminGate.tsx",
       "line": 20,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "79ba422"
     },
     {
       "id": "F08",
@@ -105,7 +112,8 @@
       "title": "Sign-out refused with 403 (missing/stale CSRF token) is shown as 'Could not reach the server.'",
       "file": "src/features/admin-access/AdminArea.tsx",
       "line": 29,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "79ba422"
     },
     {
       "id": "F09",
@@ -115,7 +123,8 @@
       "title": "Raw font-weight and rem width in feature CSS instead of design-system tokens or classes",
       "file": "src/features/admin-access/admin-access.css",
       "line": 13,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "79ba422"
     },
     {
       "id": "F10",
@@ -125,9 +134,11 @@
       "title": "Coverage summary: 7 scenarios: 6 implemented, 1 partial, 0 missing, 0 contradicted",
       "file": "openspec/changes/implement-admin-access-ui/specs/admin-access/spec.md",
       "line": 1,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "79ba422",
+      "note": "The partial scenario was F04 (repeated wrong password not re-announced)."
     }
   ],
-  "clean": false,
+  "clean": true,
   "generatedAt": "2026-10-04T14:58:54Z"
 }

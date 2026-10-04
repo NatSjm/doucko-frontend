@@ -2,6 +2,15 @@
   "generatedBy": "scripts/check-trajectory.mjs",
   "slices": [
     {
+      "slice": "2026-10-04-implement-admin-access-ui",
+      "reviewEvidence": "clean",
+      "trailerCommits": 3,
+      "libDomains": [
+        "admin-access"
+      ],
+      "processComplete": true
+    },
+    {
       "slice": "2026-10-04-implement-platform-foundation-ui",
       "reviewEvidence": "clean",
       "trailerCommits": 18,

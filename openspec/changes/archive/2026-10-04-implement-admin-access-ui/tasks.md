@@ -19,7 +19,7 @@
 
 - [x] 4.1 `npm run qa:verify` green.
 - [x] 4.2 `npx openspec validate implement-admin-access-ui --strict`.
-- [ ] 4.3 review-gate workflow; disposition the findings in `review-findings.json`.
+- [x] 4.3 review-gate workflow; disposition the findings in `review-findings.json`. 2026-10-04: findings fixed in `79ba422` / `d3030a3`; 4.1 re-run PASS.
 - [x] 4.4 Smoke against the compose stack: open `http://127.0.0.1:8081/admin`, see the sign-in form, use a wrong password and see the error, use the right one and see the admin home, then sign out and see the form. Evidence: `docs/qa/evidence/slice2-compose-smoke.md`.
 - [x] 4.5 Update `docs/current-state.md`.
-- [ ] 4.6 Archive; commit with `Slice: implement-admin-access-ui` + `Refs: NFR-6, NFR-9, NFR-13`.
+- [x] 4.6 Archive; commit with `Slice: implement-admin-access-ui` + `Refs: NFR-6, NFR-9, NFR-13`.
