@@ -1,6 +1,7 @@
 // @trace FR-58
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 
 /**
@@ -19,23 +20,37 @@ import { describe, expect, it } from 'vitest';
  */
 const TOKEN_WRITE = /(^|[;{\s])--[\w-]+\s*:|['"`]--/m;
 const SCHEME_API = /data-theme|dataset\.theme|colorScheme|color-scheme|prefers-color-scheme/;
-const QUOTED_SCHEME = /(['"])(?:(?!\1)[^\n\\]|\\.)*?\b(dark|light|theme\w*)\b(?:(?!\1)[^\n\\]|\\.)*?\1/i;
-const TEMPLATE_SCHEME = /`(?:[^`\\]|\\.)*?\b(dark|light|theme\w*)\b(?:[^`\\]|\\.)*?`/i;
+/**
+ * A scheme word as a word or as a part of an identifier-like name: `dark`, `is-dark`, `mode_dark`,
+ * `darkMode`, `isDark`, `lightTheme`, `THEME`. Not inside another word (`highlight`, `darken`).
+ */
+const SCHEME = String.raw`(?:(?<![A-Za-z])(?:dark|light|theme)(?![a-z])|(?<![A-Za-z])(?:Dark|Light|Theme|DARK|LIGHT|THEME)(?![a-z])|(?<=[a-z0-9])(?:Dark|Light|Theme)(?![a-z]))`;
+const QUOTED_SCHEME = new RegExp(String.raw`(['"])(?:(?!\1)[^\n\\]|\\.)*?${SCHEME}(?:(?!\1)[^\n\\]|\\.)*?\1`);
+const TEMPLATE_SCHEME = new RegExp(String.raw`${'`'}(?:[^${'`'}\\]|\\.)*?${SCHEME}(?:[^${'`'}\\]|\\.)*?${'`'}`);
 const CATALOGS = ['src/i18n/cs.ts', 'src/i18n/en.ts'];
 /** Directories app code does not own: the vendored design system and the generated API client. */
 const NOT_APP = new Set(['src/design-system', 'src/api/generated']);
 
-/** Source without comments (a backtick or the word "theme" in a comment is not code). */
-function withoutComments(source: string): string {
+/**
+ * Source without comments (a backtick or the word "theme" in a comment is not code). Script files go
+ * through the TypeScript printer, which knows that `/*` or `//` inside a string is text; CSS, HTML and
+ * SVG (no such strings in practice) through patterns.
+ */
+function withoutComments(source: string, file = 'snippet.css'): string {
+  if (/\.m?[jt]sx?$/.test(file)) {
+    const kind = /x$/.test(file) ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
+    const sf = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, false, kind);
+    return ts.createPrinter({ removeComments: true }).printFile(sf);
+  }
   return source
     .replace(/\/\*[\s\S]*?\*\//g, '')
     .replace(/<!--[\s\S]*?-->/g, '')
     .replace(/(^|[^:\\'"`])\/\/.*$/gm, '$1');
 }
 
-/** Every invariant `source` breaks; empty when it keeps all three. */
-export function themeViolations(source: string, isCatalog = false): string[] {
-  const text = withoutComments(source);
+/** Every invariant `source` (of `file`, which picks the comment syntax) breaks; empty when it keeps all three. */
+export function themeViolations(source: string, isCatalog = false, file?: string): string[] {
+  const text = withoutComments(source, file);
   return [
     TOKEN_WRITE.test(text) && 'declares or names a CSS custom property',
     SCHEME_API.test(text) && 'touches the colour scheme',
@@ -83,6 +98,16 @@ describe('theme follows the OS (FR-58)', () => {
     ];
     expect(fine.filter((s) => themeViolations(s).length > 0)).toEqual([]);
     expect(themeViolations("export const en = { 'admin.x': 'Light reading' };", true)).toEqual([]);
+    // camelCase and underscored scheme names are scheme names; words that only contain one are not
+    const named = ["root.className = 'darkMode'", "cls('isLight')", "el.classList.add('mode_dark')", "<div className=\"app lightTheme\">"];
+    expect(named.filter((s) => themeViolations(s, false, 'a.tsx').length === 0)).toEqual([]);
+    expect(["<mark className=\"highlight\">", "const c = 'darken-on-hover';"].filter((s) => themeViolations(s, false, 'a.tsx').length > 0)).toEqual([]);
+    // '/*' or '//' inside a string is not a comment: the code after it is still checked
+    const slashStar = ['const a = <input accept="image/*" />;', "const b = 'dark';", "const c = '*/';"].join('\n');
+    expect(themeViolations(slashStar, false, 'a.tsx')).toEqual([
+      'names a scheme in a string literal',
+    ]);
+    expect(themeViolations("const u = 'https://x.cz'; const d = 'dark';", false, 'a.ts')).toEqual(['names a scheme in a string literal']);
   });
 
   it('only the design system and generated client are skipped, by exact directory', () => {
@@ -93,7 +118,7 @@ describe('theme follows the OS (FR-58)', () => {
   it('no app source, public file or index.html breaks an invariant', () => {
     const files = [...sources('src'), ...(existsSync('public') ? sources('public') : []), 'index.html'];
     expect(files.length).toBeGreaterThan(0);
-    const broken = files.flatMap((f) => themeViolations(readFileSync(f, 'utf8'), CATALOGS.includes(f)).map((v) => `${f}: ${v}`));
+    const broken = files.flatMap((f) => themeViolations(readFileSync(f, 'utf8'), CATALOGS.includes(f), f).map((v) => `${f}: ${v}`));
     expect(broken).toEqual([]);
   });
 });

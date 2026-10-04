@@ -1,26 +1,28 @@
-node_modules/
-dist/
-coverage/
-playwright-report/
-test-results/
+# The image builds from tracked sources only. Every .gitignore pattern is excluded here too, in
+# Docker's form: Docker matches a pattern from the context root, git at any depth unless the pattern
+# has an inner slash, so an unanchored git pattern `x` becomes `**/x` (container-config.test.ts
+# checks it). The build context is then exactly the files git reports, and smoke evidence that names
+# a clean commit really did build from that commit.
 .git/
 docs/
 trace/
 retro/
 openspec/
-.env
-.env.*
-# Everything .gitignore ignores is excluded here too (container-config.test.ts checks it), so the build
-# context is exactly the tracked and untracked files git reports: smoke evidence that names a clean
-# commit really did build from that commit.
-*.log
-.idea/
-.vscode/
-.DS_Store
-uploads/
-storage/
-pgdata/
-backups/
-*.dump
+**/node_modules/
+**/dist/
+**/coverage/
+**/playwright-report/
+**/test-results/
+**/*.log
+**/.idea/
+**/.vscode/
+**/.DS_Store
+**/.env
+**/.env.*
+**/uploads/
+**/storage/
+**/pgdata/
+**/backups/
+**/*.dump
 **/raw/
 src/api/generated/

@@ -97,9 +97,32 @@ describe('Docker build context', () => {
       .map((l) => l.trim())
       .filter((l) => l && !l.startsWith('#'));
 
-  it('excludes everything git ignores, so a clean commit names exactly what the image was built from', () => {
+  /**
+   * The .dockerignore form of a .gitignore pattern. Git anchors a pattern only when it has a slash
+   * before its last character; otherwise it matches at any depth. Docker always matches from the
+   * context root, so an unanchored pattern needs a `**` prefix to mean the same.
+   */
+  const dockerForm = (p: string) => (p.slice(0, -1).includes('/') ? p.replace(/^\//, '') : `**/${p}`);
+
+  it('maps git patterns to Docker patterns that match the same files', () => {
+    expect(['*.log', 'uploads/', '.env', '**/raw/', 'src/api/generated/', '/build/'].map(dockerForm)).toEqual([
+      '**/*.log',
+      '**/uploads/',
+      '**/.env',
+      '**/raw/',
+      'src/api/generated/',
+      'build/',
+    ]);
+  });
+
+  it('excludes everything git ignores, at any depth, so a clean commit names exactly what the image was built from', () => {
     const docker = new Set(patterns('.dockerignore'));
-    expect(patterns('.gitignore').filter((p) => !p.startsWith('!') && !docker.has(p))).toEqual([]);
+    expect(
+      patterns('.gitignore')
+        .filter((p) => !p.startsWith('!'))
+        .map(dockerForm)
+        .filter((p) => !docker.has(p)),
+    ).toEqual([]);
   });
 });
 

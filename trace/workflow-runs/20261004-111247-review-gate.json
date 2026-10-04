@@ -1,0 +1,719 @@
+{
+  "workflow": "review-gate",
+  "file": "./.claude/workflows/review-gate.js",
+  "description": "Multi-dimensional adversarial review of a diff or capability: correctness, security, and spec compliance, with every finding adversarially verified before it is reported.",
+  "dryRun": false,
+  "startedAt": "2026-10-04T11:12:47.681Z",
+  "finishedAt": "2026-10-04T11:16:32.308Z",
+  "args": {
+    "scope": "slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui",
+    "baseRef": "93e81cd",
+    "headRef": "HEAD",
+    "focus": "Round 8. Verify the round-7 fixes (commits 8354568, 34a6c58): theme guard invariants (token-name strings, multi-line templates, comment stripping, exact exclusions, file types), lint rule Intl allowlist, container-smoke dirty flag and the .dockerignore/.gitignore mirror test, the Firefox axe slow timeout. Check against the spec delta and design.md. Do NOT re-report what design.md lists under \"Accepted limits (review round 3)\" or the documented real-compose-stack follow-up; static checks are heuristics backed by e2e, so do not report further obfuscation patterns (eval, string concatenation across variables, encoded strings) as defects; report only defects in shipped behaviour or tests that can pass while the spec is violated by ordinary code.",
+    "change": "implement-platform-foundation-ui"
+  },
+  "settings": {
+    "allowedTools": null,
+    "concurrency": 4,
+    "model": null,
+    "budgetPerAgentUsd": 2,
+    "maxTotalUsd": 15,
+    "untypedTools": "Read,Grep,Glob,Write,Bash",
+    "permissionMode": "acceptEdits"
+  },
+  "outcome": "ok",
+  "stoppedBecause": null,
+  "error": null,
+  "totalCostUsd": 4.0625,
+  "steps": [
+    {
+      "label": "find:correctness",
+      "phase": "Find",
+      "agentType": "code-reviewer",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 1224,
+      "durationMs": 89954,
+      "sessionId": "5e49f418-d8ba-4f49-be83-b0f8793a2eee",
+      "costUsd": 0.42681879999999994,
+      "numTurns": 10,
+      "result": {
+        "findings": [
+          {
+            "title": "Theme guard's comment stripper treats `/*` inside string literals as a comment opener, hiding real code up to the next `*/`",
+            "file": "src/app/theme-source.test.ts",
+            "line": 31,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "`withoutComments` runs `.replace(/\\/\\*[\\s\\S]*?\\*\\//g, '')` over the raw source with no awareness of strings. Ordinary Vite code such as `import.meta.glob('./pages/*.tsx'); root.classList.add('dark'); /** Routes. */` loses everything from `/*.tsx` to the JSDoc's `*/`, so `'dark'` never reaches QUOTED_SCHEME/TOKEN_WRITE and the scan of real files passes while invariant 3 is broken. The `//` stripper has the same blind spot: it removes the rest of a line when `//` inside a string follows anything other than `:`, a backslash or a quote (for example `'a // dark'` or CSS `url(//cdn…)`).",
+            "suggestion": "Strip comments with a small tokenizer that skips string, template and regex literals, or use the TypeScript scanner (`ts.createScanner` with skipTrivia) for .ts/.tsx files. Add a `forced` case with a glob string followed by a scheme literal and a later block comment."
+          },
+          {
+            "title": ".dockerignore/.gitignore mirror test compares lines literally, but Docker anchors patterns at the context root while git matches at any depth",
+            "file": "src/test/container-config.test.ts",
+            "line": 100,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "The test only checks that every .gitignore line also appears in .dockerignore. Git matches `*.log`, `.DS_Store`, `uploads/`, `*.dump` and `.env` at any depth, but .dockerignore (Go filepath.Match against the full path) matches them only at the root; only `**/raw/` is depth-independent in both. The Dockerfile does `COPY . .`, so a git-ignored `public/x.dump`, `public/uploads/…` or `src/.env` goes into the build context (and from `public/` into dist), while `git status --porcelain` stays empty and container-smoke records `dirty: false`. That is the claim the test comment says it guarantees ('a clean commit names exactly what the image was built from').",
+            "suggestion": "In .dockerignore, prefix the unanchored entries with `**/` (`**/*.log`, `**/.DS_Store`, `**/uploads/`, `**/*.dump`, `**/.env`, `**/.env.*`, …). Make the test normalise patterns: an unanchored gitignore pattern with no slash must appear as `**/<p>` in .dockerignore. Better still, have container-smoke compare `git ls-files -o -i --exclude-standard` against the paths the image actually received."
+          }
+        ]
+      }
+    },
+    {
+      "label": "find:security",
+      "phase": "Find",
+      "agentType": "security-reviewer",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 1252,
+      "durationMs": 97413,
+      "sessionId": "58aac05b-b993-42c5-bee3-16fc2c48cbd5",
+      "costUsd": 0.5356104,
+      "numTurns": 14,
+      "result": {
+        "findings": [
+          {
+            "title": "The .dockerignore mirror test compares pattern strings, but Docker anchors patterns to the context root, so files git ignores in subdirectories still reach the image while the smoke evidence reports a clean commit",
+            "file": "src/test/container-config.test.ts",
+            "line": 100,
+            "severity": "major",
+            "confidence": "high",
+            "evidence": "In .gitignore, a pattern like `uploads/`, `storage/`, `backups/`, `*.dump`, `*.log`, `.env`, `.env.*` or `.DS_Store` matches at any depth. In .dockerignore (Go filepath.Match, relative to the context root) the same text matches only at the root. `**/raw/` is the only pattern that is anchored the same way in both. The test only checks that every .gitignore line also appears in .dockerignore, so it passes even though the two files exclude different things. Concrete path: an admin drops a workbook scan into `public/uploads/page1.png` or `public/scan.dump`. Git ignores it, so `git status` is clean and tools/container-smoke.mjs:51 sets dirty=false. The evidence then says the image was built from commit X alone. But `COPY . .` (Dockerfile:9) puts the file in the build context, and Vite copies `public/` into `dist/`, so nginx serves the workbook content to the whole LAN (NFR-4). The round-7 claim in the .dockerignore comment ('the build context is exactly the tracked and untracked files git reports') is false.",
+            "suggestion": "In .dockerignore, write every unanchored .gitignore pattern as `**/<pattern>` (`**/uploads/`, `**/*.log`, `**/.env`, `**/.env.*`, `**/*.dump`, …). Make the mirror test check meaning rather than text: for each .gitignore pattern without a leading `/`, require either the `**/`-prefixed form or a root-anchored pattern that is provably root-only. Or build from a clean `git archive`/`git worktree` of the commit, and let the smoke count gitignored files under `public/` and `src/` as dirty (`git status --porcelain --ignored`)."
+          },
+          {
+            "title": "The theme guard's block-comment stripper starts at `/*` inside an ordinary string literal (e.g. `accept=\"image/*\"`) and deletes all code up to the next `*/`",
+            "file": "src/app/theme-source.test.ts",
+            "line": 31,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "`withoutComments` runs `/\\/\\*[\\s\\S]*?\\*\\//g` over the raw source without knowing about strings. `<input type=\"file\" accept=\"image/*\">` (the FR-4 image upload form) and `import.meta.glob('./pages/*.tsx')` are ordinary code, and both contain `/*` in a string. Everything from that `/*` to the next `*/` in the file is erased before the three invariants are checked, for example up to the end of a later JSDoc `/** … */`. A component that has an upload input followed by `root.classList.add('dark')` or `style={{ '--paper': x }}` and then a JSDoc block passes `themeViolations` with no findings. The FR-58 static check is meant to cover the states the e2e cannot reach, such as the dialogs and upload states that later slices add. The round-7 change ('comments are ignored') introduced this false negative, and the fixture list does not test it.",
+            "suggestion": "Strip comments with a tokenizer that knows about strings: TypeScript's `ts.createScanner` or `@babel/parser` with `tokens: true` for .ts/.tsx/.js, postcss for .css, and an HTML comment pass only for .html/.svg. Or blank out string and template contents only after recording them. Add fine/forced fixtures such as `<input accept=\"image/*\" /> ; el.classList.add('dark'); /** x */` (must be flagged) and `import.meta.glob('./p/*.tsx')`."
+          },
+          {
+            "title": "Checklist coverage for this round (other areas clean; dependency audit not verified)",
+            "file": "package.json",
+            "severity": "minor",
+            "confidence": "low",
+            "evidence": "These round-7 fixes hold: the Intl allowlist (Segmenter, ListFormat and unknown formatters are now checked; an Intl call on the constructor still exempts only locale and options), the container-smoke dirty flag (a git error or non-zero exit counts as dirty), `test.slow(browserName === 'firefox')` in e2e/a11y.spec.ts (it triples the timeout and leaves the assertions unchanged), exact NOT_APP directory exclusions, TOKEN_WRITE catching any `'--`/`\"--`/`` `-- `` string, and TEMPLATE_SCHEME catching multi-line templates. Authz/IDOR, sessions/CSRF, SQL injection, uploads and mass assignment: this slice adds no API calls, endpoints or upload handlers, so there is nothing to report. Secrets: no `VITE_*` variables. `.env*` is ignored by git (`!.env.example`) and by Docker at the root (see the major finding for subdirectories). The smoke reads `DOUCKO_CHILD_DISPLAY_NAME` and never prints it. Exposure: the smoke publishes the port on 127.0.0.1 only, and nginx refuses Hosts other than localhost or an IPv4 address with 421. Dependencies: I could not run `npm audit` in this session (permission denied), and docs/qa/automated-verification-latest.md has no audit output, so dependency advisories are unverified, not clean.",
+            "suggestion": "Run `npm audit --omit=dev` and `npm audit` and attach the output to docs/qa. Consider adding an audit step to qa:verify so this item has exit-coded evidence instead of a narrative claim."
+          }
+        ]
+      }
+    },
+    {
+      "label": "find:spec-compliance",
+      "phase": "Find",
+      "agentType": "spec-compliance-auditor",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 1195,
+      "durationMs": 120699,
+      "sessionId": "2b218d05-3328-4760-857d-f77705c504d1",
+      "costUsd": 0.5145906,
+      "numTurns": 9,
+      "result": {
+        "findings": [
+          {
+            "title": "Coverage summary: 18 scenarios: 17 implemented, 1 partial, 0 missing, 0 contradicted",
+            "file": "openspec/changes/implement-platform-foundation-ui/specs/platform-foundation/spec.md",
+            "line": 1,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "Checked all 8 requirements and 18 scenarios in the delta against the code at HEAD (b41bc45). The round-7 fixes hold up. The Intl allowlist (INTL_NON_TEXT, plus a Segmenter probe in lint-rule.test.ts:95) now checks Segmenter, ListFormat and any unknown formatter. The container-smoke dirty flag treats a non-zero exit or a spawn error from git as dirty (tools/container-smoke.mjs:51-56). test.slow(browserName === 'firefox') in e2e/a11y.spec.ts:13 triples the time limit and leaves the assertions alone. The theme guard now strips comments, matches multi-line template literals, skips only the two exact NOT_APP directories, and scans .js/.html/.svg and public/. Only the static backstop of 'No toggle' is partial (finding 2). The .dockerignore mirror is a process gap and is not tied to a scenario (finding 3).",
+            "suggestion": "None needed for this summary entry. See the findings below."
+          },
+          {
+            "title": "Theme guard misses ordinary camelCase or underscored scheme class names ('darkMode', 'isDark', 'lightTheme', 'mode_dark')",
+            "file": "src/app/theme-source.test.ts",
+            "line": 22,
+            "severity": "major",
+            "confidence": "high",
+            "evidence": "Spec (Theme follows the operating system): no app source 'SHALL … name a scheme (`dark`, `light`, `theme…`) in a string literal'. The 'No toggle' scenario: a route with no control is skipped in e2e, and 'the static source check covers it'. Code: QUOTED_SCHEME and TEMPLATE_SCHEME require `\\b(dark|light|theme\\w*)\\b`. In 'darkMode' the 'M' after 'dark' is a word character, so there is no boundary. 'isDark', 'lightTheme', 'appTheme' and 'mode_dark' have no boundary before the scheme word, so none of them match. So `document.documentElement.classList.add('darkMode')` in an effect on a screen with no control, plus `.darkMode { background: … }` in app CSS (no custom property, no scheme API), passes all three invariants. The e2e would skip that screen. These are ordinary class names, not obfuscation. The fixture lists in the test (lines 57-84) only probe word-bounded forms ('dark', 'x dark', `theme-${mode}`), so the test stays green.",
+            "suggestion": "Match the scheme words at camelCase and underscore boundaries too, for example `(?<![a-z])(dark|light|theme)(?![a-z])` without /i, or `/dark|light|theme/i` applied only inside string literals, with explicit exceptions such as 'highlight'. Add 'darkMode', 'isDark', 'lightTheme' and 'mode_dark' to the `forced` list. Keep identifiers such as `const darkMode` in `fine`."
+          },
+          {
+            "title": ".dockerignore 'mirror' matches .gitignore by string only: Docker anchors patterns at the context root, git does not, so nested git-ignored files (public/uploads/, src/**/*.log, …) reach the image while the smoke reports a clean commit",
+            "file": "src/test/container-config.test.ts",
+            "line": 100,
+            "severity": "major",
+            "confidence": "high",
+            "evidence": "The round-7 claim in .dockerignore:13-15 reads: 'the build context is exactly the tracked and untracked files git reports: smoke evidence that names a clean commit really did build from that commit.' The test only checks `patterns('.gitignore').filter(p => !docker.has(p))` is empty, which is string equality. In .gitignore, `uploads/`, `storage/`, `pgdata/`, `backups/`, `*.log`, `*.dump`, `.DS_Store`, `.idea/` and `.vscode/` match at any depth. In .dockerignore (Go filepath.Match against paths relative to the context root) they match only at the root. Only `**/raw/` has the same meaning in both. The Dockerfile does `COPY . .`, and Vite copies `public/` verbatim into dist, which nginx serves. So a git-ignored `public/uploads/page.pdf` (workbook content, NFR-4) or `public/backups/x.dump` is shipped in the image while `git status --porcelain` stays empty and container-smoke-latest.md records dirty=false.",
+            "suggestion": "Write the unanchored .gitignore patterns as `**/uploads/`, `**/*.log`, `**/*.dump`, `**/.DS_Store` and so on in .dockerignore. Make the test compare semantics, not strings: for each .gitignore pattern without a leading '/' or inner '/', require the `**/`-prefixed form in .dockerignore. Better still, have the test list the actual build context (for example by walking the tree with the .dockerignore rules) and check it against `git ls-files -co --exclude-standard`."
+          }
+        ]
+      }
+    },
+    {
+      "label": "find:visual",
+      "phase": "Find",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1464,
+      "durationMs": 103081,
+      "sessionId": "aafdfad8-4aae-4277-94a2-e4a0b78aaa6a",
+      "costUsd": 0.5299257999999999,
+      "numTurns": 13,
+      "result": {
+        "findings": [
+          {
+            "title": "Scheme-word invariant misses ordinary camelCase class names ('darkMode', 'isLight', 'appDark')",
+            "file": "src/app/theme-source.test.ts",
+            "line": 22,
+            "severity": "major",
+            "confidence": "high",
+            "evidence": "QUOTED_SCHEME and TEMPLATE_SCHEME need a word boundary on both sides: `\\b(dark|light|theme\\w*)\\b`. In 'darkMode', 'isLight' or 'appDark' there is no boundary between the scheme word and the next or previous letter, so `root.classList.add('darkMode')` breaks none of the three invariants. Add `.darkMode { background: var(--ink); color: var(--paper); }` in an app CSS file and the colours swap. That rule only reads tokens: it declares no `--x:`, uses no scheme API, and an unquoted CSS selector is never checked. The result forces a theme against the OS, which the spec forbids ('No app source … SHALL … name a scheme (`dark`, `light`, `theme…`) in a string literal'), and the guard stays green. The 'fine' fixtures only show that a camelCase *identifier* (`const darkMode`) is allowed; no fixture checks a camelCase *string*. Found by reading the regex; I couldn't run a probe test because running vitest needs approval in this session.",
+            "suggestion": "Inside string literals, match scheme words at camelCase and kebab boundaries too, for example `(?<![a-z])(dark|light|theme)(?![a-z])` without the `i` flag plus a separate check for capitalised `Dark|Light|Theme`. Or run a case-insensitive substring check on the string content and keep a short explicit allowlist. Add `\"classList.add('darkMode')\"` and `\"el.className = 'isLight'\"` to the `forced` fixtures."
+          },
+          {
+            "title": ".dockerignore 'mirror' test compares text, but Docker anchors patterns at the root, so files git ignores in subfolders still reach the image",
+            "file": "src/test/container-config.test.ts",
+            "line": 520,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "The test only checks that each .gitignore line appears word for word in .dockerignore. Git matches unanchored patterns such as `uploads/`, `storage/`, `*.log`, `.env`, `.env.*` and `*.dump` at any depth. Docker (`filepath.Match` after Clean) matches them only at the context root; only `**/raw/` uses `**`. So `public/uploads/page.png` is ignored by git, hidden from `git status --porcelain` (smoke reports `dirty: false`), yet copied by `COPY . .` into the build, and Vite ships `public/` into dist. That workbook-content path is exactly the one NFR-4 rules out. The comment in .dockerignore and the round-7 commit claim that 'a clean commit is the whole build input'. The test passes while that is false for nested ignored files.",
+            "suggestion": "Write each unanchored .gitignore pattern as `**/<pattern>` in .dockerignore (e.g. `**/uploads/`, `**/*.log`, `**/.env`, `**/.env.*`). Make the test map gitignore semantics to Docker's: a pattern with no slash, or only a trailing one, must appear with a `**/` prefix. Or check that `git ls-files -oi --exclude-standard` lists nothing that `docker build` would send."
+          }
+        ]
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1524,
+      "durationMs": 19069,
+      "sessionId": "10031a11-432c-4c4e-8f7c-8fc0ba4c6b74",
+      "costUsd": 0.1090168,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed this by reading `src/app/theme-source.test.ts:29-34`. I couldn't run the check because the command needed approval, so I traced it by hand. `withoutComments` uses plain regexes and doesn't know about strings.\n\n1. The block-comment pattern `/\\/\\*[\\s\\S]*?\\*\\//g` treats any `/*` as the start of a comment, including one inside a string. Take the input `import.meta.glob('./pages/*.tsx'); root.classList.add('dark'); /** Routes. */`. The match starts at the `/*` in `/*.tsx` and lazily runs to the first `*/`, which ends the JSDoc. Nothing earlier closes it: the `/**` only has `**` followed by a space. So `'dark'` is removed. What remains is `import.meta.glob('./pages` plus the trailing code. The quote is now unbalanced, and neither QUOTED_SCHEME nor TEMPLATE_SCHEME matches.\n\n2. The line-comment pattern `(^|[^:\\\\'\"\\`])\\/\\/.*$` only skips `//` when it directly follows `:`, a backslash or a quote. In `el.className = 'a // dark';` the character before `//` is a space, so the rest of the line is dropped, `'dark'` included. Invariant 3 is then missed.\n\n`themeViolations` runs on every app file (lines 93-97) and nothing else guards against this, so the gap is real. Its effect is limited: it is a false negative that only lowers coverage, and it needs a specific mix of string contents and a later comment. Minor severity is right.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1557,
+      "durationMs": 17220,
+      "sessionId": "15522fea-2070-45bf-83f5-8a482baa0a6d",
+      "costUsd": 0.10357939999999999,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "The mechanism is real. `withoutComments` at src/app/theme-source.test.ts:31 runs `/\\/\\*[\\s\\S]*?\\*\\//g` over the raw source and has no awareness of strings. For the cited input `import.meta.glob('./pages/*.tsx'); root.classList.add('dark'); /** Routes. */`, the match starts at the `/*` inside `'./pages/*.tsx'` and ends at the JSDoc's `*/`. That removes `'dark'` before QUOTED_SCHEME runs, so `themeViolations` returns [] even though invariant 3 is broken.\n\nThe `//` stripper at line 33 has the same blind spot. In `'a // dark'`, the character before `//` is a space, so the rest of the line is removed along with `'dark'`.\n\nNothing else guards against this. `sources()` feeds every app file straight in. The repo already knows about this pattern: src/test/container-config.test.ts:11 notes that \"a `/*` inside a string (the `@/*` alias) is not one\", which shows `/*` inside a string does occur in this codebase.\n\nAs for exploitability: this is a gap in a dev-time test guard, not a runtime bug. No end user or attacker can trigger it. It only matters if a developer writes code that forces a theme and that code happens to sit between an in-string `/*` and a later `*/`. Today no app file outside the design system has an in-string `/*` (the grep hits are test files, which the scan excludes, plus a real comment in main.tsx), so the full-repo test does not currently miss anything.\n\nSo the false negative can be reproduced, but nothing is hidden today. Minor severity is right.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/test/container-config.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1741,
+      "durationMs": 18818,
+      "sessionId": "1e36b381-c458-455e-a0d0-b5c0da695328",
+      "costUsd": 0.0881676,
+      "numTurns": 3,
+      "result": {
+        "refuted": false,
+        "reasoning": "I could not refute the finding. The mechanism it describes is real in this code.\n\n**What the test checks.** In `src/test/container-config.test.ts:100-103`, the test only compares lines as plain strings. It checks that every non-negated `.gitignore` line also appears in `.dockerignore`. It does not account for the two tools reading the same pattern differently.\n\n**How each tool reads the patterns.**\n- Git matches a pattern with no slash in it (`*.log`, `.DS_Store`, `.env`, `.env.*`, `*.dump`) at any depth. A pattern that only has a trailing slash (`uploads/`, `storage/`, `pgdata/`, `backups/`, `node_modules/`) also matches a directory with that name at any depth.\n- Docker's `.dockerignore` matching (moby patternmatcher) cleans each pattern and matches it against the path from the context root. So `*.log` matches only `x.log` at the root, and `uploads/` matches only `./uploads`. Only `**/raw/` matches at any depth, and `src/api/generated/` is anchored in both tools, so those two agree.\n\n**Where nothing protects against it.** The Dockerfile at line 9 runs `COPY . .` and then `npm run build`. So these git-ignored files would enter the build context while `git status` stays clean:\n- `src/.env`\n- `public/foo.dump`\n- `public/uploads/...`\n\nVite copies `public/` into `dist`, and the final image copies `dist`, so files from `public/` reach the shipped image. Both the `.dockerignore` comment and the test name claim the opposite: \"the build context is exactly the tracked and untracked files git reports\".\n\n**Severity.** It only triggers if someone puts such a file in a subdirectory, so \"minor\" is right. The test does guarantee less than it says, though, and in the `public/` case the result is a real gap where ignored files can leak into the image (NFR-3/NFR-4 content such as uploads or dumps).",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/test/container-config.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1774,
+      "durationMs": 19825,
+      "sessionId": "fbe30018-7486-47c7-a7f3-841bd1939371",
+      "costUsd": 0.0914894,
+      "numTurns": 3,
+      "result": {
+        "refuted": false,
+        "reasoning": "I could not refute this. The test at src/test/container-config.test.ts:100 only checks that each .gitignore line also appears, as the same text, in .dockerignore. The two files do contain the same lines: `*.log`, `.DS_Store`, `.env`, `.env.*`, `uploads/`, `storage/`, `pgdata/`, `backups/` and `*.dump` are all unanchored. Only `**/raw/` uses `**/`.\n\nThe two tools read these lines differently:\n- **Git:** a pattern with no slash, or only a trailing slash, matches at any depth.\n- **Docker:** .dockerignore patterns are matched with Go's filepath.Match against the path from the context root. Docker's docs give the example that `temp?` only excludes entries at the root. So `uploads/` excludes `./uploads` and nothing deeper, and `*.log` does not match `src/a.log`.\n\nHow it can actually happen:\n1. The Dockerfile runs `COPY . .` and then `npm run build`.\n2. Vite copies `public/` into `dist/`, and nginx serves `dist/`.\n3. So a git-ignored `public/uploads/…`, `public/x.dump` or `public/.env.local` ends up in the image and is served.\n4. `git status --porcelain` stays empty because the files are ignored, so the smoke evidence still records the commit as clean.\n\nThat breaks the guarantee the test's name and the .dockerignore comment promise: that a clean commit names exactly what the image was built from. It also undercuts the NFR-3/NFR-4 intent behind `uploads/` and `*.dump`.\n\nWhat limits the impact: it only happens if a developer leaves ignored files in a subdirectory, mainly `public/`. Files under `src/` only reach the bundle if code imports them. That fits severity minor, so I'd keep it as is. The suggested fix (prefix those entries with `**/`, and have the test normalise patterns before comparing) is correct.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/test/container-config.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 2298,
+      "durationMs": 20788,
+      "sessionId": "8110cd64-5d5f-4251-9355-158f5aa31b3d",
+      "costUsd": 0.1033866,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I could not refute the mechanism. src/test/container-config.test.ts:100-103 only checks that each .gitignore line also appears word for word in .dockerignore. The two files are identical in text but match differently. Git treats a pattern with no slash, or with only a trailing slash (`uploads/`, `*.log`, `*.dump`, `.env`, `.env.*`, `.DS_Store`, `storage/`, `backups/`, `pgdata/`), as matching at any depth. Docker cleans each .dockerignore pattern and matches it against paths relative to the context root with filepath.Match, so the same text excludes only the root entry. `**/raw/` behaves the same in both, as the finding says. Patterns that already contain a slash, like `src/api/generated/`, are also anchored in both.\n\nSo a file such as `src/uploads/x.png` or `public/scan.dump` is ignored by git. The dirty check in tools/container-smoke.mjs:51 (`git status --porcelain` without `--ignored`) then reports dirty=false. But the file is still in the build context, and `COPY . .` at Dockerfile:9 copies it into the image. The code comments rely on the opposite assumption: .dockerignore says \"the build context is exactly the tracked and untracked files git reports\", and container-smoke.mjs says \"ignored files never reach the image\". That assumption is wrong.\n\nOne point softens the impact: no `public/` directory exists yet. The leak into nginx needs someone to create `public/` (Vite's default publicDir), or to import the file from src. So the full NFR-4 exposure path takes one plausible future step. Even without it, the smoke evidence's claim that the image was built from a clean commit is wrong today, and the test only checks the text, not what it excludes. I'm keeping the severity at major.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/test/container-config.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 2331,
+      "durationMs": 23632,
+      "sessionId": "c54ad86b-3b18-47be-b322-7006523f13a2",
+      "costUsd": 0.1060248,
+      "numTurns": 3,
+      "result": {
+        "refuted": false,
+        "reasoning": "The mechanism is real. `.dockerignore` (lines 15–24) repeats `.gitignore` word for word: `*.log`, `.DS_Store`, `uploads/`, `storage/`, `pgdata/`, `backups/`, `*.dump`, `.env`, `.env.*`. Docker (moby patternmatcher / BuildKit) matches these only at the context root, while git matches them at any depth. Only `**/raw/` behaves the same in both, plus `src/api/generated/`, which is anchored in both.\n\nThe test at src/test/container-config.test.ts:100–103 just checks that each `.gitignore` line also appears in `.dockerignore`. So it passes even though the two files exclude different things. The comment in `.dockerignore` and the one in tools/container-smoke.mjs (which bases `dirty` on `git status --porcelain`) both say the build context equals what git reports. That is false: a gitignored nested file such as `src/x/foo.log`, `public/uploads/a.png` or `sub/.env` goes into the context through `COPY . .` (Dockerfile:9), and the smoke evidence still says dirty=false.\n\nWhy I'm downgrading instead of refuting: it is hard to actually hit.\n- The final image copies only `/app/dist`. A stray file in the context reaches users only if Vite puts it in dist, which means a `public/` subdirectory or a file imported from src.\n- This repo has no `public/` directory today.\n- Workbook uploads go to the backend, not into the frontend source tree. No attacker can trigger this; a developer would have to put gitignored workbook files under `public/<subdir>/` in the frontend checkout by hand.\n\nSo the NFR-4 LAN-exposure story is speculative, not a path a real user can trigger. Still true: the test checks text instead of meaning, and the smoke evidence's claim that it built from a clean commit can be wrong. The fix is simple: use `**/`-prefixed patterns, or build from `git archive`. Valid finding, but it's a correctness/hygiene issue rather than a major security one.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1981,
+      "durationMs": 19123,
+      "sessionId": "5b128879-d9a2-481a-b2cc-dccea036ece3",
+      "costUsd": 0.09991240000000001,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed this by reading the code; I could not run it because the shell command needed approval. At src/app/theme-source.test.ts:31, `withoutComments` runs `.replace(/\\/\\*[\\s\\S]*?\\*\\//g, '')` over the raw source, and nothing in it knows about string literals. The regex is non-greedy and can span lines, so in `<input accept=\"image/*\" />; el.classList.add('dark'); /** x */` the match starts at the `/*` inside \"image/*\" and stops at the next `*/`, which closes the JSDoc. That deletes `el.classList.add('dark')` before QUOTED_SCHEME, TOKEN_WRITE and SCHEME_API are checked, so `themeViolations` reports nothing. The same thing happens to `import.meta.glob('./x/*.tsx')`, or to any string or regex containing `/*`, when a `*/` comes later in the file. Nothing upstream protects against this: `sources()` passes every .ts/.tsx/.css/.html file straight to `themeViolations`, and no fixture covers a `/*` inside a string. The line-comment pass at line 33 has some protection (it skips `//` right after a quote or colon), but the block-comment pass has none. So the false negative is real. Keep the severity at minor: this is a test-side static guard, the e2e is a second layer, and a miss needs a `/*` string followed later by a `*/` in the same file. That combination is plausible, though, since FR-4 upload forms use accept=\"image/*\" and app files have JSDoc blocks.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 2014,
+      "durationMs": 17298,
+      "sessionId": "eb07aa9f-2e67-467d-94d6-55d50eaccd81",
+      "costUsd": 0.0992574,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the mechanism by reading the code; the shell command I tried for a runtime check was blocked. `withoutComments` (src/app/theme-source.test.ts:29-34) applies `/\\/\\*[\\s\\S]*?\\*\\//g` to the raw source and has no idea where strings are. In `<input accept=\"image/*\" />; el.classList.add('dark'); /** x */`, the regex match begins at the `/*` inside \"image/*\". It then lazily runs to the first `*/`, which closes the JSDoc. The `classList.add('dark')` in between is erased before QUOTED_SCHEME, TOKEN_WRITE and SCHEME_API run. Nothing else guards against this. `themeViolations` is the only check, and the repo-wide scan at line 96 feeds it raw file contents. The fixture lists contain no string with `/*` in it. `accept=\"image/*\"` is the normal markup for an upload input, and the requirements plan one (FR-4 sources upload), so this can realistically happen as more slices land. Exploitability is limited: this is a false negative in a dev-time static guard, not a runtime flaw that a user or attacker could trigger. A developer would have to add theme-forcing code by accident, between such a string and a later block comment. The e2e checks would still catch it on screens they reach. The 'security' label is a stretch, but 'minor' is the right severity for a hole in a guard. The defect is real and reproducible as described.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:package.json",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 2003,
+      "durationMs": 14907,
+      "sessionId": "7b4764ad-5aeb-4067-8354-eec89ad84d35",
+      "costUsd": 0.07089619999999999,
+      "numTurns": 3,
+      "result": {
+        "refuted": false,
+        "reasoning": "The finding is a coverage gap, not a code defect, and its factual claim holds. I searched package.json, scripts/qa-verify*, factory.config.json and docs/qa/*.md for \"audit\". No `npm audit` step appears in the qa:verify battery or the npm scripts. docs/qa/automated-verification-latest.md contains \"audit\" only in the trajectory/slices lines (\"nothing to audit yet\"), with no dependency-advisory output. So dependency advisories really have no exit-coded evidence, and calling them \"unverified, not clean\" is accurate, in line with the repo's own done-claims-need-evidence lesson. The finding does not assert that a vulnerability exists, so there is no wrong mechanism to refute. Its other \"these fixes hold\" statements are positive confirmations, not defects. Minor severity with low confidence fits a process gap.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:package.json",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 2036,
+      "durationMs": 16692,
+      "sessionId": "66d4ad57-6bde-4c61-8b6f-a47d003b7a8f",
+      "costUsd": 0.0908064,
+      "numTurns": 5,
+      "result": {
+        "refuted": true,
+        "reasoning": "Seen through exploitability, this finding has no mechanism to check. It names no vulnerable package, advisory, version range or reachable code path. It is a coverage note that says, in its own words, the dependency audit is \"unverified, not clean\". package.json has five runtime dependencies (react, react-dom, @tanstack/react-query, openapi-fetch, openapi-react-query), all on current majors. Everything else is a devDependency, which a real user of the shipped bundle never runs. I also could not run `npm audit` here because permission was denied, so I can't confirm any advisory either. Nothing could happen to a real user or attacker as described. The rest of the evidence confirms round-7 fixes and says other areas are clean, so it supports no defect. Having no audit step in qa:verify is a reasonable process improvement, but it is not a reproducible security problem at package.json.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:openspec/changes/implement-platform-foundation-ui/specs/platform-foundation/spec.md",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1550,
+      "durationMs": 16669,
+      "sessionId": "799296ff-b848-4883-b920-5f4e49821fcf",
+      "costUsd": 0.0966504,
+      "numTurns": 6,
+      "result": {
+        "refuted": false,
+        "reasoning": "This entry is a coverage summary, not a defect claim, so there's no faulty mechanism to disprove. The facts it cites check out: the delta spec has 26 headers, which is 8 Requirements plus 18 Scenarios. src/test/lint-rule.test.ts:95 has the Intl.Segmenter probe. e2e/a11y.spec.ts:13 has test.slow(browserName === 'firefox'), which makes the test slower but leaves the assertions unchanged. Nothing in the summary is wrong. It makes no correctness claim of its own; the one 'partial' scenario is deferred to the separate finding 2. Treat it as informational, not as an actionable issue.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:openspec/changes/implement-platform-foundation-ui/specs/platform-foundation/spec.md",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1583,
+      "durationMs": 12434,
+      "sessionId": "9bbdbad2-47a1-4d22-91d4-ab6039d7e721",
+      "costUsd": 0.0736056,
+      "numTurns": 3,
+      "result": {
+        "refuted": true,
+        "reasoning": "This \"finding\" only summarises coverage (\"17 implemented, 1 partial\"). It describes no defect of its own and says \"None needed\" as its suggestion. Its cited facts check out at HEAD:\n- `tools/container-smoke.mjs:51-56` treats a git spawn error or a non-zero git exit as dirty.\n- `e2e/a11y.spec.ts:13` calls `test.slow(browserName === 'firefox')`.\n- `INTL_NON_TEXT` exists in `eslint-rules/no-literal-ui-text.js`, and `lint-rule.test.ts:95` has a Segmenter probe.\n\nNothing here can be reproduced or exploited. The one \"partial\" item and the `.dockerignore` gap are handed off to separate findings (2 and 3), so they should be judged there. As a standalone issue, this entry is not a real problem.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1974,
+      "durationMs": 20722,
+      "sessionId": "56448091-0695-4124-b586-1c51e3950d40",
+      "costUsd": 0.11244399999999999,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the finding by reading the code. I couldn't run a regex check because the Bash call needed approval, so the matching below is worked out by hand from standard `\\b` rules.\n\nAt src/app/theme-source.test.ts:22-23, QUOTED_SCHEME and TEMPLATE_SCHEME need `\\b(dark|light|theme\\w*)\\b` inside a string literal.\n- In 'darkMode', 'dark' is followed by 'M', which is a word character, so there is no boundary after it.\n- In 'isDark' (matched with /i), 'mode_dark' and 'appTheme', the scheme word follows a word character ('s', '_' or 'p'), so there is no boundary before it.\n- 'lightTheme' fails both ways: 'light' is followed by 'T', and 'Theme' follows 't'.\n\nNone of these strings match the third invariant. The other two invariants don't catch them either: TOKEN_WRITE looks for `--` custom properties, and SCHEME_API looks for data-theme, colorScheme, prefers-color-scheme and similar. So `classList.add('darkMode')` gives no violation.\n\nNothing else in the file guards against this. NOT_APP only skips the design system and the generated client. The `forced` fixtures (lines 56-72) only use word-bounded forms, so the test stays green.\n\nOne more point backs the finding. The CSS half (`.darkMode { … }`) is never checked by invariant 3 at all, because CSS selectors aren't string literals. That makes the JS string the only hook the guard has, and that hook misses common camelCase names.\n\nThe doc comment (line 15) says the check covers any scheme name \"however it is built\", and the spec says this static check covers screens the e2e skips. The code doesn't do that. The mechanism is real. It's a gap in the guard, not a bug that ships in the product today, but the spec relies on this check, so keeping the severity at major is reasonable.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 2007,
+      "durationMs": 19111,
+      "sessionId": "171e3810-4d6d-4905-b3c3-295dd472ac5d",
+      "costUsd": 0.11896660000000002,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the mechanism by reading the code. In src/app/theme-source.test.ts:22-23, QUOTED_SCHEME and TEMPLATE_SCHEME match only `\\b(dark|light|theme\\w*)\\b`. In 'darkMode' the next letter 'M' is a word character, so there is no boundary after 'dark'. 'isDark' and 'appTheme' have a letter before the scheme word, and in 'mode_dark' the underscore is a word character, so none of them has a boundary before it. The /i flag changes case only, not boundaries. 'lightTheme' fails the same way because 'T' follows 'light', and the `theme\\w*` branch needs a boundary before 'Theme'. A CSS rule like `.darkMode{}` is not a string literal, so the third invariant never checks it. SCHEME_API and TOKEN_WRITE don't apply either. The fixtures (lines 56-84) test only word-bounded forms, so a regression like `classList.add('darkMode')` plus a `.darkMode` CSS rule with literal colours would pass all three invariants. The JSDoc says the guard covers screens and states the e2e cannot reach, so this gap is real. Exploitability: no user or attacker can trigger it today. A grep of src finds no darkMode, isDark, lightTheme, mode_dark or appTheme outside the test's own `fine` fixture, so the app has no current FR-58 violation. The guard misses the kind of change it is meant to catch, but nothing is broken in what ships, so I downgrade the severity from major. The finding is a correct description of a weak test guard, not a reproducible product defect.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/test/container-config.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 2163,
+      "durationMs": 21960,
+      "sessionId": "7d169859-e4f9-4312-af6a-3bc1e26e067c",
+      "costUsd": 0.1167178,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "The mechanism holds. `.dockerignore` repeats the unanchored `.gitignore` entries (`*.log`, `.idea/`, `.vscode/`, `.DS_Store`, `uploads/`, `storage/`, `pgdata/`, `backups/`, `*.dump`) word for word. The test at `src/test/container-config.test.ts:100-102` only checks that each `.gitignore` line also appears as a string in `.dockerignore`. That check is not enough because the two files read patterns differently. Docker's patternmatcher matches against paths relative to the context root (Go `filepath.Match`, with `**` support), so `*.log` and `uploads/` only exclude entries at the root. Git applies the same patterns at any depth. Only `**/raw/` means the same thing in both, and `src/api/generated/` is anchored in both.\n\nThe Dockerfile runs `COPY . .`, so a git-ignored `src/foo/uploads/x.pdf` or `public/backups/x.dump` enters the build context while `git status` stays clean. That makes the comment at `.dockerignore:13-15` false: the build context is not \"exactly the tracked and untracked files git reports\". The test still passes, so it gives a false guarantee.\n\nThe impact is narrower than the finding says, and that is why I recommend a downgrade:\n- There is no `public/` directory today. It is neither tracked nor on disk.\n- The final nginx stage only copies `/app/dist`.\n- `vite.config.ts` does not override `publicDir`, so `public/` would still be copied verbatim into dist and served if someone created one. A nested ignored file under `src/` reaches the image only if it is imported.\n\nSo the shipped-workbook-content (NFR-4) leak is latent rather than present now. What is real today is that the test passes on a wrong invariant and the provenance claim is unsound. Confirmed, with severity better rated minor/moderate than major.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/test/container-config.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 2196,
+      "durationMs": 22535,
+      "sessionId": "d37789b1-734c-4c78-a2ff-7dc5f8245b4b",
+      "costUsd": 0.10079160000000001,
+      "numTurns": 3,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the mechanism but downgraded the severity, because the user-facing harm needs conditions that don't exist in the repo today.\n\n**What I verified**\n- **The test only compares strings.** In `src/test/container-config.test.ts` (around line 100), the check is `patterns('.gitignore').filter(p => !p.startsWith('!') && !docker.has(p))`. That is plain string equality.\n- **The two files list the same lines.** `.dockerignore` repeats `*.log`, `.idea/`, `.vscode/`, `.DS_Store`, `uploads/`, `storage/`, `pgdata/`, `backups/`, `*.dump` exactly as `.gitignore` writes them.\n- **The two tools read those lines differently.**\n  - Git matches a pattern with no slash, or only a trailing slash, at any depth.\n  - Docker matches `.dockerignore` lines against the path from the context root (Go `filepath.Match`, plus `**` support). So `uploads/` only excludes `./uploads`, and `*.log` only excludes `./x.log`.\n  - Only `**/raw/` and the root-anchored paths mean the same thing in both.\n- **So the comment at `.dockerignore:13-15` is false.** It says the build context is exactly what git reports. A nested git-ignored path such as `src/x/uploads/data.json` or `src/foo.log` still enters the build stage through `COPY . .`, while `git status --porcelain` stays clean. If code imports such a file, the image differs from the commit that the smoke evidence names, which is exactly the provenance gap the comment says can't happen.\n\n**Why I downgraded it**\n- **No `public/` directory exists.** The final image copies only `/app/dist`. Vite puts only bundled imports and `public/` into `dist`. So the NFR-4 example (`public/uploads/page.pdf` served by nginx) cannot happen today; it needs someone to create `public/` and put ignored content there.\n- **Stray files mostly stay out of the shipped image.** Nested ignored files that nothing imports, such as `*.log`, `.DS_Store` or a nested `backups/`, only sit in the discarded build stage.\n- **What's left is a real but low-likelihood gap.** The smoke's \"clean commit\" provenance claim can be wrong if a git-ignored nested file is imported or a `public/` dir is added later. The fix is cheap and correct: write the patterns as `**/uploads/` and so on, and make the test compare meaning, not strings.\n\n**A small extra point:** `.gitignore`'s `!.env.example` is skipped by the test, and `.dockerignore`'s `.env.*` excludes `.env.example`. That mismatch runs the other way (the context has less than git tracks) and is harmless.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1978,
+      "durationMs": 19309,
+      "sessionId": "b17b0a38-b780-44c9-8377-518fb9e0922d",
+      "costUsd": 0.1182072,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "The mechanism is correct. At src/app/theme-source.test.ts:22-23, QUOTED_SCHEME and TEMPLATE_SCHEME use `\\b(dark|light|theme\\w*)\\b`. In 'darkMode', 'k' and 'M' are both word characters, so there is no `\\b` after 'dark'. In 'isLight' and 'appDark', 's'/'L' and 'p'/'D' are word characters too, so there is no `\\b` before the scheme word. The `i` flag doesn't help, because it changes case matching, not word boundaries. So `classList.add('darkMode')` passes invariant 3. It also passes invariant 1 (TOKEN_WRITE needs `--x:` or a string starting with `--`) and invariant 2 (no scheme API is named). A CSS rule `.darkMode { background: var(--ink); color: var(--paper); }` only reads tokens, and CSS selectors are never checked as strings, so all three invariants stay green. No `forced` fixture covers a camelCase or prefixed string; the only camelCase fixture is the allowed identifier `const darkMode`. Nothing else in the file guards this. The doc comment says the e2e covers controls, not class names. I couldn't run a node probe because it needs approval, but standard `\\b` semantics are enough to settle it. Reason to downgrade: this is a hole in a heuristic test guard, not a live defect. A grep of src/ (excluding the design system) finds no camelCase scheme string in app code today; the only hit is the test fixture itself. Exploiting it takes a deliberate new class plus a CSS rule that swaps colours. That makes it a real but minor/medium gap in the guard, not a major correctness bug.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/app/theme-source.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 2011,
+      "durationMs": 21425,
+      "sessionId": "bd850185-c2c1-454f-b621-9931f3d3febc",
+      "costUsd": 0.1428636,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "severityAdjustment": "downgrade",
+        "reasoning": "I confirmed the regex gap by reading the code, and I'm downgrading the severity.\n\n**The gap is real.** `src/app/theme-source.test.ts:22-23` use `\\b(dark|light|theme\\w*)\\b` with the `i` flag. In `'darkMode'` the `k` and `M` are both word characters, so there is no `\\b` after `dark`. The same holds before `Light` in `'isLight'` and before `Dark` in `'appDark'`. So `classList.add('darkMode')` breaks none of the three invariants:\n- It has no `--`, so TOKEN_WRITE doesn't fire.\n- It uses no scheme API, so SCHEME_API doesn't fire.\n- QUOTED_SCHEME and TEMPLATE_SCHEME don't match, for the reason above.\n\nA CSS rule like `.darkMode { background: var(--ink) }` is also invisible to the checks: it's an unquoted selector, it uses `var()` rather than declaring a token, and it calls no scheme API. Header invariant 3 says no string literal may name a scheme, and the `forced` fixtures cover `'dark'`, `'x dark'` and `'light'`. A camelCase string is a gap in that stated invariant, and no fixture covers it.\n\n**Why I'm downgrading it.**\n- **Nothing triggers it today.** A grep of app sources (excluding the design system) finds no string literal with dark, light or theme outside this test file. A developer would have to write new code that adds such a class. It is a weak guard, not a live defect.\n- **The guard is a heuristic either way.** The same colour swap through `.inverted` or `.night` gets past all three invariants, and no word-boundary fix closes that. The camelCase case is one narrow hole among several.\n- **The e2e is a second check.** The file's header says the e2e theme checks activate every control on every screen, so a forced theme that is actually reachable would probably show up there too.\n\nSo the mechanism is confirmed, but it is a minor test-hardening gap, not a major bug."
+      }
+    },
+    {
+      "label": "verify:src/test/container-config.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1777,
+      "durationMs": 19681,
+      "sessionId": "55fed2f7-188b-435b-9dae-ae5db699f6e6",
+      "costUsd": 0.09344939999999999,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the mechanism. The finding cites line 520, but the test is actually at src/test/container-config.test.ts:100-103. It turns both files into sets of lines and only checks that every non-negated .gitignore line appears word for word in .dockerignore. The two files match line for line: `*.log`, `.env`, `.env.*`, `uploads/`, `storage/`, `pgdata/`, `backups/`, `*.dump` and `src/api/generated/`. Only `**/raw/` has a `**` prefix.\n\nThe two tools read the same pattern differently. Git matches a pattern with no slash, or only a trailing one, at any depth. Docker (moby patternmatcher: filepath.Clean, then filepath.Match against the path from the context root) treats every pattern as anchored at the root. Docker's own docs say `*.log` only matches at the root, and you need `**/*.log` to match deeper. So `public/uploads/x.png`, `src/foo/.env` or `a/b.dump` would be hidden from git and from `git status --porcelain`, but still sent in the build context. The Dockerfile then runs `COPY . .` (line 9), and Vite copies `public/` into dist.\n\nThe comment in .dockerignore says the build context is \"exactly the tracked and untracked files git reports\". The test does not enforce that for nested paths, so its claim is false. Nothing elsewhere guards this; there is no extra `**/` entry in .dockerignore.\n\nSeverity is minor. Today it only bites if someone puts ignored files in subfolders, but the gap is real and the test passes anyway.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/test/container-config.test.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Bash --json-schema <…>",
+      "promptChars": 1810,
+      "durationMs": 26409,
+      "sessionId": "eaeac755-d898-476c-8ad1-cc379f7a5b26",
+      "costUsd": 0.11936960000000002,
+      "numTurns": 6,
+      "result": {
+        "refuted": false,
+        "reasoning": "The finding holds. The line number is wrong: the test is at src/test/container-config.test.ts:100-103, not line 520. The mechanism is real, though.\n\n1. **The test only compares text.** `patterns('.dockerignore')` becomes a Set, and the test asserts that every non-negated .gitignore line is in it. It never maps gitignore matching rules to Docker's.\n\n2. **Most entries only match at the root.** In .dockerignore, `uploads/`, `storage/`, `pgdata/`, `backups/`, `*.log`, `*.dump`, `.env`, `.env.*`, `.idea/`, `.vscode/` and `.DS_Store` have no `**/` prefix. Only `**/raw/` has one.\n\n3. **Docker anchors these patterns at the context root.** Docker cleans each pattern and matches it against the full relative path, also trying each parent path from the root. So `uploads` matches `uploads/...` but not `public/uploads/...`, because neither `public` nor `public/uploads` equals `uploads`. Git matches a pattern with no slash, or only a trailing one, at any depth. A file such as `public/uploads/page.png` or `src/.env` is therefore ignored by git and absent from `git status --porcelain`, yet still sent in the build context. The Dockerfile then copies it in with `COPY . .` (line 9).\n\n4. **Vite would ship it.** Vite's default `publicDir` is `public/`, and its contents are copied into `dist`. The Dockerfile copies `/app/dist` into nginx. So a nested ignored workbook file under `public/` would be served, which is the NFR-4 case.\n\n**Limits on reachability.** No `public/` directory exists today. The leak needs a developer to put ignored files in a nested folder. That rules out a remote attacker and makes it a local hygiene and evidence-integrity gap. Still, the .dockerignore comment claims the build context is exactly what git reports, and the test is offered as proof. That claim is false for nested ignored paths, and the test passes anyway.\n\nThe finding is confirmed, and \"minor\" is the right severity.",
+        "severityAdjustment": "keep"
+      }
+    }
+  ],
+  "logs": [
+    {
+      "phase": "Find",
+      "message": "10 unique findings across 4 dimensions"
+    },
+    {
+      "phase": "Report",
+      "message": "confirmed: 8, contested: 2, rejected: 0"
+    }
+  ],
+  "persisted": [
+    "openspec/changes/implement-platform-foundation-ui/review-findings.json"
+  ],
+  "returned": {
+    "scope": "slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui",
+    "summary": "Review gate for slice 1 platform-foundation (frontend): openspec/changes/implement-platform-foundation-ui: 8 confirmed, 2 contested (treat as confirmed unless trivially wrong), 0 rejected.",
+    "confirmed": [
+      {
+        "title": "Theme guard's comment stripper treats `/*` inside string literals as a comment opener, hiding real code up to the next `*/`",
+        "file": "src/app/theme-source.test.ts",
+        "line": 31,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "`withoutComments` runs `.replace(/\\/\\*[\\s\\S]*?\\*\\//g, '')` over the raw source with no awareness of strings. Ordinary Vite code such as `import.meta.glob('./pages/*.tsx'); root.classList.add('dark'); /** Routes. */` loses everything from `/*.tsx` to the JSDoc's `*/`, so `'dark'` never reaches QUOTED_SCHEME/TOKEN_WRITE and the scan of real files passes while invariant 3 is broken. The `//` stripper has the same blind spot: it removes the rest of a line when `//` inside a string follows anything other than `:`, a backslash or a quote (for example `'a // dark'` or CSS `url(//cdn…)`).",
+        "suggestion": "Strip comments with a small tokenizer that skips string, template and regex literals, or use the TypeScript scanner (`ts.createScanner` with skipTrivia) for .ts/.tsx files. Add a `forced` case with a glob string followed by a scheme literal and a later block comment.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I confirmed this by reading `src/app/theme-source.test.ts:29-34`. I couldn't run the check because the command needed approval, so I traced it by hand. `withoutComments` uses plain regexes and doesn't know about strings.\n\n1. The block-comment pattern `/\\/\\*[\\s\\S]*?\\*\\//g` treats any `/*` as the start of a comment, including one inside a string. Take the input `import.meta.glob('./pages/*.tsx'); root.classList.add('dark'); /** Routes. */`. The match starts at the `/*` in `/*.tsx` and lazily runs to the first `*/`, which ends the JSDoc. Nothing earlier closes it: the `/**` only has `**` followed by a space. So `'dark'` is removed. What remains is `import.meta.glob('./pages` plus the trailing code. The quote is now unbalanced, and neither QUOTED_SCHEME nor TEMPLATE_SCHEME matches.\n\n2. The line-comment pattern `(^|[^:\\\\'\"\\`])\\/\\/.*$` only skips `//` when it directly follows `:`, a backslash or a quote. In `el.className = 'a // dark';` the character before `//` is a space, so the rest of the line is dropped, `'dark'` included. Invariant 3 is then missed.\n\n`themeViolations` runs on every app file (lines 93-97) and nothing else guards against this, so the gap is real. Its effect is limited: it is a false negative that only lowers coverage, and it needs a specific mix of string contents and a later comment. Minor severity is right.",
+          "The mechanism is real. `withoutComments` at src/app/theme-source.test.ts:31 runs `/\\/\\*[\\s\\S]*?\\*\\//g` over the raw source and has no awareness of strings. For the cited input `import.meta.glob('./pages/*.tsx'); root.classList.add('dark'); /** Routes. */`, the match starts at the `/*` inside `'./pages/*.tsx'` and ends at the JSDoc's `*/`. That removes `'dark'` before QUOTED_SCHEME runs, so `themeViolations` returns [] even though invariant 3 is broken.\n\nThe `//` stripper at line 33 has the same blind spot. In `'a // dark'`, the character before `//` is a space, so the rest of the line is removed along with `'dark'`.\n\nNothing else guards against this. `sources()` feeds every app file straight in. The repo already knows about this pattern: src/test/container-config.test.ts:11 notes that \"a `/*` inside a string (the `@/*` alias) is not one\", which shows `/*` inside a string does occur in this codebase.\n\nAs for exploitability: this is a gap in a dev-time test guard, not a runtime bug. No end user or attacker can trigger it. It only matters if a developer writes code that forces a theme and that code happens to sit between an in-string `/*` and a later `*/`. Today no app file outside the design system has an in-string `/*` (the grep hits are test files, which the scan excludes, plus a real comment in main.tsx), so the full-repo test does not currently miss anything.\n\nSo the false negative can be reproduced, but nothing is hidden today. Minor severity is right."
+        ]
+      },
+      {
+        "title": ".dockerignore/.gitignore mirror test compares lines literally, but Docker anchors patterns at the context root while git matches at any depth",
+        "file": "src/test/container-config.test.ts",
+        "line": 100,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "The test only checks that every .gitignore line also appears in .dockerignore. Git matches `*.log`, `.DS_Store`, `uploads/`, `*.dump` and `.env` at any depth, but .dockerignore (Go filepath.Match against the full path) matches them only at the root; only `**/raw/` is depth-independent in both. The Dockerfile does `COPY . .`, so a git-ignored `public/x.dump`, `public/uploads/…` or `src/.env` goes into the build context (and from `public/` into dist), while `git status --porcelain` stays empty and container-smoke records `dirty: false`. That is the claim the test comment says it guarantees ('a clean commit names exactly what the image was built from').",
+        "suggestion": "In .dockerignore, prefix the unanchored entries with `**/` (`**/*.log`, `**/.DS_Store`, `**/uploads/`, `**/*.dump`, `**/.env`, `**/.env.*`, …). Make the test normalise patterns: an unanchored gitignore pattern with no slash must appear as `**/<p>` in .dockerignore. Better still, have container-smoke compare `git ls-files -o -i --exclude-standard` against the paths the image actually received.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I could not refute the finding. The mechanism it describes is real in this code.\n\n**What the test checks.** In `src/test/container-config.test.ts:100-103`, the test only compares lines as plain strings. It checks that every non-negated `.gitignore` line also appears in `.dockerignore`. It does not account for the two tools reading the same pattern differently.\n\n**How each tool reads the patterns.**\n- Git matches a pattern with no slash in it (`*.log`, `.DS_Store`, `.env`, `.env.*`, `*.dump`) at any depth. A pattern that only has a trailing slash (`uploads/`, `storage/`, `pgdata/`, `backups/`, `node_modules/`) also matches a directory with that name at any depth.\n- Docker's `.dockerignore` matching (moby patternmatcher) cleans each pattern and matches it against the path from the context root. So `*.log` matches only `x.log` at the root, and `uploads/` matches only `./uploads`. Only `**/raw/` matches at any depth, and `src/api/generated/` is anchored in both tools, so those two agree.\n\n**Where nothing protects against it.** The Dockerfile at line 9 runs `COPY . .` and then `npm run build`. So these git-ignored files would enter the build context while `git status` stays clean:\n- `src/.env`\n- `public/foo.dump`\n- `public/uploads/...`\n\nVite copies `public/` into `dist`, and the final image copies `dist`, so files from `public/` reach the shipped image. Both the `.dockerignore` comment and the test name claim the opposite: \"the build context is exactly the tracked and untracked files git reports\".\n\n**Severity.** It only triggers if someone puts such a file in a subdirectory, so \"minor\" is right. The test does guarantee less than it says, though, and in the `public/` case the result is a real gap where ignored files can leak into the image (NFR-3/NFR-4 content such as uploads or dumps).",
+          "I could not refute this. The test at src/test/container-config.test.ts:100 only checks that each .gitignore line also appears, as the same text, in .dockerignore. The two files do contain the same lines: `*.log`, `.DS_Store`, `.env`, `.env.*`, `uploads/`, `storage/`, `pgdata/`, `backups/` and `*.dump` are all unanchored. Only `**/raw/` uses `**/`.\n\nThe two tools read these lines differently:\n- **Git:** a pattern with no slash, or only a trailing slash, matches at any depth.\n- **Docker:** .dockerignore patterns are matched with Go's filepath.Match against the path from the context root. Docker's docs give the example that `temp?` only excludes entries at the root. So `uploads/` excludes `./uploads` and nothing deeper, and `*.log` does not match `src/a.log`.\n\nHow it can actually happen:\n1. The Dockerfile runs `COPY . .` and then `npm run build`.\n2. Vite copies `public/` into `dist/`, and nginx serves `dist/`.\n3. So a git-ignored `public/uploads/…`, `public/x.dump` or `public/.env.local` ends up in the image and is served.\n4. `git status --porcelain` stays empty because the files are ignored, so the smoke evidence still records the commit as clean.\n\nThat breaks the guarantee the test's name and the .dockerignore comment promise: that a clean commit names exactly what the image was built from. It also undercuts the NFR-3/NFR-4 intent behind `uploads/` and `*.dump`.\n\nWhat limits the impact: it only happens if a developer leaves ignored files in a subdirectory, mainly `public/`. Files under `src/` only reach the bundle if code imports them. That fits severity minor, so I'd keep it as is. The suggested fix (prefix those entries with `**/`, and have the test normalise patterns before comparing) is correct."
+        ]
+      },
+      {
+        "title": "The .dockerignore mirror test compares pattern strings, but Docker anchors patterns to the context root, so files git ignores in subdirectories still reach the image while the smoke evidence reports a clean commit",
+        "file": "src/test/container-config.test.ts",
+        "line": 100,
+        "severity": "major",
+        "confidence": "high",
+        "evidence": "In .gitignore, a pattern like `uploads/`, `storage/`, `backups/`, `*.dump`, `*.log`, `.env`, `.env.*` or `.DS_Store` matches at any depth. In .dockerignore (Go filepath.Match, relative to the context root) the same text matches only at the root. `**/raw/` is the only pattern that is anchored the same way in both. The test only checks that every .gitignore line also appears in .dockerignore, so it passes even though the two files exclude different things. Concrete path: an admin drops a workbook scan into `public/uploads/page1.png` or `public/scan.dump`. Git ignores it, so `git status` is clean and tools/container-smoke.mjs:51 sets dirty=false. The evidence then says the image was built from commit X alone. But `COPY . .` (Dockerfile:9) puts the file in the build context, and Vite copies `public/` into `dist/`, so nginx serves the workbook content to the whole LAN (NFR-4). The round-7 claim in the .dockerignore comment ('the build context is exactly the tracked and untracked files git reports') is false.",
+        "suggestion": "In .dockerignore, write every unanchored .gitignore pattern as `**/<pattern>` (`**/uploads/`, `**/*.log`, `**/.env`, `**/.env.*`, `**/*.dump`, …). Make the mirror test check meaning rather than text: for each .gitignore pattern without a leading `/`, require either the `**/`-prefixed form or a root-anchored pattern that is provably root-only. Or build from a clean `git archive`/`git worktree` of the commit, and let the smoke count gitignored files under `public/` and `src/` as dirty (`git status --porcelain --ignored`).",
+        "dimension": "security",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I could not refute the mechanism. src/test/container-config.test.ts:100-103 only checks that each .gitignore line also appears word for word in .dockerignore. The two files are identical in text but match differently. Git treats a pattern with no slash, or with only a trailing slash (`uploads/`, `*.log`, `*.dump`, `.env`, `.env.*`, `.DS_Store`, `storage/`, `backups/`, `pgdata/`), as matching at any depth. Docker cleans each .dockerignore pattern and matches it against paths relative to the context root with filepath.Match, so the same text excludes only the root entry. `**/raw/` behaves the same in both, as the finding says. Patterns that already contain a slash, like `src/api/generated/`, are also anchored in both.\n\nSo a file such as `src/uploads/x.png` or `public/scan.dump` is ignored by git. The dirty check in tools/container-smoke.mjs:51 (`git status --porcelain` without `--ignored`) then reports dirty=false. But the file is still in the build context, and `COPY . .` at Dockerfile:9 copies it into the image. The code comments rely on the opposite assumption: .dockerignore says \"the build context is exactly the tracked and untracked files git reports\", and container-smoke.mjs says \"ignored files never reach the image\". That assumption is wrong.\n\nOne point softens the impact: no `public/` directory exists yet. The leak into nginx needs someone to create `public/` (Vite's default publicDir), or to import the file from src. So the full NFR-4 exposure path takes one plausible future step. Even without it, the smoke evidence's claim that the image was built from a clean commit is wrong today, and the test only checks the text, not what it excludes. I'm keeping the severity at major.",
+          "The mechanism is real. `.dockerignore` (lines 15–24) repeats `.gitignore` word for word: `*.log`, `.DS_Store`, `uploads/`, `storage/`, `pgdata/`, `backups/`, `*.dump`, `.env`, `.env.*`. Docker (moby patternmatcher / BuildKit) matches these only at the context root, while git matches them at any depth. Only `**/raw/` behaves the same in both, plus `src/api/generated/`, which is anchored in both.\n\nThe test at src/test/container-config.test.ts:100–103 just checks that each `.gitignore` line also appears in `.dockerignore`. So it passes even though the two files exclude different things. The comment in `.dockerignore` and the one in tools/container-smoke.mjs (which bases `dirty` on `git status --porcelain`) both say the build context equals what git reports. That is false: a gitignored nested file such as `src/x/foo.log`, `public/uploads/a.png` or `sub/.env` goes into the context through `COPY . .` (Dockerfile:9), and the smoke evidence still says dirty=false.\n\nWhy I'm downgrading instead of refuting: it is hard to actually hit.\n- The final image copies only `/app/dist`. A stray file in the context reaches users only if Vite puts it in dist, which means a `public/` subdirectory or a file imported from src.\n- This repo has no `public/` directory today.\n- Workbook uploads go to the backend, not into the frontend source tree. No attacker can trigger this; a developer would have to put gitignored workbook files under `public/<subdir>/` in the frontend checkout by hand.\n\nSo the NFR-4 LAN-exposure story is speculative, not a path a real user can trigger. Still true: the test checks text instead of meaning, and the smoke evidence's claim that it built from a clean commit can be wrong. The fix is simple: use `**/`-prefixed patterns, or build from `git archive`. Valid finding, but it's a correctness/hygiene issue rather than a major security one."
+        ]
+      },
+      {
+        "title": "The theme guard's block-comment stripper starts at `/*` inside an ordinary string literal (e.g. `accept=\"image/*\"`) and deletes all code up to the next `*/`",
+        "file": "src/app/theme-source.test.ts",
+        "line": 31,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "`withoutComments` runs `/\\/\\*[\\s\\S]*?\\*\\//g` over the raw source without knowing about strings. `<input type=\"file\" accept=\"image/*\">` (the FR-4 image upload form) and `import.meta.glob('./pages/*.tsx')` are ordinary code, and both contain `/*` in a string. Everything from that `/*` to the next `*/` in the file is erased before the three invariants are checked, for example up to the end of a later JSDoc `/** … */`. A component that has an upload input followed by `root.classList.add('dark')` or `style={{ '--paper': x }}` and then a JSDoc block passes `themeViolations` with no findings. The FR-58 static check is meant to cover the states the e2e cannot reach, such as the dialogs and upload states that later slices add. The round-7 change ('comments are ignored') introduced this false negative, and the fixture list does not test it.",
+        "suggestion": "Strip comments with a tokenizer that knows about strings: TypeScript's `ts.createScanner` or `@babel/parser` with `tokens: true` for .ts/.tsx/.js, postcss for .css, and an HTML comment pass only for .html/.svg. Or blank out string and template contents only after recording them. Add fine/forced fixtures such as `<input accept=\"image/*\" /> ; el.classList.add('dark'); /** x */` (must be flagged) and `import.meta.glob('./p/*.tsx')`.",
+        "dimension": "security",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I confirmed this by reading the code; I could not run it because the shell command needed approval. At src/app/theme-source.test.ts:31, `withoutComments` runs `.replace(/\\/\\*[\\s\\S]*?\\*\\//g, '')` over the raw source, and nothing in it knows about string literals. The regex is non-greedy and can span lines, so in `<input accept=\"image/*\" />; el.classList.add('dark'); /** x */` the match starts at the `/*` inside \"image/*\" and stops at the next `*/`, which closes the JSDoc. That deletes `el.classList.add('dark')` before QUOTED_SCHEME, TOKEN_WRITE and SCHEME_API are checked, so `themeViolations` reports nothing. The same thing happens to `import.meta.glob('./x/*.tsx')`, or to any string or regex containing `/*`, when a `*/` comes later in the file. Nothing upstream protects against this: `sources()` passes every .ts/.tsx/.css/.html file straight to `themeViolations`, and no fixture covers a `/*` inside a string. The line-comment pass at line 33 has some protection (it skips `//` right after a quote or colon), but the block-comment pass has none. So the false negative is real. Keep the severity at minor: this is a test-side static guard, the e2e is a second layer, and a miss needs a `/*` string followed later by a `*/` in the same file. That combination is plausible, though, since FR-4 upload forms use accept=\"image/*\" and app files have JSDoc blocks.",
+          "I confirmed the mechanism by reading the code; the shell command I tried for a runtime check was blocked. `withoutComments` (src/app/theme-source.test.ts:29-34) applies `/\\/\\*[\\s\\S]*?\\*\\//g` to the raw source and has no idea where strings are. In `<input accept=\"image/*\" />; el.classList.add('dark'); /** x */`, the regex match begins at the `/*` inside \"image/*\". It then lazily runs to the first `*/`, which closes the JSDoc. The `classList.add('dark')` in between is erased before QUOTED_SCHEME, TOKEN_WRITE and SCHEME_API run. Nothing else guards against this. `themeViolations` is the only check, and the repo-wide scan at line 96 feeds it raw file contents. The fixture lists contain no string with `/*` in it. `accept=\"image/*\"` is the normal markup for an upload input, and the requirements plan one (FR-4 sources upload), so this can realistically happen as more slices land. Exploitability is limited: this is a false negative in a dev-time static guard, not a runtime flaw that a user or attacker could trigger. A developer would have to add theme-forcing code by accident, between such a string and a later block comment. The e2e checks would still catch it on screens they reach. The 'security' label is a stretch, but 'minor' is the right severity for a hole in a guard. The defect is real and reproducible as described."
+        ]
+      },
+      {
+        "title": "Theme guard misses ordinary camelCase or underscored scheme class names ('darkMode', 'isDark', 'lightTheme', 'mode_dark')",
+        "file": "src/app/theme-source.test.ts",
+        "line": 22,
+        "severity": "major",
+        "confidence": "high",
+        "evidence": "Spec (Theme follows the operating system): no app source 'SHALL … name a scheme (`dark`, `light`, `theme…`) in a string literal'. The 'No toggle' scenario: a route with no control is skipped in e2e, and 'the static source check covers it'. Code: QUOTED_SCHEME and TEMPLATE_SCHEME require `\\b(dark|light|theme\\w*)\\b`. In 'darkMode' the 'M' after 'dark' is a word character, so there is no boundary. 'isDark', 'lightTheme', 'appTheme' and 'mode_dark' have no boundary before the scheme word, so none of them match. So `document.documentElement.classList.add('darkMode')` in an effect on a screen with no control, plus `.darkMode { background: … }` in app CSS (no custom property, no scheme API), passes all three invariants. The e2e would skip that screen. These are ordinary class names, not obfuscation. The fixture lists in the test (lines 57-84) only probe word-bounded forms ('dark', 'x dark', `theme-${mode}`), so the test stays green.",
+        "suggestion": "Match the scheme words at camelCase and underscore boundaries too, for example `(?<![a-z])(dark|light|theme)(?![a-z])` without /i, or `/dark|light|theme/i` applied only inside string literals, with explicit exceptions such as 'highlight'. Add 'darkMode', 'isDark', 'lightTheme' and 'mode_dark' to the `forced` list. Keep identifiers such as `const darkMode` in `fine`.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I confirmed the finding by reading the code. I couldn't run a regex check because the Bash call needed approval, so the matching below is worked out by hand from standard `\\b` rules.\n\nAt src/app/theme-source.test.ts:22-23, QUOTED_SCHEME and TEMPLATE_SCHEME need `\\b(dark|light|theme\\w*)\\b` inside a string literal.\n- In 'darkMode', 'dark' is followed by 'M', which is a word character, so there is no boundary after it.\n- In 'isDark' (matched with /i), 'mode_dark' and 'appTheme', the scheme word follows a word character ('s', '_' or 'p'), so there is no boundary before it.\n- 'lightTheme' fails both ways: 'light' is followed by 'T', and 'Theme' follows 't'.\n\nNone of these strings match the third invariant. The other two invariants don't catch them either: TOKEN_WRITE looks for `--` custom properties, and SCHEME_API looks for data-theme, colorScheme, prefers-color-scheme and similar. So `classList.add('darkMode')` gives no violation.\n\nNothing else in the file guards against this. NOT_APP only skips the design system and the generated client. The `forced` fixtures (lines 56-72) only use word-bounded forms, so the test stays green.\n\nOne more point backs the finding. The CSS half (`.darkMode { … }`) is never checked by invariant 3 at all, because CSS selectors aren't string literals. That makes the JS string the only hook the guard has, and that hook misses common camelCase names.\n\nThe doc comment (line 15) says the check covers any scheme name \"however it is built\", and the spec says this static check covers screens the e2e skips. The code doesn't do that. The mechanism is real. It's a gap in the guard, not a bug that ships in the product today, but the spec relies on this check, so keeping the severity at major is reasonable.",
+          "I confirmed the mechanism by reading the code. In src/app/theme-source.test.ts:22-23, QUOTED_SCHEME and TEMPLATE_SCHEME match only `\\b(dark|light|theme\\w*)\\b`. In 'darkMode' the next letter 'M' is a word character, so there is no boundary after 'dark'. 'isDark' and 'appTheme' have a letter before the scheme word, and in 'mode_dark' the underscore is a word character, so none of them has a boundary before it. The /i flag changes case only, not boundaries. 'lightTheme' fails the same way because 'T' follows 'light', and the `theme\\w*` branch needs a boundary before 'Theme'. A CSS rule like `.darkMode{}` is not a string literal, so the third invariant never checks it. SCHEME_API and TOKEN_WRITE don't apply either. The fixtures (lines 56-84) test only word-bounded forms, so a regression like `classList.add('darkMode')` plus a `.darkMode` CSS rule with literal colours would pass all three invariants. The JSDoc says the guard covers screens and states the e2e cannot reach, so this gap is real. Exploitability: no user or attacker can trigger it today. A grep of src finds no darkMode, isDark, lightTheme, mode_dark or appTheme outside the test's own `fine` fixture, so the app has no current FR-58 violation. The guard misses the kind of change it is meant to catch, but nothing is broken in what ships, so I downgrade the severity from major. The finding is a correct description of a weak test guard, not a reproducible product defect."
+        ]
+      },
+      {
+        "title": ".dockerignore 'mirror' matches .gitignore by string only: Docker anchors patterns at the context root, git does not, so nested git-ignored files (public/uploads/, src/**/*.log, …) reach the image while the smoke reports a clean commit",
+        "file": "src/test/container-config.test.ts",
+        "line": 100,
+        "severity": "major",
+        "confidence": "high",
+        "evidence": "The round-7 claim in .dockerignore:13-15 reads: 'the build context is exactly the tracked and untracked files git reports: smoke evidence that names a clean commit really did build from that commit.' The test only checks `patterns('.gitignore').filter(p => !docker.has(p))` is empty, which is string equality. In .gitignore, `uploads/`, `storage/`, `pgdata/`, `backups/`, `*.log`, `*.dump`, `.DS_Store`, `.idea/` and `.vscode/` match at any depth. In .dockerignore (Go filepath.Match against paths relative to the context root) they match only at the root. Only `**/raw/` has the same meaning in both. The Dockerfile does `COPY . .`, and Vite copies `public/` verbatim into dist, which nginx serves. So a git-ignored `public/uploads/page.pdf` (workbook content, NFR-4) or `public/backups/x.dump` is shipped in the image while `git status --porcelain` stays empty and container-smoke-latest.md records dirty=false.",
+        "suggestion": "Write the unanchored .gitignore patterns as `**/uploads/`, `**/*.log`, `**/*.dump`, `**/.DS_Store` and so on in .dockerignore. Make the test compare semantics, not strings: for each .gitignore pattern without a leading '/' or inner '/', require the `**/`-prefixed form in .dockerignore. Better still, have the test list the actual build context (for example by walking the tree with the .dockerignore rules) and check it against `git ls-files -co --exclude-standard`.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "The mechanism holds. `.dockerignore` repeats the unanchored `.gitignore` entries (`*.log`, `.idea/`, `.vscode/`, `.DS_Store`, `uploads/`, `storage/`, `pgdata/`, `backups/`, `*.dump`) word for word. The test at `src/test/container-config.test.ts:100-102` only checks that each `.gitignore` line also appears as a string in `.dockerignore`. That check is not enough because the two files read patterns differently. Docker's patternmatcher matches against paths relative to the context root (Go `filepath.Match`, with `**` support), so `*.log` and `uploads/` only exclude entries at the root. Git applies the same patterns at any depth. Only `**/raw/` means the same thing in both, and `src/api/generated/` is anchored in both.\n\nThe Dockerfile runs `COPY . .`, so a git-ignored `src/foo/uploads/x.pdf` or `public/backups/x.dump` enters the build context while `git status` stays clean. That makes the comment at `.dockerignore:13-15` false: the build context is not \"exactly the tracked and untracked files git reports\". The test still passes, so it gives a false guarantee.\n\nThe impact is narrower than the finding says, and that is why I recommend a downgrade:\n- There is no `public/` directory today. It is neither tracked nor on disk.\n- The final nginx stage only copies `/app/dist`.\n- `vite.config.ts` does not override `publicDir`, so `public/` would still be copied verbatim into dist and served if someone created one. A nested ignored file under `src/` reaches the image only if it is imported.\n\nSo the shipped-workbook-content (NFR-4) leak is latent rather than present now. What is real today is that the test passes on a wrong invariant and the provenance claim is unsound. Confirmed, with severity better rated minor/moderate than major.",
+          "I confirmed the mechanism but downgraded the severity, because the user-facing harm needs conditions that don't exist in the repo today.\n\n**What I verified**\n- **The test only compares strings.** In `src/test/container-config.test.ts` (around line 100), the check is `patterns('.gitignore').filter(p => !p.startsWith('!') && !docker.has(p))`. That is plain string equality.\n- **The two files list the same lines.** `.dockerignore` repeats `*.log`, `.idea/`, `.vscode/`, `.DS_Store`, `uploads/`, `storage/`, `pgdata/`, `backups/`, `*.dump` exactly as `.gitignore` writes them.\n- **The two tools read those lines differently.**\n  - Git matches a pattern with no slash, or only a trailing slash, at any depth.\n  - Docker matches `.dockerignore` lines against the path from the context root (Go `filepath.Match`, plus `**` support). So `uploads/` only excludes `./uploads`, and `*.log` only excludes `./x.log`.\n  - Only `**/raw/` and the root-anchored paths mean the same thing in both.\n- **So the comment at `.dockerignore:13-15` is false.** It says the build context is exactly what git reports. A nested git-ignored path such as `src/x/uploads/data.json` or `src/foo.log` still enters the build stage through `COPY . .`, while `git status --porcelain` stays clean. If code imports such a file, the image differs from the commit that the smoke evidence names, which is exactly the provenance gap the comment says can't happen.\n\n**Why I downgraded it**\n- **No `public/` directory exists.** The final image copies only `/app/dist`. Vite puts only bundled imports and `public/` into `dist`. So the NFR-4 example (`public/uploads/page.pdf` served by nginx) cannot happen today; it needs someone to create `public/` and put ignored content there.\n- **Stray files mostly stay out of the shipped image.** Nested ignored files that nothing imports, such as `*.log`, `.DS_Store` or a nested `backups/`, only sit in the discarded build stage.\n- **What's left is a real but low-likelihood gap.** The smoke's \"clean commit\" provenance claim can be wrong if a git-ignored nested file is imported or a `public/` dir is added later. The fix is cheap and correct: write the patterns as `**/uploads/` and so on, and make the test compare meaning, not strings.\n\n**A small extra point:** `.gitignore`'s `!.env.example` is skipped by the test, and `.dockerignore`'s `.env.*` excludes `.env.example`. That mismatch runs the other way (the context has less than git tracks) and is harmless."
+        ]
+      },
+      {
+        "title": "Scheme-word invariant misses ordinary camelCase class names ('darkMode', 'isLight', 'appDark')",
+        "file": "src/app/theme-source.test.ts",
+        "line": 22,
+        "severity": "major",
+        "confidence": "high",
+        "evidence": "QUOTED_SCHEME and TEMPLATE_SCHEME need a word boundary on both sides: `\\b(dark|light|theme\\w*)\\b`. In 'darkMode', 'isLight' or 'appDark' there is no boundary between the scheme word and the next or previous letter, so `root.classList.add('darkMode')` breaks none of the three invariants. Add `.darkMode { background: var(--ink); color: var(--paper); }` in an app CSS file and the colours swap. That rule only reads tokens: it declares no `--x:`, uses no scheme API, and an unquoted CSS selector is never checked. The result forces a theme against the OS, which the spec forbids ('No app source … SHALL … name a scheme (`dark`, `light`, `theme…`) in a string literal'), and the guard stays green. The 'fine' fixtures only show that a camelCase *identifier* (`const darkMode`) is allowed; no fixture checks a camelCase *string*. Found by reading the regex; I couldn't run a probe test because running vitest needs approval in this session.",
+        "suggestion": "Inside string literals, match scheme words at camelCase and kebab boundaries too, for example `(?<![a-z])(dark|light|theme)(?![a-z])` without the `i` flag plus a separate check for capitalised `Dark|Light|Theme`. Or run a case-insensitive substring check on the string content and keep a short explicit allowlist. Add `\"classList.add('darkMode')\"` and `\"el.className = 'isLight'\"` to the `forced` fixtures.",
+        "dimension": "visual",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "The mechanism is correct. At src/app/theme-source.test.ts:22-23, QUOTED_SCHEME and TEMPLATE_SCHEME use `\\b(dark|light|theme\\w*)\\b`. In 'darkMode', 'k' and 'M' are both word characters, so there is no `\\b` after 'dark'. In 'isLight' and 'appDark', 's'/'L' and 'p'/'D' are word characters too, so there is no `\\b` before the scheme word. The `i` flag doesn't help, because it changes case matching, not word boundaries. So `classList.add('darkMode')` passes invariant 3. It also passes invariant 1 (TOKEN_WRITE needs `--x:` or a string starting with `--`) and invariant 2 (no scheme API is named). A CSS rule `.darkMode { background: var(--ink); color: var(--paper); }` only reads tokens, and CSS selectors are never checked as strings, so all three invariants stay green. No `forced` fixture covers a camelCase or prefixed string; the only camelCase fixture is the allowed identifier `const darkMode`. Nothing else in the file guards this. The doc comment says the e2e covers controls, not class names. I couldn't run a node probe because it needs approval, but standard `\\b` semantics are enough to settle it. Reason to downgrade: this is a hole in a heuristic test guard, not a live defect. A grep of src/ (excluding the design system) finds no camelCase scheme string in app code today; the only hit is the test fixture itself. Exploiting it takes a deliberate new class plus a CSS rule that swaps colours. That makes it a real but minor/medium gap in the guard, not a major correctness bug.",
+          "I confirmed the regex gap by reading the code, and I'm downgrading the severity.\n\n**The gap is real.** `src/app/theme-source.test.ts:22-23` use `\\b(dark|light|theme\\w*)\\b` with the `i` flag. In `'darkMode'` the `k` and `M` are both word characters, so there is no `\\b` after `dark`. The same holds before `Light` in `'isLight'` and before `Dark` in `'appDark'`. So `classList.add('darkMode')` breaks none of the three invariants:\n- It has no `--`, so TOKEN_WRITE doesn't fire.\n- It uses no scheme API, so SCHEME_API doesn't fire.\n- QUOTED_SCHEME and TEMPLATE_SCHEME don't match, for the reason above.\n\nA CSS rule like `.darkMode { background: var(--ink) }` is also invisible to the checks: it's an unquoted selector, it uses `var()` rather than declaring a token, and it calls no scheme API. Header invariant 3 says no string literal may name a scheme, and the `forced` fixtures cover `'dark'`, `'x dark'` and `'light'`. A camelCase string is a gap in that stated invariant, and no fixture covers it.\n\n**Why I'm downgrading it.**\n- **Nothing triggers it today.** A grep of app sources (excluding the design system) finds no string literal with dark, light or theme outside this test file. A developer would have to write new code that adds such a class. It is a weak guard, not a live defect.\n- **The guard is a heuristic either way.** The same colour swap through `.inverted` or `.night` gets past all three invariants, and no word-boundary fix closes that. The camelCase case is one narrow hole among several.\n- **The e2e is a second check.** The file's header says the e2e theme checks activate every control on every screen, so a forced theme that is actually reachable would probably show up there too.\n\nSo the mechanism is confirmed, but it is a minor test-hardening gap, not a major bug."
+        ]
+      },
+      {
+        "title": ".dockerignore 'mirror' test compares text, but Docker anchors patterns at the root, so files git ignores in subfolders still reach the image",
+        "file": "src/test/container-config.test.ts",
+        "line": 520,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "The test only checks that each .gitignore line appears word for word in .dockerignore. Git matches unanchored patterns such as `uploads/`, `storage/`, `*.log`, `.env`, `.env.*` and `*.dump` at any depth. Docker (`filepath.Match` after Clean) matches them only at the context root; only `**/raw/` uses `**`. So `public/uploads/page.png` is ignored by git, hidden from `git status --porcelain` (smoke reports `dirty: false`), yet copied by `COPY . .` into the build, and Vite ships `public/` into dist. That workbook-content path is exactly the one NFR-4 rules out. The comment in .dockerignore and the round-7 commit claim that 'a clean commit is the whole build input'. The test passes while that is false for nested ignored files.",
+        "suggestion": "Write each unanchored .gitignore pattern as `**/<pattern>` in .dockerignore (e.g. `**/uploads/`, `**/*.log`, `**/.env`, `**/.env.*`). Make the test map gitignore semantics to Docker's: a pattern with no slash, or only a trailing one, must appear with a `**/` prefix. Or check that `git ls-files -oi --exclude-standard` lists nothing that `docker build` would send.",
+        "dimension": "visual",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I confirmed the mechanism. The finding cites line 520, but the test is actually at src/test/container-config.test.ts:100-103. It turns both files into sets of lines and only checks that every non-negated .gitignore line appears word for word in .dockerignore. The two files match line for line: `*.log`, `.env`, `.env.*`, `uploads/`, `storage/`, `pgdata/`, `backups/`, `*.dump` and `src/api/generated/`. Only `**/raw/` has a `**` prefix.\n\nThe two tools read the same pattern differently. Git matches a pattern with no slash, or only a trailing one, at any depth. Docker (moby patternmatcher: filepath.Clean, then filepath.Match against the path from the context root) treats every pattern as anchored at the root. Docker's own docs say `*.log` only matches at the root, and you need `**/*.log` to match deeper. So `public/uploads/x.png`, `src/foo/.env` or `a/b.dump` would be hidden from git and from `git status --porcelain`, but still sent in the build context. The Dockerfile then runs `COPY . .` (line 9), and Vite copies `public/` into dist.\n\nThe comment in .dockerignore says the build context is \"exactly the tracked and untracked files git reports\". The test does not enforce that for nested paths, so its claim is false. Nothing elsewhere guards this; there is no extra `**/` entry in .dockerignore.\n\nSeverity is minor. Today it only bites if someone puts ignored files in subfolders, but the gap is real and the test passes anyway.",
+          "The finding holds. The line number is wrong: the test is at src/test/container-config.test.ts:100-103, not line 520. The mechanism is real, though.\n\n1. **The test only compares text.** `patterns('.dockerignore')` becomes a Set, and the test asserts that every non-negated .gitignore line is in it. It never maps gitignore matching rules to Docker's.\n\n2. **Most entries only match at the root.** In .dockerignore, `uploads/`, `storage/`, `pgdata/`, `backups/`, `*.log`, `*.dump`, `.env`, `.env.*`, `.idea/`, `.vscode/` and `.DS_Store` have no `**/` prefix. Only `**/raw/` has one.\n\n3. **Docker anchors these patterns at the context root.** Docker cleans each pattern and matches it against the full relative path, also trying each parent path from the root. So `uploads` matches `uploads/...` but not `public/uploads/...`, because neither `public` nor `public/uploads` equals `uploads`. Git matches a pattern with no slash, or only a trailing one, at any depth. A file such as `public/uploads/page.png` or `src/.env` is therefore ignored by git and absent from `git status --porcelain`, yet still sent in the build context. The Dockerfile then copies it in with `COPY . .` (line 9).\n\n4. **Vite would ship it.** Vite's default `publicDir` is `public/`, and its contents are copied into `dist`. The Dockerfile copies `/app/dist` into nginx. So a nested ignored workbook file under `public/` would be served, which is the NFR-4 case.\n\n**Limits on reachability.** No `public/` directory exists today. The leak needs a developer to put ignored files in a nested folder. That rules out a remote attacker and makes it a local hygiene and evidence-integrity gap. Still, the .dockerignore comment claims the build context is exactly what git reports, and the test is offered as proof. That claim is false for nested ignored paths, and the test passes anyway.\n\nThe finding is confirmed, and \"minor\" is the right severity."
+        ]
+      }
+    ],
+    "contested": [
+      {
+        "title": "Checklist coverage for this round (other areas clean; dependency audit not verified)",
+        "file": "package.json",
+        "severity": "minor",
+        "confidence": "low",
+        "evidence": "These round-7 fixes hold: the Intl allowlist (Segmenter, ListFormat and unknown formatters are now checked; an Intl call on the constructor still exempts only locale and options), the container-smoke dirty flag (a git error or non-zero exit counts as dirty), `test.slow(browserName === 'firefox')` in e2e/a11y.spec.ts (it triples the timeout and leaves the assertions unchanged), exact NOT_APP directory exclusions, TOKEN_WRITE catching any `'--`/`\"--`/`` `-- `` string, and TEMPLATE_SCHEME catching multi-line templates. Authz/IDOR, sessions/CSRF, SQL injection, uploads and mass assignment: this slice adds no API calls, endpoints or upload handlers, so there is nothing to report. Secrets: no `VITE_*` variables. `.env*` is ignored by git (`!.env.example`) and by Docker at the root (see the major finding for subdirectories). The smoke reads `DOUCKO_CHILD_DISPLAY_NAME` and never prints it. Exposure: the smoke publishes the port on 127.0.0.1 only, and nginx refuses Hosts other than localhost or an IPv4 address with 421. Dependencies: I could not run `npm audit` in this session (permission denied), and docs/qa/automated-verification-latest.md has no audit output, so dependency advisories are unverified, not clean.",
+        "suggestion": "Run `npm audit --omit=dev` and `npm audit` and attach the output to docs/qa. Consider adding an audit step to qa:verify so this item has exit-coded evidence instead of a narrative claim.",
+        "dimension": "security",
+        "verdict": "contested",
+        "verifierNotes": [
+          "The finding is a coverage gap, not a code defect, and its factual claim holds. I searched package.json, scripts/qa-verify*, factory.config.json and docs/qa/*.md for \"audit\". No `npm audit` step appears in the qa:verify battery or the npm scripts. docs/qa/automated-verification-latest.md contains \"audit\" only in the trajectory/slices lines (\"nothing to audit yet\"), with no dependency-advisory output. So dependency advisories really have no exit-coded evidence, and calling them \"unverified, not clean\" is accurate, in line with the repo's own done-claims-need-evidence lesson. The finding does not assert that a vulnerability exists, so there is no wrong mechanism to refute. Its other \"these fixes hold\" statements are positive confirmations, not defects. Minor severity with low confidence fits a process gap.",
+          "Seen through exploitability, this finding has no mechanism to check. It names no vulnerable package, advisory, version range or reachable code path. It is a coverage note that says, in its own words, the dependency audit is \"unverified, not clean\". package.json has five runtime dependencies (react, react-dom, @tanstack/react-query, openapi-fetch, openapi-react-query), all on current majors. Everything else is a devDependency, which a real user of the shipped bundle never runs. I also could not run `npm audit` here because permission was denied, so I can't confirm any advisory either. Nothing could happen to a real user or attacker as described. The rest of the evidence confirms round-7 fixes and says other areas are clean, so it supports no defect. Having no audit step in qa:verify is a reasonable process improvement, but it is not a reproducible security problem at package.json."
+        ]
+      },
+      {
+        "title": "Coverage summary: 18 scenarios: 17 implemented, 1 partial, 0 missing, 0 contradicted",
+        "file": "openspec/changes/implement-platform-foundation-ui/specs/platform-foundation/spec.md",
+        "line": 1,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "Checked all 8 requirements and 18 scenarios in the delta against the code at HEAD (b41bc45). The round-7 fixes hold up. The Intl allowlist (INTL_NON_TEXT, plus a Segmenter probe in lint-rule.test.ts:95) now checks Segmenter, ListFormat and any unknown formatter. The container-smoke dirty flag treats a non-zero exit or a spawn error from git as dirty (tools/container-smoke.mjs:51-56). test.slow(browserName === 'firefox') in e2e/a11y.spec.ts:13 triples the time limit and leaves the assertions alone. The theme guard now strips comments, matches multi-line template literals, skips only the two exact NOT_APP directories, and scans .js/.html/.svg and public/. Only the static backstop of 'No toggle' is partial (finding 2). The .dockerignore mirror is a process gap and is not tied to a scenario (finding 3).",
+        "suggestion": "None needed for this summary entry. See the findings below.",
+        "dimension": "spec-compliance",
+        "verdict": "contested",
+        "verifierNotes": [
+          "This entry is a coverage summary, not a defect claim, so there's no faulty mechanism to disprove. The facts it cites check out: the delta spec has 26 headers, which is 8 Requirements plus 18 Scenarios. src/test/lint-rule.test.ts:95 has the Intl.Segmenter probe. e2e/a11y.spec.ts:13 has test.slow(browserName === 'firefox'), which makes the test slower but leaves the assertions unchanged. Nothing in the summary is wrong. It makes no correctness claim of its own; the one 'partial' scenario is deferred to the separate finding 2. Treat it as informational, not as an actionable issue.",
+          "This \"finding\" only summarises coverage (\"17 implemented, 1 partial\"). It describes no defect of its own and says \"None needed\" as its suggestion. Its cited facts check out at HEAD:\n- `tools/container-smoke.mjs:51-56` treats a git spawn error or a non-zero git exit as dirty.\n- `e2e/a11y.spec.ts:13` calls `test.slow(browserName === 'firefox')`.\n- `INTL_NON_TEXT` exists in `eslint-rules/no-literal-ui-text.js`, and `lint-rule.test.ts:95` has a Segmenter probe.\n\nNothing here can be reproduced or exploited. The one \"partial\" item and the `.dockerignore` gap are handed off to separate findings (2 and 3), so they should be judged there. As a standalone issue, this entry is not a real problem."
+        ]
+      }
+    ],
+    "rejected": [],
+    "reviewEvidence": "openspec/changes/implement-platform-foundation-ui/review-findings.json"
+  }
+}

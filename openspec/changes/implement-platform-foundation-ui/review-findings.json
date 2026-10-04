@@ -6,22 +6,22 @@
   "headRef": "HEAD",
   "dimensions": {
     "correctness": {
-      "confirmed": 4,
+      "confirmed": 2,
       "contested": 0,
-      "rejected": 1
+      "rejected": 0
     },
     "security": {
-      "confirmed": 3,
-      "contested": 0,
+      "confirmed": 2,
+      "contested": 1,
       "rejected": 0
     },
     "spec-compliance": {
-      "confirmed": 5,
-      "contested": 2,
+      "confirmed": 2,
+      "contested": 1,
       "rejected": 0
     },
     "visual": {
-      "confirmed": 0,
+      "confirmed": 2,
       "contested": 0,
       "rejected": 0
     }
@@ -29,12 +29,12 @@
   "findings": [
     {
       "id": "F01",
-      "severity": "major",
+      "severity": "minor",
       "dimension": "correctness",
       "verdict": "confirmed",
-      "title": "Theme guard invariant 1 misses the computed-key custom-property idiom the design system itself uses",
+      "title": "Theme guard's comment stripper treats `/*` inside string literals as a comment opener, hiding real code up to the next `*/`",
       "file": "src/app/theme-source.test.ts",
-      "line": 19,
+      "line": 31,
       "status": "open"
     },
     {
@@ -42,132 +42,92 @@
       "severity": "minor",
       "dimension": "correctness",
       "verdict": "confirmed",
-      "title": "Scheme-word check cannot see a scheme word inside a multi-line string or template literal",
-      "file": "src/app/theme-source.test.ts",
-      "line": 21,
+      "title": ".dockerignore/.gitignore mirror test compares lines literally, but Docker anchors patterns at the context root while git matches at any depth",
+      "file": "src/test/container-config.test.ts",
+      "line": 100,
       "status": "open"
     },
     {
       "id": "F03",
-      "severity": "minor",
-      "dimension": "correctness",
+      "severity": "major",
+      "dimension": "security",
       "verdict": "confirmed",
-      "title": "Intl exemption also skips Intl.Segmenter (and other non-ListFormat methods) that take display text",
-      "file": "eslint-rules/no-literal-ui-text.js",
-      "line": 101,
+      "title": "The .dockerignore mirror test compares pattern strings, but Docker anchors patterns to the context root, so files git ignores in subdirectories still reach the image while the smoke evidence reports a clean commit",
+      "file": "src/test/container-config.test.ts",
+      "line": 100,
       "status": "open"
     },
     {
       "id": "F04",
       "severity": "minor",
-      "dimension": "correctness",
+      "dimension": "security",
       "verdict": "confirmed",
-      "title": "Container smoke records a clean tree when git status fails",
-      "file": "tools/container-smoke.mjs",
-      "line": 50,
+      "title": "The theme guard's block-comment stripper starts at `/*` inside an ordinary string literal (e.g. `accept=\"image/*\"`) and deletes all code up to the next `*/`",
+      "file": "src/app/theme-source.test.ts",
+      "line": 31,
       "status": "open"
     },
     {
       "id": "F05",
-      "severity": "minor",
-      "dimension": "security",
+      "severity": "major",
+      "dimension": "spec-compliance",
       "verdict": "confirmed",
-      "title": "Theme guard invariant 1 misses a computed-key CSS custom property in a style object",
+      "title": "Theme guard misses ordinary camelCase or underscored scheme class names ('darkMode', 'isDark', 'lightTheme', 'mode_dark')",
       "file": "src/app/theme-source.test.ts",
-      "line": 19,
+      "line": 22,
       "status": "open"
     },
     {
       "id": "F06",
-      "severity": "minor",
-      "dimension": "security",
+      "severity": "major",
+      "dimension": "spec-compliance",
       "verdict": "confirmed",
-      "title": "Theme guard skips any src/ directory whose name starts with 'design-system' or 'api/generated'",
-      "file": "src/app/theme-source.test.ts",
-      "line": 36,
+      "title": ".dockerignore 'mirror' matches .gitignore by string only: Docker anchors patterns at the context root, git does not, so nested git-ignored files (public/uploads/, src/**/*.log, …) reach the image while the smoke reports a clean commit",
+      "file": "src/test/container-config.test.ts",
+      "line": 100,
       "status": "open"
     },
     {
       "id": "F07",
-      "severity": "minor",
-      "dimension": "security",
+      "severity": "major",
+      "dimension": "visual",
       "verdict": "confirmed",
-      "title": "Lint rule exempts every Intl formatter method except ListFormat, including Intl.Segmenter.segment, which returns its input text",
-      "file": "eslint-rules/no-literal-ui-text.js",
-      "line": 105,
+      "title": "Scheme-word invariant misses ordinary camelCase class names ('darkMode', 'isLight', 'appDark')",
+      "file": "src/app/theme-source.test.ts",
+      "line": 22,
       "status": "open"
     },
     {
       "id": "F08",
-      "severity": "major",
-      "dimension": "spec-compliance",
+      "severity": "minor",
+      "dimension": "visual",
       "verdict": "confirmed",
-      "title": "Theme guard invariant 1 ('declares or sets a CSS custom property') misses a token name held in a variable or a computed key",
-      "file": "src/app/theme-source.test.ts",
-      "line": 19,
+      "title": ".dockerignore 'mirror' test compares text, but Docker anchors patterns at the root, so files git ignores in subfolders still reach the image",
+      "file": "src/test/container-config.test.ts",
+      "line": 520,
       "status": "open"
     },
     {
       "id": "F09",
-      "severity": "major",
-      "dimension": "spec-compliance",
-      "verdict": "confirmed",
-      "title": "Invariant 3 (no string literal naming a scheme) cannot see a multi-line template literal",
-      "file": "src/app/theme-source.test.ts",
-      "line": 21,
+      "severity": "minor",
+      "dimension": "security",
+      "verdict": "contested",
+      "title": "Checklist coverage for this round (other areas clean; dependency audit not verified)",
+      "file": "package.json",
+      "line": null,
       "status": "open"
     },
     {
       "id": "F10",
       "severity": "minor",
       "dimension": "spec-compliance",
-      "verdict": "confirmed",
-      "title": "Lint rule exempts every Intl method except ListFormat, including Intl.Segmenter.segment(text), which passes text through",
-      "file": "eslint-rules/no-literal-ui-text.js",
-      "line": 104,
-      "status": "open"
-    },
-    {
-      "id": "F11",
-      "severity": "minor",
-      "dimension": "spec-compliance",
-      "verdict": "confirmed",
-      "title": "Container-smoke dirty flag ignores gitignored files that are still in the Docker build context",
-      "file": "tools/container-smoke.mjs",
-      "line": 50,
-      "status": "open"
-    },
-    {
-      "id": "F12",
-      "severity": "major",
-      "dimension": "spec-compliance",
-      "verdict": "confirmed",
-      "title": "Task 4.1 'qa:verify green' is ticked, but the battery evidence predates the round-6 changes",
-      "file": "openspec/changes/implement-platform-foundation-ui/tasks.md",
-      "line": 27,
-      "status": "open"
-    },
-    {
-      "id": "F13",
-      "severity": "minor",
-      "dimension": "spec-compliance",
       "verdict": "contested",
-      "title": "Theme guard skips app files that are not .ts/.tsx/.css and everything under public/",
-      "file": "src/app/theme-source.test.ts",
-      "line": 37,
-      "status": "open"
-    },
-    {
-      "id": "F14",
-      "severity": "minor",
-      "dimension": "spec-compliance",
-      "verdict": "contested",
-      "title": "Catalog exemption from the scheme-word invariant is in design.md but not in the spec requirement",
+      "title": "Coverage summary: 18 scenarios: 17 implemented, 1 partial, 0 missing, 0 contradicted",
       "file": "openspec/changes/implement-platform-foundation-ui/specs/platform-foundation/spec.md",
-      "line": 7,
+      "line": 1,
       "status": "open"
     }
   ],
   "clean": false,
-  "generatedAt": "2026-10-04T11:01:32Z"
+  "generatedAt": "2026-10-04T11:16:32Z"
 }
