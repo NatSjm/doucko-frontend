@@ -9,7 +9,7 @@
       "screenshot": "docs/qa/demo-recordings/nfr8-task-entry/nfr8-single-part-task-entry.png",
       "explainer": "docs/qa/demo-recordings/nfr8-task-entry/nfr8-single-part-task-entry.md",
       "asserted": true,
-      "elapsedMs": 5855,
+      "elapsedMs": 8615,
       "keyDelayMs": 150,
       "pauseMs": 700
     }

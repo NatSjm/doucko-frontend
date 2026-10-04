@@ -3,7 +3,7 @@ import { useEffect, type ReactNode } from 'react';
 import { Button } from '@/design-system';
 import { useT } from '@/i18n';
 import { onAdminUnauthorized } from './adminClient';
-import { ADMIN_SESSION_KEY, checkAdminSession } from './session';
+import { ADMIN_SESSION_KEY, checkAdminSession, endAdminSession } from './session';
 import { SignInForm } from './SignInForm';
 
 /**
@@ -15,7 +15,7 @@ export function AdminGate({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const session = useQuery({ queryKey: ADMIN_SESSION_KEY, queryFn: checkAdminSession });
 
-  useEffect(() => onAdminUnauthorized(() => queryClient.setQueryData(ADMIN_SESSION_KEY, false)), [queryClient]);
+  useEffect(() => onAdminUnauthorized(() => endAdminSession(queryClient)), [queryClient]);
 
   if (session.data === undefined) {
     return (

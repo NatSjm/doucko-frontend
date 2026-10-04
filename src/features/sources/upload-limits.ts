@@ -19,7 +19,7 @@ const starts = (bytes: Uint8Array, signature: number[]) => signature.every((b, i
  * server, so the admin hears about a wrong file before a 50 MB upload; the server checks again.
  */
 async function check(file: File, signatures: number[][], max: number): Promise<FileCheck> {
-  const bytes = await head(file);
+  const bytes = await head(file).catch(() => new Uint8Array());
   if (!signatures.some((s) => starts(bytes, s))) return 'type';
   return file.size > max ? 'size' : 'ok';
 }

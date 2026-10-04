@@ -4,7 +4,7 @@ import { queryParam } from '@/app/route-paths';
 import { Button, Chip, Panel } from '@/design-system';
 import { AdminLayout, LoadState } from '@/features/admin-access/AdminLayout';
 import { Field } from '@/features/admin-access/form';
-import { ApiError } from '@/features/admin-access/problem';
+import { ApiError, problemMessage } from '@/features/admin-access/problem';
 import { useObjectUrl } from '@/features/admin-access/useObjectUrl';
 import { useReference } from '@/features/sources/api';
 import { TaskView, type TaskViewData } from '@/features/task/TaskView';
@@ -30,7 +30,7 @@ function AnswerTester({ task }: { task: TaskViewData }) {
   const t = useT();
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
   const [results, setResults] = useState<S['PartResult'][]>([]);
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState<string | null>(null);
   const labels = Object.fromEntries(task.parts.map((p) => [p.key, p.label.cs]));
 
   async function check(event: FormEvent) {
@@ -38,9 +38,10 @@ function AnswerTester({ task }: { task: TaskViewData }) {
     const body = Object.fromEntries(task.parts.map((p) => [p.key, answers[p.key] ?? (p.options ? [] : '')]));
     try {
       setResults(await testAnswers(task.taskId, body));
-      setFailed(false);
-    } catch {
-      setFailed(true);
+      setFailed(null);
+    } catch (error) {
+      setResults([]);
+      setFailed(problemMessage(error) ?? t('admin.preview.checkFailed'));
     }
   }
 
@@ -59,10 +60,14 @@ function AnswerTester({ task }: { task: TaskViewData }) {
                 <div key={o.key} className="admin-actions">
                   <label className="admin-check">
                     <input
-                      type="checkbox"
+                      type={part.type === 'CHOICE_SINGLE' ? 'radio' : 'checkbox'}
+                      name={`tester-${part.key}`}
                       checked={picked.includes(o.key)}
                       onChange={(e) =>
-                        setAnswers({ ...answers, [part.key]: e.target.checked ? [...picked, o.key] : picked.filter((k) => k !== o.key) })
+                        setAnswers({
+                          ...answers,
+                          [part.key]: part.type === 'CHOICE_SINGLE' ? [o.key] : e.target.checked ? [...picked, o.key] : picked.filter((k) => k !== o.key),
+                        })
                       }
                     />
                     {o.key}
@@ -93,7 +98,11 @@ function AnswerTester({ task }: { task: TaskViewData }) {
           {t('admin.preview.check')}
         </Button>
       </div>
-      {failed && <p role="alert">{t('admin.preview.checkFailed')}</p>}
+      {failed && (
+        <p role="alert" data-content>
+          {failed}
+        </p>
+      )}
       {results.map((r) => (
         <div key={r.key} role="group" aria-label={format(t('admin.preview.result'), { label: labels[r.key] })} className="tester-result">
           <Chip tone={VERDICT_TONE[r.verdict]}>{t(`admin.verdict.${r.verdict}` as const)}</Chip>

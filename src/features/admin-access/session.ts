@@ -1,7 +1,14 @@
+import type { QueryClient } from '@tanstack/react-query';
 import { adminClient } from './adminClient';
 
 /** TanStack Query key of "is there an admin session": `true`, `false`, or an error when unreachable. */
 export const ADMIN_SESSION_KEY = ['admin', 'session'] as const;
+
+/** Signed out: forgets every cached admin answer (specs, PDFs, images) and records "no session". */
+export function endAdminSession(queryClient: QueryClient): void {
+  queryClient.removeQueries({ predicate: (q) => q.queryKey[0] === 'admin' && q.queryKey[1] !== 'session' });
+  queryClient.setQueryData(ADMIN_SESSION_KEY, false);
+}
 
 class UnexpectedStatus extends Error {
   constructor(status: number) {

@@ -566,3 +566,108 @@ describe('details of the source reference and the task', () => {
     expect(lastBody(backend, 'POST')).toMatchObject({ grade: 7, difficulty: 3, sourceRef: { subPart: 'b' }, parts: [{ label: 'x' }] });
   });
 });
+
+describe('review fixes in the editor', () => {
+  it('a removed hint takes its translation with it (F01)', async () => {
+    const backend = await openNew();
+    await typeSinglePartTask();
+    await userEvent.click(screen.getByRole('button', { name: m['admin.editor.addHint'] }));
+    await userEvent.click(screen.getByRole('button', { name: m['admin.editor.addHint'] }));
+    await userEvent.type(field(label('admin.editor.hint', { n: 1 })), 'První.');
+    await userEvent.type(field(label('admin.editor.hint', { n: 2 })), 'Druhá.');
+    await userEvent.type(field(label('admin.editor.trHint', { n: 1, locale: 'uk' })), 'Перша.');
+    await userEvent.click(screen.getByRole('button', { name: label('admin.editor.removeHint', { n: 1 }) }));
+    expect(field(label('admin.editor.trHint', { n: 1, locale: 'uk' }))).toHaveValue('');
+    await save();
+    await screen.findByText(m['admin.editor.created']);
+    expect(lastBody(backend, 'POST').hints).toEqual(['Druhá.']);
+    expect(lastBody(backend, 'POST').translations).toBeUndefined();
+  });
+
+  it('a removed option moves the later option translations up a letter (F02)', async () => {
+    const backend = await openNew();
+    await typeSinglePartTask();
+    await userEvent.selectOptions(within(part(1)).getByLabelText(m['admin.editor.partType']), m['admin.type.CHOICE_SINGLE']);
+    await userEvent.click(within(part(1)).getByRole('button', { name: m['admin.editor.addOption'] }));
+    for (const [key, text] of [['A', 'x'], ['B', 'y'], ['C', 'z']])
+      await userEvent.type(within(part(1)).getByLabelText(label('admin.editor.option', { key })), text);
+    await userEvent.type(field(label('admin.editor.trOption', { key: 'C', n: 1, locale: 'uk' })), 'зет');
+    await userEvent.click(within(part(1)).getByLabelText(label('admin.editor.optionCorrect', { key: 'C' })));
+    await userEvent.click(within(part(1)).getByRole('button', { name: label('admin.editor.removeOption', { key: 'B' }) }));
+    await save();
+    await screen.findByText(m['admin.editor.created']);
+    const body = lastBody(backend, 'POST');
+    expect(body.parts[0].spec.options).toEqual([{ key: 'A', text: 'x' }, { key: 'B', text: 'z' }]);
+    expect(body.translations.uk.options).toEqual({ [`${body.parts[0].key}.B`]: 'зет' });
+  });
+
+  it('refuses exact decimal places that are not a whole number before sending (F03)', async () => {
+    const backend = await openNew();
+    await typeSinglePartTask('Zapiš.', '0,5');
+    await userEvent.selectOptions(within(part(1)).getByLabelText(m['admin.editor.partType']), m['admin.type.DECIMAL']);
+    await userEvent.type(within(part(1)).getByLabelText(m['admin.editor.exactDecimals']), 'dva');
+    await save();
+    await waitFor(() =>
+      expect(within(part(1)).getByLabelText(m['admin.editor.exactDecimals'])).toHaveAccessibleDescription(m['admin.editor.exactDecimalsInvalid']),
+    );
+    expect(backend.seen.some((r) => r.method === 'POST')).toBe(false);
+  });
+
+  it('keeps what is typed while a save runs (F08)', async () => {
+    const backend = await openNew();
+    await typeSinglePartTask();
+    let release = () => {};
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const handle = backend.handle;
+    backend.handle = async (request) => {
+      if (request.method === 'POST') await gate;
+      return handle(request);
+    };
+    await save();
+    await userEvent.type(field(m['admin.editor.taskNo']), '9');
+    release();
+    await screen.findByText(m['admin.editor.created']);
+    expect(field(m['admin.editor.taskNo'])).toHaveValue('49');
+  });
+
+  it('clears index-keyed errors when the parts change (F09)', async () => {
+    await openNew();
+    await userEvent.type(within(part(1)).getByLabelText(label('admin.editor.accepted', { n: 1 })), 'abc');
+    await save();
+    await screen.findByText('This value cannot be read.');
+    await userEvent.click(screen.getByRole('button', { name: m['admin.editor.addPart'] }));
+    expect(screen.queryByText('This value cannot be read.')).toBeNull();
+  });
+});
+
+describe('saving without a source and editing during an update', () => {
+  it('sends a task without a source and shows the refusal on the source field', async () => {
+    stubSignedInAdmin();
+    renderAt(<TaskEditorScreen />, '/admin/tasks/edit');
+    await screen.findByLabelText(m['admin.editor.prompt']);
+    await save();
+    await waitFor(() => expect(field(m['admin.editor.source'])).toHaveAccessibleDescription('Choose a source.'));
+  });
+
+  it('keeps what is typed while an update runs', async () => {
+    const backend = stubSignedInAdmin();
+    renderAt(<TaskEditorScreen />, `/admin/tasks/edit?taskId=${SEED.taskDecimal}`);
+    await waitFor(() => expect(field(m['admin.editor.prompt'])).toHaveValue('Zapiš jednu polovinu jako desetinné číslo.'));
+    let release = () => {};
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const handle = backend.handle;
+    backend.handle = async (request) => {
+      if (request.method === 'PUT') await gate;
+      return handle(request);
+    };
+    await save();
+    await userEvent.type(field(m['admin.editor.taskNo']), '9');
+    release();
+    await screen.findByText(m['admin.editor.updated']);
+    expect(field(m['admin.editor.taskNo'])).toHaveValue('49');
+  });
+});

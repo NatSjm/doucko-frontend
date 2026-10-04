@@ -130,6 +130,8 @@ export function TaskListScreen() {
   const [selected, setSelected] = useState<string[]>([]);
   const [publishError, setPublishError] = useState<'tooMany' | 'failed' | null>(null);
   const [results, setResults] = useState<S['PublishResult'][] | null>(null);
+  /** Prompts of the tasks sent to publish (selected tasks are always shown ones), so the result names them whatever the list shows next. */
+  const [sentPrompts, setSentPrompts] = useState<Map<string, string>>(new Map());
   const tasks = useTasks(filters);
 
   /** Applies `next` (or the current draft): checked first, then sent as the list query. */
@@ -137,7 +139,10 @@ export function TaskListScreen() {
     setDraft(next);
     const problems = checkFilters(next, t);
     setErrors(problems);
-    if (!Object.keys(problems).length) setFilters(toQuery(next));
+    if (Object.keys(problems).length) return;
+    // Only shown tasks stay selectable: a hidden task is never published by mistake.
+    setSelected([]);
+    setFilters(toQuery(next));
   }
   const choose = (name: keyof FilterForm, value: string) => apply({ ...draft, [name]: value });
 
@@ -149,6 +154,7 @@ export function TaskListScreen() {
   async function publish() {
     setResults(null);
     if (selected.length > MAX_PUBLISH) return setPublishError('tooMany');
+    setSentPrompts(new Map(selected.map((id) => [id, prompts.get(id) as string])));
     try {
       setResults(await bulkPublish(selected));
       setPublishError(null);
@@ -250,7 +256,7 @@ export function TaskListScreen() {
           <ul>
             {results.map((r) => (
               <li key={r.taskId}>
-                <span data-content>{prompts.get(r.taskId) ?? r.taskId}</span>
+                <span data-content>{sentPrompts.get(r.taskId) ?? r.taskId}</span>
                 {': '}
                 {r.published ? (
                   <span>{t('admin.tasks.published')}</span>

@@ -57,17 +57,16 @@ export function ImagesEditor({ task, onChanged }: { task: AdminTask; onChanged: 
           {ids.map((imageId, i) => (
             <li key={imageId}>
               <Thumbnail taskId={task.taskId} imageId={imageId} n={i + 1} />
-              <Button variant="ghost" disabled={busy || i === 0} onClick={() => void run(() => reorderImages(task.taskId, move(ids, i, -1)), null)}>
+              <Button disabled={busy || i === 0} onClick={() => void run(() => reorderImages(task.taskId, move(ids, i, -1)), null)}>
                 {format(t('admin.images.moveEarlier'), { n: i + 1 })}
               </Button>
               <Button
-                variant="ghost"
                 disabled={busy || i === ids.length - 1}
                 onClick={() => void run(() => reorderImages(task.taskId, move(ids, i, 1)), null)}
               >
                 {format(t('admin.images.moveLater'), { n: i + 1 })}
               </Button>
-              <Button variant="ghost" disabled={busy} onClick={() => void run(() => deleteImage(task.taskId, imageId), null)}>
+              <Button disabled={busy} onClick={() => void run(() => deleteImage(task.taskId, imageId), null)}>
                 {format(t('admin.images.remove'), { n: i + 1 })}
               </Button>
             </li>

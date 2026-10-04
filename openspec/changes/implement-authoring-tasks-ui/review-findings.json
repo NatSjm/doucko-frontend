@@ -1,0 +1,253 @@
+{
+  "generatedBy": "review-gate",
+  "scope": "slice 5 authoring-tasks frontend (implement-authoring-tasks-ui)",
+  "change": "implement-authoring-tasks-ui",
+  "baseRef": "main",
+  "headRef": "HEAD",
+  "dimensions": {
+    "correctness": {
+      "confirmed": 11,
+      "contested": 0,
+      "rejected": 1
+    },
+    "security": {
+      "confirmed": 1,
+      "contested": 0,
+      "rejected": 1
+    },
+    "spec-compliance": {
+      "confirmed": 8,
+      "contested": 0,
+      "rejected": 1
+    },
+    "visual": {
+      "confirmed": 2,
+      "contested": 0,
+      "rejected": 2
+    }
+  },
+  "findings": [
+    {
+      "id": "F01",
+      "severity": "major",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "Removing or moving a Czech hint leaves its translations attached to the wrong hints",
+      "file": "src/features/tasks/TaskEditorScreen.tsx",
+      "line": 279,
+      "status": "open"
+    },
+    {
+      "id": "F02",
+      "severity": "major",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "Removing a choice option or a part leaves orphaned or misaligned translation keys that are still sent",
+      "file": "src/features/tasks/PartEditor.tsx",
+      "line": 110,
+      "status": "open"
+    },
+    {
+      "id": "F03",
+      "severity": "major",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "Non-numeric exactDecimals is silently dropped (NaN serializes to null)",
+      "file": "src/features/tasks/taskForm.ts",
+      "line": 114,
+      "status": "open"
+    },
+    {
+      "id": "F04",
+      "severity": "major",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "Fast paging starts overlapping pdf.js renders on one canvas; the rejection is unhandled",
+      "file": "src/features/sources/PdfViewer.tsx",
+      "line": 42,
+      "status": "open"
+    },
+    {
+      "id": "F05",
+      "severity": "major",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "Bulk publish includes selected tasks that the current filters hide",
+      "file": "src/features/tasks/TaskListScreen.tsx",
+      "line": 153,
+      "status": "open"
+    },
+    {
+      "id": "F06",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "useObjectUrl revokes the URL during StrictMode's simulated unmount, then keeps using the revoked URL",
+      "file": "src/features/admin-access/useObjectUrl.ts",
+      "line": 11,
+      "status": "open"
+    },
+    {
+      "id": "F07",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "Loaded pdf.js documents are cached forever and never destroyed",
+      "file": "src/features/sources/PdfViewer.tsx",
+      "line": 13,
+      "status": "open"
+    },
+    {
+      "id": "F08",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "Edits typed while a save is in flight are overwritten",
+      "file": "src/features/tasks/TaskEditorScreen.tsx",
+      "line": 92,
+      "status": "open"
+    },
+    {
+      "id": "F09",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "Field errors keyed by index stay on the wrong row after parts or hints are reordered or removed",
+      "file": "src/features/tasks/TaskEditorScreen.tsx",
+      "line": 207,
+      "status": "open"
+    },
+    {
+      "id": "F10",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "Answer tester keeps stale verdicts after a failed check and drops the server's refusal detail",
+      "file": "src/features/tasks/PreviewScreen.tsx",
+      "line": 187,
+      "status": "open"
+    },
+    {
+      "id": "F11",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "Picking a PDF file that cannot be read gives an unhandled rejection",
+      "file": "src/features/sources/SourcesScreen.tsx",
+      "line": 35,
+      "status": "open"
+    },
+    {
+      "id": "F12",
+      "severity": "minor",
+      "dimension": "security",
+      "verdict": "confirmed",
+      "title": "Sign-out and idle expiry leave cached admin data (answer specs, PDFs, images) in the QueryClient",
+      "file": "src/features/admin-access/AdminLayout.tsx",
+      "line": 32,
+      "status": "open"
+    },
+    {
+      "id": "F13",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Coverage summary: 17 delta scenarios, 16 implemented, 1 partial, 0 missing, 0 contradicted (+1 store scenario deferred)",
+      "file": "openspec/changes/implement-authoring-tasks-ui/specs/content-authoring/spec.md",
+      "line": 1,
+      "status": "open"
+    },
+    {
+      "id": "F14",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Ticked task 2.5 (eval case) has no artifact",
+      "file": "openspec/changes/implement-authoring-tasks-ui/tasks.md",
+      "line": 11,
+      "status": "open"
+    },
+    {
+      "id": "F15",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Store scenario 'Preview matches the child task screen' (pixel/text parity) deferred and missing from the delta",
+      "file": "contract/openspec/specs/content-authoring/spec.md",
+      "line": 692,
+      "status": "open"
+    },
+    {
+      "id": "F16",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Undocumented drift: image removal (deleteTaskImage) in the editor",
+      "file": "src/features/tasks/ImagesEditor.tsx",
+      "line": 70,
+      "status": "open"
+    },
+    {
+      "id": "F17",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Bulk publish selection survives filter changes, so hidden tasks can be published",
+      "file": "src/features/tasks/TaskListScreen.tsx",
+      "line": 136,
+      "status": "open"
+    },
+    {
+      "id": "F18",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Bulk publish result falls back to raw task UUIDs when the list is filtered by DRAFT",
+      "file": "src/features/tasks/TaskListScreen.tsx",
+      "line": 180,
+      "status": "open"
+    },
+    {
+      "id": "F19",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Answer tester renders CHOICE_SINGLE parts as checkboxes",
+      "file": "src/features/tasks/PreviewScreen.tsx",
+      "line": 61,
+      "status": "open"
+    },
+    {
+      "id": "F20",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Preview translation toggle only reaches the first configured task locale",
+      "file": "src/features/tasks/PreviewScreen.tsx",
+      "line": 164,
+      "status": "open"
+    },
+    {
+      "id": "F21",
+      "severity": "major",
+      "dimension": "visual",
+      "verdict": "confirmed",
+      "title": "Inverted button styles: disabled 'Move part' buttons look like buttons, the enabled 'Remove part 1' looks like plain text",
+      "file": "docs/qa/demo-recordings/nfr8-task-entry/nfr8-single-part-task-entry.png",
+      "line": 0,
+      "status": "open"
+    },
+    {
+      "id": "F22",
+      "severity": "minor",
+      "dimension": "visual",
+      "verdict": "confirmed",
+      "title": "Still is taken after the form reset, so it shows a blank form under a 'Task saved as draft' banner",
+      "file": "docs/qa/demo-recordings/nfr8-task-entry/nfr8-single-part-task-entry.png",
+      "line": 0,
+      "status": "open"
+    }
+  ],
+  "clean": false,
+  "generatedAt": "2026-10-04T18:19:48Z"
+}

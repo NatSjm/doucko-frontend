@@ -4,7 +4,19 @@
 // @trace FR-8
 import { describe, expect, it } from 'vitest';
 import type { components } from '@/api/generated/schema';
-import { emptyTaskForm, fromAdminTask, move, newPart, stickyForm, toTaskInput, type TaskForm } from './taskForm';
+import {
+  changeHints,
+  clientErrors,
+  emptyTaskForm,
+  fromAdminTask,
+  move,
+  newPart,
+  removeOption,
+  removePart,
+  stickyForm,
+  toTaskInput,
+  type TaskForm,
+} from './taskForm';
 
 type AdminTask = components['schemas']['AdminTask'];
 
@@ -273,5 +285,60 @@ describe('fromAdminTask with sparse data', () => {
     expect(form.translations.uk).toEqual({ prompt: '', partLabels: {}, hints: [], options: {} });
     expect(form.parts[0].options).toEqual([]);
     expect(form.subPart).toBe('');
+  });
+});
+
+describe('translations follow structural edits (review F01, F02)', () => {
+  const withTranslations = (): TaskForm => {
+    const base = filled();
+    const choice = { ...base.parts[0], key: 'p1', type: 'CHOICE_SINGLE' as const, options: ['x', 'y', 'z'].map((text) => ({ text, correct: false })) };
+    const other = { ...base.parts[0], key: 'p2', label: 'b' };
+    return {
+      ...base,
+      parts: [choice, other],
+      hints: ['h1', 'h2', 'h3'],
+      translations: { uk: { prompt: '', partLabels: { p1: 'а', p2: 'б' }, hints: ['т1', '', 'т3'], options: { 'p1.A': 'ікс', 'p1.B': 'ігрек', 'p1.C': 'зет', 'p2.A': 'z' } } },
+    };
+  };
+
+  it('moves and removes translated hints with the Czech ones, padding a shorter translation', () => {
+    const moved = changeHints(withTranslations(), (h) => move(h, 2, -1));
+    expect(moved.hints).toEqual(['h1', 'h3', 'h2']);
+    expect(moved.translations.uk.hints).toEqual(['т1', 'т3', '']);
+    const removed = changeHints({ ...withTranslations(), translations: { uk: { ...withTranslations().translations.uk, hints: ['т1'] } } }, (h) => h.filter((_, k) => k !== 0));
+    expect(removed.hints).toEqual(['h2', 'h3']);
+    expect(removed.translations.uk.hints).toEqual(['', '']);
+  });
+
+  it('removes a part with its translated label and options', () => {
+    const form = removePart(withTranslations(), 0);
+    expect(form.parts.map((p) => p.key)).toEqual(['p2']);
+    expect(form.translations.uk.partLabels).toEqual({ p2: 'б' });
+    expect(form.translations.uk.options).toEqual({ 'p2.A': 'z' });
+  });
+
+  it('removes an option and moves the later translations up a letter', () => {
+    const form = removeOption(withTranslations(), 0, 1);
+    expect(form.parts[0].options.map((o) => o.text)).toEqual(['x', 'z']);
+    expect(form.translations.uk.options).toEqual({ 'p1.A': 'ікс', 'p1.B': 'зет', 'p2.A': 'z' });
+  });
+});
+
+describe('clientErrors (review F03)', () => {
+  const messages = { page: 'page!', exactDecimals: 'decimals!' };
+  it('refuses a page outside the source or not a whole number', () => {
+    expect(clientErrors({ ...filled(), page: '121' }, 120, messages)).toEqual({ 'sourceRef.page': 'page!' });
+    expect(clientErrors({ ...filled(), page: '5,5' }, 120, messages)).toEqual({ 'sourceRef.page': 'page!' });
+    expect(clientErrors({ ...filled(), page: '0' }, 120, messages)).toEqual({ 'sourceRef.page': 'page!' });
+    expect(clientErrors(filled(), 120, messages)).toEqual({});
+    expect(clientErrors({ ...filled(), page: 'x' }, null, messages)).toEqual({});
+  });
+
+  it('refuses exact decimal places that are not a whole number from 0 to 6', () => {
+    const decimal = (exactDecimals: string) => ({ ...filled(), parts: [{ ...filled().parts[0], type: 'DECIMAL' as const, exactDecimals }] });
+    expect(clientErrors(decimal('abc'), 120, messages)).toEqual({ 'parts[0].spec.exactDecimals': 'decimals!' });
+    expect(clientErrors(decimal('7'), 120, messages)).toEqual({ 'parts[0].spec.exactDecimals': 'decimals!' });
+    expect(clientErrors(decimal('2'), 120, messages)).toEqual({});
+    expect(clientErrors(decimal(''), 120, messages)).toEqual({});
   });
 });

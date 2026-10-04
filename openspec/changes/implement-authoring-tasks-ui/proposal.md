@@ -31,7 +31,7 @@ inside authoring).
     modality, source reference with sticky source and page (NFR-8), answer
     parts with every answer spec type (FR-6), ordered hints (FR-7),
     translations per configured task locale (FR-8), and, for a saved task,
-    images with type and size limits and reorder (FR-4, NFR-17).
+    images with type and size limits, reorder and removal (FR-4, NFR-17; `deleteTaskImage`).
   - `/admin/tasks/preview?taskId=…`: the task as the child sees it, rendered
     by the child task view `src/features/task/TaskView.tsx`, with the
     translation toggle, and the answer tester beside it (FR-10).

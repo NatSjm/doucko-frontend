@@ -7,7 +7,8 @@ import type { PdfDocument } from '@/features/sources/pdf';
  */
 export const rendered: number[] = [];
 /** Set to a pending promise to hold every render until it settles (a render still running). */
-export const control: { hold: Promise<void> | null } = { hold: null };
+/** `fail` makes renders reject; `maxConcurrent` and `destroyed` record how the viewer used the document. */
+export const control = { hold: null as Promise<void> | null, fail: false, running: 0, maxConcurrent: 0, destroyed: 0 };
 
 export async function loadPdf(data: ArrayBuffer): Promise<PdfDocument> {
   const text = new TextDecoder('latin1').decode(data);
@@ -16,9 +17,18 @@ export async function loadPdf(data: ArrayBuffer): Promise<PdfDocument> {
   return {
     numPages,
     async renderPage(page: number) {
-      if (control.hold) await control.hold;
-      rendered.push(page);
+      control.running += 1;
+      control.maxConcurrent = Math.max(control.maxConcurrent, control.running);
+      try {
+        if (control.hold) await control.hold;
+        if (control.fail) throw new Error('render failed');
+        rendered.push(page);
+      } finally {
+        control.running -= 1;
+      }
     },
-    destroy() {},
+    destroy() {
+      control.destroyed += 1;
+    },
   };
 }

@@ -48,6 +48,7 @@ export function PartEditor({
   onChange,
   onMove,
   onRemove,
+  onRemoveOption,
 }: {
   part: PartForm;
   index: number;
@@ -56,6 +57,8 @@ export function PartEditor({
   onChange: (part: PartForm) => void;
   onMove: (delta: number) => void;
   onRemove: () => void;
+  /** Removes option j and moves its translations with the letters (see `removeOption`). */
+  onRemoveOption: (j: number) => void;
 }) {
   const t = useT();
   const n = index + 1;
@@ -107,7 +110,7 @@ export function PartEditor({
                   onChange={(correct) => set({ options: part.options.map((o, k) => (k === j ? { ...o, correct } : o)) })}
                 />
                 {part.options.length > MIN_OPTIONS && (
-                  <Button variant="ghost" onClick={() => set({ options: part.options.filter((_, k) => k !== j) })}>
+                  <Button onClick={() => onRemoveOption(j)}>
                     {format(t('admin.editor.removeOption'), { key })}
                   </Button>
                 )}
@@ -141,7 +144,6 @@ export function PartEditor({
             )}
             {part.accepted.length > 1 && (
               <Button
-                variant="ghost"
                 onClick={() => set({ accepted: part.accepted.filter((_, k) => k !== j), normalized: part.normalized.filter((_, k) => k !== j) })}
               >
                 {format(t('admin.editor.removeAccepted'), { n: j + 1 })}
@@ -191,13 +193,13 @@ export function PartEditor({
       </Field>
       <GroupError path={path} errors={errors} />
       <div className="admin-actions">
-        <Button variant="ghost" disabled={index === 0} onClick={() => onMove(-1)}>
+        <Button disabled={index === 0} onClick={() => onMove(-1)}>
           {format(t('admin.editor.movePartUp'), { n })}
         </Button>
-        <Button variant="ghost" disabled={index === count - 1} onClick={() => onMove(1)}>
+        <Button disabled={index === count - 1} onClick={() => onMove(1)}>
           {format(t('admin.editor.movePartDown'), { n })}
         </Button>
-        <Button variant="ghost" onClick={onRemove}>
+        <Button onClick={onRemove}>
           {format(t('admin.editor.removePart'), { n })}
         </Button>
       </div>

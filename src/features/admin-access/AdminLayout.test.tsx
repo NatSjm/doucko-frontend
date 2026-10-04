@@ -57,3 +57,17 @@ describe('admin layout', () => {
     expect(screen.getByRole('link', { name: messages['admin.nav.home'] })).toHaveAttribute('aria-current', 'page');
   });
 });
+
+describe('sign-out forgets admin data (review F12)', () => {
+  it('drops cached admin answers but keeps the session flag', async () => {
+    const { QueryClient } = await import('@tanstack/react-query');
+    const { endAdminSession, ADMIN_SESSION_KEY } = await import('./session');
+    const client = new QueryClient();
+    client.setQueryData(['admin', 'task', 'x'], { prompt: 'p' });
+    client.setQueryData(['other'], 1);
+    endAdminSession(client);
+    expect(client.getQueryData(['admin', 'task', 'x'])).toBeUndefined();
+    expect(client.getQueryData(['other'])).toBe(1);
+    expect(client.getQueryData(ADMIN_SESSION_KEY)).toBe(false);
+  });
+});

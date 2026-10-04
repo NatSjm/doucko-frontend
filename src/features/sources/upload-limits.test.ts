@@ -49,3 +49,11 @@ describe('task images (NFR-17: PNG or JPG, at most 5 MB)', () => {
     expect(await checkImageFile(sized(new Uint8Array([0xff, 0xd8, 0xff]), 6 * 1024 * 1024, 'a.jpg'))).toBe('size');
   });
 });
+
+describe('a file that cannot be read (review F11)', () => {
+  it('counts as the wrong type instead of failing', async () => {
+    const broken = new File(['x'], 'x.pdf');
+    Object.defineProperty(broken, 'slice', { value: () => ({ arrayBuffer: () => Promise.reject(new Error('gone')) }) });
+    expect(await checkPdfFile(broken)).toBe('type');
+  });
+});

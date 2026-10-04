@@ -14,12 +14,16 @@ import { saveTask, TASKS_KEY, useTask, type AdminTask } from './api';
 import { ImagesEditor } from './ImagesEditor';
 import { GroupError, PartEditor } from './PartEditor';
 import {
+  changeHints,
   CHOICE_TYPES,
+  clientErrors,
   emptyTaskForm,
   fromAdminTask,
   move,
   newPart,
   optionKey,
+  removeOption,
+  removePart,
   stickyForm,
   toTaskInput,
   type TaskForm,
@@ -67,6 +71,11 @@ function TaskEditor({ task, sources, reference }: { task: AdminTask | null; sour
   }, [status]);
 
   const set = (patch: Partial<TaskForm>) => setForm((f) => ({ ...f, ...patch }));
+  /** A structural change (add, move, remove): errors keyed by index no longer point at the right row. */
+  const restructure = (change: (f: TaskForm) => TaskForm) => {
+    setErrors({});
+    setForm(change);
+  };
   const setTranslation = (locale: string, patch: Partial<TranslationForm>) =>
     setForm((f) => ({ ...f, translations: { ...f.translations, [locale]: { ...EMPTY_TRANSLATION, ...f.translations[locale], ...patch } } }));
 
@@ -74,10 +83,15 @@ function TaskEditor({ task, sources, reference }: { task: AdminTask | null; sour
     event?.preventDefault();
     setStatus(null);
     setFailure(null);
-    if (source && parsePage(form.page, source.pageCount) === null) {
-      setErrors({ 'sourceRef.page': format(t('admin.editor.pageRange'), { count: source.pageCount }) });
+    const local = clientErrors(form, source ? source.pageCount : null, {
+      page: format(t('admin.editor.pageRange'), { count: source ? source.pageCount : 0 }),
+      exactDecimals: t('admin.editor.exactDecimalsInvalid'),
+    });
+    if (Object.keys(local).length) {
+      setErrors(local);
       return;
     }
+    const submitted = form;
     setBusy(true);
     try {
       const saved = await saveTask(task?.taskId ?? null, toTaskInput(form));
@@ -86,10 +100,11 @@ function TaskEditor({ task, sources, reference }: { task: AdminTask | null; sour
       if (task) {
         queryClient.setQueryData(['admin', 'task', saved.taskId], saved);
         await queryClient.invalidateQueries({ queryKey: ['admin', 'preview', saved.taskId] });
-        setForm(fromAdminTask(saved));
+        // Edits typed while the save ran are kept; only an unchanged form takes the saved state.
+        setForm((f) => (f === submitted ? fromAdminTask(saved) : f));
         setStatus({ kind: 'updated' });
       } else {
-        setForm(stickyForm(form));
+        setForm((f) => (f === submitted ? stickyForm(f) : f));
         setStatus({ kind: 'created', taskId: saved.taskId });
       }
     } catch (error) {
@@ -204,13 +219,14 @@ function TaskEditor({ task, sources, reference }: { task: AdminTask | null; sour
                 count={form.parts.length}
                 errors={errors}
                 onChange={(next) => setPart(i, next)}
-                onMove={(delta) => set({ parts: move(form.parts, i, delta) })}
-                onRemove={() => set({ parts: form.parts.filter((_, k) => k !== i) })}
+                onMove={(delta) => restructure((f) => ({ ...f, parts: move(f.parts, i, delta) }))}
+                onRemove={() => restructure((f) => removePart(f, i))}
+                onRemoveOption={(j) => restructure((f) => removeOption(f, i, j))}
               />
             ))}
             <GroupError path="parts" errors={errors} />
             <div>
-              <Button disabled={form.parts.length >= MAX_ITEMS} onClick={() => set({ parts: [...form.parts, newPart(form.parts)] })}>
+              <Button disabled={form.parts.length >= MAX_ITEMS} onClick={() => restructure((f) => ({ ...f, parts: [...f.parts, newPart(f.parts)] }))}>
                 {t('admin.editor.addPart')}
               </Button>
             </div>
@@ -270,20 +286,20 @@ function TaskEditor({ task, sources, reference }: { task: AdminTask | null; sour
                   )}
                 </Field>
                 <div className="admin-actions">
-                  <Button variant="ghost" disabled={i === 0} onClick={() => set({ hints: move(form.hints, i, -1) })}>
+                  <Button disabled={i === 0} onClick={() => restructure((f) => changeHints(f, (h) => move(h, i, -1)))}>
                     {format(t('admin.editor.moveHintUp'), { n: i + 1 })}
                   </Button>
-                  <Button variant="ghost" disabled={i === form.hints.length - 1} onClick={() => set({ hints: move(form.hints, i, 1) })}>
+                  <Button disabled={i === form.hints.length - 1} onClick={() => restructure((f) => changeHints(f, (h) => move(h, i, 1)))}>
                     {format(t('admin.editor.moveHintDown'), { n: i + 1 })}
                   </Button>
-                  <Button variant="ghost" onClick={() => set({ hints: form.hints.filter((_, k) => k !== i) })}>
+                  <Button onClick={() => restructure((f) => changeHints(f, (h) => h.filter((_, k) => k !== i)))}>
                     {format(t('admin.editor.removeHint'), { n: i + 1 })}
                   </Button>
                 </div>
               </div>
             ))}
             <div>
-              <Button disabled={form.hints.length >= MAX_ITEMS} onClick={() => set({ hints: [...form.hints, ''] })}>
+              <Button disabled={form.hints.length >= MAX_ITEMS} onClick={() => restructure((f) => ({ ...f, hints: [...f.hints, ''] }))}>
                 {t('admin.editor.addHint')}
               </Button>
             </div>

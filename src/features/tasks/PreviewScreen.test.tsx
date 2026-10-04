@@ -158,12 +158,13 @@ describe('answer tester (FR-10)', () => {
 
   it('tests a choice part by option', async () => {
     const backend = await open(SEED.taskChoice);
-    await userEvent.click(within(tester()).getByRole('checkbox', { name: 'C' }));
+    // A single-choice part is answered with exactly one option, as the child does (FR-20).
+    await userEvent.click(within(tester()).getByRole('radio', { name: 'C' }));
     await userEvent.click(within(tester()).getByRole('button', { name: m['admin.preview.check'] }));
     expect(within(await result('a')).getByText(m['admin.verdict.CORRECT'])).toBeInTheDocument();
     expect(JSON.parse(backend.seen.find((r) => r.path.endsWith('/check'))?.body ?? '{}')).toEqual({ answers: { a: ['C'] } });
-    await userEvent.click(within(tester()).getByRole('checkbox', { name: 'C' }));
-    await userEvent.click(within(tester()).getByRole('checkbox', { name: 'A' }));
+    await userEvent.click(within(tester()).getByRole('radio', { name: 'A' }));
+    expect(within(tester()).getByRole('radio', { name: 'C' })).not.toBeChecked();
     await userEvent.click(within(tester()).getByRole('button', { name: m['admin.preview.check'] }));
     await waitFor(async () => expect(within(await result('a')).getByText(m['admin.verdict.WRONG'])).toBeInTheDocument());
   });
@@ -194,5 +195,31 @@ describe('answer tester defaults', () => {
     await userEvent.click(within(tester()).getByRole('button', { name: m['admin.preview.check'] }));
     await within(tester()).findByRole('group', { name: format(m['admin.preview.result'], { label: 'a' }) });
     expect(JSON.parse(backend.seen.find((r) => r.path.endsWith('/check'))?.body ?? '{}')).toEqual({ answers: { a: '' } });
+  });
+});
+
+describe('answer tester after a refusal (review F10)', () => {
+  it('drops the old verdicts and shows the server refusal', async () => {
+    const backend = await open();
+    await userEvent.type(within(tester()).getByLabelText(format(m['admin.preview.answerFor'], { label: 'a' })), '0,5{Enter}');
+    await within(tester()).findByRole('group', { name: format(m['admin.preview.result'], { label: 'a' }) });
+    backend.override = { match: (_m, p) => p.endsWith('/check'), status: 400, body: { detail: 'answers.a: too long' } };
+    await userEvent.click(within(tester()).getByRole('button', { name: m['admin.preview.check'] }));
+    expect(await within(tester()).findByRole('alert')).toHaveTextContent('answers.a: too long');
+    expect(within(tester()).queryByRole('group', { name: format(m['admin.preview.result'], { label: 'a' }) })).toBeNull();
+  });
+
+  it('tests a multi-choice part with checkboxes and unchecks one', async () => {
+    const backend = stubSignedInAdmin();
+    const choice = backend.tasks.find((t) => t.taskId === SEED.taskChoice);
+    if (choice) choice.input.parts[0].spec.type = 'CHOICE_MULTI';
+    renderAt(<PreviewScreen />, `/admin/tasks/preview?taskId=${SEED.taskChoice}`);
+    await screen.findByRole('region', { name: m['admin.preview.tester'] });
+    await userEvent.click(within(tester()).getByRole('checkbox', { name: 'A' }));
+    await userEvent.click(within(tester()).getByRole('checkbox', { name: 'C' }));
+    await userEvent.click(within(tester()).getByRole('checkbox', { name: 'A' }));
+    await userEvent.click(within(tester()).getByRole('button', { name: m['admin.preview.check'] }));
+    await within(tester()).findByRole('group', { name: format(m['admin.preview.result'], { label: 'a' }) });
+    expect(JSON.parse(backend.seen.find((r) => r.path.endsWith('/check'))?.body ?? '{}')).toEqual({ answers: { a: ['C'] } });
   });
 });

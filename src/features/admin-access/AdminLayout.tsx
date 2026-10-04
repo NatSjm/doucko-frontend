@@ -3,7 +3,7 @@ import { useState, type ReactNode } from 'react';
 import { routePath } from '@/app/route-paths';
 import { Button } from '@/design-system';
 import { useT, type MessageKey } from '@/i18n';
-import { ADMIN_SESSION_KEY, signOut } from './session';
+import { endAdminSession, signOut } from './session';
 import './admin-access.css';
 
 const NAV: { href: string; label: MessageKey }[] = [
@@ -29,7 +29,7 @@ export function AdminLayout({ title, wide = false, children }: { title: ReactNod
     setBusy(true);
     try {
       await signOut();
-      queryClient.setQueryData(ADMIN_SESSION_KEY, false);
+      endAdminSession(queryClient);
     } catch {
       setFailed(true);
       setBusy(false);

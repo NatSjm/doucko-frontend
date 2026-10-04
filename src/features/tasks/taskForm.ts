@@ -222,3 +222,69 @@ export function move<T>(list: T[], index: number, delta: number): T[] {
   [next[index], next[to]] = [next[to], next[index]];
   return next;
 }
+
+/** Applies one index change to `list`, padded to `length` first (a translation may be shorter). */
+function reshape(list: string[], length: number, change: (items: string[]) => string[]): string[] {
+  return change(Array.from({ length }, (_, i) => list[i] ?? ''));
+}
+
+/**
+ * Changes the Czech hints with `change` (move, remove) and applies the same index change to each
+ * locale's translated hints, which are matched by position (`Translation.hints`).
+ */
+export function changeHints(form: TaskForm, change: (items: string[]) => string[]): TaskForm {
+  const translations = Object.fromEntries(
+    Object.entries(form.translations).map(([locale, tr]) => [locale, { ...tr, hints: reshape(tr.hints, form.hints.length, change) }]),
+  );
+  return { ...form, hints: change(form.hints), translations };
+}
+
+/** Removes part `i` and its translated label and option texts. */
+export function removePart(form: TaskForm, i: number): TaskForm {
+  const key = form.parts[i].key;
+  const translations = Object.fromEntries(
+    Object.entries(form.translations).map(([locale, tr]) => {
+      const partLabels = { ...tr.partLabels };
+      delete partLabels[key];
+      const options = Object.fromEntries(Object.entries(tr.options).filter(([k]) => !k.startsWith(`${key}.`)));
+      return [locale, { ...tr, partLabels, options }];
+    }),
+  );
+  return { ...form, parts: form.parts.filter((_, k) => k !== i), translations };
+}
+
+/**
+ * Removes option `j` of part `i`. Later options move up a letter, so their translated texts (keyed
+ * "<part key>.<letter>") move with them and the removed option's translation goes.
+ */
+export function removeOption(form: TaskForm, i: number, j: number): TaskForm {
+  const part = form.parts[i];
+  const translations = Object.fromEntries(
+    Object.entries(form.translations).map(([locale, tr]) => {
+      const options: Record<string, string> = {};
+      for (const [k, v] of Object.entries(tr.options)) {
+        const index = k.startsWith(`${part.key}.`) ? k.charCodeAt(k.length - 1) - 65 : -1;
+        if (index < 0) options[k] = v;
+        else if (index !== j) options[`${part.key}.${optionKey(index > j ? index - 1 : index)}`] = v;
+      }
+      return [locale, { ...tr, options }];
+    }),
+  );
+  const parts = form.parts.map((p, k) => (k === i ? { ...p, options: p.options.filter((_, o) => o !== j) } : p));
+  return { ...form, parts, translations };
+}
+
+/**
+ * Checks the form can answer before sending: the page lies in the source (FR-3) and an exact
+ * decimal count is a whole number (`AnswerSpec.exactDecimals` is an integer 0–6). Path → message.
+ */
+export function clientErrors(form: TaskForm, pageCount: number | null, messages: { page: string; exactDecimals: string }): Record<string, string> {
+  const errors: Record<string, string> = {};
+  if (pageCount !== null && !/^\d{1,9}$/.test(form.page.trim())) errors['sourceRef.page'] = messages.page;
+  else if (pageCount !== null && (Number(form.page) < 1 || Number(form.page) > pageCount)) errors['sourceRef.page'] = messages.page;
+  form.parts.forEach((p, i) => {
+    if (p.type === 'DECIMAL' && p.exactDecimals.trim() && !/^[0-6]$/.test(p.exactDecimals.trim()))
+      errors[`parts[${i}].spec.exactDecimals`] = messages.exactDecimals;
+  });
+  return errors;
+}

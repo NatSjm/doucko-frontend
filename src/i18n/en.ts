@@ -141,6 +141,7 @@ export const en = {
   'admin.editor.normalized': 'Read as',
   'admin.editor.tolerance': 'Tolerance (optional)',
   'admin.editor.exactDecimals': 'Exact decimal places (optional)',
+  'admin.editor.exactDecimalsInvalid': 'Exact decimal places must be a whole number from 0 to 6.',
   'admin.editor.allowEquivalent': 'Accept equivalent forms',
   'admin.editor.lowestTerms': 'Require lowest terms',
   'admin.editor.unitRequired': 'Unit required',

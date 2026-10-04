@@ -9,7 +9,7 @@ Result: PASS
 
 | Clip | Proves | Video bytes | Shot | Asserted | Vision |
 |---|---|---|---|---|---|
-| nfr8-single-part-task-entry | NFR-8, FR-3 | 643926 | yes | yes | - |
+| nfr8-single-part-task-entry | NFR-8, FR-3 | 1136675 | yes | yes | - |
 
 ## Failures
 

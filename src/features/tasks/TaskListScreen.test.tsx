@@ -227,3 +227,23 @@ describe('publish result for a task not in the list', () => {
     expect(within(result).getByText(unknown)).toBeInTheDocument();
   });
 });
+
+describe('selection and filters (review F05, F18)', () => {
+  it('a filter change clears the selection, so a hidden task is never published', async () => {
+    await open();
+    await userEvent.click(screen.getByRole('checkbox', { name: m['admin.tasks.selectAll'] }));
+    await userEvent.selectOptions(field(m['admin.tasks.status']), m['admin.status.DRAFT']);
+    expect(screen.getByRole('button', { name: format(m['admin.tasks.publishSelected'], { count: 0 }) })).toBeDisabled();
+  });
+
+  it('names a published task by its prompt even when the refreshed list no longer shows it', async () => {
+    await open();
+    await userEvent.selectOptions(field(m['admin.tasks.status']), m['admin.status.DRAFT']);
+    await waitFor(() => expect(rows()).toHaveLength(3));
+    await userEvent.click(screen.getByRole('checkbox', { name: 'Které číslo je větší než 4?' }));
+    await userEvent.click(screen.getByRole('button', { name: format(m['admin.tasks.publishSelected'], { count: 1 }) }));
+    const result = await screen.findByRole('region', { name: m['admin.tasks.publishResult'] });
+    await waitFor(() => expect(rows()).toHaveLength(2));
+    expect(within(result).getByText('Které číslo je větší než 4?')).toBeInTheDocument();
+  });
+});

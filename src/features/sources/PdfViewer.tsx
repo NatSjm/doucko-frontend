@@ -16,7 +16,8 @@ function usePdf(sourceId: string) {
       const [{ loadPdf }, bytes] = await Promise.all([import('./pdf'), fetchSourceFile(sourceId)]);
       return loadPdf(bytes);
     },
-    staleTime: Infinity,
+    // Not kept after the viewer closes: the document is destroyed with it.
+    gcTime: 0,
     retry: false,
   });
 }
@@ -35,13 +36,24 @@ export function PdfViewer({ sourceId, pageCount, initialPage }: { sourceId: stri
   const [rendered, setRendered] = useState<number | null>(null);
   const [typed, setTyped] = useState(String(initialPage));
   const [invalid, setInvalid] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  /** The render in flight: pdf.js cannot draw two renders into one canvas, so each waits for the last. */
+  const chain = useRef<Promise<void>>(Promise.resolve());
 
   useEffect(() => {
-    if (!pdf.data) return;
+    const doc = pdf.data;
+    if (!doc) return;
+    return () => doc.destroy();
+  }, [pdf.data]);
+
+  useEffect(() => {
+    const doc = pdf.data;
+    if (!doc) return;
     let current = true;
-    void pdf.data.renderPage(page, canvas.current as HTMLCanvasElement).then(() => {
-      if (current) setRendered(page);
-    });
+    chain.current = chain.current
+      .then(() => (current ? doc.renderPage(page, canvas.current as HTMLCanvasElement).then(() => (current ? setRendered(page) : undefined)) : undefined))
+      .catch(() => setFailed(true));
     return () => {
       current = false;
     };
@@ -87,7 +99,7 @@ export function PdfViewer({ sourceId, pageCount, initialPage }: { sourceId: stri
           {format(t('admin.viewer.invalid'), { count: pageCount })}
         </p>
       )}
-      {pdf.isError && <p role="alert">{t('admin.viewer.failed')}</p>}
+      {(pdf.isError || failed) && <p role="alert">{t('admin.viewer.failed')}</p>}
       {pdf.isPending && <p>{t('admin.viewer.loading')}</p>}
       {/* Scrolls when the page is larger than the pane, so it takes keyboard focus (arrow keys scroll). */}
       <div className="pdf-page" role="region" aria-label={t('admin.viewer.label')} tabIndex={0}>

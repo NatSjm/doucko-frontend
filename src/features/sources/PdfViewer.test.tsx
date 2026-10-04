@@ -18,6 +18,8 @@ const canvas = (page: number) => screen.findByRole('img', { name: format(message
 beforeEach(() => {
   rendered.length = 0;
   control.hold = null;
+  control.maxConcurrent = 0;
+  control.destroyed = 0;
 });
 
 afterEach(() => {
@@ -106,5 +108,47 @@ describe('PDF viewer while a page is still rendering', () => {
     view.unmount();
     release();
     await waitFor(() => expect(rendered.at(-1)).toBe(11));
+  });
+});
+
+describe('PDF viewer render failures and release (review F04, F07)', () => {
+  it('says so when pdf.js fails to draw a page', async () => {
+    stubSignedInAdmin();
+    control.fail = true;
+    renderAt(<PdfViewer sourceId={SOURCE} pageCount={120} initialPage={3} />);
+    expect(await screen.findByText(messages['admin.viewer.failed'])).toBeInTheDocument();
+    control.fail = false;
+  });
+
+  it('draws one page at a time and releases the document on close', async () => {
+    stubSignedInAdmin();
+    const view = renderAt(<PdfViewer sourceId={SOURCE} pageCount={120} initialPage={10} />);
+    await canvas(10);
+    await userEvent.click(screen.getByRole('button', { name: messages['admin.viewer.next'] }));
+    await userEvent.click(screen.getByRole('button', { name: messages['admin.viewer.next'] }));
+    await canvas(12);
+    expect(control.maxConcurrent).toBe(1);
+    view.unmount();
+    expect(control.destroyed).toBeGreaterThan(0);
+  });
+});
+
+describe('PDF viewer skips a page it left before drawing it', () => {
+  it('never draws a page that was passed while another was still drawing', async () => {
+    stubSignedInAdmin();
+    renderAt(<PdfViewer sourceId={SOURCE} pageCount={120} initialPage={10} />);
+    await canvas(10);
+    let release = () => {};
+    control.hold = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const next = () => userEvent.click(screen.getByRole('button', { name: messages['admin.viewer.next'] }));
+    await next();
+    await next();
+    await next();
+    control.hold = null;
+    release();
+    await canvas(13);
+    expect(rendered).not.toContain(12);
   });
 });
