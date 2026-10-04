@@ -1,6 +1,6 @@
-// @trace NFR-1
-// @trace NFR-15
 // @trace NFR-6
+// @trace NFR-9
+// Store spec admin-access (sign-in screen). NFR-1 and NFR-15 are backend-owned in the capability plan.
 import type { Page } from '@playwright/test';
 import { messages } from '../src/i18n/messages';
 import { AGAINST_STACK, expect, test } from './fixtures/test';

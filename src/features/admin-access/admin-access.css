@@ -6,9 +6,5 @@
 .admin-stack {
   display: grid;
   gap: var(--space-4);
-  width: min(100%, 28rem);
-}
-
-.admin-label {
-  font-weight: 700;
+  width: min(100%, calc(var(--space-8) * 7));
 }

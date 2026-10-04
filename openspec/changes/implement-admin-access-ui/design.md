@@ -15,11 +15,16 @@ spec's non-normative note).
 - **signed out** (401): `SignInForm`. The heading is "Admin sign-in", with one
   labelled password field, "Sign in" as the submit button, and Enter submits.
   - On 401: "That password is not correct." in a `role="alert"` line. The
-    field keeps focus and is cleared.
+    field keeps focus and is cleared. Each failed attempt renders a new alert
+    node, so a repeated identical message is announced again.
   - On another failure: "Sign-in failed. Check that the server is running and
     try again."
 - **signed in** (204): `AdminHome`. The heading is "Admin", with the line
-  "You are signed in." and a "Sign out" button.
+  "You are signed in." and a "Sign out" button. The button is disabled while
+  the request runs.
+  - Sign-out answered 401: the session had already ended, so the form is shown.
+  - Any other failure (no server, a refused CSRF token, a 5xx): the home stays,
+    with the alert "Sign-out failed. Reload the page and try again."
 - **unreachable** (network error or unexpected status): an alert with
   "Could not reach the server." and a "Try again" button.
 

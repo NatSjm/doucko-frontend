@@ -13,6 +13,8 @@ export function SignInForm({ onSignedIn }: { onSignedIn: () => void }) {
   const field = useRef<HTMLInputElement>(null);
   const [password, setPassword] = useState('');
   const [error, setError] = useState<'invalid' | 'failed' | null>(null);
+  /** Bumped on every failed attempt: a new alert node is announced again, even with the same text. */
+  const [attempt, setAttempt] = useState(0);
   const [busy, setBusy] = useState(false);
 
   async function submit(event: FormEvent) {
@@ -28,6 +30,7 @@ export function SignInForm({ onSignedIn }: { onSignedIn: () => void }) {
     } catch {
       setError('failed');
     }
+    setAttempt((n) => n + 1);
     setBusy(false);
     field.current?.focus();
   }
@@ -36,7 +39,7 @@ export function SignInForm({ onSignedIn }: { onSignedIn: () => void }) {
     <main className="app-shell">
       <form className="admin-stack" onSubmit={submit} noValidate>
         <h1 className="dk-t-title">{t('admin.signIn.title')}</h1>
-        <label className="admin-label" htmlFor={fieldId}>
+        <label className="dk-t-body-strong" htmlFor={fieldId}>
           {t('admin.signIn.password')}
         </label>
         <input
@@ -48,7 +51,7 @@ export function SignInForm({ onSignedIn }: { onSignedIn: () => void }) {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        {error && <p role="alert">{t(error === 'invalid' ? 'admin.signIn.invalid' : 'admin.signIn.failed')}</p>}
+        {error && <p key={attempt} role="alert">{t(error === 'invalid' ? 'admin.signIn.invalid' : 'admin.signIn.failed')}</p>}
         <Button type="submit" variant="primary" disabled={busy}>
           {t('admin.signIn.submit')}
         </Button>

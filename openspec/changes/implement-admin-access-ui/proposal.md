@@ -4,10 +4,11 @@
 
 Slice 2 of the capability plan (`contract/docs/mvp-capability-plan.md` §4.2).
 Store spec: `admin-access`. Every admin screen of later slices needs the
-sign-in in front of it. This change owns no FR. It travels NFR-1 (admin UI
-behind a password), NFR-15 (form sign-in posted as JSON, CSRF header on admin
-mutations, the sign-in form after a 401) and NFR-9 and NFR-13 (the sign-in
-route joins the `⟦` render test and the a11y gate).
+sign-in in front of it. This change owns no FR, and NFR-1, NFR-15 and NFR-16
+belong to the backend in the plan's ownership table. This change builds the UI
+half of the store spec: the sign-in form, the CSRF header and the form after a
+401. It traces only the ids the frontend owns: NFR-9 (English admin copy, the
+`⟦` render test), NFR-13 (the a11y gate) and NFR-6 (the three browsers).
 
 ## What Changes
 

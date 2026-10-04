@@ -757,10 +757,7 @@
         "backend"
       ],
       "ownedHere": false,
-      "tests": [
-        "src/features/admin-access/AdminGate.test.tsx",
-        "e2e/admin-sign-in.spec.ts"
-      ]
+      "tests": []
     },
     {
       "id": "NFR-2",
@@ -837,7 +834,9 @@
       "ownedHere": true,
       "tests": [
         "src/app/i18n-coverage.test.tsx",
-        "src/test/lint-rule.test.ts"
+        "src/features/admin-access/AdminGate.test.tsx",
+        "src/test/lint-rule.test.ts",
+        "e2e/admin-sign-in.spec.ts"
       ]
     },
     {
@@ -885,11 +884,7 @@
         "backend"
       ],
       "ownedHere": false,
-      "tests": [
-        "src/features/admin-access/adminClient.test.ts",
-        "src/features/admin-access/AdminGate.test.tsx",
-        "e2e/admin-sign-in.spec.ts"
-      ]
+      "tests": []
     },
     {
       "id": "NFR-16",

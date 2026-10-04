@@ -14,4 +14,5 @@ export const en = {
   'admin.home.title': 'Admin',
   'admin.home.signedIn': 'You are signed in.',
   'admin.home.signOut': 'Sign out',
+  'admin.home.signOutFailed': 'Sign-out failed. Reload the page and try again.',
 } as const;

@@ -70,7 +70,7 @@ Result: PASS, 60 warning(s)
 | NFR-6 | frontend | 2 |
 | NFR-7 | frontend | - |
 | NFR-8 | frontend | - |
-| NFR-9 | backend, frontend | 2 |
+| NFR-9 | backend, frontend | 4 |
 | NFR-10 | backend | n/a |
 | NFR-11 | backend | n/a |
 | NFR-12 | backend, frontend | 2 |

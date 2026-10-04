@@ -1,0 +1,959 @@
+{
+  "workflow": "review-gate",
+  "file": "./.claude/workflows/review-gate.js",
+  "description": "Multi-dimensional adversarial review of a diff or capability: correctness, security, and spec compliance, with every finding adversarially verified before it is reported.",
+  "dryRun": false,
+  "startedAt": "2026-10-04T14:55:19.662Z",
+  "finishedAt": "2026-10-04T14:58:54.431Z",
+  "args": {
+    "scope": "slice 2 admin-access frontend (implement-admin-access-ui)",
+    "baseRef": "main",
+    "headRef": "HEAD",
+    "change": "implement-admin-access-ui"
+  },
+  "settings": {
+    "allowedTools": null,
+    "concurrency": 4,
+    "model": null,
+    "budgetPerAgentUsd": 2,
+    "maxTotalUsd": 20,
+    "untypedTools": "Read,Grep,Glob",
+    "permissionMode": "acceptEdits"
+  },
+  "outcome": "ok",
+  "stoppedBecause": null,
+  "error": null,
+  "totalCostUsd": 4.523,
+  "steps": [
+    {
+      "label": "find:correctness",
+      "phase": "Find",
+      "agentType": "code-reviewer",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 438,
+      "durationMs": 73786,
+      "sessionId": "491167c8-81d2-4721-9334-8f5ae217ace0",
+      "costUsd": 0.3965172,
+      "numTurns": 17,
+      "result": {
+        "findings": [
+          {
+            "title": "Sign-out reports every non-204/401 response, including a 403 CSRF rejection, as 'Could not reach the server.'",
+            "file": "src/features/admin-access/AdminArea.tsx",
+            "line": 19,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "`signOut()` throws `UnexpectedStatus` for any status other than 204/401 (session.ts:31). The contract lists 403 Forbidden for DELETE /api/admin/session, which happens when the XSRF-TOKEN cookie is missing or stale. The catch block in AdminHome sets `failed` and shows `t('admin.session.unreachable')` ('Could not reach the server.'). The server was reachable but refused the request, so the user gets a wrong diagnosis, and retrying keeps failing the same way. The sign-out button also has no busy/disabled state, so repeated clicks send concurrent DELETEs.",
+            "suggestion": "Tell transport failures (TypeError from fetch) apart from HTTP error statuses and show a separate 'Sign-out failed' message for the HTTP case. On 403, refetch the session or reload so a fresh XSRF token is issued. Disable the button while the request is in flight, the same way SignInForm uses `busy`."
+          },
+          {
+            "title": "Sign-out and 401 expiry flip the session flag but leave other admin query data in the cache",
+            "file": "src/features/admin-access/AdminGate.tsx",
+            "line": 18,
+            "severity": "minor",
+            "confidence": "low",
+            "evidence": "Both the 401 listener (`queryClient.setQueryData(ADMIN_SESSION_KEY, false)`) and AdminHome's sign-out only set `['admin','session']` to false. Every later admin slice will cache its data under `['admin', …]`. After sign-out or idle expiry (NFR-15), that data stays in memory, and after the next sign-in it can be shown stale without a refetch. No other admin queries exist yet, so nothing visible breaks today.",
+            "suggestion": "Put one `endAdminSession(queryClient)` helper in session.ts. It should call `queryClient.removeQueries({ queryKey: ['admin'] })` and then set ADMIN_SESSION_KEY to false. Use it from both the 401 listener and sign-out."
+          },
+          {
+            "title": "Raw font-weight and rem width in feature CSS instead of design-system tokens or classes",
+            "file": "src/features/admin-access/admin-access.css",
+            "line": 13,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "`.admin-label { font-weight: 700; }` and `.admin-stack { width: min(100%, 28rem); }` hardcode values. AGENTS.md says: 'For your own styles, use only its CSS variables … no raw hex, px or font values.' The design system already has `.dk-t-body-strong` (16px/700) and `.dk-t-label` for label text.",
+            "suggestion": "Remove `.admin-label` and give the <label> the `dk-t-body-strong` (or `dk-t-label`) class. Take the max width from an existing layout token, or derive it from spacing variables, rather than a raw `28rem`."
+          },
+          {
+            "title": "Password field uses the child answer-input style (26px tabular numerals, 56px right padding)",
+            "file": "src/features/admin-access/SignInForm.tsx",
+            "line": 45,
+            "severity": "minor",
+            "confidence": "low",
+            "evidence": "The input uses `className=\"dk-input\"`. In components.css:131 that class is the task-answer input: `height: 60px; padding: 0 56px 0 …; font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums`, and the 56px padding leaves room for a result icon. Reusing it for an admin password field gives an oversized answer-box look and reserves space for an icon that never appears.",
+            "suggestion": "Check src/design-system/README.md for a general text-input style or component for forms. If none exists, request one through the design-system artifact; don't repurpose the answer input."
+          },
+          {
+            "title": "A second wrong password may not be re-announced to screen readers",
+            "file": "src/features/admin-access/SignInForm.tsx",
+            "line": 51,
+            "severity": "minor",
+            "confidence": "low",
+            "evidence": "After the first wrong password, `error` is 'invalid' and `<p role=\"alert\">` stays mounted. Another wrong password calls `setError('invalid')` again with the same value, so React doesn't re-render the alert and its text doesn't change. Many screen readers announce a live region only when its content changes, so the second failure is silent apart from the field being cleared.",
+            "suggestion": "Clear `error` at the start of `submit` (`setError(null)` next to `setBusy(true)`), so the alert unmounts and remounts on every failed attempt, or key the alert by an attempt counter."
+          }
+        ]
+      }
+    },
+    {
+      "label": "find:security",
+      "phase": "Find",
+      "agentType": "security-reviewer",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 466,
+      "durationMs": 45289,
+      "sessionId": "1f1a2fd1-71e0-4f7a-b761-7a47184daa80",
+      "costUsd": 0.43603260000000005,
+      "numTurns": 12,
+      "result": {
+        "findings": []
+      }
+    },
+    {
+      "label": "find:spec-compliance",
+      "phase": "Find",
+      "agentType": "spec-compliance-auditor",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 409,
+      "durationMs": 93769,
+      "sessionId": "437bbeba-d5a9-4933-8a73-64d91e645fc0",
+      "costUsd": 0.6649472,
+      "numTurns": 28,
+      "result": {
+        "findings": [
+          {
+            "title": "Coverage summary: 7 scenarios: 6 implemented, 1 partial, 0 missing, 0 contradicted",
+            "file": "openspec/changes/implement-admin-access-ui/specs/admin-access/spec.md",
+            "line": 1,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "Checklist = the 4 delta scenarios (No session, Wrong password, Session ends while signed in, Sign-out CSRF) + the store admin-access scenarios with a UI or client half: 'Admin UI shows sign-in without a session', 'Idle timeout just past 8 hours … AND the admin UI shows the sign-in form', 'Reads need no CSRF token'. Implemented: No session (AdminGate.tsx:34, SignInForm.tsx:38-50, AdminArea.tsx:39; AdminGate.test.tsx:39, e2e/admin-sign-in.spec.ts:36). Session ends / idle expiry (adminClient.ts:37 + AdminGate.tsx:18; AdminGate.test.tsx:109). Sign-out CSRF (adminClient.ts:31; adminClient.test.ts:16, AdminGate.test.tsx:98, e2e:68). Reads without CSRF (adminClient.ts:5,31; adminClient.test.ts:23). Store 'shows sign-in without a session' (same as No session). Partial: Wrong password, because a repeated wrong attempt is not announced again (see the separate finding). All backend-only scenarios (cookie flags, 403 paths, password policy, LAN binding) are out of scope for this repo.",
+            "suggestion": "No action. This is the summary line the output contract asks for."
+          },
+          {
+            "title": "Frontend traces and claims NFR-1 / NFR-15, but the capability plan assigns both to the backend only",
+            "file": "src/features/admin-access/AdminGate.test.tsx",
+            "line": 1,
+            "severity": "major",
+            "confidence": "high",
+            "evidence": "Plan ownership table (contract/docs/mvp-capability-plan.md:296,309): '| NFR-1 | admin-access | backend |', '| NFR-15 | admin-access | backend |'. AGENTS.md: 'Annotate with `// @trace FR-x` (only ids this repo owns)'. Code: AdminGate.test.tsx:1-2 '// @trace NFR-1 // @trace NFR-15', adminClient.test.ts:1 '// @trace NFR-15', e2e/admin-sign-in.spec.ts:1-2. proposal.md:7-8 says the change 'travels NFR-1 … NFR-15'. The plan's slice row (line 45) lists NFR-1/15/16 for the slice, and the §4.2 DoD (line 141) gives the frontend a sign-in route. So the plan contradicts itself, and the frontend has resolved it by claiming ownership without amending the plan.",
+            "suggestion": "Amend the docs store: change the Repo(s) column for NFR-1 and NFR-15 to 'backend, frontend', because the UI half (sign-in form, CSRF header, sign-in after a 401) is frontend-enforced. Then bump contract/. Otherwise, drop the @trace tags and trace only NFR-6/9/13."
+          },
+          {
+            "title": "Repeated wrong password is not re-announced (scenario 'Wrong password' only partly met)",
+            "file": "src/features/admin-access/SignInForm.tsx",
+            "line": 51,
+            "severity": "major",
+            "confidence": "medium",
+            "evidence": "Delta scenario: 'WHEN the admin submits a password and sign-in answers 401 THEN \"That password is not correct.\" is announced as an alert'. Code: setError('invalid') (line 26) leaves the state unchanged on a second wrong attempt, so the existing <p role=\"alert\"> stays mounted with the same text, and assistive tech does not announce it again. Tests (AdminGate.test.tsx:51, e2e:48) only cover the first attempt.",
+            "suggestion": "Clear the error before each submit (setError(null) at the start of submit()) or key the alert per attempt so it remounts. Add a unit test with two consecutive wrong passwords."
+          },
+          {
+            "title": "Ticked task 3.1 names an artifact that does not exist (useAdminSession)",
+            "file": "openspec/changes/implement-admin-access-ui/tasks.md",
+            "line": 15,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "Task: '- [x] 3.1 `src/features/admin-access/`: `adminClient`, `useAdminSession`, `AdminGate`, `SignInForm`, `AdminHome`.' No `useAdminSession` exists in the folder. Session logic lives in session.ts (checkAdminSession/signIn/signOut) and an inline useQuery in AdminGate.tsx:16. `AdminHome` is a private function inside AdminArea.tsx:10, not its own module.",
+            "suggestion": "Amend task 3.1 to list the delivered artifacts (session.ts, AdminArea.tsx with AdminHome), or extract a useAdminSession hook."
+          },
+          {
+            "title": "tasks.md checkboxes do not match current-state.md, and current-state.md is stale (says 'not committed')",
+            "file": "docs/current-state.md",
+            "line": 11,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "tasks.md:24 '- [ ] 4.5 Update `docs/current-state.md`' is unticked, but this branch did update current-state.md. That file says 'Active change: `implement-admin-access-ui` (slice 2, branch `slice2-admin-access`, not committed)', yet commit fa8a182 'feat(admin): admin sign-in screen and admin API client (slice 2)' exists on the branch.",
+            "suggestion": "Correct current-state.md (committed at fa8a182, review gate pending), and tick 4.5 only once the milestone update is final."
+          },
+          {
+            "title": "Undocumented UI states: checking, unreachable + retry, sign-in failure, sign-out failure",
+            "file": "src/features/admin-access/AdminGate.tsx",
+            "line": 20,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "The delta spec has only 'Admin sign-in screen' and 'CSRF header on admin mutations'. The code adds: a checking status (AdminGate.tsx:29), an unreachable alert with a 'Try again' button (lines 23-27), a non-401 sign-in failure message (SignInForm.tsx:29,51), and a sign-out failure alert (AdminArea.tsx:19-20,29). It also treats a sign-out 401 as success (session.ts:31). These appear in design.md and are unit-tested (AdminGate.test.tsx:122-171), but no Requirement/Scenario backs them.",
+            "suggestion": "Add a delta requirement such as 'Admin UI handles an unreachable backend' with scenarios for session-check failure + retry, sign-in 5xx versus 401, and a failed sign-out, so the behaviour is in the spec."
+          },
+          {
+            "title": "Sign-out refused with 403 (missing/stale CSRF token) is shown as 'Could not reach the server.'",
+            "file": "src/features/admin-access/AdminArea.tsx",
+            "line": 29,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "Store spec 'Sign-out without a CSRF token is refused … HTTP 403'. adminClient.ts:31 sends no header when the XSRF-TOKEN cookie is missing (`&& token`). session.ts:31 throws on 403, and AdminArea shows t('admin.session.unreachable') = 'Could not reach the server.' (en.ts). The server was reached, so the copy is wrong and the admin cannot recover. The failure state also has no retry or re-sign-in path.",
+            "suggestion": "Map 403 on sign-out to its own message or to re-checking the session, and specify it in the delta spec (see the undocumented-states finding)."
+          },
+          {
+            "title": "Plan's NFR-9/NFR-13 DoD for the frontend (sign-in route in the a11y gate and ⟦ test) has no delta requirement",
+            "file": "openspec/changes/implement-admin-access-ui/specs/admin-access/spec.md",
+            "line": 3,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "mvp-capability-plan.md:141 'frontend: sign-in route in the a11y gate and the `⟦` render test.' It is implemented: route-paths.ts:5 ROUTE_PATHS = ['/', '/admin'] (iterated by the a11y/theme e2e), and i18n-coverage.test.tsx stubs the backend so /admin renders the sign-in form. proposal.md:9-10 cites NFR-9/NFR-13, but the delta spec has no requirement or scenario for them, so the slice's definition of done is not spec-backed.",
+            "suggestion": "Add a scenario to the delta spec: '/admin is in the route registry, passes axe in light and dark, and shows only catalog text under the ⟦ pseudo-catalog'."
+          },
+          {
+            "title": "'Any admin UI page' covers only the exact /admin route",
+            "file": "src/app/route-paths.ts",
+            "line": 5,
+            "severity": "minor",
+            "confidence": "low",
+            "evidence": "Store scenario: 'WHEN any admin UI page is opened THEN the English sign-in form … is shown instead of the page content'. Only '/admin' is registered. A path such as /admin/tasks falls to the not-found screen rather than the gate. No such page exists yet, so this is not a current violation, but nothing structurally guarantees later admin routes are wrapped in AdminGate.",
+            "suggestion": "When slice 5 adds admin routes, register them under AdminArea/AdminGate (or a /admin/* prefix rule). Consider a registry test that asserts every '/admin*' route is rendered inside AdminGate."
+          }
+        ]
+      }
+    },
+    {
+      "label": "find:visual",
+      "phase": "Find",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 678,
+      "durationMs": 18784,
+      "sessionId": "5c3fb3d3-9328-4f78-8fb5-4cd264c915eb",
+      "costUsd": 0.072909,
+      "numTurns": 5,
+      "result": {
+        "findings": []
+      }
+    },
+    {
+      "label": "verify:src/features/admin-access/AdminArea.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1519,
+      "durationMs": 16301,
+      "sessionId": "8093a405-8ec4-4cc5-8dfd-4f7bf62b6ed5",
+      "costUsd": 0.1636908,
+      "numTurns": 7,
+      "result": {
+        "refuted": false,
+        "reasoning": "The finding holds up. In session.ts:29-31, `signOut()` throws `UnexpectedStatus` for any status other than 204 or 401, so a 403 throws. The adminClient middleware (adminClient.ts:34-39) only acts on 401 and passes 403 through, and nothing else catches it. In AdminArea.tsx:19-20, the bare `catch` sets `failed`, which shows `admin.session.unreachable`. en.ts:7 defines that string as 'Could not reach the server.' Network errors and HTTP-status errors land in the same catch, so a 403 from a server that answered is reported as unreachable.\n\nThe 403 case can actually happen:\n- The generated schema lists 403 Forbidden on admin endpoints.\n- The test backend (src/test/admin-backend.ts:45) returns 403 when X-XSRF-TOKEN is wrong.\n- The client only attaches the header when the cookie exists (adminClient.ts:31). A missing cookie means no header, and the server rejects the request.\n\nThe Button at line 30 has no disabled or busy state, so repeated clicks send concurrent DELETEs. This side point is accurate but harmless, since sign-out is idempotent.\n\nSeverity stays minor. The only harm is a misleading message on a path that should be rare: the XSRF cookie is set at sign-in, so a 403 needs the cookie to be missing or stale.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/features/admin-access/AdminArea.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1552,
+      "durationMs": 26775,
+      "sessionId": "7426a573-e58b-42ca-9759-c580063d8887",
+      "costUsd": 0.2132388,
+      "numTurns": 9,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the mechanism in the code. `signOut()` (session.ts:29-32) throws `UnexpectedStatus` for any status other than 204/401. `AdminHome.handleSignOut` (AdminArea.tsx:15-22) catches everything with a bare `catch` and shows `admin.session.unreachable`, which en.ts:7 defines as \"Could not reach the server.\" The contract (openapi.yaml:326-337, 1069-1075) lists 403 for DELETE /api/admin/session when the session is valid but the CSRF token is missing or wrong. So a server that is reachable and refuses the request gets misreported. A 5xx response gets the same wrong message.\n\nThe 403 can happen, but less often than the finding suggests:\n- `xsrfToken()` reads the cookie on every request, so a token rotated in another tab is still picked up.\n- A server restart that loses the session returns 401, which counts as success, not 403.\n- A 403 needs the XSRF-TOKEN cookie to be cleared or changed while SESSION stays valid. Clearing it selectively in the browser is one way, or a backend that does not reissue the token.\n- When a 403 does happen, every retry keeps failing, because nothing refreshes the token.\n\nThe point about repeated clicks is accurate: there is no `busy` state, so each click sends a DELETE. But it does no harm. The first DELETE returns 204 and later ones return 401, and both count as success.\n\nNet effect: the error message misleads in a rare but reachable edge case. Sign-out does not fail silently and nothing is exposed to an attacker. Minor severity is right.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/features/admin-access/AdminGate.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1267,
+      "durationMs": 18403,
+      "sessionId": "ffb7baf8-8520-451e-93ac-c4fc6293bdd6",
+      "costUsd": 0.1580306,
+      "numTurns": 7,
+      "result": {
+        "refuted": true,
+        "reasoning": "I'm marking this as refuted. The code matches what the finding describes, but the problem it predicts doesn't happen in this code.\n\n1. **The data it describes doesn't exist.** The only query in `src/` is `ADMIN_SESSION_KEY` (`['admin','session']`). It's used at `AdminGate.tsx:16`, and both sign-out (`AdminArea.tsx:18`) and the 401 listener (`AdminGate.tsx:18`) set exactly that key. There is no other `['admin', …]` data to leave behind, so there's no defect today. The finding admits this itself.\n\n2. **\"Shown stale without a refetch\" is wrong for this setup.** `src/app/queryClient.ts` changes only `retry` and `refetchOnWindowFocus`, so `staleTime` keeps TanStack's default of 0. When the session flag goes false, `AdminGate` swaps the children for `SignInForm`, which unmounts every child query observer. After the next sign-in the children mount again, and with `staleTime` 0 every query refetches on mount. If the data hasn't been garbage-collected yet (default `gcTime` is 5 min), it shows briefly while the refetch runs. That's normal show-cached-then-refresh behaviour, not stale data that never refreshes.\n\n3. **No exposure to another user.** There's one admin role behind one password, so cached data staying in memory after sign-out doesn't show one user's data to another.\n\nThe helper the finding suggests (`removeQueries({queryKey:['admin']})`) is reasonable tidying for later slices. But a correctness finding needs a mechanism that actually fails here, and none does.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/features/admin-access/AdminGate.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1300,
+      "durationMs": 12773,
+      "sessionId": "36f79e09-02e4-48de-85f2-0e5f10623239",
+      "costUsd": 0.127339,
+      "numTurns": 4,
+      "result": {
+        "refuted": true,
+        "reasoning": "I read the code and the claimed problem can't happen today. The only TanStack Query cache entry in `src` is `ADMIN_SESSION_KEY`. A search for `queryKey`, `setQueryData` and `removeQueries` turned up only AdminGate.tsx:16, :18 and :34 plus AdminArea.tsx:18. There is no other `['admin', …]` data that could be left behind after sign-out or a 401, and the finding admits this (\"No other admin queries exist yet\"). So no real user or attacker can reproduce it.\n\nThe claim is also weak for future code:\n1. When the session flag goes false, AdminGate unmounts its children. Queries using TanStack's default `staleTime` of 0 refetch when they mount again after the next sign-in.\n2. There is only one admin, so cached data is not exposed to a different user.\n3. Without a session the cache is never shown, because the gate renders SignInForm in place of the children.\n\nAt most this is a hardening idea for later slices, not a defect in the code under review.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/features/admin-access/admin-access.css",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1139,
+      "durationMs": 14405,
+      "sessionId": "09790c5d-0457-4142-ab0b-614a4541faa3",
+      "costUsd": 0.08521419999999999,
+      "numTurns": 5,
+      "result": {
+        "refuted": true,
+        "reasoning": "The finding quotes the code correctly. admin-access.css:9 has `width: min(100%, 28rem)` and :13 has `font-weight: 700`. But there's no correctness defect here: both declarations are valid and do what they're meant to (bold labels, a capped form width), and nothing breaks.\n\nThe convention argument is also weaker than it looks. AGENTS.md bans \"raw hex, px or font values\". `28rem` is not px, and design-system/tokens.css has no width, container or measure token to use instead. tokens.css also has no font-weight variables. Weights only exist inside the `.dk-t-*` classes, so there's no CSS variable to swap in for `font-weight: 700`.\n\nOne suggested replacement would change behaviour: `.dk-t-label` is 12px and uppercase, which is not the same as the current bold label. The other, `.dk-t-body-strong`, would match.\n\nAt most this is a minor style/consistency nit: an arguable \"font value\" and reuse of an existing class. It isn't a correctness mechanism that is wrong in this code, so I'm treating it as refuted through the correctness lens. If it's kept, it belongs in a style dimension at nit severity.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/features/admin-access/admin-access.css",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1172,
+      "durationMs": 12783,
+      "sessionId": "d5985cdf-c88b-4ea9-ba82-f6c944f16f62",
+      "costUsd": 0.09156800000000001,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "The code matches the finding. src/features/admin-access/admin-access.css:9 has `width: min(100%, 28rem)` and line 13 has `.admin-label { font-weight: 700; }`. AGENTS.md says feature styles must use only design-system CSS variables, with \"no raw hex, px or font values\". A raw font-weight counts as a font value. The design system already has `.dk-t-body-strong` (16px/24px, weight 700, in tokens.css:147), which gives the same result through a sanctioned class. `28rem` is not px or hex, so the rule doesn't name it directly. It is still a raw size where the rule expects only tokens (`var(--space-*)` and similar), so that half is weaker but still a fair call. Through the exploitability lens: no user or attacker can trigger any harm. The weight renders correctly, the width is responsive because of min(100%, …), and nothing here affects contrast, focus or behaviour. That makes this a real but low-impact breach of the project rules and design-system consistency, not a runtime bug. \"Minor\" is the right severity. I can't refute it because the code that breaks the rule is really there.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/features/admin-access/SignInForm.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1212,
+      "durationMs": 16576,
+      "sessionId": "1e8d636c-f267-4215-8ac4-8db203a1303d",
+      "costUsd": 0.1300748,
+      "numTurns": 7,
+      "result": {
+        "refuted": true,
+        "reasoning": "The CSS facts are right. SignInForm.tsx:45 uses `className=\"dk-input\"`, and components.css:131 gives that class 60px height, right padding of 56px, 26px/600 weight and tabular-nums. The 56px padding leaves room for `.dk-part-state`, and that icon is only rendered inside AnswerPart (practice.tsx:76).\n\nBut calling this a misuse is wrong. The design-system README, `src/design-system/README.md:146`, lists the admin parts as \"Panel, Button, Chip …, SubjectChip …, and the same inputs.\" That explicitly allows admin screens to reuse the child input class. The README has no separate general text-input component or class, and no other input style exists in components.css. The suggested fix (\"check README for a general text-input style\") therefore finds nothing, and the README actually supports the current code.\n\nOn correctness, nothing breaks:\n- The field is a real `type=\"password\"` input with a linked label, `autoComplete`, a focus ring (`.dk-input:focus-visible`) and Enter-to-submit through the form.\n- tabular-nums has no visible effect on masked password dots.\n- The unused 56px right padding only leaves some empty space on the right of a full-width field.\n\nAt most this is a cosmetic or design-density point (README:147 says admin screens are \"denser\"). It is not a correctness defect, and the design-system docs approve the reuse. Refuted.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/features/admin-access/SignInForm.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1245,
+      "durationMs": 12929,
+      "sessionId": "22bbc4a7-3196-41a6-9a10-7484b61823b8",
+      "costUsd": 0.0908288,
+      "numTurns": 5,
+      "result": {
+        "refuted": true,
+        "reasoning": "The CSS facts are right. `.dk-input` at components.css:131 sets height 60px, 56px right padding, 26px tabular-nums, and SignInForm.tsx:45 uses that class. But the finding treats this as misuse, and the design system says the opposite. src/design-system/README.md:146, in the Admin section, says admin screens use \"Panel, Button, Chip …, SubjectChip … and the same inputs.\" `.dk-input` is the only input style the design system has; there is no separate general text-input class to use instead. Reusing it is the documented, sanctioned pattern, so the suggested fix (\"don't repurpose the answer input\") goes against the design system's own rule.\n\nNothing breaks for a user either. On a type=\"password\" field, tabular-nums and the 26px size only change how big the mask dots look. The 56px right padding is just unused space in a full-width field. The input still has a label (htmlFor/id), keeps the shared focus ring, and Enter still submits. There is no functional, accessibility, or security impact; at most it is a styling preference. The README does call admin screens \"denser\", but that refers to the body/caption type sizes and does not tell admin to avoid the shared inputs.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/features/admin-access/SignInForm.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1175,
+      "durationMs": 13145,
+      "sessionId": "9ec82a2d-9fdd-428e-a748-bc5938ed71f0",
+      "costUsd": 0.0709378,
+      "numTurns": 3,
+      "result": {
+        "refuted": false,
+        "reasoning": "I could not refute this finding. In SignInForm.tsx, `submit` never clears `error` before or during a new attempt. Line 20 only sets `busy`. After the first wrong password, `error` is 'invalid' and the `<p role=\"alert\">` on line 51 is mounted with the invalid text. A second wrong password calls `setError('invalid')` again (line 26). React skips the update because the value is the same (Object.is). Re-renders triggered by `setBusy` and `setPassword` give the same `<p>` the same text, so React makes no DOM change to the alert node: it is not removed, re-inserted, or changed. Live regions, including role=alert, are announced when their content changes. An unchanged node that stays mounted is not announced again by NVDA, JAWS or VoiceOver in their usual behaviour. Nothing else covers this. Focus going back to the input (line 32) only announces the empty password field, and the field was usually focused already because Enter submits. There is no attempt counter, no `key`, and no reset of the alert. The same thing happens with repeated 'failed' (server error) attempts. Repeated failures leave the user only the empty field as a cue, which matches the finding's claim. The suggested fix, calling `setError(null)` at the start of `submit`, would work: React would render the null state while `signIn` is awaited, so the alert unmounts and then remounts. Minor severity is right: this is an accessibility gap, not a functional failure.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/features/admin-access/SignInForm.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1208,
+      "durationMs": 12127,
+      "sessionId": "b16ac62d-7e95-467f-b85c-da06353d40ed",
+      "costUsd": 0.070883,
+      "numTurns": 3,
+      "result": {
+        "refuted": false,
+        "reasoning": "The mechanism is real. In SignInForm.tsx:18-33, `submit` never clears `error`. After the first wrong password, `error === 'invalid'` and `<p role=\"alert\">` (line 51) is mounted. A second wrong password calls `setError('invalid')` again with the same value. Even if the component re-renders because `busy` and `password` change, the alert keeps the same element and the same text, so nothing in the live region changes. Screen readers (NVDA, JAWS, VoiceOver) announce role=alert/live regions when they are inserted or their content changes, not when an unchanged region survives a re-render. Nothing else makes up for it. The input has no aria-describedby/aria-invalid pointing at the error. When the user presses Enter, `field.current?.focus()` does nothing because focus is already in the field. If they click the button, focus moves to the field, but only the label is read, not the error. Clearing a password field is not reliably announced. So for a screen-reader admin, a repeated wrong password gives no audible feedback. That is reproducible with any real assistive technology. It is minor: it only affects the admin app, it only happens on repeated failures, and there is no data or security impact. The suggested fix (call `setError(null)` at the start of `submit`, or key the alert by an attempt counter) is right.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:openspec/changes/implement-admin-access-ui/specs/admin-access/spec.md",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1716,
+      "durationMs": 17011,
+      "sessionId": "2846d846-386f-407f-896f-18e33711dbe1",
+      "costUsd": 0.10899140000000002,
+      "numTurns": 8,
+      "result": {
+        "refuted": false,
+        "reasoning": "I checked this summary against the code and it holds up. It reports coverage and asks for no fix, so there is no defect to disprove. One small error: the paths it cites are wrong. The files are in `src/features/admin-access/`, not a folder named `admin`.\n\n- **Scenarios:** the delta spec has exactly 4: No session, Wrong password, Session ends while signed in, and Sign-out.\n- **Sign-out sends the CSRF token:** `adminClient.ts:31` adds `X-XSRF-TOKEN` to every request that is not GET, HEAD or OPTIONS.\n- **Reads send no token:** the same line skips GET, HEAD and OPTIONS (the set is defined at line 5).\n- **Session ends while signed in:** `adminClient.ts:37` notifies the 401 listeners on any `/api/admin/` 401 except the sign-in POST. That covers the 8-hour idle expiry.\n- **No session:** `SignInForm.tsx:38-50` renders the heading and a single password field.\n- **Wrong password is only partial:** this is correct. After a wrong password, `error` stays `'invalid'`, so the `<p role=\"alert\">` at `SignInForm.tsx:51` keeps the same text and is never re-mounted. Screen readers may therefore not announce a second wrong attempt.\n\nThe summary does not overstate or misstate any coverage.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:openspec/changes/implement-admin-access-ui/specs/admin-access/spec.md",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1749,
+      "durationMs": 13287,
+      "sessionId": "7410b604-3dda-49d6-876f-6c59088910c6",
+      "costUsd": 0.0703358,
+      "numTurns": 4,
+      "result": {
+        "refuted": true,
+        "reasoning": "This finding is a coverage summary. It doesn't describe a defect a user or attacker could trigger, and its own suggestion is \"No action.\" The parts I checked hold up: the delta spec has four scenarios (No session, Wrong password, Session ends while signed in, Sign-out), and the cited files exist in src/features/admin-access/ (AdminGate.tsx, SignInForm.tsx, AdminArea.tsx, adminClient.ts and their tests). The only problem it mentions is the \"partial\" Wrong password case, where a repeated wrong attempt isn't announced again. That is a pointer to a separate finding, which should be judged on its own. Nothing here can be reproduced or exploited, so it doesn't count as a confirmed issue.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/features/admin-access/AdminGate.test.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1574,
+      "durationMs": 21787,
+      "sessionId": "7c943fa0-2828-4a69-9465-f1296d54745b",
+      "costUsd": 0.15733419999999998,
+      "numTurns": 8,
+      "result": {
+        "refuted": false,
+        "reasoning": "Confirmed against the code and the plan. AdminGate.test.tsx:1-2 has `// @trace NFR-1` and `// @trace NFR-15`, adminClient.test.ts:1 has `// @trace NFR-15`, and e2e/admin-sign-in.spec.ts:1-2 has both. The capability plan's ownership table (contract/docs/mvp-capability-plan.md:296, 309) gives NFR-1 and NFR-15 to `backend` only. The table can assign one id to both repos: NFR-3, NFR-9 and NFR-12 all say `backend, frontend`. So the one-repo assignment is a real distinction, not something the table can't express. The frontend AGENTS.md says to trace \"only ids this repo owns\", and the docs-store AGENTS.md calls this table the source of ownership. The finding is also right that the plan contradicts itself: §4.2 (lines 133-141) puts a sign-in screen and a frontend DoD in scope, and slice row 45 lists NFR-1/15/16 for the slice. The mechanism holds: the frontend claims ids the plan doesn't give it, and nobody amended the plan. Why I downgrade it: this is a traceability and process mismatch, not a fault in how the product behaves. check-traceability.mjs §3 only checks that ids are assigned in the plan, and the owner check runs only in the docs repo. A frontend trace to a backend-owned id doesn't break any shipped behaviour. The likely effect is that the cross-repo check-workspace join counts these traces wrongly. Fixing it is one plan edit or removing the tags.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/features/admin-access/AdminGate.test.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1607,
+      "durationMs": 25502,
+      "sessionId": "f250a23b-f111-43b9-aaf2-fe84a2e78929",
+      "costUsd": 0.10131040000000002,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "severityAdjustment": "downgrade",
+        "reasoning": "The facts in the finding hold. contract/docs/mvp-capability-plan.md:296 and :309 assign NFR-1 and NFR-15 to `backend` only. Line 45 lists both under slice 2, which has a frontend change, so the plan does contradict itself. The frontend tags NFR-1 and NFR-15 in AdminGate.test.tsx:1-2 and e2e/admin-sign-in.spec.ts:1-2, and NFR-15 in adminClient.test.ts:1. That breaks the AGENTS.md rule to trace \"only ids this repo owns\". So the convention violation is real and reproducible, and I can't refute it.\n\nThrough the exploitability lens, though, nothing harmful happens. No user or attacker can exploit this; it is a traceability labelling issue only. It also doesn't break or inflate the gate harness. scripts/lib/factory-config.mjs:243 `owns(id)` checks the plan's Repo(s) column, and check-acceptance-methods.mjs:360 and check-vision.mjs:61 only count ids this repo owns. So the stray NFR-1/NFR-15 tags are silently ignored. They can't produce a false PASS or a false failure, and they don't hide missing coverage of an owned requirement.\n\nThe real effect is plan/trace drift that a docs-store amendment or tag removal fixes. That makes it a minor spec-hygiene issue, not a major one."
+      }
+    },
+    {
+      "label": "verify:src/features/admin-access/SignInForm.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1233,
+      "durationMs": 12833,
+      "sessionId": "864e3c42-4839-48c0-bf04-fe494bebd36d",
+      "costUsd": 0.0712746,
+      "numTurns": 3,
+      "result": {
+        "refuted": false,
+        "reasoning": "The mechanism holds. In `SignInForm.tsx`, `submit()` never clears `error` before a new attempt. Line 26 calls `setError('invalid')`. On a second wrong password the state is already `'invalid'`, so React keeps the same value. The `<p role=\"alert\">` at line 51 stays mounted with identical text, so the live region does not change. Screen readers announce `role=\"alert\"` only when it is inserted or its content changes, so a repeated wrong password is not announced again.\n\nNothing else covers this:\n- The `key` never changes, so the alert is not remounted.\n- No other state clears the error. `busy` only toggles the button's `disabled`.\n- `useT` returns the same string each time.\n\nFocus does return to the cleared password field, but that announces the field, not the error message. The scenario says the message \"is announced as an alert\" on any 401 answer, and the second attempt does not meet that. The fix suggested in the finding (call `setError(null)` at the start of `submit`, or key the alert per attempt) is correct.\n\nI suggest a downgrade from major: the first wrong attempt is announced correctly, and the cleared field plus returned focus still give the user a signal. The remaining gap is a partial accessibility and spec-compliance issue, not broken functionality.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/features/admin-access/SignInForm.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1266,
+      "durationMs": 12391,
+      "sessionId": "52fd5f1b-18bb-4579-a847-c644c8819bf1",
+      "costUsd": 0.0712806,
+      "numTurns": 3,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the mechanism in SignInForm.tsx. submit() never clears `error` at the start. On a second 401, `setError('invalid')` sets the same value, so React bails out of the state update. The only other changes are setPassword('') (the field is already empty if the user retyped, or holds the new text), the busy flag going true and back to false (which touches only the Button's disabled attribute), and focus(). The `<p role=\"alert\">` at line 51 stays mounted with the same text node, so the live region doesn't change. Screen readers (NVDA, JAWS, VoiceOver) announce role=alert only when it is inserted or its content changes, so the second and later wrong attempts are silent. Nothing guards against this elsewhere: no key, no remount, no aria-live trick. Any screen-reader admin who mistypes twice will hit it. Moving focus to the field announces the field, not the error. Also, a 'failed' then 'invalid' sequence would announce, but 'invalid' then 'invalid' won't. The cited tests only cover a single attempt. I'm downgrading the severity: the first wrong attempt is announced correctly, the field is cleared and focused, and the alert text stays visible and can be reached in the DOM. So this is a partial gap in accessibility and spec compliance for repeat attempts on an admin-only screen, not a broken flow. Minor is a better fit than major.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:openspec/changes/implement-admin-access-ui/tasks.md",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1118,
+      "durationMs": 7950,
+      "sessionId": "dbd2251f-18da-40ce-a08e-50618dc8d6c8",
+      "costUsd": 0.0667314,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the finding. Task 3.1 at tasks.md:15 is ticked and lists `useAdminSession`, but nothing in `src/` defines or uses `useAdminSession`. `AdminHome` exists only as a private function inside AdminArea.tsx:10 and isn't its own module. So the ticked task names an artifact that wasn't delivered. This is a documentation and spec-compliance mismatch, not a runtime bug, so the minor severity is right.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:openspec/changes/implement-admin-access-ui/tasks.md",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1151,
+      "durationMs": 10723,
+      "sessionId": "e5b6da8e-5b15-4581-91f0-731b422d2475",
+      "costUsd": 0.07228480000000001,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "Confirmed. tasks.md:15 shows `- [x] 3.1 src/features/admin-access/: adminClient, useAdminSession, AdminGate, SignInForm, AdminHome`. A grep of src/ for `useAdminSession` finds nothing, so the artifact does not exist anywhere. `AdminHome` is a private, non-exported function at AdminArea.tsx:10, used only at line 41 of that file, so it is not a standalone module either. The ticked task therefore names an artifact that was never delivered. This is a documentation and spec-compliance drift, not a runtime defect. No user or attacker can trigger any behaviour from it, because the session logic exists and works under other names. It matters for the harness's 'done-claims need evidence' rule, since a ticked box claims a deliverable that isn't there. The finding is real and reproducible: anyone can grep and see the hook is missing. Minor severity is already appropriate.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:docs/current-state.md",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1098,
+      "durationMs": 16595,
+      "sessionId": "da37a31e-3e04-460e-bcd1-59ff6112bac1",
+      "costUsd": 0.09383140000000001,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "Main claim confirmed. `docs/current-state.md:11` says the active change is on branch `slice2-admin-access` and is \"not committed\", and line 13 lists \"archive and commit\" as the next step. But commit fa8a182 \"feat(admin): admin sign-in screen and admin API client (slice 2)\" is HEAD of that branch. At session start, git status showed only `trace/ledger.jsonl` modified, so current-state.md is clean, meaning this wording is already in a commit. The handoff file is stale and contradicts the git history. Since AGENTS.md treats current-state.md as the source a future agent relies on, that is a real (minor) spec-compliance defect.\n\nThe tasks.md half is weaker. 4.5 \"Update docs/current-state.md\" sits between the open 4.3 (review gate) and 4.6 (archive), so leaving it unticked until the milestone update is final is defensible and not really a mismatch. The finding's own suggestion admits this (\"tick 4.5 only once the milestone update is final\").\n\nThere is also a process wrinkle: 4.6 bundles \"archive; commit\", so the plan expected the commit after archive. Committing at fa8a182 before the review gate went against that order, which is why the \"not committed\" text went stale. That does not make the stale statement any less wrong. Overall the mechanism (the doc wrongly says \"not committed\") holds. Severity minor is right.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:docs/current-state.md",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1131,
+      "durationMs": 16706,
+      "sessionId": "dfbfdfe3-6cef-4ea1-be72-b5cc2090bb31",
+      "costUsd": 0.09553060000000001,
+      "numTurns": 6,
+      "result": {
+        "refuted": false,
+        "severityAdjustment": "downgrade",
+        "reasoning": "Partly confirmed. `docs/current-state.md:11` does say \"Active change: `implement-admin-access-ui` (slice 2, branch `slice2-admin-access`, not committed)\". Commit fa8a182 \"feat(admin): admin sign-in screen and admin API client (slice 2)\" is on this branch, and git status shows only trace/ledger.jsonl as modified. So the slice-2 work and this file were committed, and \"not committed\" is stale. A future agent reading the handoff file could wrongly think the work is still uncommitted. That breaks the handoff-accuracy rule in AGENTS.md.\n\nThe checkbox half of the finding is weak. Task 4.5 (\"Update docs/current-state.md\") is a milestone task. The file says the review gate (4.3), archive and commit (4.6) are still pending, and current-state needs another update at those points. Leaving 4.5 unticked is defensible, not a mismatch. A charitable reading of \"not committed\" is also possible: it may mean the final slice commit with the `Slice:` trailer (task 4.6), which hasn't happened yet. Even so, the wording is misleading.\n\nThrough the exploitability/reproducibility lens there is no runtime, user or attacker impact. This is only a documentation accuracy issue in an agent handoff file. The stale-text claim is real, so it is not refuted, but severity should drop to nit/trivial."
+      }
+    },
+    {
+      "label": "verify:src/features/admin-access/AdminGate.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1331,
+      "durationMs": 17613,
+      "sessionId": "8ef6e2a5-9fc7-43d8-95dd-4ee39449bbfc",
+      "costUsd": 0.1157,
+      "numTurns": 8,
+      "result": {
+        "refuted": false,
+        "reasoning": "The finding is confirmed. The delta spec (openspec/changes/implement-admin-access-ui/specs/admin-access/spec.md) has only two Requirements, 'Admin sign-in screen' and 'CSRF header on admin mutations', with scenarios for no session, wrong password (401), session ending while signed in, and the CSRF header on sign-out. None covers the states the code adds:\n- AdminGate.tsx:20-32 shows a 'checking' status, and when session.isError is set it shows an 'unreachable' alert with a retry button. This is reachable: checkAdminSession throws UnexpectedStatus for any status other than 204/401, and network errors also reject.\n- SignInForm.tsx:29,51 shows a separate 'failed' alert for errors that are not a 401. This is reachable because signIn throws on any status other than 204/401.\n- AdminArea.tsx:13,29 shows an alert when sign-out fails.\n- session.ts:31 treats a 401 on sign-out as success.\ndesign.md does describe the checking, unreachable and sign-in-failure states, but it is non-normative. It does not mention the sign-out failure alert or the sign-out-401-as-success rule at all, so the gap there is even bigger than the finding says. Nothing elsewhere (framework, store spec, guards) makes these paths unreachable. The finding is not saying the behaviour is wrong. It says the behaviour has no Requirement or Scenario behind it, and that is true. 'Minor' is the right severity: the behaviour is reasonable and unit-tested, and the only problem is that it is missing from the spec.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/features/admin-access/AdminGate.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1364,
+      "durationMs": 21171,
+      "sessionId": "b7707f28-33ab-46f2-bc09-aad839eb74db",
+      "costUsd": 0.0980888,
+      "numTurns": 6,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the finding against the code. The delta spec (openspec/changes/implement-admin-access-ui/specs/admin-access/spec.md) has only two requirements: \"Admin sign-in screen\" (scenarios: No session, Wrong password, Session ends while signed in) and \"CSRF header on admin mutations\" (scenario: Sign-out). The code does more than that. In AdminGate.tsx:20-32, while `session.data` is undefined it shows a \"checking\" status, and once `session.isError` is set it shows an \"unreachable\" alert with a retry button. In session.ts:17/25, `checkAdminSession` and `signIn` throw on any status other than 204 or 401, which is what feeds the unreachable state and the separate sign-in failure message. In session.ts:31, `signOut` treats a 401 as success.\n\nA real user can reach all of these. Any network failure, backend outage or 5xx on GET or POST /api/admin/session triggers them, and so does starting the frontend before `docker compose` brings the backend up. They aren't dead code or test-only paths, and nothing in the spec defines them. So the gap is real: the spec states nothing about how the user-visible copy, roles or retry should behave. The behaviour itself is sensible and causes no security problem, because a sign-out 401 means the session is already gone. That makes this a spec-traceability gap rather than a runtime defect, so the severity stays at minor.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/features/admin-access/AdminArea.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1194,
+      "durationMs": 16101,
+      "sessionId": "143818a0-3bbf-4309-ac61-76397f1749d3",
+      "costUsd": 0.1054774,
+      "numTurns": 7,
+      "result": {
+        "refuted": false,
+        "reasoning": "The main mechanism holds. In adminClient.ts:31, the X-XSRF-TOKEN header is only sent when the XSRF-TOKEN cookie exists (`&& token`). If the cookie is missing, the backend refuses the DELETE with a 403, as the spec requires. session.ts:31 throws UnexpectedStatus for any status other than 204 or 401, so a 403 throws. The 403 is not routed to the unauthorized listener either, because adminClient.ts:37 only handles 401. AdminArea.tsx:19-20 catches the error and sets `failed`, and line 29 then shows 'admin.session.unreachable', which en.ts:7 defines as 'Could not reach the server.' The server did respond, so that message is wrong. The same generic copy also covers 500s and other errors, so this is a real copy and spec-compliance problem.\n\nOne part of the finding is overstated. It says there is \"no retry\", but the Sign out button (line 30) stays on screen after the failure, so the admin can try again. Retrying will usually get another 403 while the cookie is still missing, though, and there is no path to re-sign-in, so \"cannot recover\" is mostly accurate.\n\nThe path is reachable only in edge cases (cookie cleared, expired or blocked while the session cookie survives), so minor severity fits.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/features/admin-access/AdminArea.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1227,
+      "durationMs": 25799,
+      "sessionId": "bda80855-6a60-4276-8845-40610b27753d",
+      "costUsd": 0.1293096,
+      "numTurns": 9,
+      "result": {
+        "refuted": false,
+        "reasoning": "The finding holds up in the frontend code. Some of its wording overstates the impact.\n\nWhat I confirmed:\n- In `adminClient.ts:31`, the client adds `X-XSRF-TOKEN` only when `xsrfToken()` finds a value. If the `XSRF-TOKEN` cookie is missing, the DELETE goes out with no CSRF header, and the store spec says that request gets a 403.\n- `session.ts:31` (`signOut`) accepts only 204 and 401. A 403 throws `UnexpectedStatus`.\n- `AdminArea.tsx:19-20` catches every error the same way and sets `failed`. Line 29 then shows `admin.session.unreachable`, which is \"Could not reach the server.\" (`en.ts:7`).\n- The middleware's `onResponse` reacts only to 401, so nothing else handles a 403.\n\nSo a 403 always shows a message that is plainly false, because the server did answer.\n\nThe only CSRF test (`AdminGate.test.tsx:98`) covers the happy path with the header present. No test covers the 403 case.\n\nHow likely it is in practice: low but possible. It needs a live session with a missing or stale `XSRF-TOKEN` cookie. That could happen if the user clears cookies selectively, if the session cookie and the XSRF cookie have different lifetimes, or if a proxy or WAF returns a 403. I couldn't read the backend (permission denied), so I couldn't check whether a server-stored CSRF token could go stale independently of the cookie.\n\nWhat the finding overstates:\n- \"No retry path\" is wrong. The Sign out button stays rendered, so the admin can click it again.\n- \"The admin cannot recover\" is only partly true. A retry with a missing cookie would get 403 again, but reloading the page still works.\n\nThe core claim (wrong copy for a 403, and the case is absent from the spec and the code) is real. Minor is the right severity.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:openspec/changes/implement-admin-access-ui/specs/admin-access/spec.md",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1272,
+      "durationMs": 21374,
+      "sessionId": "f47d2c1f-325b-424e-a8b2-3fab248a0d5e",
+      "costUsd": 0.14381460000000001,
+      "numTurns": 10,
+      "result": {
+        "refuted": true,
+        "reasoning": "The finding's claim is true in a narrow sense: the delta spec (openspec/changes/implement-admin-access-ui/specs/admin-access/spec.md) has no NFR-9 or NFR-13 scenario. Its conclusion, that the slice's done-definition is 'not spec-backed', is wrong. The main spec at openspec/specs/platform-foundation/spec.md, archived from slice 1, already states both obligations for every registered route. Line 55 says the pseudo-catalog render covers \"every route in the route registry\". Line 65 says \"Every route… SHALL have no serious or critical axe-core violation in either colour scheme\" (NFR-13). route-paths.ts:5 adds '/admin' to ROUTE_PATHS, which is that registry, and the a11y, theme and ⟦ tests loop over it. So /admin is already covered by existing requirements and their scenarios. Proposal.md:9-10 describes exactly this: \"the sign-in route joins the ⟦ render test and the a11y gate\". Adding the suggested delta scenario would only repeat requirements that already exist. Nothing is missing or wrong.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:openspec/changes/implement-admin-access-ui/specs/admin-access/spec.md",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1305,
+      "durationMs": 16875,
+      "sessionId": "defb355b-8d08-4056-b5c9-4322c7173d1b",
+      "costUsd": 0.10243980000000001,
+      "numTurns": 5,
+      "result": {
+        "refuted": true,
+        "reasoning": "Nothing here can go wrong for a user or an attacker. It is a traceability nit, and the premise doesn't hold either. The repo's main spec `openspec/specs/platform-foundation/spec.md` already states both obligations against the whole route registry. Lines 54-56 say `App` renders every route in the registry under the `⟦…⟧` pseudo-catalog and shows only catalog text (NFR-9). Line 66 says every route has zero serious or critical axe violations in either colour scheme (NFR-13). Those requirements quantify over the registry. Adding `/admin` to `ROUTE_PATHS` (task 2.3, proposal lines 24-25) puts the sign-in route under the existing spec automatically. The DoD item from the plan is therefore already backed by the spec, and a second, route-specific scenario in the admin-access delta would only repeat it. The finding itself says the behaviour is implemented and tested (`route-paths.ts`, `i18n-coverage.test.tsx`, the a11y e2e). So there is no gap in the code or in what the spec requires, and nothing a real user could ever hit.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/app/route-paths.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1150,
+      "durationMs": 13645,
+      "sessionId": "fb6c9064-fa66-496b-b9b2-b8300f765200",
+      "costUsd": 0.07723479999999999,
+      "numTurns": 5,
+      "result": {
+        "refuted": true,
+        "reasoning": "The code is as described. `ROUTE_PATHS` is `['/', '/admin']` (src/app/route-paths.ts:5), and routes.tsx:18 sends `/admin` to `<AdminArea />`. But under a correctness lens nothing is wrong today. The only admin UI page that exists is `/admin`, and it is gated. A path like `/admin/tasks` is not an admin UI page: no such screen exists, so showing not-found there leaks no admin content and does not break the scenario \"WHEN any admin UI page is opened THEN the sign-in form is shown instead of the page content\". The finding admits this (\"not a current violation\"). What it describes is a future-proofing or structural risk about routes slice 5 might add, not a mechanism that is wrong in this code. The registry header comment (routes.tsx:6-9) already says every slice must register its screens, and later admin routes would be reviewed when they are added. With no positive defect, this is refuted.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/app/route-paths.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1183,
+      "durationMs": 11802,
+      "sessionId": "61e1ece6-e81d-42e2-b6fd-bb35860ed0b8",
+      "costUsd": 0.069806,
+      "numTurns": 4,
+      "result": {
+        "refuted": true,
+        "reasoning": "I read `src/app/route-paths.ts:5`, `routes.tsx:18` and `App.tsx`. The routes registered are `/` and `/admin`, and `/admin` renders `<AdminArea />`, the gated sign-in area. Any other path goes to `<NotFound />`. Normalisation tests in `App.test.tsx:44-46` confirm that `/admin/`, `/admin//` and `/admin/index.html` all resolve to the gated `/admin`.\n\nA path like `/admin/tasks` shows the not-found screen, which contains no admin content. So no admin page can be reached without the sign-in, and the spec's 'any admin UI page' rule holds today, since the only admin page there is is gated. The finding admits this itself ('No such page exists yet, so this is not a current violation'). Nobody can reproduce a bypass, because there is nothing to bypass.\n\nWhat's left is a guess about future routes in slice 5. That's a suggestion for later, not a defect you can reproduce now. The backend's admin API also enforces sessions on its own, so an unwrapped route added later wouldn't expose data through the API anyway.",
+        "severityAdjustment": "downgrade"
+      }
+    }
+  ],
+  "logs": [
+    {
+      "phase": "Find",
+      "message": "14 unique findings across 4 dimensions"
+    },
+    {
+      "phase": "Report",
+      "message": "confirmed: 8, contested: 2, rejected: 4"
+    }
+  ],
+  "persisted": [
+    "openspec/changes/implement-admin-access-ui/review-findings.json"
+  ],
+  "returned": {
+    "scope": "slice 2 admin-access frontend (implement-admin-access-ui)",
+    "summary": "Review gate for slice 2 admin-access frontend (implement-admin-access-ui): 8 confirmed, 2 contested (treat as confirmed unless trivially wrong), 4 rejected.",
+    "confirmed": [
+      {
+        "title": "Sign-out reports every non-204/401 response, including a 403 CSRF rejection, as 'Could not reach the server.'",
+        "file": "src/features/admin-access/AdminArea.tsx",
+        "line": 19,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "`signOut()` throws `UnexpectedStatus` for any status other than 204/401 (session.ts:31). The contract lists 403 Forbidden for DELETE /api/admin/session, which happens when the XSRF-TOKEN cookie is missing or stale. The catch block in AdminHome sets `failed` and shows `t('admin.session.unreachable')` ('Could not reach the server.'). The server was reachable but refused the request, so the user gets a wrong diagnosis, and retrying keeps failing the same way. The sign-out button also has no busy/disabled state, so repeated clicks send concurrent DELETEs.",
+        "suggestion": "Tell transport failures (TypeError from fetch) apart from HTTP error statuses and show a separate 'Sign-out failed' message for the HTTP case. On 403, refetch the session or reload so a fresh XSRF token is issued. Disable the button while the request is in flight, the same way SignInForm uses `busy`.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "The finding holds up. In session.ts:29-31, `signOut()` throws `UnexpectedStatus` for any status other than 204 or 401, so a 403 throws. The adminClient middleware (adminClient.ts:34-39) only acts on 401 and passes 403 through, and nothing else catches it. In AdminArea.tsx:19-20, the bare `catch` sets `failed`, which shows `admin.session.unreachable`. en.ts:7 defines that string as 'Could not reach the server.' Network errors and HTTP-status errors land in the same catch, so a 403 from a server that answered is reported as unreachable.\n\nThe 403 case can actually happen:\n- The generated schema lists 403 Forbidden on admin endpoints.\n- The test backend (src/test/admin-backend.ts:45) returns 403 when X-XSRF-TOKEN is wrong.\n- The client only attaches the header when the cookie exists (adminClient.ts:31). A missing cookie means no header, and the server rejects the request.\n\nThe Button at line 30 has no disabled or busy state, so repeated clicks send concurrent DELETEs. This side point is accurate but harmless, since sign-out is idempotent.\n\nSeverity stays minor. The only harm is a misleading message on a path that should be rare: the XSRF cookie is set at sign-in, so a 403 needs the cookie to be missing or stale.",
+          "I confirmed the mechanism in the code. `signOut()` (session.ts:29-32) throws `UnexpectedStatus` for any status other than 204/401. `AdminHome.handleSignOut` (AdminArea.tsx:15-22) catches everything with a bare `catch` and shows `admin.session.unreachable`, which en.ts:7 defines as \"Could not reach the server.\" The contract (openapi.yaml:326-337, 1069-1075) lists 403 for DELETE /api/admin/session when the session is valid but the CSRF token is missing or wrong. So a server that is reachable and refuses the request gets misreported. A 5xx response gets the same wrong message.\n\nThe 403 can happen, but less often than the finding suggests:\n- `xsrfToken()` reads the cookie on every request, so a token rotated in another tab is still picked up.\n- A server restart that loses the session returns 401, which counts as success, not 403.\n- A 403 needs the XSRF-TOKEN cookie to be cleared or changed while SESSION stays valid. Clearing it selectively in the browser is one way, or a backend that does not reissue the token.\n- When a 403 does happen, every retry keeps failing, because nothing refreshes the token.\n\nThe point about repeated clicks is accurate: there is no `busy` state, so each click sends a DELETE. But it does no harm. The first DELETE returns 204 and later ones return 401, and both count as success.\n\nNet effect: the error message misleads in a rare but reachable edge case. Sign-out does not fail silently and nothing is exposed to an attacker. Minor severity is right."
+        ]
+      },
+      {
+        "title": "A second wrong password may not be re-announced to screen readers",
+        "file": "src/features/admin-access/SignInForm.tsx",
+        "line": 51,
+        "severity": "minor",
+        "confidence": "low",
+        "evidence": "After the first wrong password, `error` is 'invalid' and `<p role=\"alert\">` stays mounted. Another wrong password calls `setError('invalid')` again with the same value, so React doesn't re-render the alert and its text doesn't change. Many screen readers announce a live region only when its content changes, so the second failure is silent apart from the field being cleared.",
+        "suggestion": "Clear `error` at the start of `submit` (`setError(null)` next to `setBusy(true)`), so the alert unmounts and remounts on every failed attempt, or key the alert by an attempt counter.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I could not refute this finding. In SignInForm.tsx, `submit` never clears `error` before or during a new attempt. Line 20 only sets `busy`. After the first wrong password, `error` is 'invalid' and the `<p role=\"alert\">` on line 51 is mounted with the invalid text. A second wrong password calls `setError('invalid')` again (line 26). React skips the update because the value is the same (Object.is). Re-renders triggered by `setBusy` and `setPassword` give the same `<p>` the same text, so React makes no DOM change to the alert node: it is not removed, re-inserted, or changed. Live regions, including role=alert, are announced when their content changes. An unchanged node that stays mounted is not announced again by NVDA, JAWS or VoiceOver in their usual behaviour. Nothing else covers this. Focus going back to the input (line 32) only announces the empty password field, and the field was usually focused already because Enter submits. There is no attempt counter, no `key`, and no reset of the alert. The same thing happens with repeated 'failed' (server error) attempts. Repeated failures leave the user only the empty field as a cue, which matches the finding's claim. The suggested fix, calling `setError(null)` at the start of `submit`, would work: React would render the null state while `signIn` is awaited, so the alert unmounts and then remounts. Minor severity is right: this is an accessibility gap, not a functional failure.",
+          "The mechanism is real. In SignInForm.tsx:18-33, `submit` never clears `error`. After the first wrong password, `error === 'invalid'` and `<p role=\"alert\">` (line 51) is mounted. A second wrong password calls `setError('invalid')` again with the same value. Even if the component re-renders because `busy` and `password` change, the alert keeps the same element and the same text, so nothing in the live region changes. Screen readers (NVDA, JAWS, VoiceOver) announce role=alert/live regions when they are inserted or their content changes, not when an unchanged region survives a re-render. Nothing else makes up for it. The input has no aria-describedby/aria-invalid pointing at the error. When the user presses Enter, `field.current?.focus()` does nothing because focus is already in the field. If they click the button, focus moves to the field, but only the label is read, not the error. Clearing a password field is not reliably announced. So for a screen-reader admin, a repeated wrong password gives no audible feedback. That is reproducible with any real assistive technology. It is minor: it only affects the admin app, it only happens on repeated failures, and there is no data or security impact. The suggested fix (call `setError(null)` at the start of `submit`, or key the alert by an attempt counter) is right."
+        ]
+      },
+      {
+        "title": "Frontend traces and claims NFR-1 / NFR-15, but the capability plan assigns both to the backend only",
+        "file": "src/features/admin-access/AdminGate.test.tsx",
+        "line": 1,
+        "severity": "major",
+        "confidence": "high",
+        "evidence": "Plan ownership table (contract/docs/mvp-capability-plan.md:296,309): '| NFR-1 | admin-access | backend |', '| NFR-15 | admin-access | backend |'. AGENTS.md: 'Annotate with `// @trace FR-x` (only ids this repo owns)'. Code: AdminGate.test.tsx:1-2 '// @trace NFR-1 // @trace NFR-15', adminClient.test.ts:1 '// @trace NFR-15', e2e/admin-sign-in.spec.ts:1-2. proposal.md:7-8 says the change 'travels NFR-1 … NFR-15'. The plan's slice row (line 45) lists NFR-1/15/16 for the slice, and the §4.2 DoD (line 141) gives the frontend a sign-in route. So the plan contradicts itself, and the frontend has resolved it by claiming ownership without amending the plan.",
+        "suggestion": "Amend the docs store: change the Repo(s) column for NFR-1 and NFR-15 to 'backend, frontend', because the UI half (sign-in form, CSRF header, sign-in after a 401) is frontend-enforced. Then bump contract/. Otherwise, drop the @trace tags and trace only NFR-6/9/13.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "Confirmed against the code and the plan. AdminGate.test.tsx:1-2 has `// @trace NFR-1` and `// @trace NFR-15`, adminClient.test.ts:1 has `// @trace NFR-15`, and e2e/admin-sign-in.spec.ts:1-2 has both. The capability plan's ownership table (contract/docs/mvp-capability-plan.md:296, 309) gives NFR-1 and NFR-15 to `backend` only. The table can assign one id to both repos: NFR-3, NFR-9 and NFR-12 all say `backend, frontend`. So the one-repo assignment is a real distinction, not something the table can't express. The frontend AGENTS.md says to trace \"only ids this repo owns\", and the docs-store AGENTS.md calls this table the source of ownership. The finding is also right that the plan contradicts itself: §4.2 (lines 133-141) puts a sign-in screen and a frontend DoD in scope, and slice row 45 lists NFR-1/15/16 for the slice. The mechanism holds: the frontend claims ids the plan doesn't give it, and nobody amended the plan. Why I downgrade it: this is a traceability and process mismatch, not a fault in how the product behaves. check-traceability.mjs §3 only checks that ids are assigned in the plan, and the owner check runs only in the docs repo. A frontend trace to a backend-owned id doesn't break any shipped behaviour. The likely effect is that the cross-repo check-workspace join counts these traces wrongly. Fixing it is one plan edit or removing the tags.",
+          "The facts in the finding hold. contract/docs/mvp-capability-plan.md:296 and :309 assign NFR-1 and NFR-15 to `backend` only. Line 45 lists both under slice 2, which has a frontend change, so the plan does contradict itself. The frontend tags NFR-1 and NFR-15 in AdminGate.test.tsx:1-2 and e2e/admin-sign-in.spec.ts:1-2, and NFR-15 in adminClient.test.ts:1. That breaks the AGENTS.md rule to trace \"only ids this repo owns\". So the convention violation is real and reproducible, and I can't refute it.\n\nThrough the exploitability lens, though, nothing harmful happens. No user or attacker can exploit this; it is a traceability labelling issue only. It also doesn't break or inflate the gate harness. scripts/lib/factory-config.mjs:243 `owns(id)` checks the plan's Repo(s) column, and check-acceptance-methods.mjs:360 and check-vision.mjs:61 only count ids this repo owns. So the stray NFR-1/NFR-15 tags are silently ignored. They can't produce a false PASS or a false failure, and they don't hide missing coverage of an owned requirement.\n\nThe real effect is plan/trace drift that a docs-store amendment or tag removal fixes. That makes it a minor spec-hygiene issue, not a major one."
+        ]
+      },
+      {
+        "title": "Repeated wrong password is not re-announced (scenario 'Wrong password' only partly met)",
+        "file": "src/features/admin-access/SignInForm.tsx",
+        "line": 51,
+        "severity": "major",
+        "confidence": "medium",
+        "evidence": "Delta scenario: 'WHEN the admin submits a password and sign-in answers 401 THEN \"That password is not correct.\" is announced as an alert'. Code: setError('invalid') (line 26) leaves the state unchanged on a second wrong attempt, so the existing <p role=\"alert\"> stays mounted with the same text, and assistive tech does not announce it again. Tests (AdminGate.test.tsx:51, e2e:48) only cover the first attempt.",
+        "suggestion": "Clear the error before each submit (setError(null) at the start of submit()) or key the alert per attempt so it remounts. Add a unit test with two consecutive wrong passwords.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "The mechanism holds. In `SignInForm.tsx`, `submit()` never clears `error` before a new attempt. Line 26 calls `setError('invalid')`. On a second wrong password the state is already `'invalid'`, so React keeps the same value. The `<p role=\"alert\">` at line 51 stays mounted with identical text, so the live region does not change. Screen readers announce `role=\"alert\"` only when it is inserted or its content changes, so a repeated wrong password is not announced again.\n\nNothing else covers this:\n- The `key` never changes, so the alert is not remounted.\n- No other state clears the error. `busy` only toggles the button's `disabled`.\n- `useT` returns the same string each time.\n\nFocus does return to the cleared password field, but that announces the field, not the error message. The scenario says the message \"is announced as an alert\" on any 401 answer, and the second attempt does not meet that. The fix suggested in the finding (call `setError(null)` at the start of `submit`, or key the alert per attempt) is correct.\n\nI suggest a downgrade from major: the first wrong attempt is announced correctly, and the cleared field plus returned focus still give the user a signal. The remaining gap is a partial accessibility and spec-compliance issue, not broken functionality.",
+          "I confirmed the mechanism in SignInForm.tsx. submit() never clears `error` at the start. On a second 401, `setError('invalid')` sets the same value, so React bails out of the state update. The only other changes are setPassword('') (the field is already empty if the user retyped, or holds the new text), the busy flag going true and back to false (which touches only the Button's disabled attribute), and focus(). The `<p role=\"alert\">` at line 51 stays mounted with the same text node, so the live region doesn't change. Screen readers (NVDA, JAWS, VoiceOver) announce role=alert only when it is inserted or its content changes, so the second and later wrong attempts are silent. Nothing guards against this elsewhere: no key, no remount, no aria-live trick. Any screen-reader admin who mistypes twice will hit it. Moving focus to the field announces the field, not the error. Also, a 'failed' then 'invalid' sequence would announce, but 'invalid' then 'invalid' won't. The cited tests only cover a single attempt. I'm downgrading the severity: the first wrong attempt is announced correctly, the field is cleared and focused, and the alert text stays visible and can be reached in the DOM. So this is a partial gap in accessibility and spec compliance for repeat attempts on an admin-only screen, not a broken flow. Minor is a better fit than major."
+        ]
+      },
+      {
+        "title": "Ticked task 3.1 names an artifact that does not exist (useAdminSession)",
+        "file": "openspec/changes/implement-admin-access-ui/tasks.md",
+        "line": 15,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "Task: '- [x] 3.1 `src/features/admin-access/`: `adminClient`, `useAdminSession`, `AdminGate`, `SignInForm`, `AdminHome`.' No `useAdminSession` exists in the folder. Session logic lives in session.ts (checkAdminSession/signIn/signOut) and an inline useQuery in AdminGate.tsx:16. `AdminHome` is a private function inside AdminArea.tsx:10, not its own module.",
+        "suggestion": "Amend task 3.1 to list the delivered artifacts (session.ts, AdminArea.tsx with AdminHome), or extract a useAdminSession hook.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I confirmed the finding. Task 3.1 at tasks.md:15 is ticked and lists `useAdminSession`, but nothing in `src/` defines or uses `useAdminSession`. `AdminHome` exists only as a private function inside AdminArea.tsx:10 and isn't its own module. So the ticked task names an artifact that wasn't delivered. This is a documentation and spec-compliance mismatch, not a runtime bug, so the minor severity is right.",
+          "Confirmed. tasks.md:15 shows `- [x] 3.1 src/features/admin-access/: adminClient, useAdminSession, AdminGate, SignInForm, AdminHome`. A grep of src/ for `useAdminSession` finds nothing, so the artifact does not exist anywhere. `AdminHome` is a private, non-exported function at AdminArea.tsx:10, used only at line 41 of that file, so it is not a standalone module either. The ticked task therefore names an artifact that was never delivered. This is a documentation and spec-compliance drift, not a runtime defect. No user or attacker can trigger any behaviour from it, because the session logic exists and works under other names. It matters for the harness's 'done-claims need evidence' rule, since a ticked box claims a deliverable that isn't there. The finding is real and reproducible: anyone can grep and see the hook is missing. Minor severity is already appropriate."
+        ]
+      },
+      {
+        "title": "tasks.md checkboxes do not match current-state.md, and current-state.md is stale (says 'not committed')",
+        "file": "docs/current-state.md",
+        "line": 11,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "tasks.md:24 '- [ ] 4.5 Update `docs/current-state.md`' is unticked, but this branch did update current-state.md. That file says 'Active change: `implement-admin-access-ui` (slice 2, branch `slice2-admin-access`, not committed)', yet commit fa8a182 'feat(admin): admin sign-in screen and admin API client (slice 2)' exists on the branch.",
+        "suggestion": "Correct current-state.md (committed at fa8a182, review gate pending), and tick 4.5 only once the milestone update is final.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "Main claim confirmed. `docs/current-state.md:11` says the active change is on branch `slice2-admin-access` and is \"not committed\", and line 13 lists \"archive and commit\" as the next step. But commit fa8a182 \"feat(admin): admin sign-in screen and admin API client (slice 2)\" is HEAD of that branch. At session start, git status showed only `trace/ledger.jsonl` modified, so current-state.md is clean, meaning this wording is already in a commit. The handoff file is stale and contradicts the git history. Since AGENTS.md treats current-state.md as the source a future agent relies on, that is a real (minor) spec-compliance defect.\n\nThe tasks.md half is weaker. 4.5 \"Update docs/current-state.md\" sits between the open 4.3 (review gate) and 4.6 (archive), so leaving it unticked until the milestone update is final is defensible and not really a mismatch. The finding's own suggestion admits this (\"tick 4.5 only once the milestone update is final\").\n\nThere is also a process wrinkle: 4.6 bundles \"archive; commit\", so the plan expected the commit after archive. Committing at fa8a182 before the review gate went against that order, which is why the \"not committed\" text went stale. That does not make the stale statement any less wrong. Overall the mechanism (the doc wrongly says \"not committed\") holds. Severity minor is right.",
+          "Partly confirmed. `docs/current-state.md:11` does say \"Active change: `implement-admin-access-ui` (slice 2, branch `slice2-admin-access`, not committed)\". Commit fa8a182 \"feat(admin): admin sign-in screen and admin API client (slice 2)\" is on this branch, and git status shows only trace/ledger.jsonl as modified. So the slice-2 work and this file were committed, and \"not committed\" is stale. A future agent reading the handoff file could wrongly think the work is still uncommitted. That breaks the handoff-accuracy rule in AGENTS.md.\n\nThe checkbox half of the finding is weak. Task 4.5 (\"Update docs/current-state.md\") is a milestone task. The file says the review gate (4.3), archive and commit (4.6) are still pending, and current-state needs another update at those points. Leaving 4.5 unticked is defensible, not a mismatch. A charitable reading of \"not committed\" is also possible: it may mean the final slice commit with the `Slice:` trailer (task 4.6), which hasn't happened yet. Even so, the wording is misleading.\n\nThrough the exploitability/reproducibility lens there is no runtime, user or attacker impact. This is only a documentation accuracy issue in an agent handoff file. The stale-text claim is real, so it is not refuted, but severity should drop to nit/trivial."
+        ]
+      },
+      {
+        "title": "Undocumented UI states: checking, unreachable + retry, sign-in failure, sign-out failure",
+        "file": "src/features/admin-access/AdminGate.tsx",
+        "line": 20,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "The delta spec has only 'Admin sign-in screen' and 'CSRF header on admin mutations'. The code adds: a checking status (AdminGate.tsx:29), an unreachable alert with a 'Try again' button (lines 23-27), a non-401 sign-in failure message (SignInForm.tsx:29,51), and a sign-out failure alert (AdminArea.tsx:19-20,29). It also treats a sign-out 401 as success (session.ts:31). These appear in design.md and are unit-tested (AdminGate.test.tsx:122-171), but no Requirement/Scenario backs them.",
+        "suggestion": "Add a delta requirement such as 'Admin UI handles an unreachable backend' with scenarios for session-check failure + retry, sign-in 5xx versus 401, and a failed sign-out, so the behaviour is in the spec.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "The finding is confirmed. The delta spec (openspec/changes/implement-admin-access-ui/specs/admin-access/spec.md) has only two Requirements, 'Admin sign-in screen' and 'CSRF header on admin mutations', with scenarios for no session, wrong password (401), session ending while signed in, and the CSRF header on sign-out. None covers the states the code adds:\n- AdminGate.tsx:20-32 shows a 'checking' status, and when session.isError is set it shows an 'unreachable' alert with a retry button. This is reachable: checkAdminSession throws UnexpectedStatus for any status other than 204/401, and network errors also reject.\n- SignInForm.tsx:29,51 shows a separate 'failed' alert for errors that are not a 401. This is reachable because signIn throws on any status other than 204/401.\n- AdminArea.tsx:13,29 shows an alert when sign-out fails.\n- session.ts:31 treats a 401 on sign-out as success.\ndesign.md does describe the checking, unreachable and sign-in-failure states, but it is non-normative. It does not mention the sign-out failure alert or the sign-out-401-as-success rule at all, so the gap there is even bigger than the finding says. Nothing elsewhere (framework, store spec, guards) makes these paths unreachable. The finding is not saying the behaviour is wrong. It says the behaviour has no Requirement or Scenario behind it, and that is true. 'Minor' is the right severity: the behaviour is reasonable and unit-tested, and the only problem is that it is missing from the spec.",
+          "I confirmed the finding against the code. The delta spec (openspec/changes/implement-admin-access-ui/specs/admin-access/spec.md) has only two requirements: \"Admin sign-in screen\" (scenarios: No session, Wrong password, Session ends while signed in) and \"CSRF header on admin mutations\" (scenario: Sign-out). The code does more than that. In AdminGate.tsx:20-32, while `session.data` is undefined it shows a \"checking\" status, and once `session.isError` is set it shows an \"unreachable\" alert with a retry button. In session.ts:17/25, `checkAdminSession` and `signIn` throw on any status other than 204 or 401, which is what feeds the unreachable state and the separate sign-in failure message. In session.ts:31, `signOut` treats a 401 as success.\n\nA real user can reach all of these. Any network failure, backend outage or 5xx on GET or POST /api/admin/session triggers them, and so does starting the frontend before `docker compose` brings the backend up. They aren't dead code or test-only paths, and nothing in the spec defines them. So the gap is real: the spec states nothing about how the user-visible copy, roles or retry should behave. The behaviour itself is sensible and causes no security problem, because a sign-out 401 means the session is already gone. That makes this a spec-traceability gap rather than a runtime defect, so the severity stays at minor."
+        ]
+      },
+      {
+        "title": "Sign-out refused with 403 (missing/stale CSRF token) is shown as 'Could not reach the server.'",
+        "file": "src/features/admin-access/AdminArea.tsx",
+        "line": 29,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "Store spec 'Sign-out without a CSRF token is refused … HTTP 403'. adminClient.ts:31 sends no header when the XSRF-TOKEN cookie is missing (`&& token`). session.ts:31 throws on 403, and AdminArea shows t('admin.session.unreachable') = 'Could not reach the server.' (en.ts). The server was reached, so the copy is wrong and the admin cannot recover. The failure state also has no retry or re-sign-in path.",
+        "suggestion": "Map 403 on sign-out to its own message or to re-checking the session, and specify it in the delta spec (see the undocumented-states finding).",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "The main mechanism holds. In adminClient.ts:31, the X-XSRF-TOKEN header is only sent when the XSRF-TOKEN cookie exists (`&& token`). If the cookie is missing, the backend refuses the DELETE with a 403, as the spec requires. session.ts:31 throws UnexpectedStatus for any status other than 204 or 401, so a 403 throws. The 403 is not routed to the unauthorized listener either, because adminClient.ts:37 only handles 401. AdminArea.tsx:19-20 catches the error and sets `failed`, and line 29 then shows 'admin.session.unreachable', which en.ts:7 defines as 'Could not reach the server.' The server did respond, so that message is wrong. The same generic copy also covers 500s and other errors, so this is a real copy and spec-compliance problem.\n\nOne part of the finding is overstated. It says there is \"no retry\", but the Sign out button (line 30) stays on screen after the failure, so the admin can try again. Retrying will usually get another 403 while the cookie is still missing, though, and there is no path to re-sign-in, so \"cannot recover\" is mostly accurate.\n\nThe path is reachable only in edge cases (cookie cleared, expired or blocked while the session cookie survives), so minor severity fits.",
+          "The finding holds up in the frontend code. Some of its wording overstates the impact.\n\nWhat I confirmed:\n- In `adminClient.ts:31`, the client adds `X-XSRF-TOKEN` only when `xsrfToken()` finds a value. If the `XSRF-TOKEN` cookie is missing, the DELETE goes out with no CSRF header, and the store spec says that request gets a 403.\n- `session.ts:31` (`signOut`) accepts only 204 and 401. A 403 throws `UnexpectedStatus`.\n- `AdminArea.tsx:19-20` catches every error the same way and sets `failed`. Line 29 then shows `admin.session.unreachable`, which is \"Could not reach the server.\" (`en.ts:7`).\n- The middleware's `onResponse` reacts only to 401, so nothing else handles a 403.\n\nSo a 403 always shows a message that is plainly false, because the server did answer.\n\nThe only CSRF test (`AdminGate.test.tsx:98`) covers the happy path with the header present. No test covers the 403 case.\n\nHow likely it is in practice: low but possible. It needs a live session with a missing or stale `XSRF-TOKEN` cookie. That could happen if the user clears cookies selectively, if the session cookie and the XSRF cookie have different lifetimes, or if a proxy or WAF returns a 403. I couldn't read the backend (permission denied), so I couldn't check whether a server-stored CSRF token could go stale independently of the cookie.\n\nWhat the finding overstates:\n- \"No retry path\" is wrong. The Sign out button stays rendered, so the admin can click it again.\n- \"The admin cannot recover\" is only partly true. A retry with a missing cookie would get 403 again, but reloading the page still works.\n\nThe core claim (wrong copy for a 403, and the case is absent from the spec and the code) is real. Minor is the right severity."
+        ]
+      }
+    ],
+    "contested": [
+      {
+        "title": "Raw font-weight and rem width in feature CSS instead of design-system tokens or classes",
+        "file": "src/features/admin-access/admin-access.css",
+        "line": 13,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "`.admin-label { font-weight: 700; }` and `.admin-stack { width: min(100%, 28rem); }` hardcode values. AGENTS.md says: 'For your own styles, use only its CSS variables … no raw hex, px or font values.' The design system already has `.dk-t-body-strong` (16px/700) and `.dk-t-label` for label text.",
+        "suggestion": "Remove `.admin-label` and give the <label> the `dk-t-body-strong` (or `dk-t-label`) class. Take the max width from an existing layout token, or derive it from spacing variables, rather than a raw `28rem`.",
+        "dimension": "correctness",
+        "verdict": "contested",
+        "verifierNotes": [
+          "The finding quotes the code correctly. admin-access.css:9 has `width: min(100%, 28rem)` and :13 has `font-weight: 700`. But there's no correctness defect here: both declarations are valid and do what they're meant to (bold labels, a capped form width), and nothing breaks.\n\nThe convention argument is also weaker than it looks. AGENTS.md bans \"raw hex, px or font values\". `28rem` is not px, and design-system/tokens.css has no width, container or measure token to use instead. tokens.css also has no font-weight variables. Weights only exist inside the `.dk-t-*` classes, so there's no CSS variable to swap in for `font-weight: 700`.\n\nOne suggested replacement would change behaviour: `.dk-t-label` is 12px and uppercase, which is not the same as the current bold label. The other, `.dk-t-body-strong`, would match.\n\nAt most this is a minor style/consistency nit: an arguable \"font value\" and reuse of an existing class. It isn't a correctness mechanism that is wrong in this code, so I'm treating it as refuted through the correctness lens. If it's kept, it belongs in a style dimension at nit severity.",
+          "The code matches the finding. src/features/admin-access/admin-access.css:9 has `width: min(100%, 28rem)` and line 13 has `.admin-label { font-weight: 700; }`. AGENTS.md says feature styles must use only design-system CSS variables, with \"no raw hex, px or font values\". A raw font-weight counts as a font value. The design system already has `.dk-t-body-strong` (16px/24px, weight 700, in tokens.css:147), which gives the same result through a sanctioned class. `28rem` is not px or hex, so the rule doesn't name it directly. It is still a raw size where the rule expects only tokens (`var(--space-*)` and similar), so that half is weaker but still a fair call. Through the exploitability lens: no user or attacker can trigger any harm. The weight renders correctly, the width is responsive because of min(100%, …), and nothing here affects contrast, focus or behaviour. That makes this a real but low-impact breach of the project rules and design-system consistency, not a runtime bug. \"Minor\" is the right severity. I can't refute it because the code that breaks the rule is really there."
+        ]
+      },
+      {
+        "title": "Coverage summary: 7 scenarios: 6 implemented, 1 partial, 0 missing, 0 contradicted",
+        "file": "openspec/changes/implement-admin-access-ui/specs/admin-access/spec.md",
+        "line": 1,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "Checklist = the 4 delta scenarios (No session, Wrong password, Session ends while signed in, Sign-out CSRF) + the store admin-access scenarios with a UI or client half: 'Admin UI shows sign-in without a session', 'Idle timeout just past 8 hours … AND the admin UI shows the sign-in form', 'Reads need no CSRF token'. Implemented: No session (AdminGate.tsx:34, SignInForm.tsx:38-50, AdminArea.tsx:39; AdminGate.test.tsx:39, e2e/admin-sign-in.spec.ts:36). Session ends / idle expiry (adminClient.ts:37 + AdminGate.tsx:18; AdminGate.test.tsx:109). Sign-out CSRF (adminClient.ts:31; adminClient.test.ts:16, AdminGate.test.tsx:98, e2e:68). Reads without CSRF (adminClient.ts:5,31; adminClient.test.ts:23). Store 'shows sign-in without a session' (same as No session). Partial: Wrong password, because a repeated wrong attempt is not announced again (see the separate finding). All backend-only scenarios (cookie flags, 403 paths, password policy, LAN binding) are out of scope for this repo.",
+        "suggestion": "No action. This is the summary line the output contract asks for.",
+        "dimension": "spec-compliance",
+        "verdict": "contested",
+        "verifierNotes": [
+          "I checked this summary against the code and it holds up. It reports coverage and asks for no fix, so there is no defect to disprove. One small error: the paths it cites are wrong. The files are in `src/features/admin-access/`, not a folder named `admin`.\n\n- **Scenarios:** the delta spec has exactly 4: No session, Wrong password, Session ends while signed in, and Sign-out.\n- **Sign-out sends the CSRF token:** `adminClient.ts:31` adds `X-XSRF-TOKEN` to every request that is not GET, HEAD or OPTIONS.\n- **Reads send no token:** the same line skips GET, HEAD and OPTIONS (the set is defined at line 5).\n- **Session ends while signed in:** `adminClient.ts:37` notifies the 401 listeners on any `/api/admin/` 401 except the sign-in POST. That covers the 8-hour idle expiry.\n- **No session:** `SignInForm.tsx:38-50` renders the heading and a single password field.\n- **Wrong password is only partial:** this is correct. After a wrong password, `error` stays `'invalid'`, so the `<p role=\"alert\">` at `SignInForm.tsx:51` keeps the same text and is never re-mounted. Screen readers may therefore not announce a second wrong attempt.\n\nThe summary does not overstate or misstate any coverage.",
+          "This finding is a coverage summary. It doesn't describe a defect a user or attacker could trigger, and its own suggestion is \"No action.\" The parts I checked hold up: the delta spec has four scenarios (No session, Wrong password, Session ends while signed in, Sign-out), and the cited files exist in src/features/admin-access/ (AdminGate.tsx, SignInForm.tsx, AdminArea.tsx, adminClient.ts and their tests). The only problem it mentions is the \"partial\" Wrong password case, where a repeated wrong attempt isn't announced again. That is a pointer to a separate finding, which should be judged on its own. Nothing here can be reproduced or exploited, so it doesn't count as a confirmed issue."
+        ]
+      }
+    ],
+    "rejected": [
+      {
+        "title": "Sign-out and 401 expiry flip the session flag but leave other admin query data in the cache",
+        "file": "src/features/admin-access/AdminGate.tsx",
+        "line": 18,
+        "severity": "minor",
+        "confidence": "low",
+        "evidence": "Both the 401 listener (`queryClient.setQueryData(ADMIN_SESSION_KEY, false)`) and AdminHome's sign-out only set `['admin','session']` to false. Every later admin slice will cache its data under `['admin', …]`. After sign-out or idle expiry (NFR-15), that data stays in memory, and after the next sign-in it can be shown stale without a refetch. No other admin queries exist yet, so nothing visible breaks today.",
+        "suggestion": "Put one `endAdminSession(queryClient)` helper in session.ts. It should call `queryClient.removeQueries({ queryKey: ['admin'] })` and then set ADMIN_SESSION_KEY to false. Use it from both the 401 listener and sign-out.",
+        "dimension": "correctness",
+        "verdict": "rejected",
+        "verifierNotes": [
+          "I'm marking this as refuted. The code matches what the finding describes, but the problem it predicts doesn't happen in this code.\n\n1. **The data it describes doesn't exist.** The only query in `src/` is `ADMIN_SESSION_KEY` (`['admin','session']`). It's used at `AdminGate.tsx:16`, and both sign-out (`AdminArea.tsx:18`) and the 401 listener (`AdminGate.tsx:18`) set exactly that key. There is no other `['admin', …]` data to leave behind, so there's no defect today. The finding admits this itself.\n\n2. **\"Shown stale without a refetch\" is wrong for this setup.** `src/app/queryClient.ts` changes only `retry` and `refetchOnWindowFocus`, so `staleTime` keeps TanStack's default of 0. When the session flag goes false, `AdminGate` swaps the children for `SignInForm`, which unmounts every child query observer. After the next sign-in the children mount again, and with `staleTime` 0 every query refetches on mount. If the data hasn't been garbage-collected yet (default `gcTime` is 5 min), it shows briefly while the refetch runs. That's normal show-cached-then-refresh behaviour, not stale data that never refreshes.\n\n3. **No exposure to another user.** There's one admin role behind one password, so cached data staying in memory after sign-out doesn't show one user's data to another.\n\nThe helper the finding suggests (`removeQueries({queryKey:['admin']})`) is reasonable tidying for later slices. But a correctness finding needs a mechanism that actually fails here, and none does.",
+          "I read the code and the claimed problem can't happen today. The only TanStack Query cache entry in `src` is `ADMIN_SESSION_KEY`. A search for `queryKey`, `setQueryData` and `removeQueries` turned up only AdminGate.tsx:16, :18 and :34 plus AdminArea.tsx:18. There is no other `['admin', …]` data that could be left behind after sign-out or a 401, and the finding admits this (\"No other admin queries exist yet\"). So no real user or attacker can reproduce it.\n\nThe claim is also weak for future code:\n1. When the session flag goes false, AdminGate unmounts its children. Queries using TanStack's default `staleTime` of 0 refetch when they mount again after the next sign-in.\n2. There is only one admin, so cached data is not exposed to a different user.\n3. Without a session the cache is never shown, because the gate renders SignInForm in place of the children.\n\nAt most this is a hardening idea for later slices, not a defect in the code under review."
+        ]
+      },
+      {
+        "title": "Password field uses the child answer-input style (26px tabular numerals, 56px right padding)",
+        "file": "src/features/admin-access/SignInForm.tsx",
+        "line": 45,
+        "severity": "minor",
+        "confidence": "low",
+        "evidence": "The input uses `className=\"dk-input\"`. In components.css:131 that class is the task-answer input: `height: 60px; padding: 0 56px 0 …; font-size: 26px; font-weight: 600; font-variant-numeric: tabular-nums`, and the 56px padding leaves room for a result icon. Reusing it for an admin password field gives an oversized answer-box look and reserves space for an icon that never appears.",
+        "suggestion": "Check src/design-system/README.md for a general text-input style or component for forms. If none exists, request one through the design-system artifact; don't repurpose the answer input.",
+        "dimension": "correctness",
+        "verdict": "rejected",
+        "verifierNotes": [
+          "The CSS facts are right. SignInForm.tsx:45 uses `className=\"dk-input\"`, and components.css:131 gives that class 60px height, right padding of 56px, 26px/600 weight and tabular-nums. The 56px padding leaves room for `.dk-part-state`, and that icon is only rendered inside AnswerPart (practice.tsx:76).\n\nBut calling this a misuse is wrong. The design-system README, `src/design-system/README.md:146`, lists the admin parts as \"Panel, Button, Chip …, SubjectChip …, and the same inputs.\" That explicitly allows admin screens to reuse the child input class. The README has no separate general text-input component or class, and no other input style exists in components.css. The suggested fix (\"check README for a general text-input style\") therefore finds nothing, and the README actually supports the current code.\n\nOn correctness, nothing breaks:\n- The field is a real `type=\"password\"` input with a linked label, `autoComplete`, a focus ring (`.dk-input:focus-visible`) and Enter-to-submit through the form.\n- tabular-nums has no visible effect on masked password dots.\n- The unused 56px right padding only leaves some empty space on the right of a full-width field.\n\nAt most this is a cosmetic or design-density point (README:147 says admin screens are \"denser\"). It is not a correctness defect, and the design-system docs approve the reuse. Refuted.",
+          "The CSS facts are right. `.dk-input` at components.css:131 sets height 60px, 56px right padding, 26px tabular-nums, and SignInForm.tsx:45 uses that class. But the finding treats this as misuse, and the design system says the opposite. src/design-system/README.md:146, in the Admin section, says admin screens use \"Panel, Button, Chip …, SubjectChip … and the same inputs.\" `.dk-input` is the only input style the design system has; there is no separate general text-input class to use instead. Reusing it is the documented, sanctioned pattern, so the suggested fix (\"don't repurpose the answer input\") goes against the design system's own rule.\n\nNothing breaks for a user either. On a type=\"password\" field, tabular-nums and the 26px size only change how big the mask dots look. The 56px right padding is just unused space in a full-width field. The input still has a label (htmlFor/id), keeps the shared focus ring, and Enter still submits. There is no functional, accessibility, or security impact; at most it is a styling preference. The README does call admin screens \"denser\", but that refers to the body/caption type sizes and does not tell admin to avoid the shared inputs."
+        ]
+      },
+      {
+        "title": "Plan's NFR-9/NFR-13 DoD for the frontend (sign-in route in the a11y gate and ⟦ test) has no delta requirement",
+        "file": "openspec/changes/implement-admin-access-ui/specs/admin-access/spec.md",
+        "line": 3,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "mvp-capability-plan.md:141 'frontend: sign-in route in the a11y gate and the `⟦` render test.' It is implemented: route-paths.ts:5 ROUTE_PATHS = ['/', '/admin'] (iterated by the a11y/theme e2e), and i18n-coverage.test.tsx stubs the backend so /admin renders the sign-in form. proposal.md:9-10 cites NFR-9/NFR-13, but the delta spec has no requirement or scenario for them, so the slice's definition of done is not spec-backed.",
+        "suggestion": "Add a scenario to the delta spec: '/admin is in the route registry, passes axe in light and dark, and shows only catalog text under the ⟦ pseudo-catalog'.",
+        "dimension": "spec-compliance",
+        "verdict": "rejected",
+        "verifierNotes": [
+          "The finding's claim is true in a narrow sense: the delta spec (openspec/changes/implement-admin-access-ui/specs/admin-access/spec.md) has no NFR-9 or NFR-13 scenario. Its conclusion, that the slice's done-definition is 'not spec-backed', is wrong. The main spec at openspec/specs/platform-foundation/spec.md, archived from slice 1, already states both obligations for every registered route. Line 55 says the pseudo-catalog render covers \"every route in the route registry\". Line 65 says \"Every route… SHALL have no serious or critical axe-core violation in either colour scheme\" (NFR-13). route-paths.ts:5 adds '/admin' to ROUTE_PATHS, which is that registry, and the a11y, theme and ⟦ tests loop over it. So /admin is already covered by existing requirements and their scenarios. Proposal.md:9-10 describes exactly this: \"the sign-in route joins the ⟦ render test and the a11y gate\". Adding the suggested delta scenario would only repeat requirements that already exist. Nothing is missing or wrong.",
+          "Nothing here can go wrong for a user or an attacker. It is a traceability nit, and the premise doesn't hold either. The repo's main spec `openspec/specs/platform-foundation/spec.md` already states both obligations against the whole route registry. Lines 54-56 say `App` renders every route in the registry under the `⟦…⟧` pseudo-catalog and shows only catalog text (NFR-9). Line 66 says every route has zero serious or critical axe violations in either colour scheme (NFR-13). Those requirements quantify over the registry. Adding `/admin` to `ROUTE_PATHS` (task 2.3, proposal lines 24-25) puts the sign-in route under the existing spec automatically. The DoD item from the plan is therefore already backed by the spec, and a second, route-specific scenario in the admin-access delta would only repeat it. The finding itself says the behaviour is implemented and tested (`route-paths.ts`, `i18n-coverage.test.tsx`, the a11y e2e). So there is no gap in the code or in what the spec requires, and nothing a real user could ever hit."
+        ]
+      },
+      {
+        "title": "'Any admin UI page' covers only the exact /admin route",
+        "file": "src/app/route-paths.ts",
+        "line": 5,
+        "severity": "minor",
+        "confidence": "low",
+        "evidence": "Store scenario: 'WHEN any admin UI page is opened THEN the English sign-in form … is shown instead of the page content'. Only '/admin' is registered. A path such as /admin/tasks falls to the not-found screen rather than the gate. No such page exists yet, so this is not a current violation, but nothing structurally guarantees later admin routes are wrapped in AdminGate.",
+        "suggestion": "When slice 5 adds admin routes, register them under AdminArea/AdminGate (or a /admin/* prefix rule). Consider a registry test that asserts every '/admin*' route is rendered inside AdminGate.",
+        "dimension": "spec-compliance",
+        "verdict": "rejected",
+        "verifierNotes": [
+          "The code is as described. `ROUTE_PATHS` is `['/', '/admin']` (src/app/route-paths.ts:5), and routes.tsx:18 sends `/admin` to `<AdminArea />`. But under a correctness lens nothing is wrong today. The only admin UI page that exists is `/admin`, and it is gated. A path like `/admin/tasks` is not an admin UI page: no such screen exists, so showing not-found there leaks no admin content and does not break the scenario \"WHEN any admin UI page is opened THEN the sign-in form is shown instead of the page content\". The finding admits this (\"not a current violation\"). What it describes is a future-proofing or structural risk about routes slice 5 might add, not a mechanism that is wrong in this code. The registry header comment (routes.tsx:6-9) already says every slice must register its screens, and later admin routes would be reviewed when they are added. With no positive defect, this is refuted.",
+          "I read `src/app/route-paths.ts:5`, `routes.tsx:18` and `App.tsx`. The routes registered are `/` and `/admin`, and `/admin` renders `<AdminArea />`, the gated sign-in area. Any other path goes to `<NotFound />`. Normalisation tests in `App.test.tsx:44-46` confirm that `/admin/`, `/admin//` and `/admin/index.html` all resolve to the gated `/admin`.\n\nA path like `/admin/tasks` shows the not-found screen, which contains no admin content. So no admin page can be reached without the sign-in, and the spec's 'any admin UI page' rule holds today, since the only admin page there is is gated. The finding admits this itself ('No such page exists yet, so this is not a current violation'). Nobody can reproduce a bypass, because there is nothing to bypass.\n\nWhat's left is a guess about future routes in slice 5. That's a suggestion for later, not a defect you can reproduce now. The backend's admin API also enforces sessions on its own, so an unwrapped route added later wouldn't expose data through the API anyway."
+        ]
+      }
+    ],
+    "reviewEvidence": "openspec/changes/implement-admin-access-ui/review-findings.json"
+  }
+}

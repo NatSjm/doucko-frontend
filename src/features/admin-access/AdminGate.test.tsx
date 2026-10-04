@@ -1,5 +1,6 @@
-// @trace NFR-1
-// @trace NFR-15
+// @trace NFR-9
+// Store spec admin-access (sign-in, sign-out, CSRF, idle expiry). NFR-1 and NFR-15 are backend-owned in the
+// capability plan, so this file traces only the externalized English admin copy it also asserts.
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -46,6 +47,17 @@ describe('admin area without a session', () => {
     expect(fields[0]).toHaveAttribute('type', 'password');
     expect(fields[0]).toHaveAttribute('autocomplete', 'current-password');
     expect(screen.queryByRole('heading', { name: messages['admin.home.title'] })).toBeNull();
+  });
+
+  it('a second wrong password is announced again in a new alert', async () => {
+    stubAdminBackend();
+    renderArea();
+    await signInHeading();
+    await userEvent.type(passwordField(), 'wrong-1{Enter}');
+    const first = await screen.findByRole('alert');
+    await userEvent.type(passwordField(), 'wrong-2{Enter}');
+    await vi.waitFor(() => expect(screen.getByRole('alert')).not.toBe(first));
+    expect(screen.getByRole('alert')).toHaveTextContent(messages['admin.signIn.invalid']);
   });
 
   it('a wrong password shows an alert and keeps the form', async () => {
@@ -149,14 +161,14 @@ describe('unexpected answers from the backend', () => {
     expect(passwordField()).toHaveValue(PASSWORD);
   });
 
-  it('a failed sign-out keeps the admin home and says the server could not be reached', async () => {
+  it('a failed sign-out keeps the admin home and says sign-out failed', async () => {
     const backend = stubAdminBackend();
     backend.signedIn = true;
     renderArea();
     const signOutButton = await screen.findByRole('button', { name: messages['admin.home.signOut'] });
     backend.failWith = 500;
     await userEvent.click(signOutButton);
-    expect(await screen.findByRole('alert')).toHaveTextContent(messages['admin.session.unreachable']);
+    expect(await screen.findByRole('alert')).toHaveTextContent(messages['admin.home.signOutFailed']);
     expect(screen.getByRole('heading', { level: 1, name: messages['admin.home.title'] })).toBeInTheDocument();
   });
 
@@ -168,5 +180,15 @@ describe('unexpected answers from the backend', () => {
     backend.signedIn = false;
     await userEvent.click(signOutButton);
     await signInHeading();
+  });
+
+  it('a sign-out refused for its CSRF token says sign-out failed, not that the server is unreachable', async () => {
+    const backend = stubAdminBackend();
+    backend.signedIn = true;
+    document.cookie = 'XSRF-TOKEN=stale; path=/';
+    renderArea();
+    await userEvent.click(await screen.findByRole('button', { name: messages['admin.home.signOut'] }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(messages['admin.home.signOutFailed']);
+    expect(screen.getByRole('button', { name: messages['admin.home.signOut'] })).toBeEnabled();
   });
 });

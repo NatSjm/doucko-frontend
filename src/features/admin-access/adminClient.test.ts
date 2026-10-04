@@ -1,4 +1,4 @@
-// @trace NFR-15
+// Store spec admin-access, CSRF header (NFR-15 is backend-owned in the capability plan, so no @trace here).
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { adminClient, onAdminUnauthorized } from './adminClient';
 import { stubAdminBackend } from '@/test/admin-backend';

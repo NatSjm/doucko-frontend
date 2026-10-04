@@ -1,0 +1,133 @@
+{
+  "generatedBy": "review-gate",
+  "scope": "slice 2 admin-access frontend (implement-admin-access-ui)",
+  "change": "implement-admin-access-ui",
+  "baseRef": "main",
+  "headRef": "HEAD",
+  "dimensions": {
+    "correctness": {
+      "confirmed": 2,
+      "contested": 1,
+      "rejected": 2
+    },
+    "security": {
+      "confirmed": 0,
+      "contested": 0,
+      "rejected": 0
+    },
+    "spec-compliance": {
+      "confirmed": 6,
+      "contested": 1,
+      "rejected": 2
+    },
+    "visual": {
+      "confirmed": 0,
+      "contested": 0,
+      "rejected": 0
+    }
+  },
+  "findings": [
+    {
+      "id": "F01",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "Sign-out reports every non-204/401 response, including a 403 CSRF rejection, as 'Could not reach the server.'",
+      "file": "src/features/admin-access/AdminArea.tsx",
+      "line": 19,
+      "status": "open"
+    },
+    {
+      "id": "F02",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "A second wrong password may not be re-announced to screen readers",
+      "file": "src/features/admin-access/SignInForm.tsx",
+      "line": 51,
+      "status": "open"
+    },
+    {
+      "id": "F03",
+      "severity": "major",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Frontend traces and claims NFR-1 / NFR-15, but the capability plan assigns both to the backend only",
+      "file": "src/features/admin-access/AdminGate.test.tsx",
+      "line": 1,
+      "status": "open"
+    },
+    {
+      "id": "F04",
+      "severity": "major",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Repeated wrong password is not re-announced (scenario 'Wrong password' only partly met)",
+      "file": "src/features/admin-access/SignInForm.tsx",
+      "line": 51,
+      "status": "open"
+    },
+    {
+      "id": "F05",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Ticked task 3.1 names an artifact that does not exist (useAdminSession)",
+      "file": "openspec/changes/implement-admin-access-ui/tasks.md",
+      "line": 15,
+      "status": "open"
+    },
+    {
+      "id": "F06",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "tasks.md checkboxes do not match current-state.md, and current-state.md is stale (says 'not committed')",
+      "file": "docs/current-state.md",
+      "line": 11,
+      "status": "open"
+    },
+    {
+      "id": "F07",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Undocumented UI states: checking, unreachable + retry, sign-in failure, sign-out failure",
+      "file": "src/features/admin-access/AdminGate.tsx",
+      "line": 20,
+      "status": "open"
+    },
+    {
+      "id": "F08",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Sign-out refused with 403 (missing/stale CSRF token) is shown as 'Could not reach the server.'",
+      "file": "src/features/admin-access/AdminArea.tsx",
+      "line": 29,
+      "status": "open"
+    },
+    {
+      "id": "F09",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "contested",
+      "title": "Raw font-weight and rem width in feature CSS instead of design-system tokens or classes",
+      "file": "src/features/admin-access/admin-access.css",
+      "line": 13,
+      "status": "open"
+    },
+    {
+      "id": "F10",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "contested",
+      "title": "Coverage summary: 7 scenarios: 6 implemented, 1 partial, 0 missing, 0 contradicted",
+      "file": "openspec/changes/implement-admin-access-ui/specs/admin-access/spec.md",
+      "line": 1,
+      "status": "open"
+    }
+  ],
+  "clean": false,
+  "generatedAt": "2026-10-04T14:58:54Z"
+}
