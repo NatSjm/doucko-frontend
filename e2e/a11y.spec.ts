@@ -2,6 +2,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import { SCREENS } from './screens';
 import { expectSignedInContent, signedInAdmin } from './fixtures/admin';
+import { childBackend, expectChildContent } from './fixtures/child';
 import { AGAINST_STACK, expect, test } from './fixtures/test';
 
 for (const scheme of ['light', 'dark'] as const) {
@@ -14,9 +15,11 @@ for (const scheme of ['light', 'dark'] as const) {
         test.slow(browserName === 'firefox');
         // Admin screens are scanned signed in, with content (the stack smoke covers the real backend).
         if (screen.admin && !AGAINST_STACK) await signedInAdmin(page);
+        if (screen.child && !AGAINST_STACK) await childBackend(page);
         await page.goto(screen.path);
         await expect(page.locator(screen.marker)).toBeAttached();
         if (screen.admin && !AGAINST_STACK) await expectSignedInContent(page);
+        if (screen.child && !AGAINST_STACK) await expectChildContent(page);
         const { violations } = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
         const severe = violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
         expect(severe.map((v) => `${v.id}: ${v.help} (${v.nodes.length})`)).toEqual([]);
@@ -30,10 +33,12 @@ test.describe('reduced motion', () => {
   for (const screen of SCREENS) {
     test(`${screen.name} runs no animation`, async ({ page }) => {
       if (screen.admin && !AGAINST_STACK) await signedInAdmin(page);
+      if (screen.child && !AGAINST_STACK) await childBackend(page);
       await page.goto(screen.path);
       await page.waitForLoadState('networkidle');
       await expect(page.locator(screen.marker)).toBeAttached();
       if (screen.admin && !AGAINST_STACK) await expectSignedInContent(page);
+      if (screen.child && !AGAINST_STACK) await expectChildContent(page);
       // Sampled after load and again later, counting animations that are pending (delayed) as well
       // as running, so motion started after hydration or by a delay is seen too.
       for (const waitMs of [0, 500]) {

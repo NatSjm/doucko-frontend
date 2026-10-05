@@ -1,7 +1,8 @@
 // @trace NFR-13
 import { describe, expect, it } from 'vitest';
 import { SEED } from '@/test/fake-admin-backend';
-import { ADMIN_ROUTES, queryParam, ROUTE_EXAMPLES, ROUTE_PATHS } from './route-paths';
+import { PRACTICE } from '@/test/fake-child-backend';
+import { ADMIN_ROUTES, CHILD_ROUTES, queryParam, ROUTE_EXAMPLES, ROUTE_PATHS } from './route-paths';
 import { routes } from './routes';
 
 describe('route registry', () => {
@@ -14,8 +15,12 @@ describe('route registry', () => {
     expect(ADMIN_ROUTES).toContain('/admin/tasks/edit');
   });
 
-  it('example queries name ids of the fake backend seed, so the checks reach content', () => {
-    const ids = new Set<string>(Object.values(SEED));
+  it('marks every other path as a child route', () => {
+    expect(CHILD_ROUTES).toEqual(['/', '/mission', '/task']);
+  });
+
+  it('example queries name ids of the fake backend seeds, so the checks reach content', () => {
+    const ids = new Set<string>([...Object.values(SEED), ...Object.values(PRACTICE)]);
     for (const query of Object.values(ROUTE_EXAMPLES)) {
       const params = new URLSearchParams(query);
       for (const key of ['taskId', 'sourceId', 'missionId']) if (params.has(key)) expect(ids.has(params.get(key) as string)).toBe(true);

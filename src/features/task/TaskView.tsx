@@ -10,7 +10,7 @@ export type TaskViewData = S['TaskView'];
 type LocalizedText = S['LocalizedText'];
 
 /** Czech text with its translation, when one is on, after it in its own language (FR-8). */
-function Localized({ text, className }: { text: LocalizedText; className?: string }) {
+export function Localized({ text, className }: { text: LocalizedText; className?: string }) {
   return (
     <>
       <span data-content className={className}>

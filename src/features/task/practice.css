@@ -1,0 +1,164 @@
+/* The child task screen: one 760px column (design system), parts, feedback and actions (tokens only). */
+.task-column {
+  display: grid;
+  gap: var(--space-5);
+  width: min(100%, calc(var(--space-8) * 12 - var(--space-6) - var(--space-1) * 2));
+  margin: 0 auto;
+}
+
+.task-card {
+  gap: var(--space-5);
+}
+
+.task-head-aside {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+}
+
+.task-attempts {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--ink-muted);
+  font-weight: 600;
+}
+
+.task-form {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.task-part-notes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.task-part-word {
+  font-weight: 700;
+}
+
+.dk-part-correct .task-part-word {
+  color: var(--spark-text);
+}
+
+.dk-part-wrong .task-part-word {
+  color: var(--almost);
+}
+
+.task-field-error,
+.task-format-tip {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.task-answer {
+  color: var(--ink);
+}
+
+.task-feedback {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.task-feedback:empty {
+  display: none;
+}
+
+.task-xp {
+  flex: none;
+  margin-left: auto;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  background: var(--volt);
+  color: var(--on-volt);
+  font-weight: 800;
+  box-shadow: 0 0 0 var(--stroke-sticker) var(--panel);
+}
+
+.task-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.task-alert {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--panel-sunk);
+  font-weight: 600;
+}
+
+.task-thanks {
+  margin: 0;
+  font-weight: 600;
+}
+
+.task-muted {
+  color: var(--ink-muted);
+  margin: 0;
+}
+
+/* The report dialog sits under the task card. */
+.task-report {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.task-report h2 {
+  margin: 0;
+}
+
+.task-report-form,
+.task-report-note {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.task-report-reasons {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.task-report-reasons legend {
+  margin-bottom: var(--space-2);
+}
+
+.task-report-reason {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.task-report-reason input {
+  width: var(--space-5);
+  height: var(--space-5);
+  accent-color: var(--ink);
+}
+
+.task-report-reason input:focus-visible,
+.task-report-text:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.task-report-text {
+  font: inherit;
+  color: var(--ink);
+  background: var(--panel-sunk);
+  border: var(--stroke-control) solid var(--line);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  resize: vertical;
+}
+
+.task-report-actions {
+  display: flex;
+  gap: var(--space-3);
+}

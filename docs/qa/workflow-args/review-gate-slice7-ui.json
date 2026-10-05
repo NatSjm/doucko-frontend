@@ -1,0 +1,7 @@
+{
+  "scope": "slice 7 practice-flow frontend (implement-practice-flow-ui): child HQ, mission briefing, task screen (attempts, reveal, UNPARSEABLE, hints, translation toggle, report a problem, save and resume), client-side navigation, the child contract stub",
+  "baseRef": "4a38c1d",
+  "headRef": "HEAD",
+  "focus": "Check against the change's spec delta (openspec/changes/implement-practice-flow-ui/specs/practice-flow/spec.md), the store specs practice-flow, answer-checking (UNPARSEABLE costs nothing) and child-profile (translation setting), and contract/api/openapi.yaml for the child operations. Pay attention to: whether a verdict is ever shown without a server answer, the resync after a lost response (FR-31), locked parts never resent (OQ-11), the reveal never using the almost colour or punishing copy, keyboard path and focus management (NFR-7), the 100-code-point clamp, the report note rule, literal UI text bypassing the cs catalog, the stub's fidelity to the contract status codes, and the screenshots under docs/qa/demo-recordings/slice7-practice-flow/.",
+  "change": "implement-practice-flow-ui"
+}

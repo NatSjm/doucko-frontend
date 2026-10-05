@@ -2,14 +2,14 @@
 import { act, render } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ADMIN_ROUTES, ROUTE_EXAMPLES, type RoutePath } from './route-paths';
+import { ADMIN_ROUTES, CHILD_ROUTES, ROUTE_EXAMPLES, type RoutePath } from './route-paths';
 import { messages, type Messages } from '@/i18n';
 import { cs } from '@/i18n/cs';
 import { en } from '@/i18n/en';
 import { App } from './App';
 import { routes } from './routes';
-import { stubAdminBackend, stubSignedInAdmin } from '@/test/admin-backend';
-import { seedStrings } from '@/test/fake-admin-backend';
+import { stubAdminBackend, stubChildBackend, stubSignedInAdmin } from '@/test/admin-backend';
+import { allSeedStrings as seedStrings } from '@/test/fake-child-backend';
 
 vi.mock('@/features/sources/pdf', () => import('@/test/pdf-mock'));
 
@@ -73,11 +73,13 @@ const uncovered = (texts: string[]) => texts.filter((t) => !COVERED.test(t) && !
 /**
  * Renders App with the pseudo-catalog and lets effects and pending work settle before reading. Admin
  * routes are opened signed in, with their example query, against the shared fake backend and its
- * seed, so the authoring screens show their real content; other paths get a backend with no session.
+ * seed, so the authoring screens show their real content; child routes get the child contract stub
+ * with its practice seed; any other path a backend with no session.
  */
 async function renderSettled(path: string) {
   const admin = (ADMIN_ROUTES as readonly string[]).includes(path);
   if (admin) stubSignedInAdmin();
+  else if ((CHILD_ROUTES as readonly string[]).includes(path)) stubChildBackend();
   else stubAdminBackend();
   window.history.pushState({}, '', path + (ROUTE_EXAMPLES[path as RoutePath] ?? ''));
   render(<App messages={pseudo} />);
@@ -132,6 +134,16 @@ describe('externalized UI strings (NFR-9)', () => {
     expect(document.body.textContent).not.toContain(pseudo['admin.common.loading']);
     expect(document.body.textContent).not.toContain(pseudo['admin.session.checking']);
     if (path !== '/admin') expect(document.querySelectorAll('[data-content]').length).toBeGreaterThan(0);
+  });
+
+  it.each(CHILD_ROUTES.map((p) => [p] as const))('child route %s is checked with content, past loading', async (path) => {
+    await renderSettled(path);
+    expect(document.body.textContent).not.toContain(pseudo['child.common.loading']);
+    expect(document.body.textContent).not.toContain(pseudo['child.common.loadFailed']);
+    expect(document.body.textContent).not.toContain(pseudo['child.mission.notFound']);
+    expect(document.body.textContent).not.toContain(pseudo['child.task.notFound']);
+    expect(document.querySelectorAll('h1').length).toBe(1);
+    if (path === '/task') expect(document.querySelectorAll('[data-content]').length).toBeGreaterThan(0);
   });
 
   it('the content marker only accepts example data', () => {

@@ -1,0 +1,77 @@
+{
+  "kind": "demo",
+  "results": [
+    {
+      "id": "slice7-hq-missions",
+      "title": "HQ without login: missions by topic with x/N vyřešeno and their states (FR-24, FR-25, NFR-7)",
+      "proof": "FR-24, FR-25, NFR-7",
+      "video": "docs/qa/demo-recordings/slice7-practice-flow/slice7-hq-missions.webm",
+      "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-hq-missions.png",
+      "explainer": "docs/qa/demo-recordings/slice7-practice-flow/slice7-hq-missions.md",
+      "asserted": true
+    },
+    {
+      "id": "slice7-start-two-clicks",
+      "title": "Start a new mission in two clicks: card, then \"Začít misi\" (FR-25, FR-26, NFR-7)",
+      "proof": "FR-25, FR-26, NFR-7",
+      "video": "docs/qa/demo-recordings/slice7-practice-flow/slice7-start-two-clicks.webm",
+      "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-start-two-clicks.png",
+      "explainer": "docs/qa/demo-recordings/slice7-practice-flow/slice7-start-two-clicks.md",
+      "asserted": true
+    },
+    {
+      "id": "slice7-correct-next",
+      "title": "Correct on the first attempt: \"Výborně!\" and \"Další úloha\" (FR-26, FR-27, NFR-7)",
+      "proof": "FR-26, FR-27, NFR-7",
+      "video": "docs/qa/demo-recordings/slice7-practice-flow/slice7-correct-next.webm",
+      "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-correct-next.png",
+      "explainer": "docs/qa/demo-recordings/slice7-practice-flow/slice7-correct-next.md",
+      "asserted": true
+    },
+    {
+      "id": "slice7-wrong-then-reveal",
+      "title": "Two attempts, then the reveal: wrong part in \"almost\", right part locked, answers shown neutrally (FR-27)",
+      "proof": "FR-27",
+      "video": "docs/qa/demo-recordings/slice7-practice-flow/slice7-wrong-then-reveal.webm",
+      "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-wrong-then-reveal.png",
+      "explainer": "docs/qa/demo-recordings/slice7-practice-flow/slice7-wrong-then-reveal.md",
+      "asserted": true
+    },
+    {
+      "id": "slice7-unparseable",
+      "title": "Unreadable input: a format tip, the typed text kept, no attempt used (FR-22)",
+      "proof": "FR-22",
+      "video": "docs/qa/demo-recordings/slice7-practice-flow/slice7-unparseable.webm",
+      "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-unparseable.png",
+      "explainer": "docs/qa/demo-recordings/slice7-practice-flow/slice7-unparseable.md",
+      "asserted": true
+    },
+    {
+      "id": "slice7-hints-translation",
+      "title": "Hints in order and the Ukrainian translation next to the Czech (FR-28, FR-29)",
+      "proof": "FR-28, FR-29",
+      "video": "docs/qa/demo-recordings/slice7-practice-flow/slice7-hints-translation.webm",
+      "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-hints-translation.png",
+      "explainer": "docs/qa/demo-recordings/slice7-practice-flow/slice7-hints-translation.md",
+      "asserted": true
+    },
+    {
+      "id": "slice7-report",
+      "title": "\"Nahlásit problém\": the attempt attached, thanks, attempts unchanged; \"Jiné\" needs a note (FR-30)",
+      "proof": "FR-30",
+      "video": "docs/qa/demo-recordings/slice7-practice-flow/slice7-report.webm",
+      "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-report.png",
+      "explainer": "docs/qa/demo-recordings/slice7-practice-flow/slice7-report.md",
+      "asserted": true
+    },
+    {
+      "id": "slice7-save-resume",
+      "title": "Save and resume: a failed save keeps the input; reopening continues at the stored attempt (FR-31)",
+      "proof": "FR-31",
+      "video": "docs/qa/demo-recordings/slice7-practice-flow/slice7-save-resume.webm",
+      "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-save-resume.png",
+      "explainer": "docs/qa/demo-recordings/slice7-practice-flow/slice7-save-resume.md",
+      "asserted": true
+    }
+  ]
+}
