@@ -70,13 +70,14 @@ function Topic({ topic }: { topic: S['HqView']['topics'][number] }) {
 export function HqScreen() {
   const t = useT();
   const hq = useHq();
-  if (!hq.data)
+  const data = hq.isFetchedAfterMount ? hq.data : undefined;
+  if (!data)
     return (
       <ChildLayout title={t('app.name')} focusHeading={false}>
         <ChildLoadState error={hq.isError} onRetry={() => void hq.refetch()} />
       </ChildLayout>
     );
-  const { displayName, continueTarget, topics } = hq.data;
+  const { displayName, continueTarget, topics } = data;
   return (
     <ChildLayout title={format(t('child.hq.greeting'), { name: displayName })} wide>
       <section className="dk-panel-hero hq-hero">

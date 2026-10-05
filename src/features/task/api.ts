@@ -37,13 +37,6 @@ export async function reportProblem(missionId: string, taskId: string, reason: R
   unwrap(await childClient.POST('/api/child/missions/{missionId}/tasks/{taskId}/reports', { params: { path: { missionId, taskId } }, body }));
 }
 
-export const SETTINGS_KEY = ['child', 'settings'] as const;
-
-/** The profile settings (`getProfileSettings`). */
-export async function fetchSettings(): Promise<ProfileSettings> {
-  return unwrap(await childClient.GET('/api/child/profile/settings'));
-}
-
 /** Turns the task translation on (`'uk'`) or off (`null`) in the profile (`updateProfileSettings`). */
 export async function saveTranslation(locale: string | null): Promise<ProfileSettings> {
   return unwrap(await childClient.PATCH('/api/child/profile/settings', { body: { secondaryTaskLocale: locale } }));

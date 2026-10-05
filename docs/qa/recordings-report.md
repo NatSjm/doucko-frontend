@@ -15,14 +15,14 @@ Result: PASS
 | slice6-mission-list | FR-9 | 102828 | yes | yes | - |
 | slice6-source-edit-delete-refused | FR-55 | 489148 | yes | yes | - |
 | slice6-task-status-blocked | FR-55 | 287753 | yes | yes | - |
-| slice7-hq-missions | FR-24, FR-25, NFR-7 | 123467 | yes | yes | - |
-| slice7-start-two-clicks | FR-25, FR-26, NFR-7 | 186450 | yes | yes | - |
-| slice7-correct-next | FR-26, FR-27, NFR-7 | 256368 | yes | yes | - |
-| slice7-wrong-then-reveal | FR-27 | 430822 | yes | yes | - |
-| slice7-unparseable | FR-22 | 216203 | yes | yes | - |
-| slice7-hints-translation | FR-28, FR-29 | 351549 | yes | yes | - |
-| slice7-report | FR-30 | 361183 | yes | yes | - |
-| slice7-save-resume | FR-31 | 483455 | yes | yes | - |
+| slice7-hq-missions | FR-24, FR-25, NFR-7 | 137229 | yes | yes | - |
+| slice7-start-two-clicks | FR-25, FR-26, NFR-7 | 217789 | yes | yes | - |
+| slice7-correct-next | FR-26, FR-27, NFR-7 | 222724 | yes | yes | - |
+| slice7-wrong-then-reveal | FR-27 | 275852 | yes | yes | - |
+| slice7-unparseable | FR-22 | 225268 | yes | yes | - |
+| slice7-hints-translation | FR-28, FR-29 | 414507 | yes | yes | - |
+| slice7-report | FR-30 | 401403 | yes | yes | - |
+| slice7-save-resume | FR-31 | 415053 | yes | yes | - |
 
 ## Failures
 

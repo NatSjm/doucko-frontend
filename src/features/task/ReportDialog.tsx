@@ -92,7 +92,6 @@ export function ReportDialog({ missionId, taskId, onClose }: { missionId: string
             id={noteId}
             className="task-report-text"
             rows={3}
-            maxLength={MAX_NOTE}
             value={note}
             aria-invalid={error === 'note' ? true : undefined}
             aria-describedby={error === 'note' ? `${noteHintId} ${noteId}-error` : noteHintId}

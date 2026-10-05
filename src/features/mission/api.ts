@@ -11,7 +11,8 @@ export function useBriefing(missionId: string | null) {
     queryKey: ['child', 'mission', missionId as string],
     queryFn: async () => unwrap(await childClient.GET('/api/child/missions/{missionId}', { params: { path: { missionId: missionId as string } } })),
     enabled: !!missionId,
-    staleTime: 0,
+    // Read afresh on every visit, never a cached copy: task states change with every answer.
+    gcTime: 0,
     retry: false,
   });
 }

@@ -56,6 +56,7 @@ describe('mission briefing (FR-25, NFR-7)', () => {
   it.each([
     ['a draft mission', PRACTICE.missionDraft],
     ['an unknown mission', 'ffffffff-ffff-4fff-8fff-0000000009ff'],
+    ['a mission id that is not a UUID (400)', 'not-a-uuid'],
   ])('answers %s with "Tuhle misi jsem nenašel." and a way back to HQ', async (_, missionId) => {
     stubChildBackend();
     renderAt(<MissionScreen />, at(missionId));

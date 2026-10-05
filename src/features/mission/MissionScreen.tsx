@@ -17,20 +17,21 @@ export function MissionScreen() {
   const t = useT();
   const missionId = queryParam('missionId');
   const briefing = useBriefing(missionId);
-  const missing = !missionId || (briefing.error instanceof ApiError && briefing.error.status === 404);
+  // 404: not served; 400: a mission id that is not a UUID (refused before any lookup).
+  const missing = !missionId || (briefing.error instanceof ApiError && [400, 404].includes(briefing.error.status));
   if (missing)
     return (
       <ChildLayout title={t('app.name')} focusHeading={false}>
         <ChildDeadEnd message={t('child.mission.notFound')} />
       </ChildLayout>
     );
-  if (!briefing.data)
+  const mission = briefing.isFetchedAfterMount ? briefing.data : undefined;
+  if (!mission)
     return (
       <ChildLayout title={t('app.name')} focusHeading={false}>
         <ChildLoadState error={briefing.isError} onRetry={() => void briefing.refetch()} />
       </ChildLayout>
     );
-  const mission = briefing.data;
   const resolved = mission.tasks.filter((task) => task.state !== 'UNRESOLVED').length;
   return (
     <ChildLayout

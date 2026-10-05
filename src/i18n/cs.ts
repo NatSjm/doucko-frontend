@@ -49,6 +49,7 @@ export const cs = {
   'child.task.revealed': 'Nevadí, příště!',
   'child.task.revealedText': 'Tady jsou správné odpovědi.',
   'child.task.correctAnswer': 'Správná odpověď:',
+  'child.task.yourAnswer': 'Tvoje odpověď:',
   'child.task.partCorrect': 'Správně',
   'child.task.partWrong': 'Zkus znovu',
   'child.task.format': 'Tohle neumím přečíst',

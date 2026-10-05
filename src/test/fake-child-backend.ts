@@ -46,6 +46,9 @@ export const PROMPTS = {
 } as const;
 
 const KB = 1024;
+/** The format tip of an empty or unknown choice (self-authored; the backend sends its own Czech tip). */
+export const CHOICE_TIP = 'Vyber prosím aspoň jednu z nabízených možností.';
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const codePoints = (s: string) => [...s].length;
 
 // ---------------------------------------------------------------- a self-authored PNG (a number line)
@@ -180,6 +183,7 @@ export function allSeedStrings(): Set<string> {
   walk(practiceSeed().tasks.map((t) => t.input));
   out.add(CHILD_DISPLAY_NAME);
   out.add(FORMAT_TIP);
+  out.add(CHOICE_TIP);
   return out;
 }
 
@@ -227,6 +231,10 @@ const problem = (status: number, title: string, extra: Partial<Problem> = {}) =>
   new Response(JSON.stringify({ type: 'about:blank', title, status, ...extra }), { status, headers: { 'Content-Type': 'application/problem+json' } });
 const invalid = (field: string, message: string) => problem(400, 'Invalid input', { detail: message, errors: [{ field, message }] });
 const notFound = () => problem(404, 'Resource not found');
+/** A body that is empty or not exactly one JSON object: 400 without `errors` (backend slice 7). */
+const malformed = () => problem(400, 'Malformed request', { detail: 'The request body must be one JSON object.' });
+/** A path id that is not a UUID: 400 naming the parameter, before any lookup (contract "Field paths"). */
+const badId = (name: string) => invalid(name, `${name} must be a UUID.`);
 
 /**
  * The shared fake backend with the child API: admin and child requests see the same content. Options
@@ -278,7 +286,8 @@ const progressOf = (b: FakeBackend, taskId: string): TaskProgress => {
   return p;
 };
 const resolved = (b: FakeBackend, taskId: string) => (b.practice.progress.get(taskId)?.state ?? 'UNRESOLVED') !== 'UNRESOLVED';
-const touched = (b: FakeBackend, taskId: string) => (b.practice.progress.get(taskId)?.attemptsUsed ?? 0) > 0;
+/** Activity on a task: an attempt or an opened hint (backend slice 7: either makes a mission IN_PROGRESS). */
+const touched = (b: FakeBackend, taskId: string) => (b.practice.progress.get(taskId)?.attemptsUsed ?? 0) > 0 || (b.practice.hintsOpened.get(taskId) ?? 0) > 0;
 
 function missionState(b: FakeBackend, m: StoredMission): S['MissionState'] {
   if (m.taskIds.every((id) => resolved(b, id))) return 'COMPLETE';
@@ -370,6 +379,7 @@ async function handleChild(b: FakeBackend, request: Request, url: URL): Promise<
   if (path === '/api/child/profile/settings') return settings(b, request);
   const image = /^\/api\/child\/images\/([^/]+)$/.exec(path);
   if (image && method === 'GET') {
+    if (!UUID.test(image[1])) return badId('imageId');
     const owner = b.tasks.find((t) => t.images.some((i) => i.imageId === image[1]));
     const served = owner && servable(owner) && published(b).some((m) => m.taskIds.includes(owner.taskId));
     const stored = owner?.images.find((i) => i.imageId === image[1]);
@@ -378,7 +388,10 @@ async function handleChild(b: FakeBackend, request: Request, url: URL): Promise<
   const match = /^\/api\/child\/missions\/([^/]+)(?:\/(current-task)|\/tasks\/([^/]+)(?:\/(attempts|hints|reports))?)?$/.exec(path);
   if (!match) return notFound();
   const [, missionId, current, taskId, sub] = match;
-  const m = published(b).find((x) => x.missionId === missionId);
+  if (!UUID.test(missionId)) return badId('missionId');
+  if (taskId !== undefined && !UUID.test(taskId)) return badId('taskId');
+  // A published mission without a served task is not served either.
+  const m = published(b).find((x) => x.missionId === missionId && x.taskIds.some((id) => servable(b.tasks.find((t) => t.taskId === id))));
   if (!m) return notFound();
   if (!current && !taskId) {
     if (method !== 'GET') return problem(405, 'Method not allowed');
@@ -418,7 +431,7 @@ async function settings(b: FakeBackend, request: Request): Promise<Response> {
   if (request.method !== 'PATCH') return problem(405, 'Method not allowed');
   const body = await readBody(request);
   if (body.tooLarge) return problem(413, 'Payload too large');
-  if (!isObject(body.value)) return invalid('body', 'The body must be a JSON object.');
+  if (!isObject(body.value)) return malformed();
   const patch = body.value;
   const next = { ...b.practice.settings };
   if ('secondaryTaskLocale' in patch) {
@@ -436,7 +449,7 @@ async function settings(b: FakeBackend, request: Request): Promise<Response> {
 }
 
 function report(b: FakeBackend, m: StoredMission, t: StoredTask, value: unknown): Response {
-  if (!isObject(value)) return invalid('reason', 'Choose a reason.');
+  if (!isObject(value)) return malformed();
   const reason = value.reason;
   if (reason !== 'ANSWER_IS_CORRECT' && reason !== 'UNCLEAR_PROMPT' && reason !== 'OTHER') return invalid('reason', 'Choose a reason.');
   if (value.note !== undefined && value.note !== null && typeof value.note !== 'string') return invalid('note', 'The note must be text.');
@@ -451,7 +464,8 @@ function report(b: FakeBackend, m: StoredMission, t: StoredTask, value: unknown)
 const revealed = (part: S['PartInput']) => (part.spec.type === 'CHOICE_SINGLE' || part.spec.type === 'CHOICE_MULTI' ? [...part.spec.accepted] : part.spec.accepted[0]);
 
 function attempt(b: FakeBackend, m: StoredMission, t: StoredTask, value: unknown): Response {
-  if (!isObject(value) || !isObject(value.answers)) return invalid('answers', 'Send the answers.');
+  if (!isObject(value)) return malformed();
+  if (!isObject(value.answers)) return invalid('answers', 'Send the answers.');
   const answers = value.answers;
   for (const [key, raw] of Object.entries(answers)) {
     const part = t.input.parts.find((p) => p.key === key);
@@ -469,6 +483,10 @@ function attempt(b: FakeBackend, m: StoredMission, t: StoredTask, value: unknown
   const graded = open.map((part) => {
     const raw = answers[part.key] as string | string[] | undefined;
     if (typeof raw === 'string' && codePoints(raw) > 100) return { key: part.key, verdict: 'UNPARSEABLE' as const, normalized: null, formatTip: FORMAT_TIP, locked: false };
+    // A missing, empty or unknown choice is unreadable, not wrong (answer-checking "Multiple choice").
+    const options = part.spec.options?.map((o) => o.key);
+    if (options && (!Array.isArray(raw) || raw.length === 0 || raw.some((k) => !options.includes(k))))
+      return { key: part.key, verdict: 'UNPARSEABLE' as const, normalized: null, formatTip: CHOICE_TIP, locked: false };
     return check(part, raw);
   });
   const unreadable = graded.filter((r) => r.verdict === 'UNPARSEABLE');

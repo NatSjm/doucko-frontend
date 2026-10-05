@@ -47,10 +47,21 @@
   color: var(--almost);
 }
 
-.task-field-error,
+/* Something to fix on the screen (never a verdict): the "almost" role with its word, as the design system asks. */
+.task-field-error {
+  color: var(--almost);
+  font-weight: 700;
+  margin: 0;
+}
+
 .task-format-tip {
   color: var(--ink);
   font-weight: 600;
+}
+
+.task-hint:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 .task-answer {

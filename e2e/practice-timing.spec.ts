@@ -2,18 +2,22 @@
 import type { APIRequestContext, Page } from '@playwright/test';
 import type { components } from '../src/api/generated/schema';
 import { messages as m } from '../src/i18n/messages';
+import { PRACTICE } from '../src/test/fake-child-backend';
+import { childBackend } from './fixtures/child';
 import { AGAINST_STACK, expect, test } from './fixtures/test';
 
 // NFR-5 timing (practice-flow "Task screen: Load time", "Two attempts, then reveal: Check round-trip
 // time"), measured against the Docker Compose stack (TC-5) with the seeded fixture content, on the
-// machine that runs the check. Without a stack (`vite preview` + the contract stub) a timing says
-// nothing about the product, so these tests SKIP; a skip is never reported as a pass.
+// machine that runs the check. Without a stack (`vite preview` + the contract stub) those two tests
+// SKIP — a skip is never reported as a pass — and a third test measures only the FRONTEND SHARE of
+// the load budget (navigation, rendering, image decode against the stub's instant answers). That
+// bound is not the NFR-5 acceptance; it catches a UI that alone would eat the budget.
 //
 //   E2E_BASE_URL=http://127.0.0.1:8081 DOUCKO_CHILD_DISPLAY_NAME=… npx playwright test e2e/practice-timing.spec.ts
 //
 // The round-trip test writes ~220 graded attempts (and replays) into the stack's profile, so it also
 // needs E2E_PRACTICE_WRITES=1: never run it against a stack holding a real child's progress.
-test.skip(!AGAINST_STACK, 'NFR-5 is measured against the Docker Compose stack (set E2E_BASE_URL); the contract stub has no timing to measure');
+const NO_STACK = 'NFR-5 is measured against the Docker Compose stack (set E2E_BASE_URL); the contract stub has no server timing to measure';
 
 type S = components['schemas'];
 const LOAD_BUDGET_MS = 1500;
@@ -58,6 +62,7 @@ async function timedStart(page: Page, missionId: string): Promise<number> {
 }
 
 test('the task screen loads in under 1.5 s, 20 times from HQ via the start button, cold then warm (NFR-5)', async ({ page }) => {
+  test.skip(!AGAINST_STACK, NO_STACK);
   test.setTimeout(180_000);
   const missionId = await startableMission(page.request);
   test.skip(!missionId, 'no published mission with a start button on this stack: seed the NFR-5 fixture content');
@@ -85,6 +90,7 @@ function guess(part: S['PartView']): string | string[] {
 }
 
 test('the answer check round trip is under 300 ms at p95 over 200 graded submissions (NFR-5)', async ({ request }) => {
+  test.skip(!AGAINST_STACK, NO_STACK);
   test.skip(process.env.E2E_PRACTICE_WRITES !== '1', 'writes attempts into the stack profile: set E2E_PRACTICE_WRITES=1 on a seeded test stack only');
   test.setTimeout(600_000);
   const hq = (await (await request.get('/api/child/hq')).json()) as S['HqView'];
@@ -115,4 +121,14 @@ test('the answer check round trip is under 300 ms at p95 over 200 graded submiss
   const p95 = sorted[Math.ceil(sorted.length * 0.95) - 1];
   test.info().annotations.push({ type: 'NFR-5 check round trip p95 (ms)', description: p95.toFixed(1) });
   expect(p95).toBeLessThan(CHECK_P95_BUDGET_MS);
+});
+
+test('frontend share of the load budget: 20 task loads from HQ via the start button against the contract stub, each under 1.5 s', async ({ page }) => {
+  test.skip(AGAINST_STACK, 'against a stack the full NFR-5 measurement above runs instead');
+  test.setTimeout(180_000);
+  await childBackend(page);
+  const loads: number[] = [];
+  for (let i = 0; i < 20; i++) loads.push(await timedStart(page, PRACTICE.missionA));
+  test.info().annotations.push({ type: 'frontend share of the task screen load (ms, contract stub)', description: loads.map((ms) => ms.toFixed(0)).join(', ') });
+  expect(loads.filter((ms) => ms >= LOAD_BUDGET_MS), `loads over ${LOAD_BUDGET_MS} ms`).toEqual([]);
 });

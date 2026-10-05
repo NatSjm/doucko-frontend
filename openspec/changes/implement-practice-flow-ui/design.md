@@ -55,7 +55,7 @@ error (network or 5xx): "Nepodařilo se to načíst." with "Zkusit znovu".
   `getTask`. 204 from `getCurrentTask`: "Mise je splněná!" with "Zpět na HQ".
   404: "Tuhle úlohu jsem nenašel." with "Zpět na HQ".
   - Head: "Zpět na HQ" link, `h1` "Úloha {position}", the attempt indicator
-    (two pips and "Použité pokusy: {used} ze 2").
+    ("Použité pokusy: {used} ze 2"; no pips, whose design-system meaning is "attempts left").
   - Card (`dk-card dk-task`): the Czech prompt; the translation under it
     (`lang`) when the server sends it; images (`alt` "Obrázek n"); the answer
     form: one part per answer part. Typed parts: a labelled input (`dk-part`)
@@ -66,8 +66,8 @@ error (network or 5xx): "Nepodařilo se to načíst." with "Zkusit znovu".
     (`aria-invalid`, nothing sent); wrong (`dk-part-wrong`, `almost`, icon
     and the word "Zkus znovu"); locked correct (`dk-part-correct`, read-only,
     "Správně"); unreadable → the server's format tip under the part; revealed
-    (`dk-part-revealed`, neutral) → "Správná odpověď: …" (choice keys shown
-    with their option text); after a correct resolution every part is locked.
+    (`dk-part-revealed`, neutral) → the correct answer in the field, "Správná odpověď: …"
+    and "Tvoje odpověď: …" when the child typed one (choice keys shown with their option text); after a correct resolution every part is locked.
   - Feedback (`role="status"`, `dk-fb`): correct → `dk-fb-correct` "Výborně!"
     and "+n XP" when `xpAwarded > 0`; wrong → `dk-fb-almost` "Skoro! Zkus to
     znovu." with "Máš ještě jeden pokus."; revealed → `dk-fb-revealed`
@@ -78,7 +78,8 @@ error (network or 5xx): "Nepodařilo se to načíst." with "Zkusit znovu".
     disabled at 0), and the primary "Odeslat" (while unresolved) or "Další
     úloha" (resolved; to `/task?missionId=…`) or, when the resolution completed
     the mission, "Mise je splněná!" with "Zpět na HQ".
-  - Translation toggle: `aria-pressed`, "Zobrazit ukrajinsky" / "Skrýt
+  - Translation toggle: `aria-pressed` follows what the screen shows (the server
+    sends `LocalizedText.secondary` exactly when the setting is on), "Zobrazit ukrajinsky" / "Skrýt
     ukrajinštinu"; when the task has no translation a disabled "Překlad není
     k dispozici". A failed save keeps the old state and says "Nastavení
     překladu se nepodařilo uložit. Zkus to prosím znovu."
@@ -110,11 +111,13 @@ Correct sits on `spark`, wrong on `almost`, revealed on neutral `ink`/`panel`
 - `childClient` (openapi-fetch over the generated `paths`, same origin, no
   session, no CSRF); errors through `unwrap` → `ApiError` (status, problem).
 - Query keys: `['child','hq']`, `['child','mission',id]`,
-  `['child','task',missionId,taskId|'current']`, `['child','settings']`.
+  `['child','task',missionId,taskId|'current']`, all with `gcTime: 0` and shown
+  only once fetched after mount, so a visit never shows a cached copy from
+  before the last answer (review F06, and "Další úloha" after a task opened by
+  mission only).
   The task screen copies the loaded `TaskView` into local state and keeps it
   in step with every server answer (attempt result → `attemptsUsed`, `state`,
   `lastFeedback`; opened hint → `hints.opened`; translation → re-read task).
-  HQ and briefing are refetched on every visit (`staleTime: 0`).
 - The part view is derived from `TaskView.state`, `attemptsUsed` and
   `lastFeedback` (pure model `practice.ts`), so a reload and a live answer
   render the same.
@@ -122,9 +125,18 @@ Correct sits on `spark`, wrong on `almost`, revealed on neutral `ink`/`panel`
   choice parts as arrays of option keys). Network failure → the alert, inputs
   kept, `resync` set; the next submit first re-reads the task (`getTask`) and,
   if the server already stored an attempt, shows that verdict instead of
-  sending. 409 → re-read and show. 404 → not-found state. 400 → the save alert.
+  sending; the result is applied with a functional update, so a hint or
+  translation that arrived meanwhile is kept. 409 → re-read and show. 404 →
+  not-found state. 400/413 → the save alert without a re-read (a refusal stores
+  nothing); 5xx or no response → the alert and a re-read before the next send.
+- Hints: a 409 (all open elsewhere) re-reads the task's hints; when the last
+  hint opens, focus moves to it (the button is disabled).
+- Load errors: 404 and 400 (an id in the URL that is not a UUID) are a dead end;
+  anything else is "Nepodařilo se to načíst." with a retry. The child UI never
+  shows the server's English `detail`, only Czech catalog text.
 - Translation: `updateProfileSettings({secondaryTaskLocale: 'uk' | null})`
-  then a re-read of the task (`LocalizedText.secondary` is set by the server).
+  then a re-read of the task (`LocalizedText.secondary` is set by the server);
+  `getProfileSettings` is not needed on the task screen.
 - Navigation: `navigate(href)` (history.pushState + an event) and `Link`
   (plain `<a href>`, intercepted for unmodified left clicks); `App` re-renders
   the current route on navigation and popstate and remounts the screen when

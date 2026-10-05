@@ -100,6 +100,7 @@ describe('task screen (FR-26, NFR-7)', () => {
     ['a task of a draft mission', at(PRACTICE.missionDraft, PRACTICE.taskHidden)],
     ['a task outside the mission', at(PRACTICE.missionB, PRACTICE.taskSum)],
     ['a missing mission id', '/task'],
+    ['an id that is not a UUID (400)', '/task?missionId=abc&taskId=xyz'],
   ])('answers %s with "Tuhle úlohu jsem nenašel." and a way back', async (_, path) => {
     stubChildBackend();
     renderAt(<TaskScreen />, path);
@@ -250,6 +251,42 @@ describe('attempts and reveal (FR-27)', () => {
     await userEvent.keyboard('0,75{Enter}');
     expect(await screen.findByRole('alert')).toHaveTextContent(m['child.task.saveFailed']);
     expect(field('a')).toHaveValue('0,75');
+    // A refusal stored nothing: the next submit is sent straight away, without a re-read.
+    const reads = backend.seen.filter((r) => r.method === 'GET' && r.path.endsWith(`/tasks/${PRACTICE.taskSum}`)).length;
+    await userEvent.click(submit());
+    expect(await screen.findByText(m['child.task.correct'])).toBeInTheDocument();
+    expect(backend.seen.filter((r) => r.method === 'GET' && r.path.endsWith(`/tasks/${PRACTICE.taskSum}`)).length).toBe(reads);
+  });
+
+  it('a server error (5xx) may have stored the attempt: the next submit re-reads first', async () => {
+    const backend = stubChildBackend();
+    await open(at(PRACTICE.missionA, PRACTICE.taskSum));
+    backend.override = { match: (method, path) => method === 'POST' && path.endsWith('/attempts'), status: 503, body: {} };
+    await userEvent.keyboard('0,75{Enter}');
+    await screen.findByRole('alert');
+    const reads = backend.seen.filter((r) => r.method === 'GET' && r.path.endsWith(`/tasks/${PRACTICE.taskSum}`)).length;
+    await userEvent.click(submit());
+    expect(await screen.findByText(m['child.task.correct'])).toBeInTheDocument();
+    expect(backend.seen.filter((r) => r.method === 'GET' && r.path.endsWith(`/tasks/${PRACTICE.taskSum}`)).length).toBe(reads + 1);
+  });
+
+  it('a hint opened while an answer is on its way stays on screen after the verdict', async () => {
+    const backend = stubChildBackend();
+    await open(at(PRACTICE.missionA, PRACTICE.taskSum));
+    let release = () => {};
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    const original = backend.handle;
+    backend.handle = async (request) => {
+      if (request.url.endsWith('/attempts')) await gate;
+      return original(request);
+    };
+    await userEvent.keyboard('0,7{Enter}');
+    await userEvent.click(hintButton() as HTMLElement);
+    expect(await screen.findByText('Zapiš obě čísla na setiny.')).toBeInTheDocument();
+    release();
+    expect(await screen.findByText(m['child.task.almost'])).toBeInTheDocument();
+    expect(screen.getByText('Zapiš obě čísla na setiny.')).toBeInTheDocument();
+    expect(hintButton()).toHaveTextContent(format(m['child.task.hintsLeft'], { n: 1 }));
   });
 });
 
@@ -425,6 +462,49 @@ describe('hints (FR-28)', () => {
     await userEvent.click(hintButton() as HTMLElement);
     expect(await screen.findByRole('alert')).toHaveTextContent(m['child.task.hintFailed']);
   });
+
+  it('a 409 because every hint is already open (another tab) shows the stored hints and disables the button', async () => {
+    const backend = stubChildBackend();
+    await open(at(PRACTICE.missionA, PRACTICE.taskSum));
+    for (let i = 0; i < 2; i++) await childRequest(backend, 'POST', `/api/child/missions/${PRACTICE.missionA}/tasks/${PRACTICE.taskSum}/hints`);
+    await userEvent.click(hintButton() as HTMLElement);
+    expect(await screen.findByRole('alert')).toHaveTextContent(m['child.task.hintFailed']);
+    expect(await screen.findByText('Sečti 50 setin a 25 setin.')).toBeInTheDocument();
+    expect(hintButton()).toBeDisabled();
+  });
+
+  it('a 409 whose re-read fails too keeps the screen as it was', async () => {
+    const backend = stubChildBackend();
+    await open(at(PRACTICE.missionA, PRACTICE.taskSum));
+    backend.override = { match: (method, path) => method === 'POST' && path.endsWith('/hints'), status: 409, body: {} };
+    const original = backend.handle;
+    backend.handle = async (request) => {
+      if (request.method === 'GET') throw new TypeError('Failed to fetch');
+      return original(request);
+    };
+    await userEvent.click(hintButton() as HTMLElement);
+    expect(await screen.findByRole('alert')).toHaveTextContent(m['child.task.hintFailed']);
+    expect(hintButton()).toHaveTextContent(format(m['child.task.hintsLeft'], { n: 2 }));
+  });
+
+  it('a hint request without an answer says so and keeps the count', async () => {
+    const backend = stubChildBackend();
+    await open(at(PRACTICE.missionA, PRACTICE.taskSum));
+    backend.down = true;
+    await userEvent.click(hintButton() as HTMLElement);
+    expect(await screen.findByRole('alert')).toHaveTextContent(m['child.task.hintFailed']);
+    expect(hintButton()).toHaveTextContent(format(m['child.task.hintsLeft'], { n: 2 }));
+  });
+
+  it('when the last hint opens, focus moves to it instead of the disabled button', async () => {
+    stubChildBackend();
+    await open(at(PRACTICE.missionA, PRACTICE.taskSum));
+    await userEvent.click(hintButton() as HTMLElement);
+    await screen.findByText('Zapiš obě čísla na setiny.');
+    await userEvent.click(hintButton() as HTMLElement);
+    await screen.findByText('Sečti 50 setin a 25 setin.');
+    await waitFor(() => expect(document.querySelector('[data-hint="2"]')).toHaveFocus());
+  });
 });
 
 describe('translation toggle (FR-29)', () => {
@@ -523,7 +603,11 @@ describe('report a problem (FR-30)', () => {
     expect(backend.seen.filter((r) => r.path.endsWith('/reports'))).toHaveLength(0);
     const note = within(dialog()).getByRole('textbox', { name: m['child.report.note'] });
     expect(note).toHaveAttribute('aria-invalid', 'true');
-    expect(note).toHaveAttribute('maxlength', '1000');
+    // At most 1000 code points (the contract's limit), counted like the server: an emoji is one.
+    await userEvent.click(note);
+    await userEvent.paste('😀'.repeat(1001));
+    expect([...(note as HTMLTextAreaElement).value]).toHaveLength(1000);
+    await userEvent.clear(note);
     await userEvent.type(note, '  {Enter}');
     await userEvent.click(within(dialog()).getByRole('button', { name: m['child.report.send'] }));
     expect(backend.seen.filter((r) => r.path.endsWith('/reports'))).toHaveLength(0);

@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useEffect, useId, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import type { components } from '@/api/generated/schema';
 import { Link } from '@/app/Link';
@@ -8,7 +8,7 @@ import { ApiError } from '@/features/admin-access/problem';
 import { BackToHq, ChildDeadEnd, ChildLayout, ChildLoadState } from '@/features/child/ChildLayout';
 import { useT } from '@/i18n';
 import { format } from '@/i18n/format';
-import { fetchCurrentTask, fetchSettings, fetchTask, openNextHint, saveTranslation, submitAttempt, SETTINGS_KEY, type Answers, type ChildTask } from './api';
+import { fetchCurrentTask, fetchTask, openNextHint, saveTranslation, submitAttempt, type Answers, type ChildTask } from './api';
 import { answersToSend, answerText, applyResult, clampCodePoints, emptyParts, isChoice, optionsOf, partStates, type PartState } from './practice';
 import { ReportDialog } from './ReportDialog';
 import { Localized } from './TaskView';
@@ -46,6 +46,12 @@ function PartField({ part, state, value, required, formatTip, onChange }: {
       {formatTip && (
         <span className="task-format-tip" data-content>
           {formatTip}
+        </span>
+      )}
+      {status === 'revealed' && !isChoice(part) && value && (
+        <span>
+          {t('child.task.yourAnswer')}{' '}
+          <span data-content>{value}</span>
         </span>
       )}
       {status === 'revealed' && (
@@ -101,7 +107,8 @@ function PartField({ part, state, value, required, formatTip, onChange }: {
     );
   }
 
-  const shown = typeof value === 'string' ? value : typeof state.storedValue === 'string' ? state.storedValue : '';
+  const typed = typeof value === 'string' ? value : '';
+  const shown = status === 'revealed' ? answerText(part, state.revealed) : typed || (typeof state.storedValue === 'string' ? state.storedValue : '');
   return (
     <div className={cx('dk-part', 'task-part', `dk-part-${status}`)} data-part={part.key}>
       <label className="dk-part-label" htmlFor={id}>
@@ -201,7 +208,6 @@ function firstOpen(task: ChildTask): string {
  */
 function TaskPractice({ initial, missionId }: { initial: ChildTask; missionId: string }) {
   const t = useT();
-  const queryClient = useQueryClient();
   const formId = useId();
   const root = useRef<HTMLDivElement>(null);
   const reportButton = useRef<HTMLButtonElement>(null);
@@ -221,14 +227,15 @@ function TaskPractice({ initial, missionId }: { initial: ChildTask; missionId: s
   /** Where focus goes after the next render; a new object per request, so the same target can be asked twice. */
   const [focusRequest, setFocusRequest] = useState<{ target: string }>(() => ({ target: initial.state === 'UNRESOLVED' ? `part:${firstOpen(initial)}` : 'next' }));
   const setFocusTarget = (target: string) => setFocusRequest({ target });
-  const settings = useQuery({ queryKey: SETTINGS_KEY, queryFn: fetchSettings, retry: false });
 
   useEffect(() => {
     const focusTarget = focusRequest.target;
     const el =
       focusTarget === 'next'
         ? root.current?.querySelector<HTMLElement>('[data-next]')
-        : focusTarget === 'report'
+        : focusTarget.startsWith('hint:')
+          ? root.current?.querySelector<HTMLElement>(`[data-hint="${focusTarget.slice(5)}"]`)
+          : focusTarget === 'report'
           ? reportButton.current
           : root.current?.querySelector<HTMLElement>(`[data-part="${focusTarget.slice(5)}"] input:not([disabled])`);
     el?.focus();
@@ -245,7 +252,8 @@ function TaskPractice({ initial, missionId }: { initial: ChildTask; missionId: s
   const resolved = task.state !== 'UNRESOLVED';
   const missionDone = resolved && !!task.lastFeedback?.missionComplete;
   const unreadable = Object.keys(formatTips).length > 0;
-  const translationOn = settings.data ? settings.data.secondaryTaskLocale !== null : task.prompt.secondary !== null;
+  // The toggle shows what the screen shows: the server sends the translation exactly when the profile setting is on.
+  const translationOn = task.prompt.secondary !== null;
   const hintsLeft = task.hints.total - task.hints.opened.length;
 
   /** Takes the server's stored state of the task (after a re-read) as it is. */
@@ -277,10 +285,10 @@ function TaskPractice({ initial, missionId }: { initial: ChildTask; missionId: s
         setFormatTips(Object.fromEntries(result.parts.map((p) => [p.key, p.formatTip as string])));
         return setFocusTarget(`part:${result.parts[0].key}`);
       }
-      const next = applyResult(task, result);
       setFormatTips({});
-      setTask(next);
-      setFocusTarget(next.state === 'UNRESOLVED' ? `part:${firstOpen(next)}` : 'next');
+      // A functional update: a hint or translation that arrived during the request is kept.
+      setTask((cur) => applyResult(cur, result));
+      setFocusTarget(result.taskState === 'UNRESOLVED' ? `part:${firstOpen(applyResult(task, result))}` : 'next');
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) return setGone(true);
       if (error instanceof ApiError && error.status === 409) {
@@ -291,7 +299,9 @@ function TaskPractice({ initial, missionId }: { initial: ChildTask; missionId: s
         }
       }
       setNotice('save');
-      setResync(true);
+      // No answer at all, or a server error: the attempt may have been stored, so re-read before sending again.
+      // A 400 or 413 is a refusal that stored nothing.
+      if (!(error instanceof ApiError) || error.status >= 500) setResync(true);
     } finally {
       setBusy(false);
     }
@@ -312,8 +322,19 @@ function TaskPractice({ initial, missionId }: { initial: ChildTask; missionId: s
       const hint = await openNextHint(missionId, task.taskId);
       setTask((cur) => ({ ...cur, hints: { ...cur.hints, opened: [...cur.hints.opened.filter((h) => h.index !== hint.index), hint] } }));
       setNotice(null);
-    } catch {
+      // The button is disabled now: focus moves to the hint just opened instead of being lost.
+      if (hint.remaining === 0) setFocusTarget(`hint:${hint.index}`);
+    } catch (error) {
       setNotice('hint');
+      // 409: every hint is already open (another tab); show what the server holds.
+      if (error instanceof ApiError && error.status === 409) {
+        try {
+          const stored = await fetchTask(missionId, task.taskId);
+          setTask((cur) => ({ ...cur, hints: stored.hints }));
+        } catch {
+          // the generic message stays
+        }
+      }
     } finally {
       setHintBusy(false);
     }
@@ -322,8 +343,7 @@ function TaskPractice({ initial, missionId }: { initial: ChildTask; missionId: s
   async function toggleTranslation() {
     setToggleBusy(true);
     try {
-      const saved = await saveTranslation(translationOn ? null : TRANSLATION_LOCALE);
-      queryClient.setQueryData(SETTINGS_KEY, saved);
+      await saveTranslation(translationOn ? null : TRANSLATION_LOCALE);
       const fresh = await fetchTask(missionId, task.taskId);
       // Only the texts change with the setting; the practice state stays as this screen holds it.
       setTask((cur) => ({ ...cur, prompt: fresh.prompt, parts: fresh.parts, hints: fresh.hints }));
@@ -349,11 +369,6 @@ function TaskPractice({ initial, missionId }: { initial: ChildTask; missionId: s
       aside={
         <div className="task-head-aside">
           <span className="task-attempts">
-            <span className="dk-pips" aria-hidden="true">
-              {Array.from({ length: task.maxAttempts }, (_, i) => (
-                <span key={i} className={cx('dk-pip', i < task.attemptsUsed ? 'is-used' : null)} />
-              ))}
-            </span>
             <span>{format(t('child.task.attempts'), { used: task.attemptsUsed, total: task.maxAttempts })}</span>
           </span>
           <BackToHq />
@@ -382,7 +397,7 @@ function TaskPractice({ initial, missionId }: { initial: ChildTask; missionId: s
           {task.hints.opened.length > 0 && (
             <div className="task-hints">
               {task.hints.opened.map((hint) => (
-                <div key={hint.index} className="dk-hint">
+                <div key={hint.index} className="dk-hint task-hint" data-hint={hint.index} tabIndex={-1}>
                   <span className="dk-hint-icon">
                     <Icon name="hint" size={20} strokeWidth={2.5} />
                   </span>
@@ -523,7 +538,8 @@ export function TaskScreen() {
     if (loaded && !taskId) window.history.replaceState(window.history.state, '', `/task?missionId=${missionId}&taskId=${loaded.taskId}`);
   }, [loaded, taskId, missionId]);
 
-  if (!missionId || (query.error instanceof ApiError && query.error.status === 404))
+  // 404: not served; 400: an id in the URL that is not a UUID (refused before any lookup). Both are a dead end.
+  if (!missionId || (query.error instanceof ApiError && [400, 404].includes(query.error.status)))
     return (
       <ChildLayout title={t('app.name')} focusHeading={false}>
         <ChildDeadEnd message={t('child.task.notFound')} />
