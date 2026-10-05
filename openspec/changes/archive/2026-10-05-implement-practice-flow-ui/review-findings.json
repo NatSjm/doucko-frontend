@@ -35,7 +35,8 @@
       "title": "Submit applies the server result to a stale `task`, so a hint or translation that arrives during the request is lost",
       "file": "src/features/task/TaskScreen.tsx",
       "line": 280,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "4a6bd98"
     },
     {
       "id": "F02",
@@ -45,7 +46,8 @@
       "title": "Translation toggle shows 'failed' and a mismatched state when the setting saved but the task re-read failed",
       "file": "src/features/task/TaskScreen.tsx",
       "line": 326,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "4a6bd98"
     },
     {
       "id": "F03",
@@ -55,7 +57,8 @@
       "title": "A revealed typed part still shows the child's wrong answer in the read-only field, and a reload shows it empty",
       "file": "src/features/task/TaskScreen.tsx",
       "line": 104,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "4a6bd98"
     },
     {
       "id": "F04",
@@ -65,7 +68,8 @@
       "title": "The report note's `maxLength` counts UTF-16 units while the clamp and contract count code points",
       "file": "src/features/task/ReportDialog.tsx",
       "line": 95,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "4a6bd98"
     },
     {
       "id": "F05",
@@ -75,7 +79,8 @@
       "title": "A 409 'no hint left' leaves the hint count stale, with only a generic error",
       "file": "src/features/task/TaskScreen.tsx",
       "line": 315,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "4a6bd98"
     },
     {
       "id": "F06",
@@ -85,7 +90,8 @@
       "title": "HQ and the mission briefing first render cached progress and continue targets from before the last answer",
       "file": "src/features/hq/api.ts",
       "line": 13,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "4a6bd98"
     },
     {
       "id": "F07",
@@ -95,7 +101,8 @@
       "title": "Coverage summary: 14 delta scenarios (14 implemented, 0 partial, 0 missing, 0 contradicted); the store-level frontend scenarios also hold, except that NFR-5 was not measured",
       "file": "openspec/changes/implement-practice-flow-ui/specs/practice-flow/spec.md",
       "line": 1,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "4a6bd98"
     },
     {
       "id": "F08",
@@ -105,7 +112,8 @@
       "title": "Focus is lost when the last hint opens and the hint button becomes disabled (NFR-7 focus management)",
       "file": "src/features/task/TaskScreen.tsx",
       "line": 432,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "4a6bd98"
     },
     {
       "id": "F09",
@@ -115,7 +123,8 @@
       "title": "The revealed part keeps the child's wrong value as the prominent input text; the correct answer appears only as a small muted caption",
       "file": "src/features/task/TaskScreen.tsx",
       "line": 104,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "4a6bd98"
     },
     {
       "id": "F10",
@@ -125,7 +134,8 @@
       "title": "The report note limit uses `maxLength` (UTF-16 units) next to a code-point clamp, so notes with emoji stop below 1000 characters",
       "file": "src/features/task/ReportDialog.tsx",
       "line": 87,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "4a6bd98"
     },
     {
       "id": "F11",
@@ -135,7 +145,8 @@
       "title": "Some error and fallback UI has no backing requirement: hint and translation failure alerts, load retry, any non-404/409 error reported as a save failure",
       "file": "src/features/task/TaskScreen.tsx",
       "line": 284,
-      "status": "open"
+      "status": "waived",
+      "reason": "The extra fallbacks (hint and translation failure alerts, load retry, a generic save alert for other errors) are the practice-flow tone applied to failures the spec does not enumerate; they never show a verdict, never change state and keep the child on the task. Removing them would leave silent failures."
     },
     {
       "id": "F12",
@@ -145,7 +156,8 @@
       "title": "Attempt pips show the opposite of their label: filled = attempts left, text = attempts used",
       "file": "docs/qa/demo-recordings/slice7-practice-flow/slice7-wrong-then-reveal.png",
       "line": 0,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "4a6bd98"
     },
     {
       "id": "F13",
@@ -155,7 +167,8 @@
       "title": "The revealed answer for 'round 7,04 to tenths' shows '7', not '7,0'",
       "file": "docs/qa/demo-recordings/slice7-practice-flow/slice7-wrong-then-reveal.png",
       "line": 0,
-      "status": "open"
+      "status": "waived",
+      "reason": "The reveal shows the first accepted answer as the author entered it (contract Feedback.revealedAnswers: 'the first accepted answer as entered'); the UI only turns a decimal point into a comma. The stub's seed author wrote 7; the backend sends whatever the admin typed."
     },
     {
       "id": "F14",
@@ -165,7 +178,8 @@
       "title": "After resume, an empty field shows the orange 'Zkus znovu' state",
       "file": "docs/qa/demo-recordings/slice7-practice-flow/slice7-save-resume.png",
       "line": 0,
-      "status": "open"
+      "status": "waived",
+      "reason": "Intended: practice-flow 'Resume after closing the browser' requires the reopened task to show 'the wrong part marked'. After a reload the child's raw input is not part of TaskView, so the marked field is empty and invites the second attempt."
     },
     {
       "id": "F15",
@@ -175,7 +189,8 @@
       "title": "Report note error is styled like plain body text and sits away from the field",
       "file": "docs/qa/demo-recordings/slice7-practice-flow/slice7-report.png",
       "line": 0,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "4a6bd98"
     },
     {
       "id": "F16",
@@ -185,7 +200,8 @@
       "title": "400/413 responses to submitAttempt are shown as a lost response and trigger resync",
       "file": "src/features/task/TaskScreen.tsx",
       "line": 293,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "4a6bd98"
     },
     {
       "id": "F17",
@@ -195,9 +211,10 @@
       "title": "NFR-5 (1.5 s task load, 300 ms p95 check round trip) is never measured, yet task 4.1 is ticked with 'Overall result: Pass'",
       "file": "e2e/practice-timing.spec.ts",
       "line": 16,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "4a6bd98"
     }
   ],
-  "clean": false,
+  "clean": true,
   "generatedAt": "2026-10-05T06:55:21Z"
 }

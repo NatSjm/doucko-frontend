@@ -504,7 +504,7 @@
       "ownedHere": true,
       "specs": [
         "contract/openspec/specs/answer-checking/spec.md",
-        "openspec/changes/implement-practice-flow-ui/specs/practice-flow/spec.md"
+        "openspec/specs/practice-flow/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -538,7 +538,7 @@
       "ownedHere": true,
       "specs": [
         "contract/openspec/specs/practice-flow/spec.md",
-        "openspec/changes/implement-practice-flow-ui/specs/practice-flow/spec.md"
+        "openspec/specs/practice-flow/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -559,7 +559,7 @@
       "ownedHere": true,
       "specs": [
         "contract/openspec/specs/practice-flow/spec.md",
-        "openspec/changes/implement-practice-flow-ui/specs/practice-flow/spec.md"
+        "openspec/specs/practice-flow/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -580,7 +580,7 @@
       "ownedHere": true,
       "specs": [
         "contract/openspec/specs/practice-flow/spec.md",
-        "openspec/changes/implement-practice-flow-ui/specs/practice-flow/spec.md"
+        "openspec/specs/practice-flow/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -601,7 +601,7 @@
       "ownedHere": true,
       "specs": [
         "contract/openspec/specs/practice-flow/spec.md",
-        "openspec/changes/implement-practice-flow-ui/specs/practice-flow/spec.md"
+        "openspec/specs/practice-flow/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -622,7 +622,7 @@
       "ownedHere": true,
       "specs": [
         "contract/openspec/specs/practice-flow/spec.md",
-        "openspec/changes/implement-practice-flow-ui/specs/practice-flow/spec.md"
+        "openspec/specs/practice-flow/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -642,7 +642,7 @@
       "ownedHere": true,
       "specs": [
         "contract/openspec/specs/practice-flow/spec.md",
-        "openspec/changes/implement-practice-flow-ui/specs/practice-flow/spec.md"
+        "openspec/specs/practice-flow/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -662,7 +662,7 @@
       "ownedHere": true,
       "specs": [
         "contract/openspec/specs/practice-flow/spec.md",
-        "openspec/changes/implement-practice-flow-ui/specs/practice-flow/spec.md"
+        "openspec/specs/practice-flow/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -682,7 +682,7 @@
       "ownedHere": true,
       "specs": [
         "contract/openspec/specs/practice-flow/spec.md",
-        "openspec/changes/implement-practice-flow-ui/specs/practice-flow/spec.md"
+        "openspec/specs/practice-flow/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -1240,10 +1240,6 @@
     {
       "check": "recording-evidence",
       "msg": "FR-41 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "active-changes",
-      "msg": "active change \"implement-practice-flow-ui\" is not archived"
     }
   ]
 }
