@@ -128,6 +128,18 @@ describe('source delete (FR-55, store rule FR-56)', () => {
   });
 });
 
+describe('source grade no longer configured (review F09)', () => {
+  it('still shows and keeps the stored grade instead of a different first option', async () => {
+    const backend = await open(SEED.sourceId, (b) => (b.reference.grades = [7]));
+    expect(field(m['admin.sources.grade'])).toHaveValue('6');
+    expect(screen.getByRole('option', { name: '6' })).toBeInTheDocument();
+    backend.reference.grades = [6, 7];
+    await userEvent.click(button(m['admin.sourceEdit.save']));
+    expect(await screen.findByText(m['admin.sourceEdit.saved'])).toBeInTheDocument();
+    expect(backend.sources[0].source.grade).toBe(6);
+  });
+});
+
 describe('source edit states', () => {
   it('offers a configured subject the catalog does not know under its key; an unknown one is refused inline (Invalid source edit)', async () => {
     const backend = await open(SEED.sourceId, (b) => b.reference.subjects.push('physics'));

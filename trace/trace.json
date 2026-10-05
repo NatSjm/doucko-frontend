@@ -264,7 +264,9 @@
         "src/features/missions/MissionListScreen.test.tsx",
         "e2e/authoring-missions.spec.ts"
       ],
-      "recordings": []
+      "recordings": [
+        "docs/qa/demo-recordings/slice6-authoring-missions/manifest.json"
+      ]
     },
     {
       "id": "FR-10",
@@ -356,7 +358,9 @@
         "e2e/authoring-edit.spec.ts",
         "e2e/authoring-missions.spec.ts"
       ],
-      "recordings": []
+      "recordings": [
+        "docs/qa/demo-recordings/slice6-authoring-missions/manifest.json"
+      ]
     },
     {
       "id": "FR-56",
@@ -1156,10 +1160,6 @@
     },
     {
       "check": "recording-evidence",
-      "msg": "FR-9 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
       "msg": "FR-10 is not referenced by any recording manifest under docs/qa/"
     },
     {
@@ -1169,10 +1169,6 @@
     {
       "check": "recording-evidence",
       "msg": "FR-13 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-55 is not referenced by any recording manifest under docs/qa/"
     },
     {
       "check": "recording-evidence",

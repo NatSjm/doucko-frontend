@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { queryParam } from '@/app/route-paths';
 import { Button, Chip, Panel } from '@/design-system';
 import { AdminLayout, LoadState } from '@/features/admin-access/AdminLayout';
@@ -79,6 +79,9 @@ function TaskEditor({
   const [failure, setFailure] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>(null);
   const [busy, setBusy] = useState(false);
+  /** The stored task as a form: publishing acts on it, so it waits while the form differs. */
+  const stored = useMemo(() => (task ? JSON.stringify(fromAdminTask(task)) : null), [task]);
+  const dirty = stored !== null && JSON.stringify(form) !== stored;
   const source = sources.find((s) => s.sourceId === form.sourceId);
   const topics = reference.topics.filter((tp) => String(tp.grade) === form.grade);
 
@@ -424,7 +427,7 @@ function TaskEditor({
         {task ? (
           <>
             <ImagesEditor task={task} onChanged={() => queryClient.invalidateQueries({ queryKey: ['admin', 'task', task.taskId] })} />
-            <TaskStatusPanel task={task} onDeleted={onDeleted} />
+            <TaskStatusPanel task={task} dirty={dirty} saving={busy} onDeleted={onDeleted} />
           </>
         ) : (
           <Panel title={t('admin.images.title')} ariaLabel={t('admin.images.title')}>

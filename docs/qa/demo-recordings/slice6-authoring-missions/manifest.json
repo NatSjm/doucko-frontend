@@ -1,0 +1,50 @@
+{
+  "kind": "demo",
+  "results": [
+    {
+      "id": "slice6-mission-create-reorder-publish",
+      "title": "Create a mission, reorder it and publish it (FR-9, FR-55)",
+      "proof": "FR-9, FR-55",
+      "video": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-mission-create-reorder-publish.webm",
+      "screenshot": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-mission-create-reorder-publish.png",
+      "explainer": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-mission-create-reorder-publish.md",
+      "asserted": true
+    },
+    {
+      "id": "slice6-mission-publish-refused",
+      "title": "A refused mission publish names the blocking tasks (FR-9)",
+      "proof": "FR-9",
+      "video": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-mission-publish-refused.webm",
+      "screenshot": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-mission-publish-refused.png",
+      "explainer": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-mission-publish-refused.md",
+      "asserted": true
+    },
+    {
+      "id": "slice6-mission-list",
+      "title": "Mission list by topic and position with counter and status (FR-9)",
+      "proof": "FR-9",
+      "video": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-mission-list.webm",
+      "screenshot": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-mission-list.png",
+      "explainer": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-mission-list.md",
+      "asserted": true
+    },
+    {
+      "id": "slice6-source-edit-delete-refused",
+      "title": "Edit a source; a referenced source cannot be deleted (FR-55)",
+      "proof": "FR-55",
+      "video": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-source-edit-delete-refused.webm",
+      "screenshot": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-source-edit-delete-refused.png",
+      "explainer": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-source-edit-delete-refused.md",
+      "asserted": true
+    },
+    {
+      "id": "slice6-task-status-blocked",
+      "title": "A task in a published mission: unpublish refused, delete blocked (FR-55)",
+      "proof": "FR-55",
+      "video": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-task-status-blocked.webm",
+      "screenshot": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-task-status-blocked.png",
+      "explainer": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-task-status-blocked.md",
+      "asserted": true
+    }
+  ]
+}

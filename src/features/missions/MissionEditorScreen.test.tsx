@@ -349,6 +349,17 @@ describe('publishing (FR-9, store rules FR-57)', () => {
     expect(screen.getByText(m['admin.missionEditor.saveFirst'])).toBeInTheDocument();
   });
 
+  it('a later publish clears an earlier save refusal (review F02)', async () => {
+    const backend = await openSaved((b) => b.tasks.forEach((t) => (t.status = 'PUBLISHED')));
+    backend.down = true;
+    await userEvent.click(button(m['admin.missionEditor.save']));
+    expect(await screen.findByRole('alert')).toHaveTextContent(m['admin.common.saveFailed']);
+    backend.down = false;
+    await userEvent.click(button(m['admin.missionEditor.publish']));
+    expect(await screen.findByText(m['admin.missionEditor.published'])).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
   it('says the status change failed without a server answer', async () => {
     const backend = await openSaved();
     backend.down = true;

@@ -132,10 +132,17 @@ function MissionEditor({ initial, reference }: { initial: AdminMission | null; r
     setBusy(false);
   }
 
-  async function changeStatus(mission: AdminMission) {
+  /** A new action replaces every earlier outcome on screen. */
+  function clearOutcomes() {
     setSaveStatus(null);
+    setSaveError(null);
+    setErrors({});
     setActionStatus(null);
     setActionError(null);
+  }
+
+  async function changeStatus(mission: AdminMission) {
+    clearOutcomes();
     const next = mission.status === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED';
     setBusy(true);
     try {
@@ -150,9 +157,8 @@ function MissionEditor({ initial, reference }: { initial: AdminMission | null; r
   }
 
   async function destroy(mission: AdminMission) {
-    setSaveStatus(null);
-    setActionStatus(null);
-    setActionError(null);
+    clearOutcomes();
+    setBusy(true);
     try {
       await deleteMission(mission.missionId);
       queryClient.removeQueries({ queryKey: missionKey(mission.missionId) });
@@ -162,6 +168,7 @@ function MissionEditor({ initial, reference }: { initial: AdminMission | null; r
     } catch (error) {
       setActionError(error);
     }
+    setBusy(false);
   }
 
   if (deleted)
@@ -340,7 +347,7 @@ function MissionEditor({ initial, reference }: { initial: AdminMission | null; r
               <DeleteControl
                 label={t('admin.missionEditor.delete')}
                 question={t('admin.missionEditor.confirmDelete')}
-                disabled={!saved.deletable}
+                disabled={!saved.deletable || busy}
                 onConfirm={() => destroy(saved)}
               />
             </div>

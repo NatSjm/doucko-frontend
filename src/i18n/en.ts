@@ -192,6 +192,7 @@ export const en = {
   'admin.taskStatus.title': 'Status and deletion',
   'admin.taskStatus.publish': 'Publish task',
   'admin.taskStatus.unpublish': 'Unpublish task',
+  'admin.taskStatus.saveFirst': 'Save your changes first.',
   'admin.taskStatus.published': 'Task published.',
   'admin.taskStatus.unpublished': 'Task unpublished. It is a draft again.',
   'admin.taskStatus.inMissions': 'In missions:',

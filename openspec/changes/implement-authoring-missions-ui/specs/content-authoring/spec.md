@@ -27,7 +27,8 @@ task list built from the tasks of that topic, with a counter `<n>/10 tasks`
 and remove buttons, and focus SHALL follow a moved task. A task already in the
 mission SHALL NOT be offered again (CA-D12). At 50 tasks the editor SHALL
 offer no further task and state the maximum of 50. The topic SHALL be locked
-while the mission has tasks (CA-D10). A position that is not a whole number
+while the mission has tasks (CA-D10). The picker SHALL filter the topic's tasks
+by a search that ignores case and diacritics. A position that is not a whole number
 from 1 to 999 SHALL be refused inline before sending; server refusals SHALL be
 shown inline on the field their path names (`position`, `taskIds[i]`).
 
@@ -54,6 +55,12 @@ shown inline on the field their path names (`position`, `taskIds[i]`).
 - **WHEN** the admin looks for a 51st task to add
 - **THEN** no task can be added and the message states the maximum of 50
 
+#### Scenario: Search the topic's tasks
+
+- **GIVEN** the picker lists the tasks of topic `Desetinná čísla`
+- **WHEN** the admin types `vetsi`
+- **THEN** only tasks whose prompt contains `větší` are offered
+
 #### Scenario: Reorder a saved mission
 
 - **GIVEN** a saved mission with tasks T1, T2, T3
@@ -67,11 +74,13 @@ For a saved mission the editor SHALL offer publish or unpublish
 confirmation. The task editor SHALL offer publish or unpublish
 (`setTaskStatus`), list the missions that hold the task, and offer delete
 (`deleteTask`). The source edit screen SHALL offer delete (`deleteSource`).
-A 409 refusal SHALL be shown as an alert with the problem's `detail` and every
+Publishing acts on the stored mission or task, so publish and unpublish SHALL
+wait (disabled, with "Save your changes first.") while the form differs from
+the stored item. A 409 refusal, also of a task or mission save, SHALL be shown as an alert with the problem's `detail` and every
 id of `conflicts` named as the blocking task (prompt excerpt) or mission
 (topic and position) with a link to its editor. When `deletable` is false the
 delete action SHALL be disabled with an explanation that offers to unpublish
-instead (FR-56).
+instead (the server rule of FR-56, shown under FR-55).
 
 #### Scenario: Publish refused for a draft task
 
@@ -89,6 +98,18 @@ instead (FR-56).
 
 - **GIVEN** a published task inside a published mission
 - **WHEN** the admin unpublishes the task in the task editor
+- **THEN** an alert shows the server's reason and names the mission with a link to it
+
+#### Scenario: Save before publishing
+
+- **GIVEN** a saved mission or task whose form has unsaved changes
+- **WHEN** the admin looks at publish
+- **THEN** it is disabled with "Save your changes first." until the changes are saved
+
+#### Scenario: Task save refused while the task is in a mission
+
+- **GIVEN** a task in a mission
+- **WHEN** the admin changes its topic and saves
 - **THEN** an alert shows the server's reason and names the mission with a link to it
 
 #### Scenario: Blocked delete

@@ -8,7 +8,7 @@
 - [x] 2.2 Unit (Vitest): mission list and editor, source edit, task status and delete against the shared fake backend (FR-9, FR-55).
 - [x] 2.3 Route registry, example queries, `⟦` test and the a11y/theme screens include the three new admin routes (NFR-9, NFR-13).
 - [x] 2.4 E2E (Playwright): `e2e/authoring-missions.spec.ts` (FR-9, FR-55) and `e2e/authoring-edit.spec.ts` (FR-55), keyboard paths included.
-- [x] 2.5 Eval case for admin copy tone: left planned (evals are SKIP-planned and need a judge this run cannot call).
+- [ ] 2.5 Eval case for admin copy tone: deferred, not done (evals are PLANNED in the battery, scope 0, and need a judge this run cannot call).
 - [x] 2.6 Run them against compile-only stubs and confirm RED on assertions. Evidence: `docs/qa/evidence/slice6-red-run.md`.
 
 ## 3. UI (green)
@@ -21,7 +21,7 @@
 
 ## 4. Validation, review, archive
 
-- [x] 4.1 `npm run qa:verify` — `Overall result: Pass`.
+- [x] 4.1 `npm run qa:verify` — `Overall result: Pass (1 member(s) PLANNED, not yet due: eval-ratchet)` — evidence: `docs/qa/automated-verification-latest.md`.
 - [x] 4.2 `npx openspec validate implement-authoring-missions-ui --strict`
 - [ ] 4.3 review-gate workflow; fix confirmed findings; persist `review-findings.json` (clean:true).
 - [ ] 4.4 Smoke against the compose stack after the slice 6 merge (owner): sign in → Missions → New mission → topic, position 1, add three tasks, move the third first, save → publish (refused, the draft task named) → publish the tasks → publish the mission → in the task editor, unpublish one of its tasks (refused, the mission named) → unpublish the mission → delete it (tasks kept); Sources → Edit → change the edition → save; delete a referenced source (refused, its tasks named).

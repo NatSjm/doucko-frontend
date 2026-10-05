@@ -72,7 +72,9 @@ function SourceEditForm({ source, reference, onDeleted }: { source: Source; refe
   async function destroy() {
     setSaved(false);
     setSaveError(null);
+    setErrors({});
     setDeleteError(null);
+    setBusy(true);
     try {
       await deleteSource(source.sourceId);
       onDeleted();
@@ -81,6 +83,7 @@ function SourceEditForm({ source, reference, onDeleted }: { source: Source; refe
     } catch (error) {
       setDeleteError(error);
     }
+    setBusy(false);
   }
 
   return (
@@ -100,7 +103,7 @@ function SourceEditForm({ source, reference, onDeleted }: { source: Source; refe
           <Field label={t('admin.sources.grade')} path="grade" errors={errors}>
             {(p) => (
               <select {...p} data-content={undefined} className="admin-field" value={meta.grade} onChange={(e) => set('grade', e.target.value)}>
-                {reference.grades.map((g) => (
+                {(reference.grades.includes(source.grade) ? reference.grades : [source.grade, ...reference.grades]).map((g) => (
                   <option key={g} value={g}>
                     {g}
                   </option>
@@ -146,7 +149,7 @@ function SourceEditForm({ source, reference, onDeleted }: { source: Source; refe
       <Panel title={t('admin.sourceEdit.deleteTitle')} ariaLabel={t('admin.sourceEdit.deleteTitle')}>
         <div className="admin-form">
           <ConflictAlert error={deleteError} describe={describeTask} />
-          <DeleteControl label={t('admin.sourceEdit.delete')} question={t('admin.sourceEdit.confirmDelete')} onConfirm={destroy} />
+          <DeleteControl label={t('admin.sourceEdit.delete')} question={t('admin.sourceEdit.confirmDelete')} disabled={busy} onConfirm={destroy} />
         </div>
       </Panel>
     </>

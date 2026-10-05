@@ -14,7 +14,19 @@ import { deleteTask, setTaskStatus, TASKS_KEY, type AdminTask } from './api';
  * that hold it, and delete after a confirmation. A refusal (a published mission holds the task, or
  * practice records reference it) shows the server's reason and names the missions.
  */
-export function TaskStatusPanel({ task, onDeleted }: { task: AdminTask; onDeleted: () => void }) {
+export function TaskStatusPanel({
+  task,
+  dirty,
+  saving,
+  onDeleted,
+}: {
+  task: AdminTask;
+  /** The editor's form differs from the stored task: publishing would act on the stored copy. */
+  dirty: boolean;
+  /** The editor is saving: no status change or delete may race it. */
+  saving: boolean;
+  onDeleted: () => void;
+}) {
   const t = useT();
   const queryClient = useQueryClient();
   const describeMission = useDescribeMission();
@@ -42,6 +54,7 @@ export function TaskStatusPanel({ task, onDeleted }: { task: AdminTask; onDelete
   async function destroy() {
     setError(null);
     setDone(null);
+    setBusy(true);
     try {
       await deleteTask(task.taskId);
       onDeleted();
@@ -51,15 +64,17 @@ export function TaskStatusPanel({ task, onDeleted }: { task: AdminTask; onDelete
     } catch (e) {
       setError(e);
     }
+    setBusy(false);
   }
 
   return (
     <Panel title={title} ariaLabel={title}>
       <div className="admin-form">
         <div className="admin-actions">
-          <Button disabled={busy} onClick={() => void changeStatus()}>
+          <Button disabled={busy || saving || dirty} onClick={() => void changeStatus()}>
             {t(task.status === 'PUBLISHED' ? 'admin.taskStatus.unpublish' : 'admin.taskStatus.publish')}
           </Button>
+          {dirty && <span className="admin-muted">{t('admin.taskStatus.saveFirst')}</span>}
         </div>
         {task.missionIds.length ? (
           <div>
@@ -93,7 +108,7 @@ export function TaskStatusPanel({ task, onDeleted }: { task: AdminTask; onDelete
         <DeleteControl
           label={t('admin.taskStatus.delete')}
           question={t('admin.taskStatus.confirmDelete')}
-          disabled={!task.deletable}
+          disabled={!task.deletable || busy || saving}
           onConfirm={destroy}
         />
       </div>

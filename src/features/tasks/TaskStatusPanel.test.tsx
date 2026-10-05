@@ -113,6 +113,21 @@ describe('task status and deletion (FR-55)', () => {
     expect(within(alert).getByRole('link', { name: m['admin.conflict.thisTask'] })).toHaveAttribute('href', `/admin/tasks/edit?taskId=${SEED.taskDecimal}`);
   });
 
+  it('publishing waits while the form has unsaved edits, since it acts on the stored task (review F01)', async () => {
+    const backend = await open(SEED.taskDecimal);
+    const prompt = screen.getByLabelText(m['admin.editor.prompt'], { exact: true });
+    await userEvent.type(prompt, ' Oprava.');
+    expect(button(m['admin.taskStatus.publish'])).toBeDisabled();
+    expect(within(panel()).getByText(m['admin.taskStatus.saveFirst'])).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: m['admin.editor.save'] }));
+    expect(await screen.findByText(m['admin.editor.updated'])).toBeInTheDocument();
+    expect(button(m['admin.taskStatus.publish'])).toBeEnabled();
+    expect(within(panel()).queryByText(m['admin.taskStatus.saveFirst'])).not.toBeInTheDocument();
+    await userEvent.click(button(m['admin.taskStatus.publish']));
+    expect(await within(panel()).findByText(m['admin.taskStatus.published'])).toBeInTheDocument();
+    expect(backend.tasks[0].input.prompt).toBe('Zapiš jednu polovinu jako desetinné číslo. Oprava.');
+  });
+
   it('says the action failed without a server answer', async () => {
     const backend = await open(SEED.taskDecimal);
     backend.down = true;
