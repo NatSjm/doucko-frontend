@@ -254,7 +254,7 @@
       "ownedHere": true,
       "specs": [
         "contract/openspec/specs/content-authoring/spec.md",
-        "openspec/changes/implement-authoring-missions-ui/specs/content-authoring/spec.md"
+        "openspec/specs/content-authoring/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -346,7 +346,7 @@
       "ownedHere": true,
       "specs": [
         "contract/openspec/specs/content-authoring/spec.md",
-        "openspec/changes/implement-authoring-missions-ui/specs/content-authoring/spec.md"
+        "openspec/specs/content-authoring/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -370,7 +370,7 @@
       "ownedHere": false,
       "specs": [
         "contract/openspec/specs/content-authoring/spec.md",
-        "openspec/changes/implement-authoring-missions-ui/specs/content-authoring/spec.md"
+        "openspec/specs/content-authoring/spec.md"
       ],
       "planned": true,
       "tests": [],
@@ -1241,10 +1241,6 @@
     {
       "check": "recording-evidence",
       "msg": "FR-41 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "active-changes",
-      "msg": "active change \"implement-authoring-missions-ui\" is not archived"
     }
   ]
 }

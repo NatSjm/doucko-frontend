@@ -36,7 +36,7 @@
       "file": "src/features/tasks/TaskStatusPanel.tsx",
       "line": 60,
       "status": "fixed",
-      "fixCommit": "PENDING"
+      "fixCommit": "fcaf268"
     },
     {
       "id": "F02",
@@ -47,7 +47,7 @@
       "file": "src/features/missions/MissionEditorScreen.tsx",
       "line": 127,
       "status": "fixed",
-      "fixCommit": "PENDING"
+      "fixCommit": "fcaf268"
     },
     {
       "id": "F03",
@@ -58,7 +58,7 @@
       "file": "src/features/missions/MissionEditorScreen.tsx",
       "line": 141,
       "status": "fixed",
-      "fixCommit": "PENDING"
+      "fixCommit": "fcaf268"
     },
     {
       "id": "F04",
@@ -69,7 +69,7 @@
       "file": "openspec/changes/implement-authoring-missions-ui/tasks.md",
       "line": 12,
       "status": "fixed",
-      "fixCommit": "PENDING"
+      "fixCommit": "fcaf268"
     },
     {
       "id": "F05",
@@ -80,7 +80,7 @@
       "file": "openspec/changes/implement-authoring-missions-ui/tasks.md",
       "line": 23,
       "status": "fixed",
-      "fixCommit": "PENDING"
+      "fixCommit": "fcaf268"
     },
     {
       "id": "F06",
@@ -91,7 +91,7 @@
       "file": "src/features/missions/MissionEditorScreen.tsx",
       "line": 288,
       "status": "fixed",
-      "fixCommit": "PENDING"
+      "fixCommit": "fcaf268"
     },
     {
       "id": "F07",
@@ -102,7 +102,7 @@
       "file": "docs/qa/demo-recordings/nfr8-task-entry/nfr8-single-part-task-entry.png",
       "line": null,
       "status": "fixed",
-      "fixCommit": "PENDING"
+      "fixCommit": "fcaf268"
     },
     {
       "id": "F08",
@@ -124,7 +124,7 @@
       "file": "src/features/sources/SourceEditScreen.tsx",
       "line": 102,
       "status": "fixed",
-      "fixCommit": "PENDING"
+      "fixCommit": "fcaf268"
     }
   ],
   "clean": true,

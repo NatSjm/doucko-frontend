@@ -5,18 +5,21 @@ archived slice took: review evidence, `Slice:` trailers, and module scope.
 It does NOT verify test-first ordering or test integrity (not derivable from
 one-commit-per-slice history) — those are graded by the trajectory-eval workflow.
 
-Scope: 3 archived slice(s).
-Result: PASS, 1 warning(s)
+Scope: 4 archived slice(s).
+Result: PASS, 3 warning(s)
 
 | Slice | Review evidence | Trailer commits | design+tasks | lib domains touched |
 |---|---|---|---|---|
 | 2026-10-04-implement-admin-access-ui | clean | 4 | yes | admin-access |
 | 2026-10-04-implement-authoring-tasks-ui | clean | 4 | yes | admin-access, sources, tasks, task |
 | 2026-10-04-implement-platform-foundation-ui | clean | 18 | yes | - |
+| 2026-10-05-implement-authoring-missions-ui | clean | 2 | yes | missions, sources, tasks, admin-access |
 
 ## Cross-slice module overlap
 
-- `lib/admin-access/` touched by: 2026-10-04-implement-admin-access-ui, 2026-10-04-implement-authoring-tasks-ui
+- `lib/admin-access/` touched by: 2026-10-04-implement-admin-access-ui, 2026-10-04-implement-authoring-tasks-ui, 2026-10-05-implement-authoring-missions-ui
+- `lib/sources/` touched by: 2026-10-04-implement-authoring-tasks-ui, 2026-10-05-implement-authoring-missions-ui
+- `lib/tasks/` touched by: 2026-10-04-implement-authoring-tasks-ui, 2026-10-05-implement-authoring-missions-ui
 
 ## Failures
 
@@ -24,4 +27,6 @@ None.
 
 ## Warnings
 
-- **in-scope**: lib/admin-access/ modified by 2 slices (2026-10-04-implement-admin-access-ui, 2026-10-04-implement-authoring-tasks-ui) — review for scope drift
+- **in-scope**: lib/admin-access/ modified by 3 slices (2026-10-04-implement-admin-access-ui, 2026-10-04-implement-authoring-tasks-ui, 2026-10-05-implement-authoring-missions-ui) — review for scope drift
+- **in-scope**: lib/sources/ modified by 2 slices (2026-10-04-implement-authoring-tasks-ui, 2026-10-05-implement-authoring-missions-ui) — review for scope drift
+- **in-scope**: lib/tasks/ modified by 2 slices (2026-10-04-implement-authoring-tasks-ui, 2026-10-05-implement-authoring-missions-ui) — review for scope drift
