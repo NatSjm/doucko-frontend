@@ -1,8 +1,10 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { queryParam } from '@/app/route-paths';
 import { Button, Chip, Panel } from '@/design-system';
 import { AdminLayout, LoadState } from '@/features/admin-access/AdminLayout';
+import { ConflictAlert } from '@/features/admin-access/ConflictAlert';
+import { useDescribeMission } from '@/features/missions/useDescribeMission';
 import { Field, FormAlert } from '@/features/admin-access/form';
 import { ApiError, fieldErrors, problemMessage } from '@/features/admin-access/problem';
 import { useReference, useSources, type ReferenceData, type Source } from '@/features/sources/api';
@@ -12,6 +14,7 @@ import { useT } from '@/i18n';
 import { format } from '@/i18n/format';
 import { saveTask, TASKS_KEY, useTask, type AdminTask } from './api';
 import { ImagesEditor } from './ImagesEditor';
+import { TaskStatusPanel } from './TaskStatusPanel';
 import { GroupError, PartEditor } from './PartEditor';
 import {
   changeHints,
@@ -53,9 +56,22 @@ type Status = { kind: 'created'; taskId: string } | { kind: 'updated' } | null;
  * Enter in a single-line field or Ctrl+Enter anywhere saves; after a new task is saved, source and
  * page stay and focus returns to the prompt. Refusals land on the field their path names.
  */
-function TaskEditor({ task, sources, reference }: { task: AdminTask | null; sources: Source[]; reference: ReferenceData }) {
+function TaskEditor({
+  task,
+  sources,
+  reference,
+  onDeleted,
+}: {
+  task: AdminTask | null;
+  sources: Source[];
+  reference: ReferenceData;
+  onDeleted: () => void;
+}) {
   const t = useT();
   const queryClient = useQueryClient();
+  const describeMission = useDescribeMission();
+  /** A state refusal (409: the task is in a mission), shown with the missions it names. */
+  const [conflict, setConflict] = useState<unknown>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const promptRef = useRef<HTMLTextAreaElement>(null);
   const [form, setForm] = useState<TaskForm>(() => initialForm(task, sources, reference));
@@ -63,6 +79,9 @@ function TaskEditor({ task, sources, reference }: { task: AdminTask | null; sour
   const [failure, setFailure] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>(null);
   const [busy, setBusy] = useState(false);
+  /** The stored task as a form: publishing acts on it, so it waits while the form differs. */
+  const stored = useMemo(() => (task ? JSON.stringify(fromAdminTask(task)) : null), [task]);
+  const dirty = stored !== null && JSON.stringify(form) !== stored;
   const source = sources.find((s) => s.sourceId === form.sourceId);
   const topics = reference.topics.filter((tp) => String(tp.grade) === form.grade);
 
@@ -83,6 +102,7 @@ function TaskEditor({ task, sources, reference }: { task: AdminTask | null; sour
     event?.preventDefault();
     setStatus(null);
     setFailure(null);
+    setConflict(null);
     const local = clientErrors(form, source ? source.pageCount : null, {
       page: format(t('admin.editor.pageRange'), { count: source ? source.pageCount : 0 }),
       exactDecimals: t('admin.editor.exactDecimalsInvalid'),
@@ -110,7 +130,8 @@ function TaskEditor({ task, sources, reference }: { task: AdminTask | null; sour
     } catch (error) {
       const fields = fieldErrors(error);
       setErrors(fields);
-      if (!Object.keys(fields).length) setFailure(problemMessage(error) ?? t('admin.common.saveFailed'));
+      if (error instanceof ApiError && error.status === 409) setConflict(error);
+      else if (!Object.keys(fields).length) setFailure(problemMessage(error) ?? t('admin.common.saveFailed'));
     }
     setBusy(false);
   }
@@ -381,6 +402,7 @@ function TaskEditor({ task, sources, reference }: { task: AdminTask | null; sour
           </section>
 
           <FormAlert errors={errors} failure={failure} />
+          <ConflictAlert error={conflict} describe={describeMission} />
           {status && (
             <div role="status" className="admin-ok">
               <p>{t(status.kind === 'created' ? 'admin.editor.created' : 'admin.editor.updated')}</p>
@@ -403,7 +425,10 @@ function TaskEditor({ task, sources, reference }: { task: AdminTask | null; sour
           </div>
         </form>
         {task ? (
-          <ImagesEditor task={task} onChanged={() => queryClient.invalidateQueries({ queryKey: ['admin', 'task', task.taskId] })} />
+          <>
+            <ImagesEditor task={task} onChanged={() => queryClient.invalidateQueries({ queryKey: ['admin', 'task', task.taskId] })} />
+            <TaskStatusPanel task={task} dirty={dirty} saving={busy} onDeleted={onDeleted} />
+          </>
         ) : (
           <Panel title={t('admin.images.title')} ariaLabel={t('admin.images.title')}>
             <p>{t('admin.images.saveFirst')}</p>
@@ -421,7 +446,22 @@ export function TaskEditorScreen() {
   const reference = useReference();
   const sources = useSources();
   const task = useTask(taskId);
+  const [deleted, setDeleted] = useState(false);
   const title = t(taskId ? 'admin.editor.editTitle' : 'admin.editor.newTitle');
+
+  if (deleted)
+    return (
+      <AdminLayout title={title}>
+        <p role="status" className="admin-ok">
+          {t('admin.taskStatus.deleted')}
+        </p>
+        <p>
+          <a className="admin-link" href="/admin/tasks">
+            {t('admin.taskStatus.back')}
+          </a>
+        </p>
+      </AdminLayout>
+    );
 
   if (task.error instanceof ApiError && task.error.status === 404)
     return (
@@ -444,7 +484,7 @@ export function TaskEditorScreen() {
     );
   return (
     <AdminLayout title={title} wide>
-      <TaskEditor task={task.data ?? null} sources={sources.data} reference={reference.data} />
+      <TaskEditor task={task.data ?? null} sources={sources.data} reference={reference.data} onDeleted={() => setDeleted(true)} />
     </AdminLayout>
   );
 }

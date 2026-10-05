@@ -253,11 +253,20 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/content-authoring/spec.md"
+        "contract/openspec/specs/content-authoring/spec.md",
+        "openspec/specs/content-authoring/spec.md"
       ],
       "planned": true,
-      "tests": [],
-      "recordings": []
+      "tests": [
+        "src/features/admin-access/AdminLayout.test.tsx",
+        "src/features/missions/MissionEditorScreen.test.tsx",
+        "src/features/missions/missionForm.test.ts",
+        "src/features/missions/MissionListScreen.test.tsx",
+        "e2e/authoring-missions.spec.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/slice6-authoring-missions/manifest.json"
+      ]
     },
     {
       "id": "FR-10",
@@ -336,11 +345,22 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/content-authoring/spec.md"
+        "contract/openspec/specs/content-authoring/spec.md",
+        "openspec/specs/content-authoring/spec.md"
       ],
       "planned": true,
-      "tests": [],
-      "recordings": []
+      "tests": [
+        "src/features/missions/MissionEditorScreen.test.tsx",
+        "src/features/missions/missionForm.test.ts",
+        "src/features/sources/SourceEditScreen.test.tsx",
+        "src/features/sources/SourcesScreen.test.tsx",
+        "src/features/tasks/TaskStatusPanel.test.tsx",
+        "e2e/authoring-edit.spec.ts",
+        "e2e/authoring-missions.spec.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/slice6-authoring-missions/manifest.json"
+      ]
     },
     {
       "id": "FR-56",
@@ -349,7 +369,8 @@
       ],
       "ownedHere": false,
       "specs": [
-        "contract/openspec/specs/content-authoring/spec.md"
+        "contract/openspec/specs/content-authoring/spec.md",
+        "openspec/specs/content-authoring/spec.md"
       ],
       "planned": true,
       "tests": [],
@@ -1047,14 +1068,6 @@
   "warnings": [
     {
       "check": "test-trace",
-      "msg": "FR-9 (owned by frontend) has no test annotated \"@trace FR-9\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-55 (owned by frontend) has no test annotated \"@trace FR-55\""
-    },
-    {
-      "check": "test-trace",
       "msg": "FR-22 (owned by frontend) has no test annotated \"@trace FR-22\""
     },
     {
@@ -1147,10 +1160,6 @@
     },
     {
       "check": "recording-evidence",
-      "msg": "FR-9 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
       "msg": "FR-10 is not referenced by any recording manifest under docs/qa/"
     },
     {
@@ -1160,10 +1169,6 @@
     {
       "check": "recording-evidence",
       "msg": "FR-13 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-55 is not referenced by any recording manifest under docs/qa/"
     },
     {
       "check": "recording-evidence",

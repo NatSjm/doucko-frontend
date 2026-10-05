@@ -10,6 +10,8 @@ const NAV: { href: string; label: MessageKey }[] = [
   { href: '/admin', label: 'admin.nav.home' },
   { href: '/admin/tasks', label: 'admin.nav.tasks' },
   { href: '/admin/tasks/edit', label: 'admin.nav.newTask' },
+  { href: '/admin/missions', label: 'admin.nav.missions' },
+  { href: '/admin/missions/edit', label: 'admin.nav.newMission' },
   { href: '/admin/sources', label: 'admin.nav.sources' },
 ];
 

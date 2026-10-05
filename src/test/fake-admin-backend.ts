@@ -21,6 +21,7 @@ export const SEED = {
   taskGraphic: 'aaaaaaaa-aaaa-4aaa-8aaa-000000000003',
   taskChoice: 'aaaaaaaa-aaaa-4aaa-8aaa-000000000004',
   imageDecimal: 'bbbbbbbb-bbbb-4bbb-8bbb-000000000001',
+  missionDecimals: 'ffffffff-ffff-4fff-8fff-000000000001',
 } as const;
 
 export const CSRF_TOKEN = 'xsrf-123';
@@ -78,7 +79,18 @@ interface StoredTask {
   images: { imageId: string; bytes: Uint8Array; type: string }[];
 }
 
-/** Seed data: one 120-page and one 40-page source, two grade-6 topics, four tasks (one with an image). */
+export interface StoredMission {
+  missionId: string;
+  topicId: string;
+  position: number;
+  taskIds: string[];
+  status: S['PublishStatus'];
+}
+
+/**
+ * Seed data: one 120-page and one 40-page source, two grade-6 topics, four tasks (one with an image)
+ * and one draft mission of the decimals topic holding its two tasks.
+ */
 function seed() {
   const reference: S['ReferenceData'] = {
     grades: [6],
@@ -168,7 +180,10 @@ function seed() {
       },
     },
   ];
-  return { reference, sources, tasks };
+  const missions: StoredMission[] = [
+    { missionId: SEED.missionDecimals, topicId: SEED.topicDecimals, position: 1, taskIds: [SEED.taskDecimal, SEED.taskChoice], status: 'DRAFT' },
+  ];
+  return { reference, sources, tasks, missions };
 }
 
 /** Every string of the seed data: the `⟦` test accepts exactly these as admin-entered content. */
@@ -316,6 +331,9 @@ export interface FakeAdminBackend {
   reference: S['ReferenceData'];
   sources: { source: S['Source']; bytes: Uint8Array }[];
   tasks: StoredTask[];
+  missions: StoredMission[];
+  /** Ids of tasks that have practice records (an attempt, a problem report or an opened hint): they block deletes (FR-56, CA-D22). */
+  usage: Set<string>;
   /** Ids handed out by the backend, predictable for tests. */
   nextId: number;
   handle(request: Request): Promise<Response>;
@@ -329,10 +347,13 @@ const problem = (status: number, title: string, extra: Partial<Problem> = {}) =>
     headers: { 'Content-Type': 'application/problem+json' },
   });
 const invalid = (errors: FieldError[]) => problem(400, 'Invalid input', { detail: errors[0]?.message, errors });
+/** A state-rule refusal (409): the reason in `detail`, the blocking entities in `conflicts`. */
+const conflict = (detail: string, conflicts: string[] = []) => problem(409, 'Not allowed now', { detail, conflicts });
+const noContent = () => new Response(null, { status: 204 });
 
 /** Creates a fake admin backend. `seeded` loads the seed data; `signedIn` starts with a session. */
 export function createFakeAdminBackend({ signedIn = false, seeded = true } = {}): FakeAdminBackend {
-  const data = seeded ? seed() : { ...seed(), sources: [], tasks: [] };
+  const data = seeded ? seed() : { ...seed(), sources: [], tasks: [], missions: [] };
   const backend: FakeAdminBackend = {
     signedIn,
     password: ADMIN_PASSWORD,
@@ -343,6 +364,8 @@ export function createFakeAdminBackend({ signedIn = false, seeded = true } = {})
     reference: data.reference,
     sources: data.sources,
     tasks: data.tasks,
+    missions: data.missions,
+    usage: new Set(),
     nextId: 1,
     handle: (request) => handle(backend, request),
   };
@@ -374,10 +397,47 @@ function adminTask(b: FakeAdminBackend, t: StoredTask): S['AdminTask'] {
       taskNo: t.input.sourceRef.taskNo,
       subPart: t.input.sourceRef.subPart ?? null,
     },
-    attemptCount: 0,
-    missionIds: [],
-    deletable: true,
+    attemptCount: b.usage.has(t.taskId) ? 1 : 0,
+    missionIds: b.missions.filter((m) => m.taskIds.includes(t.taskId)).map((m) => m.missionId),
+    deletable: !b.usage.has(t.taskId) && !publishedHolders(b, t.taskId).length,
   };
+}
+
+/** The published missions that hold a task. */
+const publishedHolders = (b: FakeAdminBackend, taskId: string) => b.missions.filter((m) => m.status === 'PUBLISHED' && m.taskIds.includes(taskId));
+const plural = (n: number, one: string, many: string) => (n === 1 ? `1 ${one}` : `${n} ${many}`);
+
+/**
+ * Adds a self-authored task of `topicId` (published TEXT unless told otherwise) and returns it; specs
+ * use it to fill a topic, e.g. with 51 tasks for the mission maximum.
+ */
+export function addTask(
+  b: FakeAdminBackend,
+  overrides: { topicId: string; status?: S['PublishStatus']; modality?: S['Modality']; prompt?: string },
+): StoredTask {
+  const n = b.tasks.length + 1;
+  const task: StoredTask = {
+    taskId: newId(b, 'dddddddd'),
+    status: overrides.status ?? 'PUBLISHED',
+    images: [],
+    input: {
+      prompt: overrides.prompt ?? `Úloha číslo ${n}`,
+      topicId: overrides.topicId,
+      grade: 6,
+      difficulty: 1,
+      modality: overrides.modality ?? 'TEXT',
+      sourceRef: { sourceId: SEED.sourceId, page: 60, taskNo: String(n), subPart: null },
+      parts: overrides.modality === 'GRAPHIC' ? [] : [{ key: 'a', label: 'a', spec: { ...FLAGS, type: 'INTEGER', accepted: [String(n)] } }],
+      hints: [],
+    },
+  };
+  b.tasks.push(task);
+  return task;
+}
+
+function adminMission(b: FakeAdminBackend, m: StoredMission): S['AdminMission'] {
+  const used = m.taskIds.some((id) => b.usage.has(id));
+  return { missionId: m.missionId, topicId: m.topicId, position: m.position, taskIds: [...m.taskIds], status: m.status, hasAttempts: used, deletable: !used };
 }
 
 function summary(b: FakeAdminBackend, t: StoredTask): S['TaskSummary'] {
@@ -468,7 +528,21 @@ async function handle(b: FakeAdminBackend, request: Request): Promise<Response> 
     const stored = b.sources.find((s) => s.source.sourceId === sourceMatch[1]);
     if (!stored) return problem(404, 'Resource not found');
     if (sourceMatch[2]) return new Response(stored.bytes.slice(), { status: 200, headers: { 'Content-Type': 'application/pdf' } });
+    if (method === 'PUT') return updateSource(b, request, stored.source);
+    if (method === 'DELETE') return deleteSource(b, stored.source);
     return json(200, stored.source);
+  }
+
+  if (path === '/api/admin/missions' && method === 'GET') return json(200, b.missions.map((m) => adminMission(b, m)));
+  if (path === '/api/admin/missions' && method === 'POST') return saveMission(b, request, null);
+  const missionMatch = /^\/api\/admin\/missions\/([^/]+)(\/status)?$/.exec(path);
+  if (missionMatch) {
+    const m = b.missions.find((x) => x.missionId === missionMatch[1]);
+    if (!m) return problem(404, 'Resource not found');
+    if (missionMatch[2] && method === 'PUT') return setMissionStatus(b, request, m);
+    if (!missionMatch[2] && method === 'GET') return json(200, adminMission(b, m));
+    if (!missionMatch[2] && method === 'PUT') return saveMission(b, request, m);
+    if (!missionMatch[2] && method === 'DELETE') return deleteMission(b, m);
   }
 
   if (path === '/api/admin/tasks' && method === 'GET') return listTasks(b, url);
@@ -494,6 +568,8 @@ async function handle(b: FakeAdminBackend, request: Request): Promise<Response> 
     const [, , sub, imageId] = taskMatch;
     if (!sub && method === 'GET') return json(200, adminTask(b, t));
     if (!sub && method === 'PUT') return saveTask(b, request, t);
+    if (!sub && method === 'DELETE') return deleteTask(b, t);
+    if (sub === 'status' && method === 'PUT') return setTaskStatus(b, request, t);
     if (sub === 'preview') {
       const locale = url.searchParams.get('locale');
       if (locale && !b.reference.taskLocales.includes(locale)) return invalid([{ field: 'locale', message: 'Unsupported locale.' }]);
@@ -561,6 +637,12 @@ async function saveTask(b: FakeAdminBackend, request: Request, existing: StoredT
   if (errors.length) return invalid(errors);
   const trimmed: S['TaskInput'] = { ...input, prompt: input.prompt.trim() };
   if (existing) {
+    const holders = b.missions.filter((m) => m.taskIds.includes(existing.taskId));
+    if (holders.length && (input.topicId !== existing.input.topicId || input.grade !== existing.input.grade))
+      return conflict('The topic or grade cannot change while the task is in a mission.', holders.map((m) => m.missionId));
+    const published = publishedHolders(b, existing.taskId);
+    if (published.length && input.modality === 'GRAPHIC')
+      return conflict('A task in a published mission cannot become graphic. Unpublish the mission first.', published.map((m) => m.missionId));
     existing.input = trimmed;
     return json(200, adminTask(b, existing));
   }
@@ -597,4 +679,118 @@ async function images(b: FakeAdminBackend, request: Request, t: StoredTask, imag
   const image = { imageId: newId(b, 'eeeeeeee'), bytes, type: isPng(bytes) ? 'image/png' : 'image/jpeg' };
   t.images.push(image);
   return json(201, list().at(-1));
+}
+
+// ---------------------------------------------------------------- slice 6: edits, missions, deletes
+
+async function updateSource(b: FakeAdminBackend, request: Request, source: S['Source']): Promise<Response> {
+  const body = ((await readJson(request)) ?? {}) as Record<string, unknown>;
+  const errors: FieldError[] = [];
+  for (const key of Object.keys(body))
+    if (!['title', 'publisher', 'edition', 'grade', 'subject'].includes(key)) errors.push({ field: key, message: `Unknown field: ${key}.` });
+  const text = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
+  const title = text(body.title);
+  if (!title) errors.push({ field: 'title', message: 'Title is required.' });
+  else if (codePoints(title) > 200) errors.push({ field: 'title', message: 'Title must be at most 200 characters.' });
+  const publisher = text(body.publisher);
+  if (publisher && codePoints(publisher) > 200) errors.push({ field: 'publisher', message: 'Publisher must be at most 200 characters.' });
+  const edition = text(body.edition);
+  if (edition && codePoints(edition) > 50) errors.push({ field: 'edition', message: 'Edition must be at most 50 characters.' });
+  const grade = body.grade as number;
+  if (!b.reference.grades.includes(grade)) errors.push({ field: 'grade', message: `Grade must be one of: ${b.reference.grades.join(', ')}.` });
+  const subject = String(body.subject ?? '');
+  if (!b.reference.subjects.includes(subject)) errors.push({ field: 'subject', message: `Subject must be one of: ${b.reference.subjects.join(', ')}.` });
+  if (errors.length) return invalid(errors);
+  const referencing = b.tasks.filter((t) => t.input.sourceRef.sourceId === source.sourceId);
+  if (grade !== source.grade && referencing.length)
+    return conflict(`The grade cannot change: ${plural(referencing.length, 'task references', 'tasks reference')} this source.`, referencing.map((t) => t.taskId));
+  Object.assign(source, { title, publisher, edition, grade, subject });
+  return json(200, source);
+}
+
+function deleteSource(b: FakeAdminBackend, source: S['Source']): Response {
+  const referencing = b.tasks.filter((t) => t.input.sourceRef.sourceId === source.sourceId);
+  if (referencing.length)
+    return conflict(`${plural(referencing.length, 'task references', 'tasks reference')} this source. Delete or move those tasks first.`, referencing.map((t) => t.taskId));
+  b.sources = b.sources.filter((s) => s.source.sourceId !== source.sourceId);
+  return noContent();
+}
+
+async function setTaskStatus(b: FakeAdminBackend, request: Request, t: StoredTask): Promise<Response> {
+  const body = (await readJson(request)) as S['StatusChange'] | undefined;
+  if (body?.status !== 'DRAFT' && body?.status !== 'PUBLISHED') return invalid([{ field: 'status', message: 'Status must be DRAFT or PUBLISHED.' }]);
+  const published = publishedHolders(b, t.taskId);
+  if (body.status === 'DRAFT' && published.length)
+    return conflict('The task is in a published mission. Unpublish the mission first.', published.map((m) => m.missionId));
+  t.status = body.status;
+  return json(200, adminTask(b, t));
+}
+
+function deleteTask(b: FakeAdminBackend, t: StoredTask): Response {
+  if (b.usage.has(t.taskId)) return conflict('Practice records reference this task, so it cannot be deleted. Unpublish it instead.', [t.taskId]);
+  const published = publishedHolders(b, t.taskId);
+  if (published.length) return conflict('The task is in a published mission. Unpublish the mission first.', published.map((m) => m.missionId));
+  b.tasks = b.tasks.filter((x) => x !== t);
+  for (const m of b.missions) m.taskIds = m.taskIds.filter((id) => id !== t.taskId);
+  return noContent();
+}
+
+const servable = (t: StoredTask | undefined) => t?.status === 'PUBLISHED' && t.input.modality === 'TEXT';
+
+async function saveMission(b: FakeAdminBackend, request: Request, existing: StoredMission | null): Promise<Response> {
+  const input = ((await readJson(request)) ?? {}) as Partial<S['MissionInput']>;
+  // The topic of a non-empty mission is checked before any field (backend slice 6).
+  if (existing && input.topicId !== existing.topicId && existing.taskIds.length)
+    return conflict('The topic can change only while the mission has no tasks.', [...existing.taskIds]);
+  const errors: FieldError[] = [];
+  const topic = b.reference.topics.find((tp) => tp.topicId === input.topicId);
+  if (!topic) errors.push({ field: 'topicId', message: 'Choose a topic.' });
+  const position = input.position as number;
+  if (!Number.isInteger(position) || position < 1 || position > 999) errors.push({ field: 'position', message: 'Position must be a whole number from 1 to 999.' });
+  else if (b.missions.some((m) => m !== existing && m.topicId === input.topicId && m.position === position))
+    errors.push({ field: 'position', message: `Position ${position} is already taken in this topic.` });
+  const taskIds = Array.isArray(input.taskIds) ? input.taskIds : [];
+  if (taskIds.length > 50) errors.push({ field: 'taskIds', message: 'A mission can have at most 50 tasks.' });
+  taskIds.forEach((id, i) => {
+    const t = b.tasks.find((x) => x.taskId === id);
+    if (!t) errors.push({ field: `taskIds[${i}]`, message: 'Unknown task.' });
+    else if (taskIds.indexOf(id) !== i) errors.push({ field: `taskIds[${i}]`, message: 'The task is already in the mission.' });
+    else if (topic && t.input.topicId !== topic.topicId) {
+      const other = b.reference.topics.find((tp) => tp.topicId === t.input.topicId);
+      errors.push({ field: `taskIds[${i}]`, message: `The task is of topic ${other?.name}, the mission of topic ${topic.name}.` });
+    }
+  });
+  if (errors.length) return invalid(errors);
+  if (existing) {
+    if (existing.status === 'PUBLISHED') {
+      if (!taskIds.length) return conflict('The last task cannot be removed from a published mission. Unpublish the mission first.', [existing.missionId]);
+      const blocking = taskIds.filter((id) => !existing.taskIds.includes(id) && !servable(b.tasks.find((t) => t.taskId === id)));
+      if (blocking.length) return conflict('Only published text tasks can join a published mission.', blocking);
+    }
+    Object.assign(existing, { topicId: input.topicId, position, taskIds: [...taskIds] });
+    return json(200, adminMission(b, existing));
+  }
+  const mission: StoredMission = { missionId: newId(b, 'ffffffff'), topicId: input.topicId as string, position, taskIds: [...taskIds], status: 'DRAFT' };
+  b.missions.push(mission);
+  return json(201, adminMission(b, mission));
+}
+
+async function setMissionStatus(b: FakeAdminBackend, request: Request, m: StoredMission): Promise<Response> {
+  const body = (await readJson(request)) as S['StatusChange'] | undefined;
+  if (body?.status !== 'DRAFT' && body?.status !== 'PUBLISHED') return invalid([{ field: 'status', message: 'Status must be DRAFT or PUBLISHED.' }]);
+  if (body.status === 'PUBLISHED') {
+    if (!m.taskIds.length) return conflict('A mission needs at least one task to be published.');
+    const blocking = m.taskIds.filter((id) => !servable(b.tasks.find((t) => t.taskId === id)));
+    if (blocking.length)
+      return conflict(`Only published text tasks can be in a published mission: ${plural(blocking.length, 'task blocks', 'tasks block')} publishing.`, blocking);
+  }
+  m.status = body.status;
+  return json(200, adminMission(b, m));
+}
+
+function deleteMission(b: FakeAdminBackend, m: StoredMission): Response {
+  const used = m.taskIds.filter((id) => b.usage.has(id));
+  if (used.length) return conflict('Practice records reference tasks of this mission, so it cannot be deleted. Unpublish it instead.', used);
+  b.missions = b.missions.filter((x) => x !== m);
+  return noContent();
 }

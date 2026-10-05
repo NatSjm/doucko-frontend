@@ -34,7 +34,8 @@
     "workflow": "node scripts/run-workflow.mjs",
     "check:vision": "node scripts/check-vision.mjs",
     "test:container": "node tools/container-smoke.mjs --e2e",
-    "qa:record-nfr8": "npm run build && node tools/record-nfr8.mjs"
+    "qa:record-nfr8": "npm run build && node tools/record-nfr8.mjs",
+    "qa:record-slice6": "npm run build && node tools/record-slice6.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

@@ -165,6 +165,9 @@ function SourceList({ sources }: { sources: Source[] }) {
                   <a className="admin-link" href={`/admin/tasks/edit?sourceId=${s.sourceId}&page=1`}>
                     {t('admin.sources.newTask')}
                   </a>
+                  <a className="admin-link" href={`/admin/sources/edit?sourceId=${s.sourceId}`}>
+                    {t('admin.sources.edit')}
+                  </a>
                 </div>
               </td>
             </tr>

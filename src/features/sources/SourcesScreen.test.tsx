@@ -40,6 +40,11 @@ describe('source list (FR-1)', () => {
       'href',
       '/admin/tasks/edit?sourceId=11111111-1111-4111-8111-111111111111&page=1',
     );
+    // @trace FR-55 — every source can be edited.
+    expect(within(row).getByRole('link', { name: messages['admin.sources.edit'] })).toHaveAttribute(
+      'href',
+      '/admin/sources/edit?sourceId=11111111-1111-4111-8111-111111111111',
+    );
   });
 
   it('says so when there is no source yet', async () => {

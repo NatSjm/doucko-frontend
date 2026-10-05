@@ -7,9 +7,12 @@ export const ROUTE_PATHS = [
   '/admin',
   '/admin/sources',
   '/admin/sources/view',
+  '/admin/sources/edit',
   '/admin/tasks',
   '/admin/tasks/edit',
   '/admin/tasks/preview',
+  '/admin/missions',
+  '/admin/missions/edit',
 ] as const;
 
 export type RoutePath = (typeof ROUTE_PATHS)[number];
@@ -23,8 +26,10 @@ export const ADMIN_ROUTES: readonly RoutePath[] = ROUTE_PATHS.filter((p) => p.st
 /** The query that brings a route to its content state for those checks (screens take ids by query). */
 export const ROUTE_EXAMPLES: Partial<Record<RoutePath, string>> = {
   '/admin/sources/view': '?sourceId=11111111-1111-4111-8111-111111111111&page=57',
+  '/admin/sources/edit': '?sourceId=11111111-1111-4111-8111-111111111111',
   '/admin/tasks/edit': '?taskId=aaaaaaaa-aaaa-4aaa-8aaa-000000000001',
   '/admin/tasks/preview': '?taskId=aaaaaaaa-aaaa-4aaa-8aaa-000000000001',
+  '/admin/missions/edit': '?missionId=ffffffff-ffff-4fff-8fff-000000000001',
 };
 
 /** The registered path a pathname means: `/index.html` is the root; a trailing slash is ignored. */

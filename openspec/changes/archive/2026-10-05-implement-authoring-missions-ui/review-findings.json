@@ -1,0 +1,132 @@
+{
+  "generatedBy": "review-gate",
+  "scope": "slice 6 authoring-missions frontend (implement-authoring-missions-ui)",
+  "change": "implement-authoring-missions-ui",
+  "baseRef": "e57bb4d",
+  "headRef": "HEAD",
+  "dimensions": {
+    "correctness": {
+      "confirmed": 3,
+      "contested": 1,
+      "rejected": 1
+    },
+    "security": {
+      "confirmed": 0,
+      "contested": 0,
+      "rejected": 0
+    },
+    "spec-compliance": {
+      "confirmed": 3,
+      "contested": 0,
+      "rejected": 5
+    },
+    "visual": {
+      "confirmed": 2,
+      "contested": 0,
+      "rejected": 0
+    }
+  },
+  "findings": [
+    {
+      "id": "F01",
+      "severity": "major",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "Task Publish/Unpublish is enabled while the task form has unsaved edits, so the stored version is published",
+      "file": "src/features/tasks/TaskStatusPanel.tsx",
+      "line": 60,
+      "status": "fixed",
+      "fixCommit": "fcaf268"
+    },
+    {
+      "id": "F02",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "A stale save-error alert stays on screen after a later publish or delete succeeds",
+      "file": "src/features/missions/MissionEditorScreen.tsx",
+      "line": 127,
+      "status": "fixed",
+      "fixCommit": "fcaf268"
+    },
+    {
+      "id": "F03",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "Publish/unpublish and delete on the mission and source screens don't share a busy guard",
+      "file": "src/features/missions/MissionEditorScreen.tsx",
+      "line": 141,
+      "status": "fixed",
+      "fixCommit": "fcaf268"
+    },
+    {
+      "id": "F04",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "tasks.md 2.5 is ticked, but no eval case exists for the admin copy tone",
+      "file": "openspec/changes/implement-authoring-missions-ui/tasks.md",
+      "line": 12,
+      "status": "fixed",
+      "fixCommit": "fcaf268"
+    },
+    {
+      "id": "F05",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Ticked 4.1 claims 'Overall result: Pass' without an evidence pointer on the same line",
+      "file": "openspec/changes/implement-authoring-missions-ui/tasks.md",
+      "line": 23,
+      "status": "fixed",
+      "fixCommit": "fcaf268"
+    },
+    {
+      "id": "F06",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Scope drift: the task-picker search box (case- and diacritic-insensitive) has no backing requirement",
+      "file": "src/features/missions/MissionEditorScreen.tsx",
+      "line": 288,
+      "status": "fixed",
+      "fixCommit": "fcaf268"
+    },
+    {
+      "id": "F07",
+      "severity": "major",
+      "dimension": "visual",
+      "verdict": "confirmed",
+      "title": "No rendered screenshots of any slice-6 screen (missions list/editor, source edit, task status/delete), so the visual lens cannot check them",
+      "file": "docs/qa/demo-recordings/nfr8-task-entry/nfr8-single-part-task-entry.png",
+      "line": null,
+      "status": "fixed",
+      "fixCommit": "fcaf268"
+    },
+    {
+      "id": "F08",
+      "severity": "minor",
+      "dimension": "visual",
+      "verdict": "confirmed",
+      "title": "The 'Task saved as draft' banner sits next to an already-reset blank form, so it is unclear which task it refers to",
+      "file": "docs/qa/demo-recordings/nfr8-task-entry/nfr8-single-part-task-entry.png",
+      "line": null,
+      "status": "waived",
+      "reason": "About the slice 5 NFR-8 still, not a slice 6 screen; slice 6 does not touch that banner. The still is taken after the save on purpose (the saved status and the sticky form the next task starts from), as waived in slice 5 (F22)."
+    },
+    {
+      "id": "F09",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "contested",
+      "title": "The source grade select can show a value different from the one it submits",
+      "file": "src/features/sources/SourceEditScreen.tsx",
+      "line": 102,
+      "status": "fixed",
+      "fixCommit": "fcaf268"
+    }
+  ],
+  "clean": true,
+  "generatedAt": "2026-10-04T20:37:06Z"
+}

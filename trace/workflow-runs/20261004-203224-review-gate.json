@@ -1,0 +1,1016 @@
+{
+  "workflow": "review-gate",
+  "file": "./.claude/workflows/review-gate.js",
+  "description": "Multi-dimensional adversarial review of a diff or capability: correctness, security, and spec compliance, with every finding adversarially verified before it is reported.",
+  "dryRun": false,
+  "startedAt": "2026-10-04T20:32:24.533Z",
+  "finishedAt": "2026-10-04T20:37:06.390Z",
+  "args": {
+    "scope": "slice 6 authoring-missions frontend (implement-authoring-missions-ui)",
+    "baseRef": "e57bb4d",
+    "headRef": "HEAD",
+    "change": "implement-authoring-missions-ui"
+  },
+  "settings": {
+    "allowedTools": null,
+    "concurrency": 4,
+    "model": null,
+    "budgetPerAgentUsd": 2,
+    "maxTotalUsd": 25,
+    "untypedTools": "Read,Grep,Glob",
+    "permissionMode": "acceptEdits"
+  },
+  "outcome": "ok",
+  "stoppedBecause": null,
+  "error": null,
+  "totalCostUsd": 6.5299,
+  "steps": [
+    {
+      "label": "find:correctness",
+      "phase": "Find",
+      "agentType": "code-reviewer",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 453,
+      "durationMs": 99584,
+      "sessionId": "673f3780-5430-4379-b639-8db198437452",
+      "costUsd": 0.5678692000000001,
+      "numTurns": 12,
+      "result": {
+        "findings": [
+          {
+            "title": "Task Publish/Unpublish is enabled while the task form has unsaved edits, so the stored version is published",
+            "file": "src/features/tasks/TaskStatusPanel.tsx",
+            "line": 60,
+            "severity": "major",
+            "confidence": "medium",
+            "evidence": "`<Button disabled={busy} onClick={() => void changeStatus()}>` is the only guard. `setTaskStatus(task.taskId, next)` publishes the server copy, so edits still in TaskEditor's local `form` state (prompt, answer key) are left out without warning. The mission editor in the same slice blocks exactly this case with `disabled={busy || dirty}` and the `admin.missionEditor.saveFirst` hint (MissionEditorScreen.tsx:332-335). The two publish flows behave differently, and an admin can publish a task they think includes their fix.",
+            "suggestion": "Pass a `dirty` flag from TaskEditor, comparing `form` with `initialForm(task, …)` or a saved snapshot, into TaskStatusPanel. Disable publish while it is true and show a 'save first' hint, the same way MissionEditor does. Also share `busy` so publishing can't race an in-flight save."
+          },
+          {
+            "title": "A stale save-error alert stays on screen after a later publish or delete succeeds",
+            "file": "src/features/missions/MissionEditorScreen.tsx",
+            "line": 127,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "`changeStatus` and `destroy` clear `saveStatus`, `actionStatus` and `actionError`, but not `saveError` or `errors`. A save can fail on an unchanged mission (for example a 409 position clash or a network error), and in that case `dirty` is false so Publish stays enabled. If Publish then succeeds, the screen shows the old `ConflictAlert` from the save (role=alert) next to the 'published' status, which contradicts it.",
+            "suggestion": "Call `setSaveError(null)` (and clear `errors` if appropriate) at the start of `changeStatus` and `destroy`, just as `save` clears the action state."
+          },
+          {
+            "title": "Every 409 from a task save is described as a mission conflict",
+            "file": "src/features/tasks/TaskEditorScreen.tsx",
+            "line": 130,
+            "severity": "minor",
+            "confidence": "low",
+            "evidence": "`if (error instanceof ApiError && error.status === 409) setConflict(error);` routes every 409 to `<ConflictAlert error={conflict} describe={describeMission} />`. Some 409s may not be mission-related (for example source/page locks or `conflicts` ids that are task or source ids). Their ids then show as 'unknown item' ids, with no link. A 409 that also has field-path errors gets both the field errors and the alert.",
+            "suggestion": "Only use describeMission when the conflict ids resolve to missions, or let the describe callback fall back to the task or source. Keep the field-error branch first, so a 409 that has a field path lands only on its field."
+          },
+          {
+            "title": "Publish/unpublish and delete on the mission and source screens don't share a busy guard",
+            "file": "src/features/missions/MissionEditorScreen.tsx",
+            "line": 141,
+            "severity": "minor",
+            "confidence": "low",
+            "evidence": "`destroy(mission)` doesn't set `busy`, and DeleteControl keeps its own separate `busy`. So Publish (or Save) and Delete can both be in flight together. If the delete succeeds after a publish has started, the publish's `refresh(result)` puts the deleted mission back into the cache with `setQueryData(missionKey(...))`. SourceEditForm has the same gap between `save` and `destroy`.",
+            "suggestion": "Set the screen-level `busy` around `destroy`, and pass `disabled={busy || …}` to DeleteControl. Or disable the other actions while a delete confirmation is pending."
+          },
+          {
+            "title": "The source grade select can show a value different from the one it submits",
+            "file": "src/features/sources/SourceEditScreen.tsx",
+            "line": 102,
+            "severity": "minor",
+            "confidence": "low",
+            "evidence": "`meta.grade` is set from `String(source.grade)`, but the options come only from `reference.grades`. If the stored grade is no longer in the reference list, the browser displays the first option while state keeps the old grade. Saving then sends a grade the admin never saw.",
+            "suggestion": "If `meta.grade` isn't in `reference.grades`, add an option for it (for example marked as unavailable), so the controlled value always matches a visible option."
+          }
+        ]
+      }
+    },
+    {
+      "label": "find:security",
+      "phase": "Find",
+      "agentType": "security-reviewer",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 481,
+      "durationMs": 40725,
+      "sessionId": "54ce3437-ca97-472b-8f40-58792fbf51f8",
+      "costUsd": 0.3254334,
+      "numTurns": 13,
+      "result": {
+        "findings": []
+      }
+    },
+    {
+      "label": "find:spec-compliance",
+      "phase": "Find",
+      "agentType": "spec-compliance-auditor",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 424,
+      "durationMs": 126190,
+      "sessionId": "d655b60f-5391-4bab-99ec-3b9794c5c484",
+      "costUsd": 0.8221946000000001,
+      "numTurns": 22,
+      "result": {
+        "findings": [
+          {
+            "title": "tasks.md 2.5 is ticked, but no eval case exists for the admin copy tone",
+            "file": "openspec/changes/implement-authoring-missions-ui/tasks.md",
+            "line": 12,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "Coverage summary: 16 scenarios: 16 implemented, 0 partial, 0 missing, 0 contradicted. The task reads: \"- [x] 2.5 Eval case for admin copy tone: left planned (evals are SKIP-planned and need a judge this run cannot call).\" No slice 6 eval exists under `evals/cases/`. In `docs/qa/automated-verification-latest.md`, eval-ratchet is `PLANNED (exit code: 0, Scope: 0)`. The checkbox claims the task is done, but its artifact doesn't exist.",
+            "suggestion": "Untick 2.5 and add a note that it is deferred, or record an explicit waiver under docs/qa/waivers/. Don't count a planned item as a completed task."
+          },
+          {
+            "title": "Ticked 4.1 claims 'Overall result: Pass' without an evidence pointer on the same line",
+            "file": "openspec/changes/implement-authoring-missions-ui/tasks.md",
+            "line": 23,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "The task reads: \"- [x] 4.1 `npm run qa:verify` — `Overall result: Pass`.\" The report exists (`docs/qa/automated-verification-latest.md`: \"Overall result: Pass (1 member(s) PLANNED, not yet due: eval-ratchet)\"), but the tasks.md line has no path to it. It also leaves out that eval-ratchet is PLANNED with scope 0. This conflicts with the done-claims-need-evidence lesson.",
+            "suggestion": "Add the evidence path `docs/qa/automated-verification-latest.md` and the PLANNED qualifier to the 4.1 line."
+          },
+          {
+            "title": "No demo recording covers FR-9 or FR-55; the recordings check passes over one clip from earlier slices",
+            "file": "docs/qa/automated-verification-latest.md",
+            "line": 109,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "The recordings section reads \"Status: PASS (exit code: 0, Scope: 1)\" and \"Scope: 1 clip(s) across 1 manifest(s)\". `scripts/record-demos.mjs` mentions neither FR-9, FR-55 nor missions. AGENTS.md says \"Recordings: scripts/record-demos.mjs — every clip asserts the FRs it shows\". Slice 6 adds new user-visible flows (create, reorder, publish, delete a mission) but no clip.",
+            "suggestion": "Add a clip for the mission create → reorder → publish-refused → publish flow that asserts FR-9 and FR-55. Otherwise, document that recordings are not a declared acceptance method for these FRs."
+          },
+          {
+            "title": "Scope drift: mission publish/unpublish is disabled while the form has unsaved changes",
+            "file": "src/features/missions/MissionEditorScreen.tsx",
+            "line": 328,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "Spec: \"For a saved mission the editor SHALL offer publish or unpublish (`setMissionStatus`)…\". Nothing in it gates this on a clean form. Code: `<Button disabled={busy || dirty} …>` plus `{dirty && <span …>{t('admin.missionEditor.saveFirst')}</span>}`. The test 'asks to save changes before publishing' covers it, but no requirement does.",
+            "suggestion": "Amend the 'Publishing and deleting with clear refusals' requirement with a scenario: an unsaved mission must be saved before its status can change."
+          },
+          {
+            "title": "Scope drift: the task-picker search box (case- and diacritic-insensitive) has no backing requirement",
+            "file": "src/features/missions/MissionEditorScreen.tsx",
+            "line": 288,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "proposal.md mentions \"a picker of the topic's tasks with a search box\", but the 'Mission editor' requirement in specs/content-authoring/spec.md has no search requirement or scenario. Code: `fold(task.promptExcerpt).includes(query)` with a `type=\"search\"` field. Test: 'filters the offered tasks by a search without diacritics'.",
+            "suggestion": "Add a scenario to the 'Mission editor' requirement: the picker filters the topic's tasks by a search that ignores case and diacritics."
+          },
+          {
+            "title": "Scope drift: a 409 on task save now opens a ConflictAlert naming missions, which the delta spec doesn't cover",
+            "file": "src/features/tasks/TaskEditorScreen.tsx",
+            "line": 1,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "Diff: `if (error instanceof ApiError && error.status === 409) setConflict(error);` … `<ConflictAlert error={conflict} describe={describeMission} />`. The test 'a refused topic change of a task in a mission names the mission (Changing the topic of a task in a mission)' covers it. The delta requirement 'Publishing and deleting with clear refusals' only lists publish/unpublish and delete for the task editor, not a refused task save or topic change.",
+            "suggestion": "Amend the delta spec with a scenario: a task save refused with 409 (topic change while the task is in a mission) shows the reason and links the missions."
+          },
+          {
+            "title": "The frontend requirement cites FR-56, but the capability plan assigns FR-56 to the backend only",
+            "file": "openspec/changes/implement-authoring-missions-ui/specs/content-authoring/spec.md",
+            "line": 60,
+            "severity": "minor",
+            "confidence": "low",
+            "evidence": "Spec: \"When `deletable` is false the delete action SHALL be disabled with an explanation that offers to unpublish instead (FR-56).\" Plan line 293: \"| FR-56 | authoring-missions | backend |\". Under the ownership rule, frontend tests can't `@trace FR-56`, so the UI side of this requirement has no traceable id. The tests trace only FR-9 and FR-55.",
+            "suggestion": "Either cite FR-55 (the frontend-owned edit/delete FR) and name FR-56 only as the server rule being shown, or amend the plan to give FR-56 to `backend, frontend`."
+          },
+          {
+            "title": "NFR-9: a few visible strings are hardcoded outside the catalog and not marked as content",
+            "file": "src/features/missions/MissionLabel.tsx",
+            "line": 11,
+            "severity": "minor",
+            "confidence": "low",
+            "evidence": "Requirement: \"Every visible string … SHALL come from the message catalogs, except content the admin entered or the server sent\". Code: `{' · '}` in MissionLabel.tsx, and `<span className=\"mission-num\">{n}.</span>` in MissionEditorScreen.tsx:237. Both are visible punctuation that is neither in the catalog nor marked `data-content`. The pseudo-catalog test probably ignores bare punctuation and digits, so it doesn't catch them.",
+            "suggestion": "Move the separator and the ordinal format into catalog keys (e.g. 'admin.missions.label' as '{topic} · Position {position}', and 'admin.missionEditor.ordinal' as '{n}.'), or document the punctuation exemption in the NFR-9 scenario."
+          }
+        ]
+      }
+    },
+    {
+      "label": "find:visual",
+      "phase": "Find",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 693,
+      "durationMs": 29921,
+      "sessionId": "3b8d4a8c-cc77-472b-869b-6129da077f54",
+      "costUsd": 0.1661952,
+      "numTurns": 8,
+      "result": {
+        "findings": [
+          {
+            "title": "No rendered screenshots of any slice-6 screen (missions list/editor, source edit, task status/delete), so the visual lens cannot check them",
+            "file": "docs/qa/demo-recordings/nfr8-task-entry/nfr8-single-part-task-entry.png",
+            "severity": "major",
+            "confidence": "high",
+            "evidence": "The only image under docs/qa/ is docs/qa/demo-recordings/nfr8-task-entry/nfr8-single-part-task-entry.png, which shows the slice-5 'New task' entry form. docs/qa/automated-verification-latest.md reports 'Scope: 1 clip(s) across 1 manifest(s)' and WARNs that FR-55 and the other authoring FRs are 'not referenced by any recording manifest'. So none of the new mission screens, source edit, publish/unpublish, or the delete-blocked dialog were rendered for visual review. The recordings check still shows PASS while the slice-6 UI has no visual evidence.",
+            "suggestion": "Add a recording manifest and clips to scripts/record-demos.mjs for the slice-6 flows: mission list, mission editor with task ordering, source edit, publish/unpublish, and the 'blocked by practice records, offer to unpublish' delete dialog. Each clip should assert the FRs it shows (e.g. FR-55). Commit the stills under docs/qa/demo-recordings/ so a visual review can check contrast, layout and how inert controls look. Until then, report the slice-6 recording evidence as NOT-EARNED, not PASS."
+          },
+          {
+            "title": "The 'Task saved as draft' banner sits next to an already-reset blank form, so it is unclear which task it refers to",
+            "file": "docs/qa/demo-recordings/nfr8-task-entry/nfr8-single-part-task-entry.png",
+            "severity": "minor",
+            "confidence": "low",
+            "evidence": "In the still, every task field is empty again (Prompt, Task number, Accepted answer 1), yet a teal 'Task saved as draft. Edit saved task / Preview' banner appears directly above 'Save task'. Its placement reads as the status of the form currently on screen, but the form is now a new, unsaved entry. The 'Images' card below also says 'Save the task first to attach images.' right under the 'saved' message, which contradicts it visually.",
+            "suggestion": "If the slice-6 status changes touch this banner, name the saved task in it (e.g. 'Task 12a saved as draft') or move it to the top of the form as a dismissible notice. That way it reads as the outcome of the previous save, not the state of the blank form."
+          }
+        ]
+      }
+    },
+    {
+      "label": "verify:src/features/tasks/TaskStatusPanel.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1463,
+      "durationMs": 17508,
+      "sessionId": "3c37c639-7b17-454c-9395-57fd1110404e",
+      "costUsd": 0.1776496,
+      "numTurns": 6,
+      "result": {
+        "refuted": false,
+        "reasoning": "The finding holds. `TaskStatusPanel.tsx:60` disables the button only on its own `busy`. `TaskEditorScreen.tsx:427` renders `<TaskStatusPanel task={task} onDeleted={onDeleted} />` and passes no dirty or busy state, even though the editor keeps the edits in local `form` state (line 77) that is only sent by `save()`. `changeStatus()` calls `setTaskStatus(task.taskId, next)`, which changes the status of the stored copy and never sends `form`. So an admin can edit the prompt or answer key, click Publish without saving, and publish the old version with no warning. Nothing else guards this path: there is no dirty check in the task editor, no confirm dialog, and the panel's `busy` is separate from the editor's `busy`, so a publish can also run during an in-flight save. The comparison with the mission editor is accurate too: `MissionEditorScreen.tsx:60` computes `dirty = isDirty(form, saved)`, and lines 328-331 use `disabled={busy || dirty}` and show the `admin.missionEditor.saveFirst` hint. The two publish flows in the same slice really do behave differently. Rating it major is reasonable because no data is lost (the unsaved edits stay in the form and can still be saved), but the admin can be misled about what gets published.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/features/tasks/TaskStatusPanel.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1496,
+      "durationMs": 20361,
+      "sessionId": "249186ed-8693-4ff4-86de-51d0190f9e34",
+      "costUsd": 0.2051728,
+      "numTurns": 7,
+      "result": {
+        "refuted": false,
+        "reasoning": "The finding holds; I couldn't refute it. `TaskStatusPanel` is rendered on the same screen as the editable form, below it (`TaskEditorScreen.tsx:427`), whenever a saved task is loaded. It only receives `task` (the server copy) and `onDeleted`. It gets no dirty flag and does not share the editor's `busy` state. Its Publish button checks only its own `busy` (`TaskStatusPanel.tsx:60`), and `changeStatus` calls `setTaskStatus(task.taskId, next)`, which publishes whatever the server has stored. The editor keeps edits in local `form` state (`TaskEditorScreen.tsx:77`) and sends them only when Save is pressed (`save()`, lines 98-134). Nothing checks the two against each other.\n\nHow to reproduce:\n1. Open `/admin/tasks/edit?taskId=X` for a draft task.\n2. Change the prompt or the answer key, and don't press Save.\n3. Press Publish.\n\nThe old stored version is published and the panel shows a \"published\" status. The unsaved edits stay in the form, so the admin can easily believe the fix went live.\n\nThe mission editor in the same slice does guard this case: `MissionEditorScreen.tsx:60` computes `isDirty`, line 328 sets `disabled={busy || dirty}`, and line 331 shows the `saveFirst` hint. So the two publish flows really do behave differently.\n\nThere is also a smaller race: the editor's `busy` state isn't shared with the panel, so Publish can be clicked while a save is still running.\n\nThis is not a security issue, since only the password-protected admin can do it. But it is a real correctness problem that a normal user can hit: children may get a task with a wrong answer key that the admin thinks they fixed. I'm keeping the severity at major.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/features/missions/MissionEditorScreen.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1205,
+      "durationMs": 18379,
+      "sessionId": "3e371c40-d052-4e7d-b523-a72c6a92430e",
+      "costUsd": 0.14807920000000002,
+      "numTurns": 3,
+      "result": {
+        "refuted": false,
+        "reasoning": "The finding holds for publish and unpublish. It does not hold for delete.\n\n**What the code does**\n- `changeStatus` (lines 135–150) clears `saveStatus`, `actionStatus` and `actionError`. It never clears `saveError` or `errors`.\n- Line 269 shows a save failure through `FormAlert`, and line 270 shows it through `ConflictAlert`. Both stay on screen until something resets that state.\n- The Save button (line 277) is only disabled while `busy`. You can submit an unchanged mission.\n\n**How the bug happens**\n1. Save fails without the form changing, for example because of a network error. `saveError` is set, and `FormAlert` shows \"save failed\".\n2. `isDirty(form, saved)` is still false, so the Publish/Unpublish button at line 328 stays enabled.\n3. Publish succeeds. `saved` updates, the status message says \"published\", and the old save-failure alert is still showing next to it. That is a real contradiction on screen.\n\n**Where the finding is wrong**\n- **Delete:** if `destroy` succeeds it sets `deleted`, and the early return at line 167 replaces the whole editor. So no stale alert can survive a successful delete.\n- **Example:** a position clash probably comes back as a field error (`fieldErrors`). That would show in `errors`/`FormAlert`, not in `ConflictAlert`. A network error is a cleaner example.\n\nThe core mechanism is confirmed: the stale save error survives a successful status change. Keeping severity at minor, since it is a cosmetic or messaging issue with no data impact.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/features/missions/MissionEditorScreen.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1238,
+      "durationMs": 20978,
+      "sessionId": "df97eb7b-c370-4a23-835b-f4f680e3e533",
+      "costUsd": 0.147293,
+      "numTurns": 3,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the bug for publish/unpublish. The delete half of the finding is wrong.\n\nCode at src/features/missions/MissionEditorScreen.tsx:\n- `save` (lines 106-133) clears the action state.\n- `changeStatus` (lines 135-150) clears only `saveStatus`, `actionStatus` and `actionError`. It never clears `saveError` or `errors`.\n- The Publish/Unpublish button (line 328) is disabled only by `busy || dirty`. `dirty` is `isDirty(form, saved)`, which compares the form with the last good save. A failed save does not change `saved`, so when the form matches it, `dirty` is false.\n\nWays a real admin can get there:\n1. Press Save on an unchanged mission and hit a network error or a non-field problem. The catch at lines 127-131 sets `saveError`.\n2. Change the position to one that clashes, Save, get the refusal, then type the old position back. `errors` / `saveError` stay set while `dirty` goes back to false.\n\nPublish is then enabled. If it succeeds, the save form still shows the old FormAlert \"save failed\" or the ConflictAlert (lines 269-270, role=alert), or the field error, while the status panel says \"published\". That contradicts itself. Nothing else clears this state: there is no effect on `saved`, and the component does not remount. This is UI-only, so 'minor' is right.\n\nThe delete half does not hold. When `destroy` succeeds it sets `deleted=true`, and lines 167-179 then render a different view without the form. The stale alert cannot appear next to a delete success. The fix (`setSaveError(null)` / `setErrors({})` in `changeStatus`) is still valid.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/features/tasks/TaskEditorScreen.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1246,
+      "durationMs": 29731,
+      "sessionId": "08692292-7e36-44db-813f-9f0ff4e95259",
+      "costUsd": 0.266319,
+      "numTurns": 12,
+      "result": {
+        "refuted": true,
+        "reasoning": "The mechanism the finding relies on doesn't exist in the contract. In `contract/api/openapi.yaml:535-558`, updateTask returns 409 only through the shared Conflict response. Field errors (`errors[].field`) come back as 400 BadRequest, not 409. The content-authoring spec (`contract/openspec/specs/content-authoring/spec.md:821-834, 869-873`) lists only two state rules that can refuse a task save, and both involve missions: CA-D8 (a task in a published mission can't become GRAPHIC) and CA-D10 (a task's topic or grade can't change while the task belongs to any mission). The spec says each one is \"refused with a message naming the mission\", so the `conflicts` ids for a task save are mission ids, and `describeMission` is the right resolver. The contract has no source or page locks, and no 409 on task update that names a task or source. The finding's own example is speculative (\"may not be\"). Even if a 409 carried an id that isn't a mission, `ConflictAlert` (`src/features/admin-access/ConflictAlert.tsx:38-40`) still shows the server's `detail` and lists the id as \"unknown item\", so nothing breaks; that was a deliberate fallback. The \"409 with field paths\" case can't happen under the contract, because field paths belong to 400. Even if it did, showing both the field errors and the alert is intentional (fields are set first, then the conflict). I couldn't read the backend source because permission was denied, but the contract the frontend is written against rules out the claimed mis-labelling.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/features/tasks/TaskEditorScreen.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1279,
+      "durationMs": 38167,
+      "sessionId": "02265c5c-3104-4474-8aeb-efe67ec8ca56",
+      "costUsd": 0.2989917999999999,
+      "numTurns": 16,
+      "result": {
+        "refuted": true,
+        "reasoning": "I checked the contract to see which 409s a task save can actually return. `updateTask` (`contract/api/openapi.yaml:557`) only returns the generic Conflict response. The content-authoring spec (`spec.md:824-834`, CA-D8 and CA-D10) defines exactly two state rules that apply to a task edit:\n- A task in a published mission cannot change its modality to GRAPHIC (CA-D8).\n- A task's topic or grade cannot change while the task is in any mission (CA-D10).\n\nBoth are blocked by missions, so the `conflicts` ids are mission ids, and `describeMission` is the right resolver. That matches the code's own comment at `TaskEditorScreen.tsx:73`: \"409: the task is in a mission\".\n\nA new task (POST) belongs to no mission, so it cannot hit either rule. The examples in the finding, such as source or page locks, or task or source ids in `conflicts`, don't exist anywhere in the contract or spec. They are made up.\n\nIf an unexpected id ever did appear, `ConflictAlert` still shows the server's `detail` message and lists the id as \"unknown item\". That is a graceful fallback, not a wrong result.\n\nThe other claim, a 409 that also carries field-path errors, depends on a response shape the contract never defines: field errors belong to the 400 BadRequest response. Even if it happened, showing both the field error and the conflict alert is harmless.\n\nThere is no reachable path where a real user sees a non-mission conflict mislabelled.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/features/missions/MissionEditorScreen.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1187,
+      "durationMs": 25867,
+      "sessionId": "7a18b64f-93e8-4e6e-ac0c-c1c27e25fff2",
+      "costUsd": 0.18697760000000002,
+      "numTurns": 7,
+      "result": {
+        "refuted": false,
+        "reasoning": "The mechanism is real in the code. In MissionEditorScreen.tsx, `changeStatus` (l.135-150) and `save` (l.106-133) set the screen-level `busy`, but `destroy` (l.152-165) never does. DeleteControl gets `disabled={!saved.deletable}` only (l.343), and that prop only gates the initial \"Delete\" button. The confirm-step Delete/Cancel buttons are gated by DeleteControl's own internal `busy` (DeleteControl.tsx l.24, 61-64). Nothing goes the other way either: the Publish button (`disabled={busy || dirty}`, l.328) and Save (`disabled={busy}`) don't know about a pending delete. So a user can click Publish and then confirm Delete while the publish request is still pending. If the delete response lands first, `removeQueries(missionKey)` runs, and then the publish's `refresh(result)` calls `queryClient.setQueryData(missionKey(result.missionId), result)` (l.100), which puts the deleted mission back into the cache under ['admin','mission',id]. Nothing removes it: the later `invalidateQueries` calls target MISSIONS_KEY (['admin','missions']) and ['admin','task'], which don't match ['admin','mission',id]. The publish branch also calls setSaved/setActionStatus after `deleted` is true, but the deleted view doesn't render those, so that part is harmless. Practical impact is small: the cache entry has no observers, the deleted view replaces the editor, and the \"back\" link is a plain href. Even so, the missing shared guard and the cache resurrection are real, and a \"minor\"/low-confidence rating fits. I didn't open SourceEditForm, but the mission-screen half is confirmed on its own.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/features/missions/MissionEditorScreen.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1220,
+      "durationMs": 40761,
+      "sessionId": "07f75562-4546-49be-8c0e-c954b026f9ed",
+      "costUsd": 0.2687212,
+      "numTurns": 8,
+      "result": {
+        "refuted": false,
+        "severityAdjustment": "downgrade",
+        "reasoning": "The finding holds: the missing guard is real and a user can reach it. The harm it describes, though, is narrow and not visible to the user, so the severity should go down.\n\n**The missing guard is real.** In `MissionEditorScreen.tsx`:\n- `destroy` (lines 152-165) never calls `setBusy`.\n- `DeleteControl` (lines 340-345) only gets `disabled={!saved.deletable}`. Its own `busy` state (`DeleteControl.tsx` lines 24 and 39-44) only disables its own Delete and Cancel buttons.\n- So after clicking Publish/Unpublish (or Save), the user can open the delete question and confirm it while the first request is still running. The reverse also works: while a delete is running, Publish is still enabled (`disabled={busy || dirty}`) because `busy` was never set.\n\n**Nothing on the server blocks it.** The contract defines `AdminMission.deletable` by attempts, reports and opened hints only (`openapi.yaml:1758`). A published mission can still be deleted, so both requests can succeed.\n\n**The cache write does happen.** `refresh()` calls `setQueryData(missionKey(id), result)` (line 100). If the publish response is handled after `destroy` has run `removeQueries` (line 158), the deleted mission is written back into the cache.\n\n**Why the impact is small:**\n1. **The ordering is unlikely.** The publish must commit on the server before the delete (otherwise it gets a 404 and never calls `refresh`), yet its response must reach the client after the delete's response. That mostly needs lock contention or reordered responses, plus a two-click confirmation fired inside one request's round trip.\n2. **The stale entry can't really be seen:**\n   - Once `deleted` is true, the component only shows the \"deleted\" view (line 167), whatever is in the cache.\n   - `MISSIONS_KEY` (`['admin','missions']`) is invalidated, so the list drops the row.\n   - `missionKey` is `['admin','mission',id]` and uses the default `staleTime` of 0 (`queryClient.ts` has no override). Opening that URL again therefore refetches, gets a 404, and `MissionEditorScreen` checks for the 404 error first and shows \"not found\". At worst the old editor flashes until that refetch finishes.\n   - Nothing is corrupted on the server, and no wrong action can follow from the stale entry.\n\n**Save + Delete** has the same shape and the same small impact: if the delete wins, the save gets a 404 and its error is hidden behind the deleted view. If the save wins, the same stale entry appears as above.\n\n**Verdict:** a real gap in the UI's concurrency handling, but the consequence is a short-lived cache entry with nearly no user impact. It should be a nit or hardening item rather than a correctness bug. The suggested fix (share `busy` and pass `disabled={busy || !saved.deletable}`) is still cheap and worth doing."
+      }
+    },
+    {
+      "label": "verify:src/features/sources/SourceEditScreen.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1058,
+      "durationMs": 18144,
+      "sessionId": "8a58ac5e-2993-425f-8aca-747169ca6bc9",
+      "costUsd": 0.124713,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "The mechanism is real. At `SourceEditScreen.tsx:20`, `meta.grade` is set to `String(source.grade)`. The select at line 102 is a controlled element with `value={meta.grade}`, and its options come only from `reference.grades` (a `number[]`, stringified by `<option value={g}>`). Nothing in this file or in `SourceEditScreen` checks that `meta.grade` is one of those options or adds an option for it. When a controlled `<select>` has a value that matches no option, React leaves the DOM showing the first option, while state keeps the old value. `save()` then sends `updateSource(source.sourceId, meta)` with the hidden old grade, so the mismatch the finding describes does happen.\n\nIt can only happen if a source's stored grade is missing from the configured grades. Grades are deployment configuration (CA-D16, MVP `[6]`), so this needs the config to change after sources exist. That fits the low confidence and minor severity.\n\nThe harm is also smaller than \"saving sends a grade the admin never saw\" suggests. The schema says the grade must be \"One of ReferenceData.grades\", and the fake backend rejects grades outside that list (`fake-admin-backend.ts:273`, 'Grade must be one of…'). So the real outcome is probably a refused save: a grade field error appears even though the select shows a valid value, and an unrelated edit such as a title change cannot be saved until the admin re-selects a grade. That is still a correctness and usability problem. The same pattern exists in `TaskEditorScreen.tsx:268`. Not refuted; severity stays minor.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/features/sources/SourceEditScreen.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1091,
+      "durationMs": 20338,
+      "sessionId": "a5fe6d63-b3e1-4d75-a35d-10c09b98095f",
+      "costUsd": 0.13865280000000002,
+      "numTurns": 5,
+      "result": {
+        "refuted": true,
+        "reasoning": "The React behaviour described is real: a controlled `<select>` whose value matches no `<option>` shows the first option. But I couldn't find a way for a real user to hit it, and even if one did, it does no harm.\n\n1. **No type mismatch.** `ReferenceData.grades` is `number[]` (schema.d.ts:887). The options render `value={g}`, which becomes the string \"6\". `meta.grade` is `String(source.grade)`, also \"6\". So any stored grade that is in the list matches its option.\n2. **A stored grade can't be missing from the list in normal use.** The schema says `SourceMetadata.grade` / `SourceUpdate.grade` must be \"One of ReferenceData.grades\" (schema.d.ts:903 and 913), and the server enforces it when a source is created. The MVP configures only `[6]`. A stale grade would need an operator to remove a grade from server config while sources still use it. Nothing in the frontend, the contract or the MVP plan does that. It's hypothetical config drift, not a user or attacker path.\n3. **Even then, nothing bad is sent.** The form would submit the source's existing, unchanged grade. That's not \"a grade the admin never saw\" in any harmful sense, because it's exactly what is stored. The backend either accepts it as unchanged (a locked grade only refuses changes, per CA-D16) or rejects it as not configured. A rejection comes back through `fieldErrors` and shows on the grade field. Nothing is silently corrupted.\n4. The subject select has the same theoretical pattern. That supports the view that this is a general UI-hardening idea, not a reachable bug.\n\nThe finding is low confidence and I couldn't confirm a reproducible path, so I'm marking it refuted. At most it's a nit about future config drift.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:openspec/changes/implement-authoring-missions-ui/tasks.md",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1227,
+      "durationMs": 12463,
+      "sessionId": "184f5d6f-2222-43a8-bef9-313bf964ab13",
+      "costUsd": 0.08772700000000001,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "Confirmed, with one correction: the item is on line 11, not line 12. tasks.md:11 reads \"- [x] 2.5 Eval case for admin copy tone: left planned (evals are SKIP-planned and need a judge this run cannot call).\" The only file in evals/cases/ is .gitkeep, so the artifact doesn't exist. The box is ticked even though the task was not done. The note does say \"left planned\", so nothing is hidden, but there's no waiver and the box still counts as completed. AGENTS.md says a declared method with no mechanism needs either a working check or an explicit human waiver, and a 0-scope result must not count as done. The archived slice 5 tasks.md has the same ticked \"left planned\" line, so this is a pattern that has been carried forward, not a one-off. That doesn't make it correct. Severity stays minor: it's a bookkeeping problem, not a runtime one.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:openspec/changes/implement-authoring-missions-ui/tasks.md",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1260,
+      "durationMs": 15810,
+      "sessionId": "6b95ecf7-2a8a-43d1-b4e5-9ae3e43b1d85",
+      "costUsd": 0.0929822,
+      "numTurns": 6,
+      "result": {
+        "refuted": false,
+        "reasoning": "Confirmed. The line number is slightly off: the item is at line 11, not 12. The mechanism holds: tasks.md:11 reads \"- [x] 2.5 Eval case for admin copy tone: left planned (...)\", so the box is checked but no artifact exists. evals/cases/ contains only .gitkeep, and docs/qa/waivers/ has one waiver, for slice 1 task 2.8, and none for this eval. The inline note does say \"left planned\", which softens it. Still, a checked box is the machine-readable completion signal. AGENTS.md says deferred work needs an explicit waiver or a \"Scope NOT delivered\" note, never a completion mark. Slice 5's archived tasks.md has the same ticked-but-planned 2.5. That shows a repeated pattern, not that the pattern was accepted. No user or attacker can exploit this, and nothing in the runtime is affected. It is a process and traceability defect only, so minor is the right severity.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:openspec/changes/implement-authoring-missions-ui/tasks.md",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1141,
+      "durationMs": 14908,
+      "sessionId": "fa2dda9e-51dc-4c91-87bf-e389c3392a3c",
+      "costUsd": 0.09426960000000001,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "Confirmed, with a small correction: the line is 24, not 23. tasks.md:24 reads \"- [x] 4.1 `npm run qa:verify` — `Overall result: Pass`.\" That line names no evidence path. The report it relies on, docs/qa/automated-verification-latest.md:8, says \"Overall result: Pass (1 member(s) PLANNED, not yet due: eval-ratchet)\", and tasks.md drops that PLANNED qualifier. The AGENTS.md lesson done-claims-need-evidence lists \"Overall result: Pass\" by name as strong completion language that needs an evidence path on the same line in handoff docs. Two things weaken the finding, which is why it stays minor. First, a tasks.md checklist is only arguably a \"handoff doc\"; the lesson names current-state.md, PR bodies and handoff docs. Second, the archived slice 5 tasks.md uses exactly the same wording and was accepted, so this follows an existing convention. The report file exists and is current, so the claim itself is true. Only the in-line pointer and the qualifier are missing.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:openspec/changes/implement-authoring-missions-ui/tasks.md",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1174,
+      "durationMs": 16566,
+      "sessionId": "10633675-8c83-45b5-9a3d-364d3f02a7a5",
+      "costUsd": 0.1462058,
+      "numTurns": 6,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed this against the file. `tasks.md:24` reads \"- [x] 4.1 `npm run qa:verify` — `Overall result: Pass`.\" and nothing else: no path to the report, no qualifier. The phrase \"Overall result: Pass\" is on the forbidden list in AGENTS.md and in `contract/factory/lessons/done-claims-need-evidence/lesson.md`. Both say such a claim needs a resolvable evidence pointer on the same line, and the lesson says that in review an unbacked claim is \"an automatic finding\". The report does exist (`docs/qa/automated-verification-latest.md:8`), but it says \"Pass (1 member(s) PLANNED, not yet due: eval-ratchet)\", and the tasks.md line drops that qualifier. No script or other place makes up for it: `scripts/` has no checker that scans tasks.md for done-claims. The archived slice 5 `tasks.md:25` uses the same wording, so this is a repeated pattern, not a one-off. The rule is meant for the exact situation where a reader sees a bare \"Pass\" and cannot trace it to evidence. One point against it: tasks.md is an OpenSpec checklist, so it is debatable whether it counts as a \"handoff doc\". Even so, the lesson names this exact phrase and calls it an automatic review finding. Minor severity fits, because the underlying claim matches a real report, so nobody is misled about substance. Only the traceability and the PLANNED qualifier are missing.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:docs/qa/automated-verification-latest.md",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1228,
+      "durationMs": 15901,
+      "sessionId": "4145a7d6-2299-4c87-bae0-f9c649f9f916",
+      "costUsd": 0.10256420000000001,
+      "numTurns": 5,
+      "result": {
+        "refuted": true,
+        "reasoning": "The facts are right, but they don't show a problem. The recordings section does say \"Scope: 1 clip(s) across 1 manifest(s)\" (lines 109/112). `scripts/record-demos.mjs` has one clip, which proves only FR-1. But no rule requires a clip for FR-9 or FR-55. `contract/docs/requirements.md` declares the acceptance method for both as **e2e** (line 69 for FR-9, line 74 for FR-55), not recording. The AGENTS.md line the finding quotes (\"every clip asserts the FRs it shows\") only says what each existing clip must assert. It does not say every FR needs a clip. The recordings PASS is also not hiding missing coverage. The same report prints explicit `WARN [recording-evidence] FR-9 …` and `FR-55 is not referenced by any recording manifest` (lines 59 and 63), along with roughly 27 other MVP FRs from earlier slices that have no clip either. So this is the project's normal, visible state, not a gap slice 6 introduced. The vacuous-pass lesson doesn't apply because the scope is 1, not 0. The finding's own suggested alternative (\"document that recordings are not a declared acceptance method for these FRs\") is already true in the requirements table. At most this is an optional nice-to-have, not a spec-compliance defect.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:docs/qa/automated-verification-latest.md",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1261,
+      "durationMs": 15569,
+      "sessionId": "b61dcc45-2403-47e6-b917-a935849ed965",
+      "costUsd": 0.12785600000000003,
+      "numTurns": 6,
+      "result": {
+        "refuted": true,
+        "reasoning": "The facts in the finding are correct: the recordings section shows Scope: 1, and scripts/record-demos.mjs only proves FR-1. The conclusion drawn from them is wrong. contract/docs/requirements.md:69 lists FR-9's verification method as `e2e` only, and requirements.md:74 does the same for FR-55. `recording` is a closed-vocabulary method (requirements.md:46) that is declared only for FR-32 and NFR-8. So recordings are not a declared acceptance method for these FRs. The AGENTS.md line \"every clip asserts the FRs it shows\" constrains the clips that exist. It does not require a clip for every user-visible flow. The declared e2e mechanism exists and is traced. e2e/authoring-missions.spec.ts has `@trace FR-9`/`@trace FR-55` and covers create, reorder, publish-refused, publish/unpublish, the 50-task cap and delete. e2e/authoring-edit.spec.ts also covers FR-55. The recordings PASS is not a vacuous pass over zero evidence, because its scope is 1 real clip for an FR that declares `recording`. No real gap, mis-verification or user-facing problem exists. The finding's second suggestion, \"document that recordings are not a declared method\", is already true in the contract.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/features/missions/MissionEditorScreen.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1132,
+      "durationMs": 15893,
+      "sessionId": "72608b67-ceea-4074-92be-1afec1faa244",
+      "costUsd": 0.16044000000000003,
+      "numTurns": 5,
+      "result": {
+        "refuted": true,
+        "reasoning": "Refuted. The code at MissionEditorScreen.tsx:328 does disable the button with `disabled={busy || dirty}` and shows a `saveFirst` hint, so the quote is accurate. But nothing about this is wrong, and it isn't undocumented drift.\n\n1. The change's own design calls for it. openspec/changes/implement-authoring-missions-ui/design.md:45-47 says: \"Publish mission\" / \"Unpublish mission\" (disabled with \"Save your changes first.\" while the form differs from the stored mission). The UI does exactly what the approved change design says. The finding's claim that \"no requirement does\" cover it only holds if you ignore design.md, which is part of the same change.\n\n2. The behaviour is correct. `changeStatus(saved)` acts on the stored mission. If publish worked while the form had unsaved edits, the admin would be publishing a mission that differs from the one on screen. Blocking that is a sensible guard, not a defect.\n\n3. It doesn't contradict the spec. \"SHALL offer publish or unpublish\" still holds: the action is shown on every saved mission and only disabled until the edits are saved, with the reason given.\n\nAt most, the spec could gain a scenario to mirror the design. That's a documentation nicety, not a correctness or scope-drift defect.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/features/missions/MissionEditorScreen.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1165,
+      "durationMs": 17201,
+      "sessionId": "1e17aa92-070d-4b70-ac7e-bcfdf560976f",
+      "costUsd": 0.1402368,
+      "numTurns": 5,
+      "result": {
+        "refuted": true,
+        "reasoning": "The code is as the finding says: `MissionEditorScreen.tsx:328` disables publish/unpublish while `dirty` and shows the saveFirst hint at line 331. But calling it scope drift is wrong. The change's own design doc already specifies this behaviour. `openspec/changes/implement-authoring-missions-ui/design.md:45-47` says: \"Publish mission\" / \"Unpublish mission\" (disabled with \"Save your changes first.\" while the form differs from the stored mission). So the gate is planned and documented in the same change, and the unit test covers it. It is not behaviour that crept in without a plan. The spec delta's 'Publishing and deleting with clear refusals' requirement doesn't contradict it either. It only says the editor SHALL offer publish/unpublish for a saved mission, and it still does once the form is saved. On the exploitability/reproducibility lens: this is a deliberate guard that prevents publishing a server state that doesn't match what the admin sees. It harms no user and gives an attacker nothing to exploit. What remains is a small documentation gap: the spec has no scenario for this, while design.md does. That is a nit, not a spec-compliance defect.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/features/missions/MissionEditorScreen.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1128,
+      "durationMs": 14846,
+      "sessionId": "3213d289-d776-4b10-827d-ff344cea8d1f",
+      "costUsd": 0.1218834,
+      "numTurns": 6,
+      "result": {
+        "refuted": false,
+        "reasoning": "I checked the finding against the code and the change's specs, and it holds. `MissionEditorScreen.tsx:288-289` renders a `type=\"search\"` field in the \"Add tasks\" panel, and that field filters the picker. `proposal.md:25` and `design.md:40` both mention the search box. However, the change's spec delta `openspec/changes/implement-authoring-missions-ui/specs/content-authoring/spec.md` never mentions search or diacritics in its 'Mission editor' requirement (lines 21-61) or any of its scenarios. A grep across `openspec/` turns up search only in the task-list requirement (FR-11, lines 99/102 of the main spec), not in the mission editor. Nothing elsewhere in the change covers it. This isn't a runtime bug: the claimed mechanism is correct, because shipped behavior has no requirement behind it. That is minor spec-compliance drift, so keeping it at minor is appropriate.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/features/missions/MissionEditorScreen.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1161,
+      "durationMs": 17858,
+      "sessionId": "dfa60023-b0d0-46bf-9f33-98c6aa2014cb",
+      "costUsd": 0.13627519999999999,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "severityAdjustment": "downgrade",
+        "reasoning": "The factual claim holds. MissionEditorScreen.tsx:19 defines `fold` (NFD, strips diacritical marks, Czech lower-casing). Lines 61–62 filter the offered tasks with `fold(task.promptExcerpt).includes(query)`, and line 289 renders the `type=\"search\"` input. The change's spec delta (openspec/changes/implement-authoring-missions-ui/specs/content-authoring/spec.md, 'Requirement: Mission editor', lines 21+) says nothing about a search, case or diacritics, and none of its scenarios cover it. So the case- and diacritic-insensitive matching is a behaviour that no requirement backs or traces.\n\n'Scope drift' overstates it, though. The search is declared in the change's own proposal.md:25 ('a picker of the topic's tasks with a search box') and in design.md:40 and :105 (the 'Add tasks' panel search box, and focus falling back to it after a remove). It is planned scope that never made it into a requirement scenario, not something added outside the plan.\n\nOn exploitability and reproducibility, no user or attacker can turn this into harm. The filter runs only on the client, over tasks already fetched for the selected topic, in an admin screen behind a password. It only hides or shows rows in the picker. Server validation still decides which taskIds are accepted, so nothing is bypassed and no data is exposed. The real issue is a small spec/traceability gap (the test exists but its behaviour isn't traced to a scenario). That makes it valid but low-impact: keep it as a documentation fix and downgrade it to nit level."
+      }
+    },
+    {
+      "label": "verify:src/features/tasks/TaskEditorScreen.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1266,
+      "durationMs": 22800,
+      "sessionId": "0321ad6c-2f07-4da3-95a1-dcffef5acf02",
+      "costUsd": 0.1801484,
+      "numTurns": 9,
+      "result": {
+        "refuted": true,
+        "reasoning": "The code does what the finding says: `TaskEditorScreen.tsx:130` calls `setConflict(error)` on a 409 from save, and line 402 renders `<ConflictAlert describe={describeMission} />`. But calling this scope drift is wrong, for two reasons.\n\n1. The delta requirement \"Publishing and deleting with clear refusals\" (`openspec/changes/implement-authoring-missions-ui/specs/content-authoring/spec.md:70-72`) is not limited to publish and delete. It says: \"A 409 refusal SHALL be shown as an alert with the problem's `detail` and every id of `conflicts` named as the blocking task … or mission (topic and position) with a link to its editor.\" That covers any 409, including a refused task save. Its scenarios are examples; they don't make the list exhaustive.\n\n2. The behaviour is required by the product spec, which is where product truth lives in this setup. The test's title names that spec's scenario word for word: `contract/openspec/specs/content-authoring/spec.md:923` \"Changing the topic of a task in a mission\": \"the save is refused with a message naming missions A and B\". The frontend delta only restates what it adds or changes and references the store (`references: [doucko]`). Building UI for a scenario the store already defines is required conformance, not drift.\n\nThe most the finding could claim is that the delta has no worked scenario for this case. That is a documentation nicety. It is not a correctness or spec-compliance defect, because the normative 409 text already applies to it.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/features/tasks/TaskEditorScreen.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1299,
+      "durationMs": 19742,
+      "sessionId": "3ae25fb5-2752-4d84-8425-6ab9071d4437",
+      "costUsd": 0.16066360000000002,
+      "numTurns": 8,
+      "result": {
+        "refuted": true,
+        "reasoning": "The code path exists: in `TaskEditorScreen.tsx:130`, a 409 from `saveTask` sets `conflict`, and line 402 renders `<ConflictAlert describe={describeMission}>`. But the finding says the delta spec doesn't cover this, and that isn't accurate. The requirement \"Publishing and deleting with clear refusals\" (delta spec.md:70-72) has a general clause: \"A 409 refusal SHALL be shown as an alert with the problem's `detail` and every id of `conflicts` named as the blocking task … or mission (topic and position) with a link to its editor.\" That clause is not limited to publish/unpublish/delete. design.md:22 also maps the store requirement \"Mission publishing rules\" to \"every refusal (409) shown with its detail and the blocking tasks or missions named from `conflicts`\". The backend invariant that refuses a topic change for a task in a mission is part of that requirement. So a 409 on task save is exactly the kind of refusal the spec says must be shown this way. This is the specified behaviour, not new scope.\n\nThrough the exploitability lens, there is also nothing harmful a user or attacker could trigger. The behaviour is display-only: it shows a server refusal that would otherwise appear as a generic save-failed message, and it is covered by a test. At most, an extra explicit scenario would be a nice-to-have, which is not a spec-compliance defect.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:openspec/changes/implement-authoring-missions-ui/specs/content-authoring/spec.md",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1200,
+      "durationMs": 19519,
+      "sessionId": "a178fb53-c518-4a6e-ba83-55abf0aecc0f",
+      "costUsd": 0.1307902,
+      "numTurns": 6,
+      "result": {
+        "refuted": true,
+        "reasoning": "The facts are right, but they don't add up to a real defect. The `(FR-56)` citation is at spec.md:73-74, not line 60. The plan (contract/docs/mvp-capability-plan.md:293) does list FR-56 as backend-only. But the finding's claimed harm is that the UI side 'has no traceable id', and that is false. The tests that cover the blocked-delete UI are annotated `@trace FR-55`: TaskStatusPanel.test.tsx, MissionEditorScreen.test.tsx and e2e/authoring-edit.spec.ts. The e2e test 'delete a draft task: blocked with an offer to unpublish… (FR-55)' covers this behaviour directly. FR-55 is the frontend-owned edit/delete FR. The ownership rule in AGENTS.md limits `@trace` annotations to ids this repo owns. It does not stop spec prose from naming the server rule that the UI displays. The test titles in fact call this 'FR-56 messaging'. The trace tooling treats this as consistent: traceability-report.md shows FR-56 as owner backend with n/a for the frontend, and nothing fails or warns. No trace annotation is broken and no gate breaks. At most this is a wording preference about whether to also cite FR-55 in that sentence, so there is no correctness defect.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:openspec/changes/implement-authoring-missions-ui/specs/content-authoring/spec.md",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1233,
+      "durationMs": 18858,
+      "sessionId": "52435c04-8e5b-468b-bb25-7f06bccfd00d",
+      "costUsd": 0.1478286,
+      "numTurns": 5,
+      "result": {
+        "refuted": true,
+        "reasoning": "The facts are right but the harm the finding claims does not happen. The line is wrong: the sentence is at spec.md:73-74, not :60. FR-56 really is backend-only (capability plan line 293), and the requirement does cite \"(FR-56)\". But the finding says that, as a result, \"the UI side of this requirement has no traceable id\", and that is false. The same requirement block is backed by frontend e2e tests that carry `// @trace FR-55`. One is e2e/authoring-missions.spec.ts:144, 'delete: blocked by practice records with an offer to unpublish ... (Delete only unused content, FR-55)'. Another is e2e/authoring-edit.spec.ts:77, the blocked task delete with the offer to unpublish. So the disabled-delete and offer-to-unpublish UI is traced through FR-55, a requirement the frontend owns. Citing FR-56 in that sentence just names the server rule the UI shows. The repo already does this on purpose: the test titles say \"FR-56 messaging\" and \"FR-57 messaging\". The traceability tooling does not count it as a gap either: docs/qa/traceability-report.md lists FR-56 as owned by backend with frontend 'n/a' and no error. Nobody using the app can run into a problem from this, and no gate fails because of it. At most it is a wording nit in the spec. The behaviour is implemented and traced.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/features/missions/MissionLabel.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1303,
+      "durationMs": 18526,
+      "sessionId": "f9b10517-4a73-48ff-9309-4971bd08a364",
+      "costUsd": 0.14538920000000002,
+      "numTurns": 7,
+      "result": {
+        "refuted": true,
+        "reasoning": "The cited code is real: `{' · '}` at MissionLabel.tsx:10 and `<span className=\"mission-num\">{n}.</span>` at MissionEditorScreen.tsx:237. But calling them NFR-9 violations misreads how the project has defined and enforces NFR-9.\n\n1. The finding guesses that the pseudo-catalog test \"probably ignores bare punctuation and digits\" by accident. It does not. The exemption is deliberate and written down. `src/app/i18n-coverage.test.tsx:17-24` defines `COVERED` and `NO_WORDS` (`/^[\\s\\d\\p{P}\\p{S}]*$/u`) with the comment \"Separators and numbers carry no words; the lint rule allows them too.\"\n\n2. The NFR-9 lint rule says the same thing. `eslint-rules/no-literal-ui-text.js:19` reads: \"Allows punctuation-only text (\" · \", \"/\"), whitespace, and every expression.\" Its own example is the exact `\" · \"` separator the finding flags.\n\n3. Neither string contains anything that needs translating. `·` is a separator, and `{n}.` is a number from an expression plus a period, which is how ordinals are written in Czech too. The parts that carry words are already handled: `topicName` is marked `data-content`, and the position text comes from `t('admin.missions.label')`.\n\nSo nothing is broken here. The project's NFR-9 checks treat punctuation and digit-only text as exempt on purpose, and the finding's fallback suggestion (\"document the punctuation exemption\") is already done in both enforcement mechanisms. What remains is a style preference, not a correctness defect.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/features/missions/MissionLabel.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1336,
+      "durationMs": 13670,
+      "sessionId": "a09a9f1b-4b7f-4b23-ad77-a15bfa6b51a5",
+      "costUsd": 0.0955594,
+      "numTurns": 5,
+      "result": {
+        "refuted": true,
+        "reasoning": "The code matches the description: MissionLabel.tsx:10 renders a literal `{' · '}` and MissionEditorScreen.tsx:237 renders `{n}.`. But this isn't a real defect. The project's NFR-9 mechanism, src/app/i18n-coverage.test.tsx:16-19, deliberately counts text as covered when it is made of catalog segments \"plus whitespace, digits and punctuation between them\". That exemption is written down on purpose, not an oversight the test fails to catch. The only words around the separator, \"Position {position}\", already come from the catalog (`admin.missions.label`), and the topic name is marked `data-content`. A middle dot and an ordinal like \"1.\" contain no translatable language, and the admin UI is English-only. No user will ever see an untranslated word. This is a style nitpick that goes against the repo's documented convention, not a spec violation that can actually happen.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:docs/qa/demo-recordings/nfr8-task-entry/nfr8-single-part-task-entry.png",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1750,
+      "durationMs": 17661,
+      "sessionId": "a427eb34-40a9-4ff8-bc4d-67132e024b7c",
+      "costUsd": 0.1297322,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "severityAdjustment": "downgrade",
+        "reasoning": "The facts check out. The only image under docs/qa/ is docs/qa/demo-recordings/nfr8-task-entry/nfr8-single-part-task-entry.png, from slice 5. automated-verification-latest.md shows the recordings check as `PASS (Scope: 1)` with \"1 clip(s) across 1 manifest(s)\", and a WARN that FR-55 is \"not referenced by any recording manifest\". So no slice-6 screen (missions list/editor, source edit, publish/unpublish, delete-blocked dialog) has a rendered still a visual reviewer could check. I can't refute that.\n\nSome of the finding's reasoning is overstated, though:\n(1) The recordings PASS is not a vacuous pass under the project rule. That rule applies only when scope is 0, and here it is 1. The finding's call to report it as NOT-EARNED isn't backed by the rule as written.\n(2) The slice-6 OpenSpec change (openspec/changes/implement-authoring-missions-ui) declares no recording or screenshot acceptance method for its requirements. Slice 5 declared one, for NFR-8's timed clip. So no declared method is missing a mechanism.\n(3) The behaviour these screens implement is covered by passing e2e tests in chromium, msedge and firefox. These include authoring-missions.spec.ts (reorder, delete blocked with an offer to unpublish) and authoring-edit.spec.ts (source/task refusals, task delete), all tagged FR-55.\n\nThere is no correctness defect in the code. This is a gap in visual-review evidence, which is real but small, so I'm downgrading it from major."
+      }
+    },
+    {
+      "label": "verify:docs/qa/demo-recordings/nfr8-task-entry/nfr8-single-part-task-entry.png",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1783,
+      "durationMs": 20115,
+      "sessionId": "66bf6803-3636-440e-b37d-d31730c14318",
+      "costUsd": 0.126398,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "severityAdjustment": "downgrade",
+        "reasoning": "The facts check out. The only image under docs/qa/ is docs/qa/demo-recordings/nfr8-task-entry/nfr8-single-part-task-entry.png, from slice 5. automated-verification-latest.md shows the recordings check as \"PASS … Scope: 1 clip(s) across 1 manifest(s)\" and warns that FR-55 and the other authoring FRs are \"not referenced by any recording manifest\". So no slice-6 screen (missions list/editor, source edit, publish/unpublish, delete-blocked dialog) has any committed visual evidence.\n\nThrough the exploitability lens, though, this is not a defect a real user or attacker can trigger. It is a gap in review evidence and changes nothing at runtime. Two of the finding's claims are also overstated:\n1. The recordings PASS is not a vacuous pass. Its scope is 1 real clip, not 0, so the vacuous-pass-not-earned rule (which needs a scope of 0) does not apply.\n2. The slice-6 change (openspec/changes/implement-authoring-missions-ui) never names a recording as its acceptance method. Searching it for record/screenshot/visual only turns up the term \"practice records\". Only NFR-8 in slice 5 declared a recorded clip. So the declared-method-needs-mechanism rule is not broken either.\n\nThe gap is real, but it is a coverage and process limit for the visual review, not a major product defect. It should be downgraded, e.g. to minor or info."
+      }
+    },
+    {
+      "label": "verify:docs/qa/demo-recordings/nfr8-task-entry/nfr8-single-part-task-entry.png",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1372,
+      "durationMs": 22163,
+      "sessionId": "6f6208fb-afc6-46a3-8d44-b16ddcc228a0",
+      "costUsd": 0.1860928,
+      "numTurns": 8,
+      "result": {
+        "refuted": false,
+        "severityAdjustment": "keep",
+        "reasoning": "The code confirms the mechanism. In src/features/tasks/TaskEditorScreen.tsx:123-125, a successful create resets the form with `setForm(stickyForm(f))`. Source, page and similar fields stay; prompt, task number and accepted answers are cleared. In the same step it sets `status = {kind:'created', taskId}`. Status is only cleared at the start of the next submit (line 100), so it stays on screen while the user types the next task. The banner (lines 403-417) shows the generic 'Task saved as draft.' text (en.ts:187) and never names the task. It sits directly above the Save button inside the form. Because the form is new again, `task` is null, so the 'Images' panel shows 'Save the task first to attach images.' (lines 429-432) right below the 'saved' banner. That is exactly the layout the still shows.\n\nWhat the finding gets right and wrong: this is not a functional bug. The 'Edit saved task' and 'Preview' links carry the correct saved taskId, and the sticky-form reset is the intended NFR-8 fast-entry flow. The criticism is about UX clarity, not wrong behaviour. It is also pre-existing slice-5 code, not something slice 6 introduced. Still, the claimed visual problem is real and reproducible from the code: a generic 'saved' message sits inside a blank, unsaved form next to a 'save first' notice. So it is not refuted, and minor is the right severity."
+      }
+    },
+    {
+      "label": "verify:docs/qa/demo-recordings/nfr8-task-entry/nfr8-single-part-task-entry.png",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1405,
+      "durationMs": 19090,
+      "sessionId": "305f6d8c-0939-4173-939c-fa7178b60e8a",
+      "costUsd": 0.17257280000000003,
+      "numTurns": 6,
+      "result": {
+        "refuted": false,
+        "reasoning": "The mechanism is real, and any admin creating a task hits it every time. In `src/features/tasks/TaskEditorScreen.tsx:124-125`, a successful create resets the form to `stickyForm(f)`. That keeps source, grade and page but blanks prompt, task number and answers, which is intended for keyboard batch entry (NFR-8). In the same step it sets `status = {kind:'created', taskId}`. The `role=\"status\"` banner (lines 403-417) is rendered inside the form, directly above the Save button. It stays visible while the user types the next task, because `setStatus(null)` only runs at the start of the next `save()` (line 100). `task` is still undefined in create mode, so the Images panel below shows 'admin.images.saveFirst' (lines 429-432) right under the 'Task saved as draft.' message. So the still accurately shows what the app renders.\n\nPoints against the finding:\n- The banner text plus its 'Edit saved task' / 'Preview' links point to the saved task's id, which partly signals that it refers to the previous save.\n- This is the intended batch-entry design.\n- The code is from slice 5 and is not changed by slice 6, which is why the suggestion is phrased as conditional.\n\nThese lessen the impact but do not refute that the layout is ambiguous, so this stays a minor, subjective UX/visual clarity issue rather than a functional bug.",
+        "severityAdjustment": "keep"
+      }
+    }
+  ],
+  "logs": [
+    {
+      "phase": "Find",
+      "message": "15 unique findings across 4 dimensions"
+    },
+    {
+      "phase": "Report",
+      "message": "confirmed: 8, contested: 1, rejected: 6"
+    }
+  ],
+  "persisted": [
+    "openspec/changes/implement-authoring-missions-ui/review-findings.json"
+  ],
+  "returned": {
+    "scope": "slice 6 authoring-missions frontend (implement-authoring-missions-ui)",
+    "summary": "Review gate for slice 6 authoring-missions frontend (implement-authoring-missions-ui): 8 confirmed, 1 contested (treat as confirmed unless trivially wrong), 6 rejected.",
+    "confirmed": [
+      {
+        "title": "Task Publish/Unpublish is enabled while the task form has unsaved edits, so the stored version is published",
+        "file": "src/features/tasks/TaskStatusPanel.tsx",
+        "line": 60,
+        "severity": "major",
+        "confidence": "medium",
+        "evidence": "`<Button disabled={busy} onClick={() => void changeStatus()}>` is the only guard. `setTaskStatus(task.taskId, next)` publishes the server copy, so edits still in TaskEditor's local `form` state (prompt, answer key) are left out without warning. The mission editor in the same slice blocks exactly this case with `disabled={busy || dirty}` and the `admin.missionEditor.saveFirst` hint (MissionEditorScreen.tsx:332-335). The two publish flows behave differently, and an admin can publish a task they think includes their fix.",
+        "suggestion": "Pass a `dirty` flag from TaskEditor, comparing `form` with `initialForm(task, …)` or a saved snapshot, into TaskStatusPanel. Disable publish while it is true and show a 'save first' hint, the same way MissionEditor does. Also share `busy` so publishing can't race an in-flight save.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "The finding holds. `TaskStatusPanel.tsx:60` disables the button only on its own `busy`. `TaskEditorScreen.tsx:427` renders `<TaskStatusPanel task={task} onDeleted={onDeleted} />` and passes no dirty or busy state, even though the editor keeps the edits in local `form` state (line 77) that is only sent by `save()`. `changeStatus()` calls `setTaskStatus(task.taskId, next)`, which changes the status of the stored copy and never sends `form`. So an admin can edit the prompt or answer key, click Publish without saving, and publish the old version with no warning. Nothing else guards this path: there is no dirty check in the task editor, no confirm dialog, and the panel's `busy` is separate from the editor's `busy`, so a publish can also run during an in-flight save. The comparison with the mission editor is accurate too: `MissionEditorScreen.tsx:60` computes `dirty = isDirty(form, saved)`, and lines 328-331 use `disabled={busy || dirty}` and show the `admin.missionEditor.saveFirst` hint. The two publish flows in the same slice really do behave differently. Rating it major is reasonable because no data is lost (the unsaved edits stay in the form and can still be saved), but the admin can be misled about what gets published.",
+          "The finding holds; I couldn't refute it. `TaskStatusPanel` is rendered on the same screen as the editable form, below it (`TaskEditorScreen.tsx:427`), whenever a saved task is loaded. It only receives `task` (the server copy) and `onDeleted`. It gets no dirty flag and does not share the editor's `busy` state. Its Publish button checks only its own `busy` (`TaskStatusPanel.tsx:60`), and `changeStatus` calls `setTaskStatus(task.taskId, next)`, which publishes whatever the server has stored. The editor keeps edits in local `form` state (`TaskEditorScreen.tsx:77`) and sends them only when Save is pressed (`save()`, lines 98-134). Nothing checks the two against each other.\n\nHow to reproduce:\n1. Open `/admin/tasks/edit?taskId=X` for a draft task.\n2. Change the prompt or the answer key, and don't press Save.\n3. Press Publish.\n\nThe old stored version is published and the panel shows a \"published\" status. The unsaved edits stay in the form, so the admin can easily believe the fix went live.\n\nThe mission editor in the same slice does guard this case: `MissionEditorScreen.tsx:60` computes `isDirty`, line 328 sets `disabled={busy || dirty}`, and line 331 shows the `saveFirst` hint. So the two publish flows really do behave differently.\n\nThere is also a smaller race: the editor's `busy` state isn't shared with the panel, so Publish can be clicked while a save is still running.\n\nThis is not a security issue, since only the password-protected admin can do it. But it is a real correctness problem that a normal user can hit: children may get a task with a wrong answer key that the admin thinks they fixed. I'm keeping the severity at major."
+        ]
+      },
+      {
+        "title": "A stale save-error alert stays on screen after a later publish or delete succeeds",
+        "file": "src/features/missions/MissionEditorScreen.tsx",
+        "line": 127,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "`changeStatus` and `destroy` clear `saveStatus`, `actionStatus` and `actionError`, but not `saveError` or `errors`. A save can fail on an unchanged mission (for example a 409 position clash or a network error), and in that case `dirty` is false so Publish stays enabled. If Publish then succeeds, the screen shows the old `ConflictAlert` from the save (role=alert) next to the 'published' status, which contradicts it.",
+        "suggestion": "Call `setSaveError(null)` (and clear `errors` if appropriate) at the start of `changeStatus` and `destroy`, just as `save` clears the action state.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "The finding holds for publish and unpublish. It does not hold for delete.\n\n**What the code does**\n- `changeStatus` (lines 135–150) clears `saveStatus`, `actionStatus` and `actionError`. It never clears `saveError` or `errors`.\n- Line 269 shows a save failure through `FormAlert`, and line 270 shows it through `ConflictAlert`. Both stay on screen until something resets that state.\n- The Save button (line 277) is only disabled while `busy`. You can submit an unchanged mission.\n\n**How the bug happens**\n1. Save fails without the form changing, for example because of a network error. `saveError` is set, and `FormAlert` shows \"save failed\".\n2. `isDirty(form, saved)` is still false, so the Publish/Unpublish button at line 328 stays enabled.\n3. Publish succeeds. `saved` updates, the status message says \"published\", and the old save-failure alert is still showing next to it. That is a real contradiction on screen.\n\n**Where the finding is wrong**\n- **Delete:** if `destroy` succeeds it sets `deleted`, and the early return at line 167 replaces the whole editor. So no stale alert can survive a successful delete.\n- **Example:** a position clash probably comes back as a field error (`fieldErrors`). That would show in `errors`/`FormAlert`, not in `ConflictAlert`. A network error is a cleaner example.\n\nThe core mechanism is confirmed: the stale save error survives a successful status change. Keeping severity at minor, since it is a cosmetic or messaging issue with no data impact.",
+          "I confirmed the bug for publish/unpublish. The delete half of the finding is wrong.\n\nCode at src/features/missions/MissionEditorScreen.tsx:\n- `save` (lines 106-133) clears the action state.\n- `changeStatus` (lines 135-150) clears only `saveStatus`, `actionStatus` and `actionError`. It never clears `saveError` or `errors`.\n- The Publish/Unpublish button (line 328) is disabled only by `busy || dirty`. `dirty` is `isDirty(form, saved)`, which compares the form with the last good save. A failed save does not change `saved`, so when the form matches it, `dirty` is false.\n\nWays a real admin can get there:\n1. Press Save on an unchanged mission and hit a network error or a non-field problem. The catch at lines 127-131 sets `saveError`.\n2. Change the position to one that clashes, Save, get the refusal, then type the old position back. `errors` / `saveError` stay set while `dirty` goes back to false.\n\nPublish is then enabled. If it succeeds, the save form still shows the old FormAlert \"save failed\" or the ConflictAlert (lines 269-270, role=alert), or the field error, while the status panel says \"published\". That contradicts itself. Nothing else clears this state: there is no effect on `saved`, and the component does not remount. This is UI-only, so 'minor' is right.\n\nThe delete half does not hold. When `destroy` succeeds it sets `deleted=true`, and lines 167-179 then render a different view without the form. The stale alert cannot appear next to a delete success. The fix (`setSaveError(null)` / `setErrors({})` in `changeStatus`) is still valid."
+        ]
+      },
+      {
+        "title": "Publish/unpublish and delete on the mission and source screens don't share a busy guard",
+        "file": "src/features/missions/MissionEditorScreen.tsx",
+        "line": 141,
+        "severity": "minor",
+        "confidence": "low",
+        "evidence": "`destroy(mission)` doesn't set `busy`, and DeleteControl keeps its own separate `busy`. So Publish (or Save) and Delete can both be in flight together. If the delete succeeds after a publish has started, the publish's `refresh(result)` puts the deleted mission back into the cache with `setQueryData(missionKey(...))`. SourceEditForm has the same gap between `save` and `destroy`.",
+        "suggestion": "Set the screen-level `busy` around `destroy`, and pass `disabled={busy || …}` to DeleteControl. Or disable the other actions while a delete confirmation is pending.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "The mechanism is real in the code. In MissionEditorScreen.tsx, `changeStatus` (l.135-150) and `save` (l.106-133) set the screen-level `busy`, but `destroy` (l.152-165) never does. DeleteControl gets `disabled={!saved.deletable}` only (l.343), and that prop only gates the initial \"Delete\" button. The confirm-step Delete/Cancel buttons are gated by DeleteControl's own internal `busy` (DeleteControl.tsx l.24, 61-64). Nothing goes the other way either: the Publish button (`disabled={busy || dirty}`, l.328) and Save (`disabled={busy}`) don't know about a pending delete. So a user can click Publish and then confirm Delete while the publish request is still pending. If the delete response lands first, `removeQueries(missionKey)` runs, and then the publish's `refresh(result)` calls `queryClient.setQueryData(missionKey(result.missionId), result)` (l.100), which puts the deleted mission back into the cache under ['admin','mission',id]. Nothing removes it: the later `invalidateQueries` calls target MISSIONS_KEY (['admin','missions']) and ['admin','task'], which don't match ['admin','mission',id]. The publish branch also calls setSaved/setActionStatus after `deleted` is true, but the deleted view doesn't render those, so that part is harmless. Practical impact is small: the cache entry has no observers, the deleted view replaces the editor, and the \"back\" link is a plain href. Even so, the missing shared guard and the cache resurrection are real, and a \"minor\"/low-confidence rating fits. I didn't open SourceEditForm, but the mission-screen half is confirmed on its own.",
+          "The finding holds: the missing guard is real and a user can reach it. The harm it describes, though, is narrow and not visible to the user, so the severity should go down.\n\n**The missing guard is real.** In `MissionEditorScreen.tsx`:\n- `destroy` (lines 152-165) never calls `setBusy`.\n- `DeleteControl` (lines 340-345) only gets `disabled={!saved.deletable}`. Its own `busy` state (`DeleteControl.tsx` lines 24 and 39-44) only disables its own Delete and Cancel buttons.\n- So after clicking Publish/Unpublish (or Save), the user can open the delete question and confirm it while the first request is still running. The reverse also works: while a delete is running, Publish is still enabled (`disabled={busy || dirty}`) because `busy` was never set.\n\n**Nothing on the server blocks it.** The contract defines `AdminMission.deletable` by attempts, reports and opened hints only (`openapi.yaml:1758`). A published mission can still be deleted, so both requests can succeed.\n\n**The cache write does happen.** `refresh()` calls `setQueryData(missionKey(id), result)` (line 100). If the publish response is handled after `destroy` has run `removeQueries` (line 158), the deleted mission is written back into the cache.\n\n**Why the impact is small:**\n1. **The ordering is unlikely.** The publish must commit on the server before the delete (otherwise it gets a 404 and never calls `refresh`), yet its response must reach the client after the delete's response. That mostly needs lock contention or reordered responses, plus a two-click confirmation fired inside one request's round trip.\n2. **The stale entry can't really be seen:**\n   - Once `deleted` is true, the component only shows the \"deleted\" view (line 167), whatever is in the cache.\n   - `MISSIONS_KEY` (`['admin','missions']`) is invalidated, so the list drops the row.\n   - `missionKey` is `['admin','mission',id]` and uses the default `staleTime` of 0 (`queryClient.ts` has no override). Opening that URL again therefore refetches, gets a 404, and `MissionEditorScreen` checks for the 404 error first and shows \"not found\". At worst the old editor flashes until that refetch finishes.\n   - Nothing is corrupted on the server, and no wrong action can follow from the stale entry.\n\n**Save + Delete** has the same shape and the same small impact: if the delete wins, the save gets a 404 and its error is hidden behind the deleted view. If the save wins, the same stale entry appears as above.\n\n**Verdict:** a real gap in the UI's concurrency handling, but the consequence is a short-lived cache entry with nearly no user impact. It should be a nit or hardening item rather than a correctness bug. The suggested fix (share `busy` and pass `disabled={busy || !saved.deletable}`) is still cheap and worth doing."
+        ]
+      },
+      {
+        "title": "tasks.md 2.5 is ticked, but no eval case exists for the admin copy tone",
+        "file": "openspec/changes/implement-authoring-missions-ui/tasks.md",
+        "line": 12,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "Coverage summary: 16 scenarios: 16 implemented, 0 partial, 0 missing, 0 contradicted. The task reads: \"- [x] 2.5 Eval case for admin copy tone: left planned (evals are SKIP-planned and need a judge this run cannot call).\" No slice 6 eval exists under `evals/cases/`. In `docs/qa/automated-verification-latest.md`, eval-ratchet is `PLANNED (exit code: 0, Scope: 0)`. The checkbox claims the task is done, but its artifact doesn't exist.",
+        "suggestion": "Untick 2.5 and add a note that it is deferred, or record an explicit waiver under docs/qa/waivers/. Don't count a planned item as a completed task.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "Confirmed, with one correction: the item is on line 11, not line 12. tasks.md:11 reads \"- [x] 2.5 Eval case for admin copy tone: left planned (evals are SKIP-planned and need a judge this run cannot call).\" The only file in evals/cases/ is .gitkeep, so the artifact doesn't exist. The box is ticked even though the task was not done. The note does say \"left planned\", so nothing is hidden, but there's no waiver and the box still counts as completed. AGENTS.md says a declared method with no mechanism needs either a working check or an explicit human waiver, and a 0-scope result must not count as done. The archived slice 5 tasks.md has the same ticked \"left planned\" line, so this is a pattern that has been carried forward, not a one-off. That doesn't make it correct. Severity stays minor: it's a bookkeeping problem, not a runtime one.",
+          "Confirmed. The line number is slightly off: the item is at line 11, not 12. The mechanism holds: tasks.md:11 reads \"- [x] 2.5 Eval case for admin copy tone: left planned (...)\", so the box is checked but no artifact exists. evals/cases/ contains only .gitkeep, and docs/qa/waivers/ has one waiver, for slice 1 task 2.8, and none for this eval. The inline note does say \"left planned\", which softens it. Still, a checked box is the machine-readable completion signal. AGENTS.md says deferred work needs an explicit waiver or a \"Scope NOT delivered\" note, never a completion mark. Slice 5's archived tasks.md has the same ticked-but-planned 2.5. That shows a repeated pattern, not that the pattern was accepted. No user or attacker can exploit this, and nothing in the runtime is affected. It is a process and traceability defect only, so minor is the right severity."
+        ]
+      },
+      {
+        "title": "Ticked 4.1 claims 'Overall result: Pass' without an evidence pointer on the same line",
+        "file": "openspec/changes/implement-authoring-missions-ui/tasks.md",
+        "line": 23,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "The task reads: \"- [x] 4.1 `npm run qa:verify` — `Overall result: Pass`.\" The report exists (`docs/qa/automated-verification-latest.md`: \"Overall result: Pass (1 member(s) PLANNED, not yet due: eval-ratchet)\"), but the tasks.md line has no path to it. It also leaves out that eval-ratchet is PLANNED with scope 0. This conflicts with the done-claims-need-evidence lesson.",
+        "suggestion": "Add the evidence path `docs/qa/automated-verification-latest.md` and the PLANNED qualifier to the 4.1 line.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "Confirmed, with a small correction: the line is 24, not 23. tasks.md:24 reads \"- [x] 4.1 `npm run qa:verify` — `Overall result: Pass`.\" That line names no evidence path. The report it relies on, docs/qa/automated-verification-latest.md:8, says \"Overall result: Pass (1 member(s) PLANNED, not yet due: eval-ratchet)\", and tasks.md drops that PLANNED qualifier. The AGENTS.md lesson done-claims-need-evidence lists \"Overall result: Pass\" by name as strong completion language that needs an evidence path on the same line in handoff docs. Two things weaken the finding, which is why it stays minor. First, a tasks.md checklist is only arguably a \"handoff doc\"; the lesson names current-state.md, PR bodies and handoff docs. Second, the archived slice 5 tasks.md uses exactly the same wording and was accepted, so this follows an existing convention. The report file exists and is current, so the claim itself is true. Only the in-line pointer and the qualifier are missing.",
+          "I confirmed this against the file. `tasks.md:24` reads \"- [x] 4.1 `npm run qa:verify` — `Overall result: Pass`.\" and nothing else: no path to the report, no qualifier. The phrase \"Overall result: Pass\" is on the forbidden list in AGENTS.md and in `contract/factory/lessons/done-claims-need-evidence/lesson.md`. Both say such a claim needs a resolvable evidence pointer on the same line, and the lesson says that in review an unbacked claim is \"an automatic finding\". The report does exist (`docs/qa/automated-verification-latest.md:8`), but it says \"Pass (1 member(s) PLANNED, not yet due: eval-ratchet)\", and the tasks.md line drops that qualifier. No script or other place makes up for it: `scripts/` has no checker that scans tasks.md for done-claims. The archived slice 5 `tasks.md:25` uses the same wording, so this is a repeated pattern, not a one-off. The rule is meant for the exact situation where a reader sees a bare \"Pass\" and cannot trace it to evidence. One point against it: tasks.md is an OpenSpec checklist, so it is debatable whether it counts as a \"handoff doc\". Even so, the lesson names this exact phrase and calls it an automatic review finding. Minor severity fits, because the underlying claim matches a real report, so nobody is misled about substance. Only the traceability and the PLANNED qualifier are missing."
+        ]
+      },
+      {
+        "title": "Scope drift: the task-picker search box (case- and diacritic-insensitive) has no backing requirement",
+        "file": "src/features/missions/MissionEditorScreen.tsx",
+        "line": 288,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "proposal.md mentions \"a picker of the topic's tasks with a search box\", but the 'Mission editor' requirement in specs/content-authoring/spec.md has no search requirement or scenario. Code: `fold(task.promptExcerpt).includes(query)` with a `type=\"search\"` field. Test: 'filters the offered tasks by a search without diacritics'.",
+        "suggestion": "Add a scenario to the 'Mission editor' requirement: the picker filters the topic's tasks by a search that ignores case and diacritics.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I checked the finding against the code and the change's specs, and it holds. `MissionEditorScreen.tsx:288-289` renders a `type=\"search\"` field in the \"Add tasks\" panel, and that field filters the picker. `proposal.md:25` and `design.md:40` both mention the search box. However, the change's spec delta `openspec/changes/implement-authoring-missions-ui/specs/content-authoring/spec.md` never mentions search or diacritics in its 'Mission editor' requirement (lines 21-61) or any of its scenarios. A grep across `openspec/` turns up search only in the task-list requirement (FR-11, lines 99/102 of the main spec), not in the mission editor. Nothing elsewhere in the change covers it. This isn't a runtime bug: the claimed mechanism is correct, because shipped behavior has no requirement behind it. That is minor spec-compliance drift, so keeping it at minor is appropriate.",
+          "The factual claim holds. MissionEditorScreen.tsx:19 defines `fold` (NFD, strips diacritical marks, Czech lower-casing). Lines 61–62 filter the offered tasks with `fold(task.promptExcerpt).includes(query)`, and line 289 renders the `type=\"search\"` input. The change's spec delta (openspec/changes/implement-authoring-missions-ui/specs/content-authoring/spec.md, 'Requirement: Mission editor', lines 21+) says nothing about a search, case or diacritics, and none of its scenarios cover it. So the case- and diacritic-insensitive matching is a behaviour that no requirement backs or traces.\n\n'Scope drift' overstates it, though. The search is declared in the change's own proposal.md:25 ('a picker of the topic's tasks with a search box') and in design.md:40 and :105 (the 'Add tasks' panel search box, and focus falling back to it after a remove). It is planned scope that never made it into a requirement scenario, not something added outside the plan.\n\nOn exploitability and reproducibility, no user or attacker can turn this into harm. The filter runs only on the client, over tasks already fetched for the selected topic, in an admin screen behind a password. It only hides or shows rows in the picker. Server validation still decides which taskIds are accepted, so nothing is bypassed and no data is exposed. The real issue is a small spec/traceability gap (the test exists but its behaviour isn't traced to a scenario). That makes it valid but low-impact: keep it as a documentation fix and downgrade it to nit level."
+        ]
+      },
+      {
+        "title": "No rendered screenshots of any slice-6 screen (missions list/editor, source edit, task status/delete), so the visual lens cannot check them",
+        "file": "docs/qa/demo-recordings/nfr8-task-entry/nfr8-single-part-task-entry.png",
+        "severity": "major",
+        "confidence": "high",
+        "evidence": "The only image under docs/qa/ is docs/qa/demo-recordings/nfr8-task-entry/nfr8-single-part-task-entry.png, which shows the slice-5 'New task' entry form. docs/qa/automated-verification-latest.md reports 'Scope: 1 clip(s) across 1 manifest(s)' and WARNs that FR-55 and the other authoring FRs are 'not referenced by any recording manifest'. So none of the new mission screens, source edit, publish/unpublish, or the delete-blocked dialog were rendered for visual review. The recordings check still shows PASS while the slice-6 UI has no visual evidence.",
+        "suggestion": "Add a recording manifest and clips to scripts/record-demos.mjs for the slice-6 flows: mission list, mission editor with task ordering, source edit, publish/unpublish, and the 'blocked by practice records, offer to unpublish' delete dialog. Each clip should assert the FRs it shows (e.g. FR-55). Commit the stills under docs/qa/demo-recordings/ so a visual review can check contrast, layout and how inert controls look. Until then, report the slice-6 recording evidence as NOT-EARNED, not PASS.",
+        "dimension": "visual",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "The facts check out. The only image under docs/qa/ is docs/qa/demo-recordings/nfr8-task-entry/nfr8-single-part-task-entry.png, from slice 5. automated-verification-latest.md shows the recordings check as `PASS (Scope: 1)` with \"1 clip(s) across 1 manifest(s)\", and a WARN that FR-55 is \"not referenced by any recording manifest\". So no slice-6 screen (missions list/editor, source edit, publish/unpublish, delete-blocked dialog) has a rendered still a visual reviewer could check. I can't refute that.\n\nSome of the finding's reasoning is overstated, though:\n(1) The recordings PASS is not a vacuous pass under the project rule. That rule applies only when scope is 0, and here it is 1. The finding's call to report it as NOT-EARNED isn't backed by the rule as written.\n(2) The slice-6 OpenSpec change (openspec/changes/implement-authoring-missions-ui) declares no recording or screenshot acceptance method for its requirements. Slice 5 declared one, for NFR-8's timed clip. So no declared method is missing a mechanism.\n(3) The behaviour these screens implement is covered by passing e2e tests in chromium, msedge and firefox. These include authoring-missions.spec.ts (reorder, delete blocked with an offer to unpublish) and authoring-edit.spec.ts (source/task refusals, task delete), all tagged FR-55.\n\nThere is no correctness defect in the code. This is a gap in visual-review evidence, which is real but small, so I'm downgrading it from major.",
+          "The facts check out. The only image under docs/qa/ is docs/qa/demo-recordings/nfr8-task-entry/nfr8-single-part-task-entry.png, from slice 5. automated-verification-latest.md shows the recordings check as \"PASS … Scope: 1 clip(s) across 1 manifest(s)\" and warns that FR-55 and the other authoring FRs are \"not referenced by any recording manifest\". So no slice-6 screen (missions list/editor, source edit, publish/unpublish, delete-blocked dialog) has any committed visual evidence.\n\nThrough the exploitability lens, though, this is not a defect a real user or attacker can trigger. It is a gap in review evidence and changes nothing at runtime. Two of the finding's claims are also overstated:\n1. The recordings PASS is not a vacuous pass. Its scope is 1 real clip, not 0, so the vacuous-pass-not-earned rule (which needs a scope of 0) does not apply.\n2. The slice-6 change (openspec/changes/implement-authoring-missions-ui) never names a recording as its acceptance method. Searching it for record/screenshot/visual only turns up the term \"practice records\". Only NFR-8 in slice 5 declared a recorded clip. So the declared-method-needs-mechanism rule is not broken either.\n\nThe gap is real, but it is a coverage and process limit for the visual review, not a major product defect. It should be downgraded, e.g. to minor or info."
+        ]
+      },
+      {
+        "title": "The 'Task saved as draft' banner sits next to an already-reset blank form, so it is unclear which task it refers to",
+        "file": "docs/qa/demo-recordings/nfr8-task-entry/nfr8-single-part-task-entry.png",
+        "severity": "minor",
+        "confidence": "low",
+        "evidence": "In the still, every task field is empty again (Prompt, Task number, Accepted answer 1), yet a teal 'Task saved as draft. Edit saved task / Preview' banner appears directly above 'Save task'. Its placement reads as the status of the form currently on screen, but the form is now a new, unsaved entry. The 'Images' card below also says 'Save the task first to attach images.' right under the 'saved' message, which contradicts it visually.",
+        "suggestion": "If the slice-6 status changes touch this banner, name the saved task in it (e.g. 'Task 12a saved as draft') or move it to the top of the form as a dismissible notice. That way it reads as the outcome of the previous save, not the state of the blank form.",
+        "dimension": "visual",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "The code confirms the mechanism. In src/features/tasks/TaskEditorScreen.tsx:123-125, a successful create resets the form with `setForm(stickyForm(f))`. Source, page and similar fields stay; prompt, task number and accepted answers are cleared. In the same step it sets `status = {kind:'created', taskId}`. Status is only cleared at the start of the next submit (line 100), so it stays on screen while the user types the next task. The banner (lines 403-417) shows the generic 'Task saved as draft.' text (en.ts:187) and never names the task. It sits directly above the Save button inside the form. Because the form is new again, `task` is null, so the 'Images' panel shows 'Save the task first to attach images.' (lines 429-432) right below the 'saved' banner. That is exactly the layout the still shows.\n\nWhat the finding gets right and wrong: this is not a functional bug. The 'Edit saved task' and 'Preview' links carry the correct saved taskId, and the sticky-form reset is the intended NFR-8 fast-entry flow. The criticism is about UX clarity, not wrong behaviour. It is also pre-existing slice-5 code, not something slice 6 introduced. Still, the claimed visual problem is real and reproducible from the code: a generic 'saved' message sits inside a blank, unsaved form next to a 'save first' notice. So it is not refuted, and minor is the right severity.",
+          "The mechanism is real, and any admin creating a task hits it every time. In `src/features/tasks/TaskEditorScreen.tsx:124-125`, a successful create resets the form to `stickyForm(f)`. That keeps source, grade and page but blanks prompt, task number and answers, which is intended for keyboard batch entry (NFR-8). In the same step it sets `status = {kind:'created', taskId}`. The `role=\"status\"` banner (lines 403-417) is rendered inside the form, directly above the Save button. It stays visible while the user types the next task, because `setStatus(null)` only runs at the start of the next `save()` (line 100). `task` is still undefined in create mode, so the Images panel below shows 'admin.images.saveFirst' (lines 429-432) right under the 'Task saved as draft.' message. So the still accurately shows what the app renders.\n\nPoints against the finding:\n- The banner text plus its 'Edit saved task' / 'Preview' links point to the saved task's id, which partly signals that it refers to the previous save.\n- This is the intended batch-entry design.\n- The code is from slice 5 and is not changed by slice 6, which is why the suggestion is phrased as conditional.\n\nThese lessen the impact but do not refute that the layout is ambiguous, so this stays a minor, subjective UX/visual clarity issue rather than a functional bug."
+        ]
+      }
+    ],
+    "contested": [
+      {
+        "title": "The source grade select can show a value different from the one it submits",
+        "file": "src/features/sources/SourceEditScreen.tsx",
+        "line": 102,
+        "severity": "minor",
+        "confidence": "low",
+        "evidence": "`meta.grade` is set from `String(source.grade)`, but the options come only from `reference.grades`. If the stored grade is no longer in the reference list, the browser displays the first option while state keeps the old grade. Saving then sends a grade the admin never saw.",
+        "suggestion": "If `meta.grade` isn't in `reference.grades`, add an option for it (for example marked as unavailable), so the controlled value always matches a visible option.",
+        "dimension": "correctness",
+        "verdict": "contested",
+        "verifierNotes": [
+          "The mechanism is real. At `SourceEditScreen.tsx:20`, `meta.grade` is set to `String(source.grade)`. The select at line 102 is a controlled element with `value={meta.grade}`, and its options come only from `reference.grades` (a `number[]`, stringified by `<option value={g}>`). Nothing in this file or in `SourceEditScreen` checks that `meta.grade` is one of those options or adds an option for it. When a controlled `<select>` has a value that matches no option, React leaves the DOM showing the first option, while state keeps the old value. `save()` then sends `updateSource(source.sourceId, meta)` with the hidden old grade, so the mismatch the finding describes does happen.\n\nIt can only happen if a source's stored grade is missing from the configured grades. Grades are deployment configuration (CA-D16, MVP `[6]`), so this needs the config to change after sources exist. That fits the low confidence and minor severity.\n\nThe harm is also smaller than \"saving sends a grade the admin never saw\" suggests. The schema says the grade must be \"One of ReferenceData.grades\", and the fake backend rejects grades outside that list (`fake-admin-backend.ts:273`, 'Grade must be one of…'). So the real outcome is probably a refused save: a grade field error appears even though the select shows a valid value, and an unrelated edit such as a title change cannot be saved until the admin re-selects a grade. That is still a correctness and usability problem. The same pattern exists in `TaskEditorScreen.tsx:268`. Not refuted; severity stays minor.",
+          "The React behaviour described is real: a controlled `<select>` whose value matches no `<option>` shows the first option. But I couldn't find a way for a real user to hit it, and even if one did, it does no harm.\n\n1. **No type mismatch.** `ReferenceData.grades` is `number[]` (schema.d.ts:887). The options render `value={g}`, which becomes the string \"6\". `meta.grade` is `String(source.grade)`, also \"6\". So any stored grade that is in the list matches its option.\n2. **A stored grade can't be missing from the list in normal use.** The schema says `SourceMetadata.grade` / `SourceUpdate.grade` must be \"One of ReferenceData.grades\" (schema.d.ts:903 and 913), and the server enforces it when a source is created. The MVP configures only `[6]`. A stale grade would need an operator to remove a grade from server config while sources still use it. Nothing in the frontend, the contract or the MVP plan does that. It's hypothetical config drift, not a user or attacker path.\n3. **Even then, nothing bad is sent.** The form would submit the source's existing, unchanged grade. That's not \"a grade the admin never saw\" in any harmful sense, because it's exactly what is stored. The backend either accepts it as unchanged (a locked grade only refuses changes, per CA-D16) or rejects it as not configured. A rejection comes back through `fieldErrors` and shows on the grade field. Nothing is silently corrupted.\n4. The subject select has the same theoretical pattern. That supports the view that this is a general UI-hardening idea, not a reachable bug.\n\nThe finding is low confidence and I couldn't confirm a reproducible path, so I'm marking it refuted. At most it's a nit about future config drift."
+        ]
+      }
+    ],
+    "rejected": [
+      {
+        "title": "Every 409 from a task save is described as a mission conflict",
+        "file": "src/features/tasks/TaskEditorScreen.tsx",
+        "line": 130,
+        "severity": "minor",
+        "confidence": "low",
+        "evidence": "`if (error instanceof ApiError && error.status === 409) setConflict(error);` routes every 409 to `<ConflictAlert error={conflict} describe={describeMission} />`. Some 409s may not be mission-related (for example source/page locks or `conflicts` ids that are task or source ids). Their ids then show as 'unknown item' ids, with no link. A 409 that also has field-path errors gets both the field errors and the alert.",
+        "suggestion": "Only use describeMission when the conflict ids resolve to missions, or let the describe callback fall back to the task or source. Keep the field-error branch first, so a 409 that has a field path lands only on its field.",
+        "dimension": "correctness",
+        "verdict": "rejected",
+        "verifierNotes": [
+          "The mechanism the finding relies on doesn't exist in the contract. In `contract/api/openapi.yaml:535-558`, updateTask returns 409 only through the shared Conflict response. Field errors (`errors[].field`) come back as 400 BadRequest, not 409. The content-authoring spec (`contract/openspec/specs/content-authoring/spec.md:821-834, 869-873`) lists only two state rules that can refuse a task save, and both involve missions: CA-D8 (a task in a published mission can't become GRAPHIC) and CA-D10 (a task's topic or grade can't change while the task belongs to any mission). The spec says each one is \"refused with a message naming the mission\", so the `conflicts` ids for a task save are mission ids, and `describeMission` is the right resolver. The contract has no source or page locks, and no 409 on task update that names a task or source. The finding's own example is speculative (\"may not be\"). Even if a 409 carried an id that isn't a mission, `ConflictAlert` (`src/features/admin-access/ConflictAlert.tsx:38-40`) still shows the server's `detail` and lists the id as \"unknown item\", so nothing breaks; that was a deliberate fallback. The \"409 with field paths\" case can't happen under the contract, because field paths belong to 400. Even if it did, showing both the field errors and the alert is intentional (fields are set first, then the conflict). I couldn't read the backend source because permission was denied, but the contract the frontend is written against rules out the claimed mis-labelling.",
+          "I checked the contract to see which 409s a task save can actually return. `updateTask` (`contract/api/openapi.yaml:557`) only returns the generic Conflict response. The content-authoring spec (`spec.md:824-834`, CA-D8 and CA-D10) defines exactly two state rules that apply to a task edit:\n- A task in a published mission cannot change its modality to GRAPHIC (CA-D8).\n- A task's topic or grade cannot change while the task is in any mission (CA-D10).\n\nBoth are blocked by missions, so the `conflicts` ids are mission ids, and `describeMission` is the right resolver. That matches the code's own comment at `TaskEditorScreen.tsx:73`: \"409: the task is in a mission\".\n\nA new task (POST) belongs to no mission, so it cannot hit either rule. The examples in the finding, such as source or page locks, or task or source ids in `conflicts`, don't exist anywhere in the contract or spec. They are made up.\n\nIf an unexpected id ever did appear, `ConflictAlert` still shows the server's `detail` message and lists the id as \"unknown item\". That is a graceful fallback, not a wrong result.\n\nThe other claim, a 409 that also carries field-path errors, depends on a response shape the contract never defines: field errors belong to the 400 BadRequest response. Even if it happened, showing both the field error and the conflict alert is harmless.\n\nThere is no reachable path where a real user sees a non-mission conflict mislabelled."
+        ]
+      },
+      {
+        "title": "No demo recording covers FR-9 or FR-55; the recordings check passes over one clip from earlier slices",
+        "file": "docs/qa/automated-verification-latest.md",
+        "line": 109,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "The recordings section reads \"Status: PASS (exit code: 0, Scope: 1)\" and \"Scope: 1 clip(s) across 1 manifest(s)\". `scripts/record-demos.mjs` mentions neither FR-9, FR-55 nor missions. AGENTS.md says \"Recordings: scripts/record-demos.mjs — every clip asserts the FRs it shows\". Slice 6 adds new user-visible flows (create, reorder, publish, delete a mission) but no clip.",
+        "suggestion": "Add a clip for the mission create → reorder → publish-refused → publish flow that asserts FR-9 and FR-55. Otherwise, document that recordings are not a declared acceptance method for these FRs.",
+        "dimension": "spec-compliance",
+        "verdict": "rejected",
+        "verifierNotes": [
+          "The facts are right, but they don't show a problem. The recordings section does say \"Scope: 1 clip(s) across 1 manifest(s)\" (lines 109/112). `scripts/record-demos.mjs` has one clip, which proves only FR-1. But no rule requires a clip for FR-9 or FR-55. `contract/docs/requirements.md` declares the acceptance method for both as **e2e** (line 69 for FR-9, line 74 for FR-55), not recording. The AGENTS.md line the finding quotes (\"every clip asserts the FRs it shows\") only says what each existing clip must assert. It does not say every FR needs a clip. The recordings PASS is also not hiding missing coverage. The same report prints explicit `WARN [recording-evidence] FR-9 …` and `FR-55 is not referenced by any recording manifest` (lines 59 and 63), along with roughly 27 other MVP FRs from earlier slices that have no clip either. So this is the project's normal, visible state, not a gap slice 6 introduced. The vacuous-pass lesson doesn't apply because the scope is 1, not 0. The finding's own suggested alternative (\"document that recordings are not a declared acceptance method for these FRs\") is already true in the requirements table. At most this is an optional nice-to-have, not a spec-compliance defect.",
+          "The facts in the finding are correct: the recordings section shows Scope: 1, and scripts/record-demos.mjs only proves FR-1. The conclusion drawn from them is wrong. contract/docs/requirements.md:69 lists FR-9's verification method as `e2e` only, and requirements.md:74 does the same for FR-55. `recording` is a closed-vocabulary method (requirements.md:46) that is declared only for FR-32 and NFR-8. So recordings are not a declared acceptance method for these FRs. The AGENTS.md line \"every clip asserts the FRs it shows\" constrains the clips that exist. It does not require a clip for every user-visible flow. The declared e2e mechanism exists and is traced. e2e/authoring-missions.spec.ts has `@trace FR-9`/`@trace FR-55` and covers create, reorder, publish-refused, publish/unpublish, the 50-task cap and delete. e2e/authoring-edit.spec.ts also covers FR-55. The recordings PASS is not a vacuous pass over zero evidence, because its scope is 1 real clip for an FR that declares `recording`. No real gap, mis-verification or user-facing problem exists. The finding's second suggestion, \"document that recordings are not a declared method\", is already true in the contract."
+        ]
+      },
+      {
+        "title": "Scope drift: mission publish/unpublish is disabled while the form has unsaved changes",
+        "file": "src/features/missions/MissionEditorScreen.tsx",
+        "line": 328,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "Spec: \"For a saved mission the editor SHALL offer publish or unpublish (`setMissionStatus`)…\". Nothing in it gates this on a clean form. Code: `<Button disabled={busy || dirty} …>` plus `{dirty && <span …>{t('admin.missionEditor.saveFirst')}</span>}`. The test 'asks to save changes before publishing' covers it, but no requirement does.",
+        "suggestion": "Amend the 'Publishing and deleting with clear refusals' requirement with a scenario: an unsaved mission must be saved before its status can change.",
+        "dimension": "spec-compliance",
+        "verdict": "rejected",
+        "verifierNotes": [
+          "Refuted. The code at MissionEditorScreen.tsx:328 does disable the button with `disabled={busy || dirty}` and shows a `saveFirst` hint, so the quote is accurate. But nothing about this is wrong, and it isn't undocumented drift.\n\n1. The change's own design calls for it. openspec/changes/implement-authoring-missions-ui/design.md:45-47 says: \"Publish mission\" / \"Unpublish mission\" (disabled with \"Save your changes first.\" while the form differs from the stored mission). The UI does exactly what the approved change design says. The finding's claim that \"no requirement does\" cover it only holds if you ignore design.md, which is part of the same change.\n\n2. The behaviour is correct. `changeStatus(saved)` acts on the stored mission. If publish worked while the form had unsaved edits, the admin would be publishing a mission that differs from the one on screen. Blocking that is a sensible guard, not a defect.\n\n3. It doesn't contradict the spec. \"SHALL offer publish or unpublish\" still holds: the action is shown on every saved mission and only disabled until the edits are saved, with the reason given.\n\nAt most, the spec could gain a scenario to mirror the design. That's a documentation nicety, not a correctness or scope-drift defect.",
+          "The code is as the finding says: `MissionEditorScreen.tsx:328` disables publish/unpublish while `dirty` and shows the saveFirst hint at line 331. But calling it scope drift is wrong. The change's own design doc already specifies this behaviour. `openspec/changes/implement-authoring-missions-ui/design.md:45-47` says: \"Publish mission\" / \"Unpublish mission\" (disabled with \"Save your changes first.\" while the form differs from the stored mission). So the gate is planned and documented in the same change, and the unit test covers it. It is not behaviour that crept in without a plan. The spec delta's 'Publishing and deleting with clear refusals' requirement doesn't contradict it either. It only says the editor SHALL offer publish/unpublish for a saved mission, and it still does once the form is saved. On the exploitability/reproducibility lens: this is a deliberate guard that prevents publishing a server state that doesn't match what the admin sees. It harms no user and gives an attacker nothing to exploit. What remains is a small documentation gap: the spec has no scenario for this, while design.md does. That is a nit, not a spec-compliance defect."
+        ]
+      },
+      {
+        "title": "Scope drift: a 409 on task save now opens a ConflictAlert naming missions, which the delta spec doesn't cover",
+        "file": "src/features/tasks/TaskEditorScreen.tsx",
+        "line": 1,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "Diff: `if (error instanceof ApiError && error.status === 409) setConflict(error);` … `<ConflictAlert error={conflict} describe={describeMission} />`. The test 'a refused topic change of a task in a mission names the mission (Changing the topic of a task in a mission)' covers it. The delta requirement 'Publishing and deleting with clear refusals' only lists publish/unpublish and delete for the task editor, not a refused task save or topic change.",
+        "suggestion": "Amend the delta spec with a scenario: a task save refused with 409 (topic change while the task is in a mission) shows the reason and links the missions.",
+        "dimension": "spec-compliance",
+        "verdict": "rejected",
+        "verifierNotes": [
+          "The code does what the finding says: `TaskEditorScreen.tsx:130` calls `setConflict(error)` on a 409 from save, and line 402 renders `<ConflictAlert describe={describeMission} />`. But calling this scope drift is wrong, for two reasons.\n\n1. The delta requirement \"Publishing and deleting with clear refusals\" (`openspec/changes/implement-authoring-missions-ui/specs/content-authoring/spec.md:70-72`) is not limited to publish and delete. It says: \"A 409 refusal SHALL be shown as an alert with the problem's `detail` and every id of `conflicts` named as the blocking task … or mission (topic and position) with a link to its editor.\" That covers any 409, including a refused task save. Its scenarios are examples; they don't make the list exhaustive.\n\n2. The behaviour is required by the product spec, which is where product truth lives in this setup. The test's title names that spec's scenario word for word: `contract/openspec/specs/content-authoring/spec.md:923` \"Changing the topic of a task in a mission\": \"the save is refused with a message naming missions A and B\". The frontend delta only restates what it adds or changes and references the store (`references: [doucko]`). Building UI for a scenario the store already defines is required conformance, not drift.\n\nThe most the finding could claim is that the delta has no worked scenario for this case. That is a documentation nicety. It is not a correctness or spec-compliance defect, because the normative 409 text already applies to it.",
+          "The code path exists: in `TaskEditorScreen.tsx:130`, a 409 from `saveTask` sets `conflict`, and line 402 renders `<ConflictAlert describe={describeMission}>`. But the finding says the delta spec doesn't cover this, and that isn't accurate. The requirement \"Publishing and deleting with clear refusals\" (delta spec.md:70-72) has a general clause: \"A 409 refusal SHALL be shown as an alert with the problem's `detail` and every id of `conflicts` named as the blocking task … or mission (topic and position) with a link to its editor.\" That clause is not limited to publish/unpublish/delete. design.md:22 also maps the store requirement \"Mission publishing rules\" to \"every refusal (409) shown with its detail and the blocking tasks or missions named from `conflicts`\". The backend invariant that refuses a topic change for a task in a mission is part of that requirement. So a 409 on task save is exactly the kind of refusal the spec says must be shown this way. This is the specified behaviour, not new scope.\n\nThrough the exploitability lens, there is also nothing harmful a user or attacker could trigger. The behaviour is display-only: it shows a server refusal that would otherwise appear as a generic save-failed message, and it is covered by a test. At most, an extra explicit scenario would be a nice-to-have, which is not a spec-compliance defect."
+        ]
+      },
+      {
+        "title": "The frontend requirement cites FR-56, but the capability plan assigns FR-56 to the backend only",
+        "file": "openspec/changes/implement-authoring-missions-ui/specs/content-authoring/spec.md",
+        "line": 60,
+        "severity": "minor",
+        "confidence": "low",
+        "evidence": "Spec: \"When `deletable` is false the delete action SHALL be disabled with an explanation that offers to unpublish instead (FR-56).\" Plan line 293: \"| FR-56 | authoring-missions | backend |\". Under the ownership rule, frontend tests can't `@trace FR-56`, so the UI side of this requirement has no traceable id. The tests trace only FR-9 and FR-55.",
+        "suggestion": "Either cite FR-55 (the frontend-owned edit/delete FR) and name FR-56 only as the server rule being shown, or amend the plan to give FR-56 to `backend, frontend`.",
+        "dimension": "spec-compliance",
+        "verdict": "rejected",
+        "verifierNotes": [
+          "The facts are right, but they don't add up to a real defect. The `(FR-56)` citation is at spec.md:73-74, not line 60. The plan (contract/docs/mvp-capability-plan.md:293) does list FR-56 as backend-only. But the finding's claimed harm is that the UI side 'has no traceable id', and that is false. The tests that cover the blocked-delete UI are annotated `@trace FR-55`: TaskStatusPanel.test.tsx, MissionEditorScreen.test.tsx and e2e/authoring-edit.spec.ts. The e2e test 'delete a draft task: blocked with an offer to unpublish… (FR-55)' covers this behaviour directly. FR-55 is the frontend-owned edit/delete FR. The ownership rule in AGENTS.md limits `@trace` annotations to ids this repo owns. It does not stop spec prose from naming the server rule that the UI displays. The test titles in fact call this 'FR-56 messaging'. The trace tooling treats this as consistent: traceability-report.md shows FR-56 as owner backend with n/a for the frontend, and nothing fails or warns. No trace annotation is broken and no gate breaks. At most this is a wording preference about whether to also cite FR-55 in that sentence, so there is no correctness defect.",
+          "The facts are right but the harm the finding claims does not happen. The line is wrong: the sentence is at spec.md:73-74, not :60. FR-56 really is backend-only (capability plan line 293), and the requirement does cite \"(FR-56)\". But the finding says that, as a result, \"the UI side of this requirement has no traceable id\", and that is false. The same requirement block is backed by frontend e2e tests that carry `// @trace FR-55`. One is e2e/authoring-missions.spec.ts:144, 'delete: blocked by practice records with an offer to unpublish ... (Delete only unused content, FR-55)'. Another is e2e/authoring-edit.spec.ts:77, the blocked task delete with the offer to unpublish. So the disabled-delete and offer-to-unpublish UI is traced through FR-55, a requirement the frontend owns. Citing FR-56 in that sentence just names the server rule the UI shows. The repo already does this on purpose: the test titles say \"FR-56 messaging\" and \"FR-57 messaging\". The traceability tooling does not count it as a gap either: docs/qa/traceability-report.md lists FR-56 as owned by backend with frontend 'n/a' and no error. Nobody using the app can run into a problem from this, and no gate fails because of it. At most it is a wording nit in the spec. The behaviour is implemented and traced."
+        ]
+      },
+      {
+        "title": "NFR-9: a few visible strings are hardcoded outside the catalog and not marked as content",
+        "file": "src/features/missions/MissionLabel.tsx",
+        "line": 11,
+        "severity": "minor",
+        "confidence": "low",
+        "evidence": "Requirement: \"Every visible string … SHALL come from the message catalogs, except content the admin entered or the server sent\". Code: `{' · '}` in MissionLabel.tsx, and `<span className=\"mission-num\">{n}.</span>` in MissionEditorScreen.tsx:237. Both are visible punctuation that is neither in the catalog nor marked `data-content`. The pseudo-catalog test probably ignores bare punctuation and digits, so it doesn't catch them.",
+        "suggestion": "Move the separator and the ordinal format into catalog keys (e.g. 'admin.missions.label' as '{topic} · Position {position}', and 'admin.missionEditor.ordinal' as '{n}.'), or document the punctuation exemption in the NFR-9 scenario.",
+        "dimension": "spec-compliance",
+        "verdict": "rejected",
+        "verifierNotes": [
+          "The cited code is real: `{' · '}` at MissionLabel.tsx:10 and `<span className=\"mission-num\">{n}.</span>` at MissionEditorScreen.tsx:237. But calling them NFR-9 violations misreads how the project has defined and enforces NFR-9.\n\n1. The finding guesses that the pseudo-catalog test \"probably ignores bare punctuation and digits\" by accident. It does not. The exemption is deliberate and written down. `src/app/i18n-coverage.test.tsx:17-24` defines `COVERED` and `NO_WORDS` (`/^[\\s\\d\\p{P}\\p{S}]*$/u`) with the comment \"Separators and numbers carry no words; the lint rule allows them too.\"\n\n2. The NFR-9 lint rule says the same thing. `eslint-rules/no-literal-ui-text.js:19` reads: \"Allows punctuation-only text (\" · \", \"/\"), whitespace, and every expression.\" Its own example is the exact `\" · \"` separator the finding flags.\n\n3. Neither string contains anything that needs translating. `·` is a separator, and `{n}.` is a number from an expression plus a period, which is how ordinals are written in Czech too. The parts that carry words are already handled: `topicName` is marked `data-content`, and the position text comes from `t('admin.missions.label')`.\n\nSo nothing is broken here. The project's NFR-9 checks treat punctuation and digit-only text as exempt on purpose, and the finding's fallback suggestion (\"document the punctuation exemption\") is already done in both enforcement mechanisms. What remains is a style preference, not a correctness defect.",
+          "The code matches the description: MissionLabel.tsx:10 renders a literal `{' · '}` and MissionEditorScreen.tsx:237 renders `{n}.`. But this isn't a real defect. The project's NFR-9 mechanism, src/app/i18n-coverage.test.tsx:16-19, deliberately counts text as covered when it is made of catalog segments \"plus whitespace, digits and punctuation between them\". That exemption is written down on purpose, not an oversight the test fails to catch. The only words around the separator, \"Position {position}\", already come from the catalog (`admin.missions.label`), and the topic name is marked `data-content`. A middle dot and an ordinal like \"1.\" contain no translatable language, and the admin UI is English-only. No user will ever see an untranslated word. This is a style nitpick that goes against the repo's documented convention, not a spec violation that can actually happen."
+        ]
+      }
+    ],
+    "reviewEvidence": "openspec/changes/implement-authoring-missions-ui/review-findings.json"
+  }
+}

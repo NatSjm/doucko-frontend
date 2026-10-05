@@ -5,7 +5,7 @@ requirements/spec/test/recording change; CI runs `--check-fresh`.
 
 Repo: frontend (contract: submodule).
 Scope: 48 MVP functional requirements, 30 owned by frontend.
-Result: PASS, 48 warning(s)
+Result: PASS, 44 warning(s)
 
 | FR | Spec | Plan | Owner repo(s) | Test trace here | Recording here |
 |---|---|---|---|---|---|
@@ -17,12 +17,12 @@ Result: PASS, 48 warning(s)
 | FR-6 | yes | yes | backend, frontend | 2 | - |
 | FR-7 | yes | yes | backend, frontend | 4 | - |
 | FR-8 | yes | yes | backend, frontend | 5 | - |
-| FR-9 | yes | yes | backend, frontend | - | - |
+| FR-9 | yes | yes | backend, frontend | 5 | yes |
 | FR-10 | yes | yes | backend, frontend | 3 | - |
 | FR-11 | yes | yes | backend, frontend | 2 | - |
 | FR-12 | yes | yes | backend | n/a | n/a |
 | FR-13 | yes | yes | backend, frontend | 3 | - |
-| FR-55 | yes | yes | backend, frontend | - | - |
+| FR-55 | yes | yes | backend, frontend | 7 | yes |
 | FR-56 | yes | yes | backend | n/a | n/a |
 | FR-57 | yes | yes | backend | n/a | n/a |
 | FR-14 | yes | yes | backend | n/a | n/a |
@@ -97,8 +97,6 @@ None.
 
 ## Warnings
 
-- **test-trace**: FR-9 (owned by frontend) has no test annotated "@trace FR-9"
-- **test-trace**: FR-55 (owned by frontend) has no test annotated "@trace FR-55"
 - **test-trace**: FR-22 (owned by frontend) has no test annotated "@trace FR-22"
 - **test-trace**: FR-24 (owned by frontend) has no test annotated "@trace FR-24"
 - **test-trace**: FR-25 (owned by frontend) has no test annotated "@trace FR-25"
@@ -122,11 +120,9 @@ None.
 - **recording-evidence**: FR-6 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-7 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-8 is not referenced by any recording manifest under docs/qa/
-- **recording-evidence**: FR-9 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-10 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-11 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-13 is not referenced by any recording manifest under docs/qa/
-- **recording-evidence**: FR-55 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-22 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-24 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-25 is not referenced by any recording manifest under docs/qa/

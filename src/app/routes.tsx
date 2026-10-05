@@ -1,5 +1,8 @@
 import type { ReactElement } from 'react';
 import { AdminArea } from '@/features/admin-access/AdminArea';
+import { MissionEditorScreen } from '@/features/missions/MissionEditorScreen';
+import { MissionListScreen } from '@/features/missions/MissionListScreen';
+import { SourceEditScreen } from '@/features/sources/SourceEditScreen';
 import { SourcesScreen } from '@/features/sources/SourcesScreen';
 import { SourceViewerScreen } from '@/features/sources/SourceViewerScreen';
 import { PreviewScreen } from '@/features/tasks/PreviewScreen';
@@ -23,7 +26,10 @@ export const routes: AppRoute[] = [
   { path: '/admin', element: <AdminArea /> },
   { path: '/admin/sources', element: <AdminArea><SourcesScreen /></AdminArea> },
   { path: '/admin/sources/view', element: <AdminArea><SourceViewerScreen /></AdminArea> },
+  { path: '/admin/sources/edit', element: <AdminArea><SourceEditScreen /></AdminArea> },
   { path: '/admin/tasks', element: <AdminArea><TaskListScreen /></AdminArea> },
   { path: '/admin/tasks/edit', element: <AdminArea><TaskEditorScreen /></AdminArea> },
   { path: '/admin/tasks/preview', element: <AdminArea><PreviewScreen /></AdminArea> },
+  { path: '/admin/missions', element: <AdminArea><MissionListScreen /></AdminArea> },
+  { path: '/admin/missions/edit', element: <AdminArea><MissionEditorScreen /></AdminArea> },
 ];

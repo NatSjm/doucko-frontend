@@ -11,10 +11,12 @@ export type TaskFilters = NonNullable<operations['listTasks']['parameters']['que
 export const TASKS_KEY = ['admin', 'tasks'] as const;
 const taskKey = (taskId: string) => ['admin', 'task', taskId] as const;
 
-export function useTasks(filters: TaskFilters) {
+/** The tasks matching `filters` (`listTasks`); `enabled: false` waits (e.g. until a topic is chosen). */
+export function useTasks(filters: TaskFilters, enabled = true) {
   return useQuery({
     queryKey: [...TASKS_KEY, filters],
     queryFn: async () => unwrap(await adminClient.GET('/api/admin/tasks', { params: { query: filters } })),
+    enabled,
   });
 }
 
@@ -82,4 +84,14 @@ export function usePreview(taskId: string | null, locale: string | null) {
 /** The answer tester (`testAnswers`): verdicts only, nothing is recorded (FR-10). */
 export async function testAnswers(taskId: string, answers: Record<string, string | string[]>): Promise<S['PartResult'][]> {
   return unwrap(await adminClient.POST('/api/admin/tasks/{taskId}/check', { params: { path: { taskId } }, body: { answers } }));
+}
+
+/** Publish or unpublish one task (`setTaskStatus`); 409 while a published mission holds it (FR-57). */
+export async function setTaskStatus(taskId: string, status: S['PublishStatus']): Promise<AdminTask> {
+  return unwrap(await adminClient.PUT('/api/admin/tasks/{taskId}/status', { params: { path: { taskId } }, body: { status } }));
+}
+
+/** `deleteTask`; 409 with practice records or while in a published mission (FR-56, CA-D6, CA-D22). */
+export async function deleteTask(taskId: string): Promise<void> {
+  unwrap(await adminClient.DELETE('/api/admin/tasks/{taskId}', { params: { path: { taskId } } }));
 }
