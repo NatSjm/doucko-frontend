@@ -40,6 +40,18 @@
         "admin-access"
       ],
       "processComplete": true
+    },
+    {
+      "slice": "2026-10-05-implement-practice-flow-ui",
+      "reviewEvidence": "clean",
+      "trailerCommits": 3,
+      "libDomains": [
+        "hq",
+        "mission",
+        "task",
+        "child"
+      ],
+      "processComplete": true
     }
   ],
   "overlaps": [
@@ -64,6 +76,13 @@
         "2026-10-04-implement-authoring-tasks-ui",
         "2026-10-05-implement-authoring-missions-ui"
       ]
+    },
+    {
+      "domain": "task",
+      "slices": [
+        "2026-10-04-implement-authoring-tasks-ui",
+        "2026-10-05-implement-practice-flow-ui"
+      ]
     }
   ],
   "failures": [],
@@ -79,6 +98,10 @@
     {
       "check": "in-scope",
       "msg": "lib/tasks/ modified by 2 slices (2026-10-04-implement-authoring-tasks-ui, 2026-10-05-implement-authoring-missions-ui) — review for scope drift"
+    },
+    {
+      "check": "in-scope",
+      "msg": "lib/task/ modified by 2 slices (2026-10-04-implement-authoring-tasks-ui, 2026-10-05-implement-practice-flow-ui) — review for scope drift"
     }
   ]
 }

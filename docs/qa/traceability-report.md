@@ -5,7 +5,7 @@ requirements/spec/test/recording change; CI runs `--check-fresh`.
 
 Repo: frontend (contract: submodule).
 Scope: 48 MVP functional requirements, 30 owned by frontend.
-Result: PASS, 44 warning(s)
+Result: PASS, 26 warning(s)
 
 | FR | Spec | Plan | Owner repo(s) | Test trace here | Recording here |
 |---|---|---|---|---|---|
@@ -33,16 +33,16 @@ Result: PASS, 44 warning(s)
 | FR-19 | yes | yes | backend | n/a | n/a |
 | FR-20 | yes | yes | backend | n/a | n/a |
 | FR-21 | yes | yes | backend | n/a | n/a |
-| FR-22 | yes | yes | backend, frontend | - | - |
+| FR-22 | yes | yes | backend, frontend | 3 | yes |
 | FR-23 | yes | yes | backend | n/a | n/a |
-| FR-24 | yes | yes | backend, frontend | - | - |
-| FR-25 | yes | yes | backend, frontend | - | - |
-| FR-26 | yes | yes | backend, frontend | - | - |
-| FR-27 | yes | yes | backend, frontend | - | - |
-| FR-28 | yes | yes | backend, frontend | - | - |
-| FR-29 | yes | yes | backend, frontend | - | - |
-| FR-30 | yes | yes | backend, frontend | - | - |
-| FR-31 | yes | yes | backend, frontend | - | - |
+| FR-24 | yes | yes | backend, frontend | 3 | yes |
+| FR-25 | yes | yes | backend, frontend | 3 | yes |
+| FR-26 | yes | yes | backend, frontend | 3 | yes |
+| FR-27 | yes | yes | backend, frontend | 3 | yes |
+| FR-28 | yes | yes | backend, frontend | 2 | yes |
+| FR-29 | yes | yes | backend, frontend | 2 | yes |
+| FR-30 | yes | yes | backend, frontend | 2 | yes |
+| FR-31 | yes | yes | backend, frontend | 3 | yes |
 | FR-32 | yes | yes | backend, frontend | - | - |
 | FR-33 | yes | yes | backend, frontend | - | - |
 | FR-34 | yes | yes | backend | n/a | n/a |
@@ -66,9 +66,9 @@ Result: PASS, 44 warning(s)
 | NFR-2 | backend | n/a |
 | NFR-3 | backend, frontend | 1 |
 | NFR-4 | backend, frontend | 1 |
-| NFR-5 | backend, frontend | - |
+| NFR-5 | backend, frontend | 2 |
 | NFR-6 | frontend | 2 |
-| NFR-7 | frontend | - |
+| NFR-7 | frontend | 7 |
 | NFR-8 | frontend | 2 |
 | NFR-9 | backend, frontend | 6 |
 | NFR-10 | backend | n/a |
@@ -97,15 +97,6 @@ None.
 
 ## Warnings
 
-- **test-trace**: FR-22 (owned by frontend) has no test annotated "@trace FR-22"
-- **test-trace**: FR-24 (owned by frontend) has no test annotated "@trace FR-24"
-- **test-trace**: FR-25 (owned by frontend) has no test annotated "@trace FR-25"
-- **test-trace**: FR-26 (owned by frontend) has no test annotated "@trace FR-26"
-- **test-trace**: FR-27 (owned by frontend) has no test annotated "@trace FR-27"
-- **test-trace**: FR-28 (owned by frontend) has no test annotated "@trace FR-28"
-- **test-trace**: FR-29 (owned by frontend) has no test annotated "@trace FR-29"
-- **test-trace**: FR-30 (owned by frontend) has no test annotated "@trace FR-30"
-- **test-trace**: FR-31 (owned by frontend) has no test annotated "@trace FR-31"
 - **test-trace**: FR-32 (owned by frontend) has no test annotated "@trace FR-32"
 - **test-trace**: FR-33 (owned by frontend) has no test annotated "@trace FR-33"
 - **test-trace**: FR-36 (owned by frontend) has no test annotated "@trace FR-36"
@@ -123,15 +114,6 @@ None.
 - **recording-evidence**: FR-10 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-11 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-13 is not referenced by any recording manifest under docs/qa/
-- **recording-evidence**: FR-22 is not referenced by any recording manifest under docs/qa/
-- **recording-evidence**: FR-24 is not referenced by any recording manifest under docs/qa/
-- **recording-evidence**: FR-25 is not referenced by any recording manifest under docs/qa/
-- **recording-evidence**: FR-26 is not referenced by any recording manifest under docs/qa/
-- **recording-evidence**: FR-27 is not referenced by any recording manifest under docs/qa/
-- **recording-evidence**: FR-28 is not referenced by any recording manifest under docs/qa/
-- **recording-evidence**: FR-29 is not referenced by any recording manifest under docs/qa/
-- **recording-evidence**: FR-30 is not referenced by any recording manifest under docs/qa/
-- **recording-evidence**: FR-31 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-32 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-33 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-36 is not referenced by any recording manifest under docs/qa/

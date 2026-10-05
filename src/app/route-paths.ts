@@ -4,6 +4,8 @@
  */
 export const ROUTE_PATHS = [
   '/',
+  '/mission',
+  '/task',
   '/admin',
   '/admin/sources',
   '/admin/sources/view',
@@ -23,8 +25,16 @@ export type RoutePath = (typeof ROUTE_PATHS)[number];
  */
 export const ADMIN_ROUTES: readonly RoutePath[] = ROUTE_PATHS.filter((p) => p.startsWith('/admin'));
 
+/**
+ * Child routes (no login): the a11y, theme and `⟦` checks open them against the child contract stub
+ * (`src/test/fake-child-backend.ts`, whose practice seed the ids below name).
+ */
+export const CHILD_ROUTES: readonly RoutePath[] = ROUTE_PATHS.filter((p) => !p.startsWith('/admin'));
+
 /** The query that brings a route to its content state for those checks (screens take ids by query). */
 export const ROUTE_EXAMPLES: Partial<Record<RoutePath, string>> = {
+  '/mission': '?missionId=ffffffff-ffff-4fff-8fff-000000000101',
+  '/task': '?missionId=ffffffff-ffff-4fff-8fff-000000000101&taskId=aaaaaaaa-aaaa-4aaa-8aaa-000000000101',
   '/admin/sources/view': '?sourceId=11111111-1111-4111-8111-111111111111&page=57',
   '/admin/sources/edit': '?sourceId=11111111-1111-4111-8111-111111111111',
   '/admin/tasks/edit': '?taskId=aaaaaaaa-aaaa-4aaa-8aaa-000000000001',

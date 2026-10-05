@@ -503,11 +503,18 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/answer-checking/spec.md"
+        "contract/openspec/specs/answer-checking/spec.md",
+        "openspec/specs/practice-flow/spec.md"
       ],
       "planned": true,
-      "tests": [],
-      "recordings": []
+      "tests": [
+        "src/features/task/practice.test.ts",
+        "src/features/task/TaskScreen.test.tsx",
+        "e2e/practice-task.spec.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/slice7-practice-flow/manifest.json"
+      ]
     },
     {
       "id": "FR-23",
@@ -530,11 +537,18 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/practice-flow/spec.md"
+        "contract/openspec/specs/practice-flow/spec.md",
+        "openspec/specs/practice-flow/spec.md"
       ],
       "planned": true,
-      "tests": [],
-      "recordings": []
+      "tests": [
+        "src/app/App.test.tsx",
+        "src/features/hq/HqScreen.test.tsx",
+        "e2e/practice-hq.spec.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/slice7-practice-flow/manifest.json"
+      ]
     },
     {
       "id": "FR-25",
@@ -544,11 +558,18 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/practice-flow/spec.md"
+        "contract/openspec/specs/practice-flow/spec.md",
+        "openspec/specs/practice-flow/spec.md"
       ],
       "planned": true,
-      "tests": [],
-      "recordings": []
+      "tests": [
+        "src/features/hq/HqScreen.test.tsx",
+        "src/features/mission/MissionScreen.test.tsx",
+        "e2e/practice-hq.spec.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/slice7-practice-flow/manifest.json"
+      ]
     },
     {
       "id": "FR-26",
@@ -558,11 +579,18 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/practice-flow/spec.md"
+        "contract/openspec/specs/practice-flow/spec.md",
+        "openspec/specs/practice-flow/spec.md"
       ],
       "planned": true,
-      "tests": [],
-      "recordings": []
+      "tests": [
+        "src/features/task/practice.test.ts",
+        "src/features/task/TaskScreen.test.tsx",
+        "e2e/practice-task.spec.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/slice7-practice-flow/manifest.json"
+      ]
     },
     {
       "id": "FR-27",
@@ -572,11 +600,18 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/practice-flow/spec.md"
+        "contract/openspec/specs/practice-flow/spec.md",
+        "openspec/specs/practice-flow/spec.md"
       ],
       "planned": true,
-      "tests": [],
-      "recordings": []
+      "tests": [
+        "src/features/task/practice.test.ts",
+        "src/features/task/TaskScreen.test.tsx",
+        "e2e/practice-task.spec.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/slice7-practice-flow/manifest.json"
+      ]
     },
     {
       "id": "FR-28",
@@ -586,11 +621,17 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/practice-flow/spec.md"
+        "contract/openspec/specs/practice-flow/spec.md",
+        "openspec/specs/practice-flow/spec.md"
       ],
       "planned": true,
-      "tests": [],
-      "recordings": []
+      "tests": [
+        "src/features/task/TaskScreen.test.tsx",
+        "e2e/practice-help.spec.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/slice7-practice-flow/manifest.json"
+      ]
     },
     {
       "id": "FR-29",
@@ -600,11 +641,17 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/practice-flow/spec.md"
+        "contract/openspec/specs/practice-flow/spec.md",
+        "openspec/specs/practice-flow/spec.md"
       ],
       "planned": true,
-      "tests": [],
-      "recordings": []
+      "tests": [
+        "src/features/task/TaskScreen.test.tsx",
+        "e2e/practice-help.spec.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/slice7-practice-flow/manifest.json"
+      ]
     },
     {
       "id": "FR-30",
@@ -614,11 +661,17 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/practice-flow/spec.md"
+        "contract/openspec/specs/practice-flow/spec.md",
+        "openspec/specs/practice-flow/spec.md"
       ],
       "planned": true,
-      "tests": [],
-      "recordings": []
+      "tests": [
+        "src/features/task/TaskScreen.test.tsx",
+        "e2e/practice-help.spec.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/slice7-practice-flow/manifest.json"
+      ]
     },
     {
       "id": "FR-31",
@@ -628,11 +681,18 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/practice-flow/spec.md"
+        "contract/openspec/specs/practice-flow/spec.md",
+        "openspec/specs/practice-flow/spec.md"
       ],
       "planned": true,
-      "tests": [],
-      "recordings": []
+      "tests": [
+        "src/features/task/practice.test.ts",
+        "src/features/task/TaskScreen.test.tsx",
+        "e2e/practice-resume.spec.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/slice7-practice-flow/manifest.json"
+      ]
     },
     {
       "id": "FR-32",
@@ -873,7 +933,10 @@
         "frontend"
       ],
       "ownedHere": true,
-      "tests": []
+      "tests": [
+        "src/app/navigation.test.tsx",
+        "e2e/practice-timing.spec.ts"
+      ]
     },
     {
       "id": "NFR-6",
@@ -892,7 +955,15 @@
         "frontend"
       ],
       "ownedHere": true,
-      "tests": []
+      "tests": [
+        "src/app/App.test.tsx",
+        "src/app/navigation.test.tsx",
+        "src/features/hq/HqScreen.test.tsx",
+        "src/features/mission/MissionScreen.test.tsx",
+        "src/features/task/TaskScreen.test.tsx",
+        "e2e/practice-hq.spec.ts",
+        "e2e/practice-task.spec.ts"
+      ]
     },
     {
       "id": "NFR-8",
@@ -1068,42 +1139,6 @@
   "warnings": [
     {
       "check": "test-trace",
-      "msg": "FR-22 (owned by frontend) has no test annotated \"@trace FR-22\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-24 (owned by frontend) has no test annotated \"@trace FR-24\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-25 (owned by frontend) has no test annotated \"@trace FR-25\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-26 (owned by frontend) has no test annotated \"@trace FR-26\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-27 (owned by frontend) has no test annotated \"@trace FR-27\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-28 (owned by frontend) has no test annotated \"@trace FR-28\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-29 (owned by frontend) has no test annotated \"@trace FR-29\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-30 (owned by frontend) has no test annotated \"@trace FR-30\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-31 (owned by frontend) has no test annotated \"@trace FR-31\""
-    },
-    {
-      "check": "test-trace",
       "msg": "FR-32 (owned by frontend) has no test annotated \"@trace FR-32\""
     },
     {
@@ -1169,42 +1204,6 @@
     {
       "check": "recording-evidence",
       "msg": "FR-13 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-22 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-24 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-25 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-26 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-27 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-28 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-29 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-30 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-31 is not referenced by any recording manifest under docs/qa/"
     },
     {
       "check": "recording-evidence",

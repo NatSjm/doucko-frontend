@@ -29,8 +29,8 @@ export const ADMIN_PASSWORD = 'Kocka-na-plote-42';
 
 const MB = 1024 * 1024;
 /** The contract defaults of the answer spec flags (`AnswerSpec`). */
-const FLAGS = { allowEquivalent: true, requireLowestTerms: false, unitRequired: true, diacriticsStrict: false };
-const FORMAT_TIP = 'Tohle číslo neumím přečíst. Zkus třeba 5,2.';
+export const FLAGS = { allowEquivalent: true, requireLowestTerms: false, unitRequired: true, diacriticsStrict: false };
+export const FORMAT_TIP = 'Tohle číslo neumím přečíst. Zkus třeba 5,2.';
 
 /** A minimal, valid PDF of `pages` pages, each showing "Page n" (self-authored test data). */
 export function makePdf(pages: number): Uint8Array {
@@ -72,7 +72,7 @@ const pageCount = (b: Uint8Array) => (new TextDecoder('latin1').decode(b).match(
 const fold = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').toLocaleLowerCase('cs');
 const codePoints = (s: string) => [...s.trim()].length;
 
-interface StoredTask {
+export interface StoredTask {
   input: S['TaskInput'];
   taskId: string;
   status: S['PublishStatus'];
@@ -248,7 +248,7 @@ function normalize(type: S['AnswerType'], raw: string): string | null {
   }
 }
 
-function check(part: S['PartInput'], answer: string | string[] | undefined): S['PartResult'] {
+export function check(part: S['PartInput'], answer: string | string[] | undefined): S['PartResult'] {
   const spec = part.spec;
   if (spec.type === 'CHOICE_SINGLE' || spec.type === 'CHOICE_MULTI') {
     const picked = [...new Set(Array.isArray(answer) ? answer : [])].sort();

@@ -115,8 +115,8 @@
       {
         "method": "local-verifiable",
         "mechanism": "npm:test:run",
-        "artifact": null,
-        "status": "planned"
+        "artifact": "src/features/task/practice.test.ts",
+        "status": "artifact-ok"
       }
     ],
     "FR-24": [
@@ -153,8 +153,8 @@
       {
         "method": "local-verifiable",
         "mechanism": "npm:test:run",
-        "artifact": null,
-        "status": "planned"
+        "artifact": "src/features/task/practice.test.ts",
+        "status": "artifact-ok"
       }
     ],
     "FR-28": [
@@ -311,8 +311,8 @@
       {
         "method": "local-verifiable",
         "mechanism": "npm:test:run",
-        "artifact": null,
-        "status": "planned"
+        "artifact": "src/app/navigation.test.tsx",
+        "status": "artifact-ok"
       }
     ],
     "NFR-6": [

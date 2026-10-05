@@ -1,0 +1,77 @@
+/* The frame of the child screens: a slim top bar with the brand, then the screen (tokens only). */
+.child-page {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+}
+
+.child-top {
+  display: flex;
+  align-items: center;
+  padding: var(--space-3) var(--space-7);
+}
+
+.child-brand {
+  color: var(--ink);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  padding: var(--space-1) var(--space-2);
+}
+
+.child-brand:focus-visible,
+.child-back:focus-visible,
+.child-main a.dk-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.child-main {
+  width: min(100%, calc(var(--space-8) * 12));
+  box-sizing: border-box;
+  margin: 0 auto;
+  padding: var(--space-3) var(--space-7) var(--space-7);
+  display: grid;
+  align-content: start;
+  gap: var(--space-6);
+}
+
+.child-main-wide {
+  width: min(100%, calc(var(--space-8) * 18));
+}
+
+.child-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-5);
+}
+
+.child-title {
+  margin: 0;
+}
+
+.child-title:focus {
+  outline: none;
+}
+
+.child-back {
+  text-decoration: none;
+}
+
+/* The arrow icon points right; a way back points left. */
+.child-back-icon {
+  transform: scaleX(-1);
+}
+
+.child-stack {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.child-dead-end {
+  margin: 0;
+}
+
+a.dk-btn {
+  text-decoration: none;
+}

@@ -1,0 +1,52 @@
+/* The mission briefing: progress, the task list and the start button (tokens only). */
+.mission-card {
+  display: grid;
+  gap: var(--space-4);
+  max-width: calc(var(--space-8) * 12);
+}
+
+.mission-card p {
+  margin: 0;
+}
+
+.mission-tasks {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mission-task {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--panel-sunk);
+}
+
+.mission-task-mark {
+  width: var(--space-6);
+  height: var(--space-6);
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-full);
+  background: var(--panel);
+  color: var(--ink);
+}
+
+.mission-task.is-done .mission-task-mark {
+  background: var(--spark);
+  color: var(--on-spark);
+}
+
+.mission-task-name {
+  font-weight: 700;
+  flex: 1;
+}
+
+.mission-task-state {
+  color: var(--ink-muted);
+}

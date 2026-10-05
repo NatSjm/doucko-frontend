@@ -1,23 +1,28 @@
+// @trace FR-24
+// @trace NFR-7
 import { render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import userEvent from '@testing-library/user-event';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { messages } from '@/i18n';
+import { format } from '@/i18n/format';
+import { stubChildBackend } from '@/test/admin-backend';
+import { CHILD_DISPLAY_NAME, PRACTICE, PROMPTS, practise } from '@/test/fake-child-backend';
 import { App } from './App';
 import { routePath } from './route-paths';
 
 afterEach(() => {
   window.history.pushState({}, '', '/');
   document.title = '';
+  vi.unstubAllGlobals();
 });
 
 describe('App shell', () => {
-  it('renders the product name as the page heading', () => {
-    render(<App />);
-    expect(screen.getByRole('heading', { level: 1, name: 'Doučko' })).toBeInTheDocument();
-  });
-
-  it('renders the route registered for the current path and marks it', () => {
+  it('opens HQ at the root with the product name as the brand (FR-24)', async () => {
+    stubChildBackend();
     const { container } = render(<App />);
     expect(container.querySelector('[data-route="/"]')).not.toBeNull();
+    expect(screen.getByRole('link', { name: messages['app.name'] })).toHaveAttribute('href', '/');
+    expect(await screen.findByRole('heading', { level: 1, name: format(messages['child.hq.greeting'], { name: CHILD_DISPLAY_NAME }) })).toBeInTheDocument();
   });
 
   it('renders the not-found screen for an unregistered path, not the first route', () => {
@@ -31,8 +36,57 @@ describe('App shell', () => {
   });
 
   it('sets the document title from the catalog', () => {
+    stubChildBackend();
     render(<App />);
     expect(document.title).toBe(messages['app.name']);
+  });
+});
+
+describe('two clicks from HQ to a task (NFR-7)', () => {
+  it('a new mission: its card, then the start button, opens its first task without a page load', async () => {
+    stubChildBackend();
+    const { container } = render(<App />);
+    await userEvent.click(await screen.findByRole('link', { name: new RegExp(format(messages['child.hq.mission'], { n: 2 })) }));
+    expect(container.querySelector('[data-route="/mission"]')).not.toBeNull();
+    expect(await screen.findByRole('heading', { level: 1, name: format(messages['child.hq.mission'], { n: 2 }) })).toHaveFocus();
+    await userEvent.click(screen.getByRole('link', { name: messages['child.mission.start'] }));
+    expect(container.querySelector('[data-route="/task"]')).not.toBeNull();
+    expect(await screen.findByText(PROMPTS.thousands)).toBeInTheDocument();
+    expect(screen.getByRole('textbox', { name: 'a' })).toHaveFocus();
+  });
+
+  it('"Pokračovat" opens the task to continue with one click, and back to HQ with one more', async () => {
+    const backend = stubChildBackend();
+    await practise(backend, PRACTICE.missionA, PRACTICE.taskSum, { a: '0,75' });
+    render(<App />);
+    await userEvent.click(await screen.findByRole('link', { name: messages['child.hq.continue'] }));
+    expect(await screen.findByText(PROMPTS.round)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('link', { name: messages['child.common.backToHq'] }));
+    expect(await screen.findByRole('link', { name: messages['child.hq.continue'] })).toBeInTheDocument();
+  });
+
+  it('"Další úloha" opens the next unresolved task of the mission', async () => {
+    stubChildBackend();
+    window.history.pushState({}, '', `/task?missionId=${PRACTICE.missionA}&taskId=${PRACTICE.taskSum}`);
+    render(<App />);
+    await screen.findByText(PROMPTS.sum);
+    await userEvent.keyboard('0,75{Enter}');
+    await userEvent.click(await screen.findByRole('link', { name: messages['child.task.next'] }));
+    expect(await screen.findByText(PROMPTS.round)).toBeInTheDocument();
+    expect(window.location.search).toBe(`?missionId=${PRACTICE.missionA}&taskId=${PRACTICE.taskRound}`);
+  });
+});
+
+describe('a task opened twice is read afresh', () => {
+  it('"Další úloha" after a task opened by mission only shows the next task, not the cached one', async () => {
+    stubChildBackend();
+    window.history.pushState({}, '', `/task?missionId=${PRACTICE.missionA}`);
+    render(<App />);
+    await screen.findByText(PROMPTS.sum);
+    await userEvent.keyboard('0,75{Enter}');
+    await userEvent.click(await screen.findByRole('link', { name: messages['child.task.next'] }));
+    expect(await screen.findByText(PROMPTS.round)).toBeInTheDocument();
+    expect(screen.queryByText(PROMPTS.sum)).toBeNull();
   });
 });
 

@@ -1,0 +1,60 @@
+/* HQ: the hero panel with "Pokračovat", then the missions by topic (tokens only). */
+.hq-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  border-radius: var(--radius-xl);
+}
+
+.hq-intro {
+  margin: 0;
+}
+
+.hq-topic {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.hq-topic h2 {
+  margin: 0;
+}
+
+.hq-missions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A mission card is a link: it keeps the card's look and gets the focus ring. */
+.hq-mission {
+  display: block;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+/* Spans in a link: give band and progress their flex rows and the body its grid back. */
+.hq-mission .dk-mission-band,
+.hq-mission .dk-mission-progress {
+  display: flex;
+}
+
+.hq-mission .dk-mission-body {
+  display: grid;
+}
+
+.hq-mission .dk-mission-body {
+  padding-top: var(--space-2);
+}
+
+.hq-mission:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.hq-empty {
+  margin: 0;
+}
