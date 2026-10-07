@@ -1,0 +1,187 @@
+{
+  "generatedBy": "review-gate",
+  "scope": "slice 9 progress-stats frontend (implement-progress-stats-ui): the admin stats page /admin/stats (success metric, weekly table, week count, first-try rate per topic, empty state), the admin flag queue /admin/reports (reports with task, reason, note, attached attempt, raw input in full, both verdicts, status filter, re-evaluate, dismiss, outcome line), the admin navigation entries, ISO admin dates, and the admin contract stub's stats and flag queue (src/test/fake-progress-backend.ts)",
+  "change": "implement-progress-stats-ui",
+  "baseRef": "14ded76",
+  "headRef": "HEAD",
+  "dimensions": {
+    "correctness": {
+      "confirmed": 6,
+      "contested": 1,
+      "rejected": 1
+    },
+    "security": {
+      "confirmed": 0,
+      "contested": 0,
+      "rejected": 0
+    },
+    "spec-compliance": {
+      "confirmed": 6,
+      "contested": 1,
+      "rejected": 2
+    },
+    "visual": {
+      "confirmed": 0,
+      "contested": 0,
+      "rejected": 0
+    }
+  },
+  "findings": [
+    {
+      "id": "F01",
+      "severity": "major",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "A 409 refusal moves no focus, and the pressed button can unmount, dropping focus to <body>",
+      "file": "src/features/reports/ReportsScreen.tsx",
+      "line": 60,
+      "status": "fixed",
+      "fixCommit": "bd732c8"
+    },
+    {
+      "id": "F02",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "Short weeks are hidden when the shown weeks are empty but older practice exists (the 'no practice' check only looks at the shown weeks)",
+      "file": "src/features/stats/stats.ts",
+      "line": 44,
+      "status": "fixed",
+      "fixCommit": "bd732c8"
+    },
+    {
+      "id": "F03",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "The 'unchanged' outcome always says the attempt is still not correct, which is wrong for other changed:false reasons",
+      "file": "src/features/reports/ReportsScreen.tsx",
+      "line": 21,
+      "status": "fixed",
+      "fixCommit": "bd732c8"
+    },
+    {
+      "id": "F04",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "The e2e wrap assertion for long raw input is vacuous for an inline span",
+      "file": "e2e/flag-queue.spec.ts",
+      "line": 125,
+      "status": "fixed",
+      "fixCommit": "bd732c8"
+    },
+    {
+      "id": "F05",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "A failed refetch after an action is ignored while cached data exists, so a stale queue still offers actions",
+      "file": "src/features/reports/ReportsScreen.tsx",
+      "line": 74,
+      "status": "fixed",
+      "fixCommit": "bd732c8"
+    },
+    {
+      "id": "F06",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "Stale doc comments describe a date format the code no longer produces",
+      "file": "src/features/stats/stats.ts",
+      "line": 73,
+      "status": "fixed",
+      "fixCommit": "bd732c8"
+    },
+    {
+      "id": "F07",
+      "severity": "major",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Empty state is decided from the shown weeks only: it hides every Short mark and can say 'No practice recorded yet' when practice did happen",
+      "file": "src/features/stats/stats.ts",
+      "line": 36,
+      "status": "fixed",
+      "fixCommit": "bd732c8"
+    },
+    {
+      "id": "F08",
+      "severity": "major",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "After a 409 refusal, focus is not moved to the outcome and can fall to <body>",
+      "file": "src/features/reports/ReportsScreen.tsx",
+      "line": 58,
+      "status": "fixed",
+      "fixCommit": "bd732c8"
+    },
+    {
+      "id": "F09",
+      "severity": "major",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "The e2e 'wrapped' assertion for long raw input can never fail; wrapping and U+00A0 inputs are not actually checked",
+      "file": "e2e/flag-queue.spec.ts",
+      "line": 122,
+      "status": "fixed",
+      "fixCommit": "bd732c8"
+    },
+    {
+      "id": "F10",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Dismiss outcome copy differs from the scenario text",
+      "file": "src/i18n/en.ts",
+      "line": 354,
+      "status": "fixed",
+      "fixCommit": "bd732c8"
+    },
+    {
+      "id": "F11",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Doc comments still describe the old word-style dates",
+      "file": "src/features/stats/stats.ts",
+      "line": 73,
+      "status": "fixed",
+      "fixCommit": "bd732c8"
+    },
+    {
+      "id": "F12",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Coverage summary",
+      "file": "openspec/changes/implement-progress-stats-ui/specs/progress-stats/spec.md",
+      "line": 1,
+      "status": "fixed",
+      "fixCommit": "bd732c8"
+    },
+    {
+      "id": "F13",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "contested",
+      "title": "The part-key column is very narrow and its keys do not wrap under table-layout: fixed",
+      "file": "src/features/reports/reports.css",
+      "line": 75,
+      "status": "fixed",
+      "fixCommit": "bd732c8"
+    },
+    {
+      "id": "F14",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "contested",
+      "title": "Stub fidelity: the excerpt cuts UTF-16 code units, the topic list differs, and the re-evaluation rule is simplified",
+      "file": "src/test/fake-progress-backend.ts",
+      "line": 81,
+      "status": "waived",
+      "reason": "Excerpt now cut by code points (fixed in bd732c8). The remainder is waived: the stub lists every reference topic in firstTryRateByTopic and requires every part CORRECT for a replay fix; the UI renders whatever topics and verdicts the server serves, so neither difference changes what the UI does. The backend notes (scratch/slice9-backend-behaviour.md, 2026-10-07) were re-read before the gate and are folded into design.md."
+    }
+  ],
+  "clean": true,
+  "generatedAt": "2026-10-07T20:01:51Z"
+}

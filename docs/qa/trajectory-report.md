@@ -5,7 +5,7 @@ archived slice took: review evidence, `Slice:` trailers, and module scope.
 It does NOT verify test-first ordering or test integrity (not derivable from
 one-commit-per-slice history) — those are graded by the trajectory-eval workflow.
 
-Scope: 6 archived slice(s).
+Scope: 7 archived slice(s).
 Result: PASS, 6 warning(s)
 
 | Slice | Review evidence | Trailer commits | design+tasks | lib domains touched |
@@ -16,10 +16,11 @@ Result: PASS, 6 warning(s)
 | 2026-10-05-implement-authoring-missions-ui | clean | 3 | yes | missions, sources, tasks, admin-access |
 | 2026-10-05-implement-practice-flow-ui | clean | 3 | yes | hq, mission, task, child |
 | 2026-10-07-implement-gamification-ui | clean | 4 | yes | mission, summary, task, hq, rank, skin |
+| 2026-10-07-implement-progress-stats-ui | clean | 3 | yes | stats, admin-access, reports |
 
 ## Cross-slice module overlap
 
-- `lib/admin-access/` touched by: 2026-10-04-implement-admin-access-ui, 2026-10-04-implement-authoring-tasks-ui, 2026-10-05-implement-authoring-missions-ui
+- `lib/admin-access/` touched by: 2026-10-04-implement-admin-access-ui, 2026-10-04-implement-authoring-tasks-ui, 2026-10-05-implement-authoring-missions-ui, 2026-10-07-implement-progress-stats-ui
 - `lib/sources/` touched by: 2026-10-04-implement-authoring-tasks-ui, 2026-10-05-implement-authoring-missions-ui
 - `lib/tasks/` touched by: 2026-10-04-implement-authoring-tasks-ui, 2026-10-05-implement-authoring-missions-ui
 - `lib/task/` touched by: 2026-10-04-implement-authoring-tasks-ui, 2026-10-05-implement-practice-flow-ui, 2026-10-07-implement-gamification-ui
@@ -32,7 +33,7 @@ None.
 
 ## Warnings
 
-- **in-scope**: lib/admin-access/ modified by 3 slices (2026-10-04-implement-admin-access-ui, 2026-10-04-implement-authoring-tasks-ui, 2026-10-05-implement-authoring-missions-ui) — review for scope drift
+- **in-scope**: lib/admin-access/ modified by 4 slices (2026-10-04-implement-admin-access-ui, 2026-10-04-implement-authoring-tasks-ui, 2026-10-05-implement-authoring-missions-ui, 2026-10-07-implement-progress-stats-ui) — review for scope drift
 - **in-scope**: lib/sources/ modified by 2 slices (2026-10-04-implement-authoring-tasks-ui, 2026-10-05-implement-authoring-missions-ui) — review for scope drift
 - **in-scope**: lib/tasks/ modified by 2 slices (2026-10-04-implement-authoring-tasks-ui, 2026-10-05-implement-authoring-missions-ui) — review for scope drift
 - **in-scope**: lib/task/ modified by 3 slices (2026-10-04-implement-authoring-tasks-ui, 2026-10-05-implement-practice-flow-ui, 2026-10-07-implement-gamification-ui) — review for scope drift
