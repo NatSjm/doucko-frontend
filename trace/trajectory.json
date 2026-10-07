@@ -56,7 +56,7 @@
     {
       "slice": "2026-10-07-implement-gamification-ui",
       "reviewEvidence": "clean",
-      "trailerCommits": 2,
+      "trailerCommits": 3,
       "libDomains": [
         "mission",
         "summary",
