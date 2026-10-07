@@ -72,6 +72,21 @@ export function AdminLayout({ title, wide = false, children }: { title: ReactNod
   );
 }
 
+/**
+ * A non-blocking alert while a screen shows earlier data whose refresh failed (after an action or a
+ * refetch): the data may be out of date, with a retry.
+ */
+export function RefreshFailed({ show, onRetry }: { show: boolean; onRetry: () => void }) {
+  const t = useT();
+  if (!show) return null;
+  return (
+    <div className="admin-alert admin-actions" role="alert">
+      <span>{t('admin.common.refreshFailed')}</span>
+      <Button onClick={onRetry}>{t('admin.session.retry')}</Button>
+    </div>
+  );
+}
+
 /** A status line while a screen loads, and an alert with a retry when it could not. */
 export function LoadState({ error, onRetry }: { error: boolean; onRetry: () => void }) {
   const t = useT();

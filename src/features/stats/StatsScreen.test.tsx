@@ -138,6 +138,27 @@ describe('stats page (FR-40)', () => {
     expect(await weekly()).toBeInTheDocument();
   });
 
+  it('never shows the figures of another week count as the chosen one: a failed load says so and retries (review F05)', async () => {
+    const backend = stubSignedInAdmin();
+    open();
+    await weekly();
+    backend.override = { match: (method, path) => method === 'GET' && path === '/api/admin/stats', status: 500, body: { title: 'Server error' } };
+    await userEvent.selectOptions(screen.getByLabelText(m['admin.stats.weeksShown']), '8');
+    expect(await screen.findByText(m['admin.common.loadFailed'])).toBeInTheDocument();
+    expect(screen.queryByRole('table', { name: m['admin.stats.weeklyCaption'] })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: m['admin.session.retry'] }));
+    await vi.waitFor(async () => expect(rows(await weekly())).toHaveLength(8));
+  });
+
+  it('practice older than the shown weeks is not the empty state: the short weeks are marked (review F07)', async () => {
+    const backend = stubSignedInAdmin();
+    backend.progress.history = [];
+    open();
+    const table = await weekly();
+    expect(screen.queryByText(m['admin.stats.empty'])).not.toBeInTheDocument();
+    expect(within(table).getAllByText(m['admin.stats.short'])).toHaveLength(4);
+  });
+
   it('is behind the admin session: without one, the sign-in form is shown and no stats are asked for', async () => {
     const backend = stubAdminBackend();
     open();

@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { Button, Chip } from '@/design-system';
-import { AdminLayout, LoadState } from '@/features/admin-access/AdminLayout';
+import { AdminLayout, LoadState, RefreshFailed } from '@/features/admin-access/AdminLayout';
 import { ApiError } from '@/features/admin-access/problem';
 import { STATS_KEY } from '@/features/stats/api';
 import { useT } from '@/i18n';
@@ -38,17 +38,25 @@ export function ReportsScreen() {
   const reports = useReports(status || null);
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState({ text: '', seq: 0 });
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState({ text: '', seq: 0 });
   const outcomeLine = useRef<HTMLParagraphElement>(null);
+  const errorLine = useRef<HTMLParagraphElement>(null);
   const title = t('admin.reports.title');
 
   useEffect(() => {
     if (outcome.seq) outcomeLine.current?.focus();
   }, [outcome.seq]);
 
+  // A refusal or failure takes focus too: the pressed button may be gone after the reload (review F01).
+  useEffect(() => {
+    if (error.seq) errorLine.current?.focus();
+  }, [error.seq]);
+
+  const fail = (text: string) => setError((e) => ({ text, seq: e.seq + 1 }));
+
   async function act(report: Report, action: 'reevaluate' | 'dismiss') {
     setBusy(true);
-    setError(null);
+    setError((e) => ({ text: '', seq: e.seq }));
     try {
       const text =
         action === 'reevaluate'
@@ -59,9 +67,9 @@ export function ReportsScreen() {
     } catch (e) {
       setOutcome((o) => ({ text: '', seq: o.seq }));
       if (e instanceof ApiError && e.status === 409) {
-        setError(e.problem?.detail ?? t('admin.reports.alreadyHandled'));
+        fail(e.problem?.detail ?? t('admin.reports.alreadyHandled'));
         await reload();
-      } else setError(t('admin.common.actionFailed'));
+      } else fail(t('admin.common.actionFailed'));
     }
     setBusy(false);
   }
@@ -94,11 +102,12 @@ export function ReportsScreen() {
       <p ref={outcomeLine} role="status" tabIndex={-1} className="admin-ok report-outcome">
         {outcome.text}
       </p>
-      {error && (
-        <p role="alert" className="admin-alert">
-          {error}
+      {error.text && (
+        <p ref={errorLine} role="alert" tabIndex={-1} className="admin-alert report-error">
+          {error.text}
         </p>
       )}
+      <RefreshFailed show={reports.isError} onRetry={() => void reports.refetch()} />
       {reports.data.length ? (
         <ol className="report-list" aria-label={t('admin.reports.list')}>
           {reports.data.map((report) => (

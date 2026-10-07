@@ -39,8 +39,10 @@ the metric verdict from the weeks it shows and never adds up XP.
     held in the response with fewer than 3 qualifying sessions. With the
     default 5 weeks every metric week is in the response; the UI names no
     week it does not have, and the verdict is always `metricMet`.
-    With no practice at all the empty-state message speaks and no week is
-    singled out as short.
+    With no practice recorded at all (no activity in the weeks shown and no
+    resolved task in any topic) the empty-state message speaks and no week
+    is singled out as short; practice older than the weeks shown is not the
+    empty state (review F07).
   - **Week count** (`select`, "Weeks shown"): 5 (default), 8, 12, 26, 52.
     Changing it refetches; the previous figures stay while loading.
   - **Weekly table** (caption "Weekly practice", newest week first): Week
@@ -53,7 +55,7 @@ the metric verdict from the weeks it shows and never adds up XP.
     First-try rate ("75%", rounded to a whole percent; "—" when `resolved` is
     0), Resolved tasks ("6 of 8 first try"; "None yet").
   - **Empty state**: when every served week has 0 sessions, 0 hints and 0
-    reveals, "No practice recorded yet. The figures fill in as the child
+    reveals and no topic has a resolved task, "No practice recorded yet. The figures fill in as the child
     answers tasks." above the (zero) table; no error.
   - Loading / error: `LoadState` (status line; alert with "Try again").
 - `/admin/reports` — `AdminLayout` "Flag queue".
@@ -82,11 +84,15 @@ the metric verdict from the weeks it shows and never adds up XP.
     bonus." when `bonusXp > 0`); `changed` on a replay attempt → "Fixed: the
     replay attempt is now correct. Replay attempts earn no XP."; `changed`
     otherwise with 0 XP → "Fixed: the attempt is now correct. No XP added.";
-    not `changed` → "Nothing changed: under the current answer spec the
-    attempt is still not correct. The report stays open."; dismiss → "Report
+    not `changed` → "Nothing changed for “{task}”: under the current
+    answer spec the re-evaluation does not improve the outcome. The report
+    stays open." (neutral: `changed: false` also covers an attempt already
+    correct or an outcome already as good); dismiss → "Report on “{task}”
     dismissed."; a 409 → the server's `detail` (or "This report was already
-    handled.") and the queue reloads; other failures → the common
-    action-failed alert.
+    handled.") as an alert that takes focus (the pressed button may be gone)
+    and the queue reloads; other failures → the common action-failed alert,
+    focused. A failed reload keeps the queue shown with "Could not refresh
+    this. What is shown may be out of date." and a retry (review F01, F05).
   - Empty: "No reports." / "No reports with this status."
 
 ## Design-system mapping

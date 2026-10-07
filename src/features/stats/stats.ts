@@ -60,9 +60,15 @@ export function shortWeeks(stats: Stats): string[] {
     .reverse();
 }
 
-/** True when no served week has a session, an opened hint or a reveal (the empty state). */
+/**
+ * True when no practice is recorded at all (the empty state): no served week has a session, an
+ * opened hint or a reveal, and no topic has a resolved task (practice older than the shown weeks
+ * would have resolved one, review F07).
+ */
 export function noPractice(stats: Stats): boolean {
-  return stats.weeks.every((w) => w.sessions === 0 && w.hintsUsed === 0 && w.revealed === 0);
+  return (
+    stats.weeks.every((w) => w.sessions === 0 && w.hintsUsed === 0 && w.revealed === 0) && stats.firstTryRateByTopic.every((topic) => topic.resolved === 0)
+  );
 }
 
 /** The first-try rate as a whole percent, or null when nothing is resolved (shown as —). */
@@ -70,7 +76,7 @@ export function firstTryPercent(topic: { resolved: number; firstTry: number }): 
   return topic.resolved === 0 ? null : Math.round((topic.firstTry * 100) / topic.resolved);
 }
 
-/** A week start (`YYYY-MM-DD`, a calendar date) as "5 Oct 2026", never shifted by a time zone. */
+/** A week start (`YYYY-MM-DD`, a calendar date) as the admin reads it, "2026-10-05" (ISO), never shifted. */
 export function formatWeek(date: string): string {
   return adminDate(date);
 }

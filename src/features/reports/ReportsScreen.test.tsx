@@ -268,7 +268,10 @@ describe('re-evaluate and dismiss (FR-41)', () => {
     // Handled elsewhere in the meantime.
     backend.progress.reports[0].report.status = 'DISMISSED';
     await userEvent.click(within(entry(REPORTS.openRevealed)).getByRole('button', { name: m['admin.reports.dismiss'] }));
-    expect(await screen.findByRole('alert')).toHaveTextContent('Only an open report can be dismissed; this one is DISMISSED.');
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Only an open report can be dismissed; this one is DISMISSED.');
+    // The pressed button is gone after the reload; focus is on the refusal (review F01).
+    expect(alert).toHaveFocus();
     await vi.waitFor(() => expect(within(entry(REPORTS.openRevealed)).getByText(m['admin.reports.status.DISMISSED'])).toBeInTheDocument());
   });
 
@@ -286,7 +289,30 @@ describe('re-evaluate and dismiss (FR-41)', () => {
     backend.down = true;
     await userEvent.click(within(entry(REPORTS.openRevealed)).getByRole('button', { name: m['admin.reports.reevaluate'] }));
     expect(await screen.findByRole('alert')).toHaveTextContent(m['admin.common.actionFailed']);
+    expect(screen.getByRole('alert')).toHaveFocus();
     expect(within(entry(REPORTS.openRevealed)).getByRole('button', { name: m['admin.reports.reevaluate'] })).toBeEnabled();
+  });
+
+  it('says when the queue could not be refreshed after an action, keeps what it shows, and retries (review F05)', async () => {
+    const backend = stubSignedInAdmin();
+    await open();
+    const handle = backend.handle;
+    let failNextList = false;
+    backend.handle = async (request) => {
+      const path = new URL(request.url).pathname;
+      if (request.method === 'POST') failNextList = true;
+      else if (failNextList && path === '/api/admin/reports') {
+        failNextList = false;
+        return new Response(null, { status: 503 });
+      }
+      return handle(request);
+    };
+    await userEvent.click(within(entry(REPORTS.openNoAttempt)).getByRole('button', { name: m['admin.reports.dismiss'] }));
+    expect(await screen.findByText(m['admin.common.refreshFailed'])).toBeInTheDocument();
+    expect(entries()).toHaveLength(5);
+    await userEvent.click(screen.getByRole('button', { name: m['admin.session.retry'] }));
+    await vi.waitFor(() => expect(screen.queryByText(m['admin.common.refreshFailed'])).not.toBeInTheDocument());
+    expect(within(entry(REPORTS.openNoAttempt)).getByText(m['admin.reports.status.DISMISSED'])).toBeInTheDocument();
   });
 
   it('disables every action while one runs', async () => {

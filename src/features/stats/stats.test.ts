@@ -82,6 +82,12 @@ describe('short weeks', () => {
 });
 
 describe('empty state', () => {
+  it('is not shown when a topic has a resolved task (practice before the shown weeks), so short weeks are marked', () => {
+    const old = { ...stats([week('2026-09-28', []), week('2026-10-05', [])]), firstTryRateByTopic: [{ topicId: 't', topicName: 'x', resolved: 2, firstTry: 1 }] };
+    expect(noPractice(old)).toBe(false);
+    expect(weekRows(old).map((r) => r.short)).toEqual([false, true]);
+  });
+
   it('is shown only when no week has a session, a hint or a reveal', () => {
     expect(noPractice(stats([week('2026-09-28', []), week('2026-10-05', [])]))).toBe(true);
     expect(noPractice(stats([week('2026-09-28', [], 1), week('2026-10-05', [])]))).toBe(false);

@@ -78,7 +78,8 @@ export interface SeedTasks {
   topicPerimeter: string;
 }
 
-const excerpt = (prompt: string) => (prompt.length > 80 ? `${prompt.slice(0, 80)}…` : prompt);
+/** The first 80 code points of the prompt, "…" when longer (backend slice 9). */
+const excerpt = (prompt: string) => ([...prompt].length > 80 ? `${[...prompt].slice(0, 80).join('')}…` : prompt);
 
 function attempt(no: number, raw: Record<string, string | string[]>, normalized: Record<string, string | null>, verdicts: Record<string, S['Verdict']>, extra: Partial<S['LoggedAttempt']>): S['LoggedAttempt'] {
   return {

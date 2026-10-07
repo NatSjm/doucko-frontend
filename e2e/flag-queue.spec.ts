@@ -110,19 +110,50 @@ test('keyboard: dismiss a report without an attempt; the outcome is announced an
   expect(backend.progress.reports.find((r) => r.report.reportId === REPORTS.openNoAttempt)?.report.status).toBe('DISMISSED');
 });
 
+test('a report handled elsewhere meanwhile: the refusal is shown and focused, and the queue reloads (409)', async ({ page }) => {
+  const backend = await signedInAdmin(page);
+  await page.goto('/admin/reports');
+  const button = entry(page, REPORTS.openRevealed).getByRole('button', { name: m['admin.reports.reevaluate'] });
+  await expect(button).toBeVisible();
+  const stored = backend.progress.reports.find((r) => r.report.reportId === REPORTS.openRevealed);
+  if (stored) stored.report.status = 'DISMISSED';
+  await button.click();
+  await expect(page.getByRole('alert')).toHaveText('Only an open report can be re-evaluated; this one is DISMISSED.');
+  await expect(page.getByRole('alert')).toBeFocused();
+  await expect(entry(page, REPORTS.openRevealed).getByText(m['admin.reports.status.DISMISSED'], { exact: true })).toBeVisible();
+  expect(backend.progress.awards).toEqual([]);
+});
+
+/** The raw input is whole, wraps onto several lines, stays inside its cell and entry, and the page does not scroll sideways. */
+async function expectWrappedWhole(page: Page, reportId: string, text: string) {
+  const raw = entry(page, reportId).locator('.report-raw');
+  await expect(raw).toBeVisible();
+  expect(await raw.textContent()).toBe(text);
+  const box = await raw.evaluate((el) => {
+    const rect = el.getBoundingClientRect();
+    const cell = (el.closest('td') as HTMLElement).getBoundingClientRect();
+    const article = (el.closest('article') as HTMLElement).getBoundingClientRect();
+    return { lines: el.getClientRects().length, inCell: rect.right <= cell.right + 0.5, inEntry: rect.right <= article.right + 0.5, ellipsis: getComputedStyle(el).textOverflow === 'ellipsis' };
+  });
+  expect(box).toEqual({ lines: expect.any(Number), inCell: true, inEntry: true, ellipsis: false });
+  expect(box.lines).toBeGreaterThan(1);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+}
+
 test('a 100-code-point raw input is shown in full, wrapped within its entry, with no horizontal page scroll', async ({ page }) => {
   await signedInAdmin(page);
   await page.goto('/admin/reports');
-  const long = entry(page, REPORTS.dismissedLong);
-  const raw = long.getByText(LONG_RAW, { exact: true });
-  await expect(raw).toBeVisible();
-  expect(await raw.textContent()).toBe(LONG_RAW);
-  expect(await raw.evaluate((el) => getComputedStyle(el).textOverflow)).not.toBe('ellipsis');
-  const [rawBox, entryBox] = [await raw.boundingBox(), await long.boundingBox()];
-  expect(rawBox && entryBox && rawBox.x + rawBox.width <= entryBox.x + entryBox.width + 0.5).toBe(true);
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
-  // The text wraps: the cell is taller than one line of it.
-  expect(await raw.evaluate((el) => el.getClientRects().length > 1 || el.scrollWidth <= el.clientWidth)).toBe(true);
+  await expectWrappedWhole(page, REPORTS.dismissedLong, LONG_RAW);
+});
+
+test('a 100-code-point raw input with no break opportunity (digits joined by no-break spaces) still wraps whole, U+00A0 kept', async ({ page }) => {
+  const backend = await signedInAdmin(page);
+  const unbroken = '1 '.repeat(50);
+  expect([...unbroken]).toHaveLength(100);
+  const attempt = backend.progress.reports.find((r) => r.report.reportId === REPORTS.openRevealed)?.report.attempt;
+  if (attempt) attempt.rawInput = { a: unbroken };
+  await page.goto('/admin/reports');
+  await expectWrappedWhole(page, REPORTS.openRevealed, unbroken);
 });
 
 test('filter by status lists only that status; All lists every report again', async ({ page }) => {

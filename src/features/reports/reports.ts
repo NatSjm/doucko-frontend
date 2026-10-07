@@ -1,6 +1,6 @@
 import { adminDateTime } from '@/i18n/format';
 
-/** A report or attempt time as the admin reads it: "5 Oct 2026, 16:20", Europe/Prague. */
+/** A report or attempt time as the admin reads it: "2026-10-05 16:20", Europe/Prague, 24 h. */
 export function formatTime(instant: string): string {
   return adminDateTime(instant);
 }

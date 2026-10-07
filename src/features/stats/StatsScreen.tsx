@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Chip, Panel } from '@/design-system';
-import { AdminLayout, LoadState } from '@/features/admin-access/AdminLayout';
+import { AdminLayout, LoadState, RefreshFailed } from '@/features/admin-access/AdminLayout';
 import { useT } from '@/i18n';
 import { format } from '@/i18n/format';
 import { useStats, type Stats } from './api';
@@ -27,6 +27,7 @@ export function StatsScreen() {
 
   return (
     <AdminLayout title={title}>
+      <RefreshFailed show={stats.isError} onRetry={() => void stats.refetch()} />
       <Metric stats={stats.data} />
       {noPractice(stats.data) && <p className="admin-muted">{t('admin.stats.empty')}</p>}
       <div className="admin-control stats-weeks">

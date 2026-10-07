@@ -11,7 +11,10 @@ request 5 weeks by default, so all four metric weeks are shown, and SHALL
 offer 5, 8, 12, 26 or 52 weeks. When the metric is not met, every metric week
 in the response with fewer than 3 qualifying sessions SHALL be marked as
 short. A topic with no resolved task SHALL show "—". When no practice is
-recorded the page SHALL show an empty-state message and no error. The page
+recorded at all (no session, hint or reveal in the weeks shown and no
+resolved task in any topic) the page SHALL show an empty-state message, no
+error, and no week marked short; practice older than the weeks shown is not
+the empty state. The page
 SHALL be reachable from the admin navigation.
 
 #### Scenario: Metric not met, short week marked
@@ -44,6 +47,12 @@ SHALL be reachable from the admin navigation.
 - **WHEN** the admin chooses 12 weeks
 - **THEN** the API is asked for 12 weeks and the table shows 12 rows
 
+#### Scenario: Practice before the weeks shown
+
+- **GIVEN** resolved tasks from practice older than the weeks shown and no activity in the weeks shown
+- **WHEN** the admin opens the stats page
+- **THEN** no empty-state message is shown and every metric week is marked "Short"
+
 #### Scenario: No data yet
 
 - **GIVEN** no attempts and no opened hints
@@ -63,7 +72,9 @@ offer All, Open, Fixed and Dismissed. An OPEN report SHALL offer Dismiss and,
 only with an attached attempt, Re-evaluate. After an action the outcome SHALL
 be announced and receive focus: fixed with the XP added (and a mission bonus),
 fixed on a replay attempt with no XP, or nothing changed with the report still
-open; a refusal (409) shows the server's reason and the queue reloads. The
+open; a refusal (409) or a failure shows the reason as an alert that receives
+focus, and after a refusal the queue reloads. When a reload fails, the queue
+shown stays with a notice that it may be out of date and a retry. The
 queue SHALL be reachable from the admin navigation.
 
 #### Scenario: Report with an attempt
@@ -106,4 +117,10 @@ queue SHALL be reachable from the admin navigation.
 
 - **GIVEN** an OPEN report
 - **WHEN** the admin dismisses it
-- **THEN** "Report dismissed." is announced and the entry shows Dismissed with no actions
+- **THEN** "Report on “{task excerpt}” dismissed." is announced and focused, and the entry shows Dismissed with no actions
+
+#### Scenario: Report handled elsewhere
+
+- **GIVEN** an OPEN report that is dismissed elsewhere after the queue was loaded
+- **WHEN** the admin re-evaluates it
+- **THEN** the server's reason is shown as an alert that receives focus, no XP is added, and the reloaded queue shows the report as Dismissed
