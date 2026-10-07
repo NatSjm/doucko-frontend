@@ -702,11 +702,18 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/practice-flow/spec.md"
+        "contract/openspec/specs/practice-flow/spec.md",
+        "openspec/changes/implement-gamification-ui/specs/practice-flow/spec.md"
       ],
       "planned": true,
-      "tests": [],
-      "recordings": []
+      "tests": [
+        "src/features/summary/SummaryScreen.test.tsx",
+        "src/features/task/TaskScreen.test.tsx",
+        "e2e/gamification-summary.spec.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/slice8-gamification/manifest.json"
+      ]
     },
     {
       "id": "FR-33",
@@ -716,11 +723,19 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/practice-flow/spec.md"
+        "contract/openspec/specs/practice-flow/spec.md",
+        "openspec/changes/implement-gamification-ui/specs/practice-flow/spec.md"
       ],
       "planned": true,
-      "tests": [],
-      "recordings": []
+      "tests": [
+        "src/features/mission/MissionScreen.test.tsx",
+        "src/features/summary/SummaryScreen.test.tsx",
+        "src/features/task/TaskXp.test.tsx",
+        "e2e/gamification-summary.spec.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/slice8-gamification/manifest.json"
+      ]
     },
     {
       "id": "FR-34",
@@ -756,11 +771,23 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/gamification/spec.md"
+        "contract/openspec/specs/gamification/spec.md",
+        "openspec/changes/implement-gamification-ui/specs/gamification/spec.md",
+        "openspec/changes/implement-gamification-ui/specs/practice-flow/spec.md"
       ],
       "planned": true,
-      "tests": [],
-      "recordings": []
+      "tests": [
+        "src/features/hq/HqProgress.test.tsx",
+        "src/features/rank/RankUp.test.tsx",
+        "src/features/summary/SummaryScreen.test.tsx",
+        "src/features/task/TaskXp.test.tsx",
+        "e2e/a11y.spec.ts",
+        "e2e/gamification-hq.spec.ts",
+        "e2e/gamification-summary.spec.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/slice8-gamification/manifest.json"
+      ]
     },
     {
       "id": "FR-37",
@@ -770,11 +797,18 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/gamification/spec.md"
+        "contract/openspec/specs/gamification/spec.md",
+        "openspec/changes/implement-gamification-ui/specs/gamification/spec.md"
       ],
       "planned": true,
-      "tests": [],
-      "recordings": []
+      "tests": [
+        "src/features/hq/HqProgress.test.tsx",
+        "src/features/rank/rank.test.ts",
+        "e2e/gamification-hq.spec.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/slice8-gamification/manifest.json"
+      ]
     },
     {
       "id": "FR-38",
@@ -784,11 +818,18 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/gamification/spec.md"
+        "contract/openspec/specs/gamification/spec.md",
+        "openspec/changes/implement-gamification-ui/specs/gamification/spec.md"
       ],
       "planned": true,
-      "tests": [],
-      "recordings": []
+      "tests": [
+        "src/features/hq/HqProgress.test.tsx",
+        "src/features/task/TaskXp.test.tsx",
+        "e2e/gamification-hq.spec.ts"
+      ],
+      "recordings": [
+        "docs/qa/demo-recordings/slice8-gamification/manifest.json"
+      ]
     },
     {
       "id": "FR-39",
@@ -798,10 +839,13 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/gamification/spec.md"
+        "contract/openspec/specs/gamification/spec.md",
+        "openspec/changes/implement-gamification-ui/specs/gamification/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "src/features/skin/denylist.test.ts"
+      ],
       "recordings": []
     },
     {
@@ -1139,30 +1183,6 @@
   "warnings": [
     {
       "check": "test-trace",
-      "msg": "FR-32 (owned by frontend) has no test annotated \"@trace FR-32\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-33 (owned by frontend) has no test annotated \"@trace FR-33\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-36 (owned by frontend) has no test annotated \"@trace FR-36\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-37 (owned by frontend) has no test annotated \"@trace FR-37\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-38 (owned by frontend) has no test annotated \"@trace FR-38\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-39 (owned by frontend) has no test annotated \"@trace FR-39\""
-    },
-    {
-      "check": "test-trace",
       "msg": "FR-40 (owned by frontend) has no test annotated \"@trace FR-40\""
     },
     {
@@ -1207,26 +1227,6 @@
     },
     {
       "check": "recording-evidence",
-      "msg": "FR-32 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-33 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-36 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-37 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-38 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
       "msg": "FR-39 is not referenced by any recording manifest under docs/qa/"
     },
     {
@@ -1240,6 +1240,10 @@
     {
       "check": "recording-evidence",
       "msg": "FR-41 is not referenced by any recording manifest under docs/qa/"
+    },
+    {
+      "check": "active-changes",
+      "msg": "active change \"implement-gamification-ui\" is not archived"
     }
   ]
 }

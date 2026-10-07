@@ -6,6 +6,7 @@
 // @trace FR-30
 // @trace FR-31
 // @trace NFR-7
+// @trace FR-32
 import { act, cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -88,11 +89,12 @@ describe('task screen (FR-26, NFR-7)', () => {
     expect(window.location.search).toBe(`?missionId=${PRACTICE.missionA}&taskId=${PRACTICE.taskSum}`);
   });
 
-  it('says the mission is done when no task of it is left', async () => {
+  it('says the mission is done when no task of it is left, with its results and the way back (FR-32)', async () => {
     const backend = stubChildBackend();
     await practise(backend, PRACTICE.missionPerimeter, PRACTICE.taskSquare, { a: '8 cm' });
     renderAt(<TaskScreen />, at(PRACTICE.missionPerimeter));
     expect(await screen.findByText(m['child.task.missionDoneText'])).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: m['child.mission.results'] })).toHaveAttribute('href', `/summary?missionId=${PRACTICE.missionPerimeter}`);
     expect(screen.getByRole('link', { name: m['child.common.backToHq'] })).toHaveAttribute('href', '/');
   });
 
@@ -729,13 +731,14 @@ describe('save and resume (FR-31)', () => {
     expect(backend.practice.attempts).toHaveLength(0);
   });
 
-  it('the last task of a mission says the mission is done and leads back to HQ', async () => {
+  it('the last task of a mission says the mission is done and leads to its results (FR-32)', async () => {
     stubChildBackend();
     await open(at(PRACTICE.missionPerimeter, PRACTICE.taskSquare));
     await userEvent.keyboard('8 cm{Enter}');
     expect(await screen.findByText(m['child.task.missionDone'])).toBeInTheDocument();
     expect(screen.queryByRole('link', { name: m['child.task.next'] })).toBeNull();
-    const back = screen.getAllByRole('link', { name: m['child.common.backToHq'] });
-    expect(back.at(-1)).toHaveFocus();
+    const results = screen.getByRole('link', { name: m['child.mission.results'] });
+    expect(results).toHaveAttribute('href', `/summary?missionId=${PRACTICE.missionPerimeter}`);
+    expect(results).toHaveFocus();
   });
 });

@@ -5,7 +5,7 @@ requirements/spec/test/recording change; CI runs `--check-fresh`.
 
 Repo: frontend (contract: submodule).
 Scope: 48 MVP functional requirements, 30 owned by frontend.
-Result: PASS, 26 warning(s)
+Result: PASS, 16 warning(s)
 
 | FR | Spec | Plan | Owner repo(s) | Test trace here | Recording here |
 |---|---|---|---|---|---|
@@ -43,14 +43,14 @@ Result: PASS, 26 warning(s)
 | FR-29 | yes | yes | backend, frontend | 2 | yes |
 | FR-30 | yes | yes | backend, frontend | 2 | yes |
 | FR-31 | yes | yes | backend, frontend | 3 | yes |
-| FR-32 | yes | yes | backend, frontend | - | - |
-| FR-33 | yes | yes | backend, frontend | - | - |
+| FR-32 | yes | yes | backend, frontend | 3 | yes |
+| FR-33 | yes | yes | backend, frontend | 4 | yes |
 | FR-34 | yes | yes | backend | n/a | n/a |
 | FR-35 | yes | yes | backend | n/a | n/a |
-| FR-36 | yes | yes | backend, frontend | - | - |
-| FR-37 | yes | yes | backend, frontend | - | - |
-| FR-38 | yes | yes | backend, frontend | - | - |
-| FR-39 | yes | yes | backend, frontend | - | - |
+| FR-36 | yes | yes | backend, frontend | 7 | yes |
+| FR-37 | yes | yes | backend, frontend | 3 | yes |
+| FR-38 | yes | yes | backend, frontend | 3 | yes |
+| FR-39 | yes | yes | backend, frontend | 1 | - |
 | FR-58 | yes | yes | frontend | 2 | - |
 | FR-40 | yes | yes | backend, frontend | - | - |
 | FR-41 | yes | yes | backend, frontend | - | - |
@@ -97,12 +97,6 @@ None.
 
 ## Warnings
 
-- **test-trace**: FR-32 (owned by frontend) has no test annotated "@trace FR-32"
-- **test-trace**: FR-33 (owned by frontend) has no test annotated "@trace FR-33"
-- **test-trace**: FR-36 (owned by frontend) has no test annotated "@trace FR-36"
-- **test-trace**: FR-37 (owned by frontend) has no test annotated "@trace FR-37"
-- **test-trace**: FR-38 (owned by frontend) has no test annotated "@trace FR-38"
-- **test-trace**: FR-39 (owned by frontend) has no test annotated "@trace FR-39"
 - **test-trace**: FR-40 (owned by frontend) has no test annotated "@trace FR-40"
 - **test-trace**: FR-41 (owned by frontend) has no test annotated "@trace FR-41"
 - **recording-evidence**: FR-1 is not referenced by any recording manifest under docs/qa/
@@ -114,12 +108,8 @@ None.
 - **recording-evidence**: FR-10 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-11 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-13 is not referenced by any recording manifest under docs/qa/
-- **recording-evidence**: FR-32 is not referenced by any recording manifest under docs/qa/
-- **recording-evidence**: FR-33 is not referenced by any recording manifest under docs/qa/
-- **recording-evidence**: FR-36 is not referenced by any recording manifest under docs/qa/
-- **recording-evidence**: FR-37 is not referenced by any recording manifest under docs/qa/
-- **recording-evidence**: FR-38 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-39 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-58 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-40 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-41 is not referenced by any recording manifest under docs/qa/
+- **active-changes**: active change "implement-gamification-ui" is not archived

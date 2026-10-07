@@ -1,0 +1,7 @@
+{
+  "scope": "slice 8 gamification frontend (implement-gamification-ui): HQ progress panel (rank, XP bar, solved tasks), the rank-up celebration (one-shot, ackRankUp, reduced-motion variant), the mission-complete screen /summary, replay from the briefing and the summary, XP / bonus / rank-up on the task feedback, the skin deny-list check, the extended child contract stub",
+  "baseRef": "48b9ff6",
+  "headRef": "HEAD",
+  "focus": "Check against the change's spec deltas (openspec/changes/implement-gamification-ui/specs/gamification/spec.md and specs/practice-flow/spec.md), the store specs gamification ('Rank-up celebration', 'Progress on HQ', 'No negative mechanics', 'Swappable skin', 'Light and dark theme') and practice-flow ('Mission complete screen', 'Replay completed missions'), and contract/api/openapi.yaml for HqView, AttemptResult.rankUp, MissionSummary, ackRankUp and startReplay. Pay attention to: a celebration that could play twice or never (ack timing, StrictMode, reload, HQ vs summary), anything the UI computes that the server should own (XP, rank), any XP amount of 0 or less or a minus sign on a child screen, motion under prefers-reduced-motion, focus after closing the celebration and after the last task, literal UI text bypassing the cs catalog, borrowed IP in copy or assets, the stub's fidelity to the contract and to the backend half's notes (scratch/slice8-backend-behaviour.md), and the stills under docs/qa/demo-recordings/slice8-gamification/.",
+  "change": "implement-gamification-ui"
+}

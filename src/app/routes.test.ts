@@ -16,7 +16,7 @@ describe('route registry', () => {
   });
 
   it('marks every other path as a child route', () => {
-    expect(CHILD_ROUTES).toEqual(['/', '/mission', '/task']);
+    expect(CHILD_ROUTES).toEqual(['/', '/mission', '/task', '/summary']);
   });
 
   it('example queries name ids of the fake backend seeds, so the checks reach content', () => {

@@ -7,6 +7,7 @@ import { MissionListScreen } from '@/features/missions/MissionListScreen';
 import { SourceEditScreen } from '@/features/sources/SourceEditScreen';
 import { SourcesScreen } from '@/features/sources/SourcesScreen';
 import { SourceViewerScreen } from '@/features/sources/SourceViewerScreen';
+import { SummaryScreen } from '@/features/summary/SummaryScreen';
 import { TaskScreen } from '@/features/task/TaskScreen';
 import { PreviewScreen } from '@/features/tasks/PreviewScreen';
 import { TaskEditorScreen } from '@/features/tasks/TaskEditorScreen';
@@ -28,6 +29,7 @@ export const routes: AppRoute[] = [
   { path: '/', element: <HqScreen /> },
   { path: '/mission', element: <MissionScreen /> },
   { path: '/task', element: <TaskScreen /> },
+  { path: '/summary', element: <SummaryScreen /> },
   { path: '/admin', element: <AdminArea /> },
   { path: '/admin/sources', element: <AdminArea><SourcesScreen /></AdminArea> },
   { path: '/admin/sources/view', element: <AdminArea><SourceViewerScreen /></AdminArea> },

@@ -50,3 +50,19 @@
 .mission-task-state {
   color: var(--ink-muted);
 }
+
+/* The XP the mission can still earn (as the server counts it). */
+.mission-xp {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--ink-muted);
+  font-weight: 600;
+}
+
+.mission-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}

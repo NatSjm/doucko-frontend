@@ -1,0 +1,30 @@
+{
+  "generatedBy": "scripts/check-vision.mjs",
+  "result": "PASS",
+  "met": true,
+  "readable": true,
+  "scope": 2,
+  "requirements": [
+    {
+      "id": "FR-36",
+      "clips": [
+        "slice8-rankup-hq",
+        "slice8-rankup-reduced-motion",
+        "slice8-rankup-task",
+        "slice8-mission-complete-rankup"
+      ],
+      "met": true,
+      "status": "met"
+    },
+    {
+      "id": "FR-37",
+      "clips": [
+        "slice8-hq-progress",
+        "slice8-hq-top-rank"
+      ],
+      "met": true,
+      "status": "met"
+    }
+  ],
+  "failures": []
+}

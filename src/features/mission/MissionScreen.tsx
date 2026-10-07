@@ -1,22 +1,29 @@
+import { useState } from 'react';
+import { navigate } from '@/app/navigation';
 import { queryParam } from '@/app/route-paths';
 import { Link } from '@/app/Link';
-import { Icon, cx } from '@/design-system';
+import { Button, Icon, cx } from '@/design-system';
 import { ApiError } from '@/features/admin-access/problem';
 import { BackToHq, ChildDeadEnd, ChildLayout, ChildLoadState } from '@/features/child/ChildLayout';
 import { useT } from '@/i18n';
 import { format } from '@/i18n/format';
-import { useBriefing } from './api';
+import { formatXp } from '@/features/rank/rank';
+import { startReplay, useBriefing } from './api';
 import './mission.css';
 
 /**
  * The mission briefing (practice-flow "Start or continue within two clicks"): topic, number,
  * progress, the tasks with their states, and the start button that opens the first unresolved task
- * — the second click from HQ (NFR-7). An unknown or draft mission answers 404: a friendly dead end.
+ * — the second click from HQ (NFR-7), and the XP still to earn. A complete mission offers its replay
+ * ("Zopakovat misi", which also resumes an unfinished replay, FR-33) and its results. An unknown or
+ * draft mission answers 404: a friendly dead end.
  */
 export function MissionScreen() {
   const t = useT();
   const missionId = queryParam('missionId');
   const briefing = useBriefing(missionId);
+  const [replayFailed, setReplayFailed] = useState(false);
+  const [starting, setStarting] = useState(false);
   // 404: not served; 400: a mission id that is not a UUID (refused before any lookup).
   const missing = !missionId || (briefing.error instanceof ApiError && [400, 404].includes(briefing.error.status));
   if (missing)
@@ -33,6 +40,21 @@ export function MissionScreen() {
       </ChildLayout>
     );
   const resolved = mission.tasks.filter((task) => task.state !== 'UNRESOLVED').length;
+
+  async function replay() {
+    setStarting(true);
+    setReplayFailed(false);
+    try {
+      const task = await startReplay(mission!.missionId);
+      navigate(`/task?missionId=${mission!.missionId}&taskId=${task.taskId}`);
+    } catch (error) {
+      setStarting(false);
+      // 409: the mission is no longer complete (content changed); show what the server holds now.
+      if (error instanceof ApiError && error.status === 409) void briefing.refetch();
+      else setReplayFailed(true);
+    }
+  }
+
   return (
     <ChildLayout
       kicker={format(t('child.hq.topic'), { name: mission.topicName })}
@@ -41,6 +63,12 @@ export function MissionScreen() {
     >
       <section className="dk-card mission-card">
         <p className="dk-t-body-strong">{format(t('child.hq.progress'), { resolved, total: mission.tasks.length })}</p>
+        {mission.xpAvailable > 0 && (
+          <p className="mission-xp">
+            <Icon name="bolt" size={16} strokeWidth={2.5} />
+            {format(t('child.mission.xpAvailable'), { xp: formatXp(mission.xpAvailable) })}
+          </p>
+        )}
         <ol className="mission-tasks" aria-label={t('child.mission.tasks')}>
           {mission.tasks.map((task) => (
             <li key={task.taskId} className={cx('mission-task', task.state !== 'UNRESOLVED' ? 'is-done' : null)}>
@@ -53,7 +81,18 @@ export function MissionScreen() {
           ))}
         </ol>
         {mission.state === 'COMPLETE' ? (
-          <p className="mission-complete">{t('child.mission.complete')}</p>
+          <>
+            <p className="mission-complete">{t('child.mission.complete')}</p>
+            {replayFailed && <p role="alert">{t('child.mission.replayFailed')}</p>}
+            <div className="mission-actions">
+              <Button variant="primary" size="lg" icon="retry" disabled={starting} onClick={() => void replay()}>
+                {t('child.mission.replay')}
+              </Button>
+              <Link className="dk-btn dk-btn-secondary" href={`/summary?missionId=${mission.missionId}`}>
+                {t('child.mission.results')}
+              </Link>
+            </div>
+          </>
         ) : (
           <div>
             <Link className="dk-btn dk-btn-primary dk-btn-lg" href={`/task?missionId=${mission.missionId}`}>

@@ -8,8 +8,10 @@ import { check, createFakeAdminBackend, FLAGS, FORMAT_TIP, seedStrings, SEED, ty
  * same tasks and missions. It is a contract stub, not the backend: it keeps the practice state in
  * memory, answers with the contract's shapes and status codes, and applies the practice-flow rules
  * the UI must show (two attempts then a reveal, locks, UNPARSEABLE without cost, hints in order,
- * reports, the 404/409/400/413 refusals). XP fields stay 0 / [] / null as the backend returns them
- * until slice 8. All data is self-authored (NFR-4); the display name is the fictional e2e one (NFR-3).
+ * reports, the 404/409/400/413 refusals) and the gamification rules (slice 8: XP on a task's first
+ * resolution, completion bonuses, the placeholder rank ladder, a rank-up carried by the attempt, or
+ * by the summary and HQ until acknowledged, mission summaries and replay runs). All data is
+ * self-authored (NFR-4); the display name is the fictional e2e one (NFR-3).
  */
 type S = components['schemas'];
 type Problem = S['Problem'];
@@ -173,7 +175,7 @@ function practiceSeed() {
   return { tasks, missions };
 }
 
-/** Every string of both seeds and the display name: the `⟦` test accepts exactly these as content. */
+/** Every string of both seeds, the display name and the rank names: the `⟦` test accepts exactly these as content. */
 export function allSeedStrings(): Set<string> {
   const out = seedStrings();
   const walk = (v: unknown) => {
@@ -182,6 +184,7 @@ export function allSeedStrings(): Set<string> {
   };
   walk(practiceSeed().tasks.map((t) => t.input));
   out.add(CHILD_DISPLAY_NAME);
+  for (const rank of PLACEHOLDER_LADDER) out.add(rank.name);
   out.add(FORMAT_TIP);
   out.add(CHOICE_TIP);
   return out;
@@ -207,19 +210,77 @@ export interface StoredReport {
   attempt: Answers | null;
 }
 
+/**
+ * One run of a mission: the first run, whose task progress is the shared resolution of every task
+ * (OQ-15), or a replay run with its own progress that earns nothing (OQ-17).
+ */
+export interface MissionRun {
+  replay: boolean;
+  /** A replay's own task progress; null for the first run (it reads the shared progress). */
+  progress: Map<string, TaskProgress> | null;
+  /** xpAwarded + bonusXp of this run's answers (MissionSummary.xpEarned). */
+  xpEarned: number;
+  /** Tasks this run resolved correctly on the first attempt (MissionSummary.firstTryCount). */
+  firstTry: number;
+  /** The rank crossed by the completing answer while not acknowledged (MissionSummary.rankUp). */
+  rankUp: S['Rank'] | null;
+  /** The highest rank reached in this run whose celebration played (MissionSummary.rankReachedDuringRun). */
+  rankReached: S['Rank'] | null;
+}
+
+/** The XP configuration (gamification "XP per task", "Mission completion bonus"; defaults). */
+export interface XpConfig {
+  first: number;
+  second: number;
+  revealed: number;
+  hintCost: number;
+  min: number;
+  bonus: number;
+}
+
+export const XP_DEFAULTS: XpConfig = { first: 10, second: 5, revealed: 1, hintCost: 2, min: 1, bonus: 20 };
+
+/**
+ * The placeholder ladder (gamification "Rank ladder": 0, 150, 400, 800, 1500 XP), with the names the
+ * backend ships (its gamification.json, slice 8). The UI always shows `Rank.name` from the API.
+ */
+export const PLACEHOLDER_LADDER: readonly S['Rank'][] = [
+  { index: 0, name: 'Nováček', minXp: 0 },
+  { index: 1, name: 'Kadet', minXp: 150 },
+  { index: 2, name: 'Strážce', minXp: 400 },
+  { index: 3, name: 'Hrdina', minXp: 800 },
+  { index: 4, name: 'Legenda', minXp: 1500 },
+];
+
 export interface PracticeState {
   displayName: string;
   settings: S['ProfileSettings'];
+  /** The shared resolution of every task: the first run's progress (OQ-15). */
   progress: Map<string, TaskProgress>;
   /** Opened hints per task (recorded with the task, FR-28). */
   hintsOpened: Map<string, number>;
-  /** Every graded attempt, in order (the attempt log as the stub keeps it). */
+  /** Every graded attempt of a first run, in order (the attempt log as the stub keeps it). */
   attempts: { missionId: string; taskId: string; attemptNo: number; answers: Answers }[];
+  /** Every graded attempt of a replay run, in order (logged, never awarded). */
+  replayAttempts: { missionId: string; taskId: string; attemptNo: number; answers: Answers }[];
   reports: StoredReport[];
   /** Missions in the order they were last practised (latest last). */
   practised: string[];
   /** The next child request matching this is processed and stored, then its response is lost. */
   dropResponse: ((method: string, path: string) => boolean) | null;
+  xp: XpConfig;
+  ladder: S['Rank'][];
+  totalXp: number;
+  /** The highest rank reached and not yet celebrated (HqView.pendingRankUp). */
+  pendingRankUp: S['Rank'] | null;
+  /** Missions whose completion bonus was paid (once per mission). */
+  bonusPaid: Set<string>;
+  /** The current (latest started) run of each mission that has one. */
+  runs: Map<string, MissionRun>;
+  /** The latest completed run of each mission (what its summary shows). */
+  completedRuns: Map<string, MissionRun>;
+  /** Every `ackRankUp` rankIndex received, in order. */
+  acks: number[];
 }
 
 export interface FakeBackend extends FakeAdminBackend {
@@ -248,9 +309,18 @@ export function createFakeBackend(options: { signedIn?: boolean; seeded?: boolea
     progress: new Map(),
     hintsOpened: new Map(),
     attempts: [],
+    replayAttempts: [],
     reports: [],
     practised: [],
     dropResponse: null,
+    xp: { ...XP_DEFAULTS },
+    ladder: PLACEHOLDER_LADDER.map((r) => ({ ...r })),
+    totalXp: 0,
+    pendingRankUp: null,
+    bonusPaid: new Set(),
+    runs: new Map(),
+    completedRuns: new Map(),
+    acks: [],
   };
   if (options.practice ?? true) {
     const seed = practiceSeed();
@@ -273,15 +343,45 @@ export function createFakeBackend(options: { signedIn?: boolean; seeded?: boolea
   return b;
 }
 
+// ---------------------------------------------------------------- ranks and XP
+
+/** The highest rank whose threshold the total has reached (gamification "Rank ladder"). */
+export function rankFor(b: FakeBackend, totalXp: number): S['Rank'] {
+  return [...b.practice.ladder].reverse().find((r) => totalXp >= r.minXp) ?? b.practice.ladder[0];
+}
+
+const higher = (a: S['Rank'] | null, c: S['Rank'] | null) => (!a ? c : !c ? a : c.index > a.index ? c : a);
+
+/**
+ * Adds XP credited outside a child session (a mission published already complete, an admin
+ * re-evaluation): a crossed threshold becomes the pending rank-up HQ celebrates (gamification
+ * "Rank-up outside a session").
+ */
+export function creditOutsideSession(b: FakeBackend, xp: number): void {
+  const before = rankFor(b, b.practice.totalXp);
+  b.practice.totalXp += xp;
+  const after = rankFor(b, b.practice.totalXp);
+  if (after.index > before.index) b.practice.pendingRankUp = higher(b.practice.pendingRankUp, after);
+}
+
+/** The task XP of a first resolution (gamification "XP per task"). */
+function award(b: FakeBackend, state: S['TaskState'], hints: number): number {
+  const { first, second, revealed, hintCost, min } = b.practice.xp;
+  if (state === 'REVEALED') return revealed;
+  const base = state === 'CORRECT_FIRST_TRY' ? first : state === 'CORRECT_SECOND_TRY' ? second : 0;
+  return base === 0 ? 0 : Math.max(min, base - hintCost * hints);
+}
+
 // ---------------------------------------------------------------- views
 
 const servable = (t: StoredTask | undefined): t is StoredTask => t?.status === 'PUBLISHED' && t.input.modality === 'TEXT';
 const published = (b: FakeBackend) => b.missions.filter((m) => m.status === 'PUBLISHED');
-const progressOf = (b: FakeBackend, taskId: string): TaskProgress => {
-  let p = b.practice.progress.get(taskId);
+const newProgress = (): TaskProgress => ({ attemptsUsed: 0, state: 'UNRESOLVED', locked: {}, last: null, lastRaw: null });
+const progressIn = (map: Map<string, TaskProgress>, taskId: string): TaskProgress => {
+  let p = map.get(taskId);
   if (!p) {
-    p = { attemptsUsed: 0, state: 'UNRESOLVED', locked: {}, last: null, lastRaw: null };
-    b.practice.progress.set(taskId, p);
+    p = newProgress();
+    map.set(taskId, p);
   }
   return p;
 };
@@ -293,6 +393,21 @@ function missionState(b: FakeBackend, m: StoredMission): S['MissionState'] {
   if (m.taskIds.every((id) => resolved(b, id))) return 'COMPLETE';
   return m.taskIds.some((id) => resolved(b, id) || touched(b, id)) ? 'IN_PROGRESS' : 'NEW';
 }
+
+/** The mission's current run: the latest replay while it exists, else the first run. */
+function runOf(b: FakeBackend, missionId: string): MissionRun {
+  let run = b.practice.runs.get(missionId);
+  if (!run) {
+    run = { replay: false, progress: null, xpEarned: 0, firstTry: 0, rankUp: null, rankReached: null };
+    b.practice.runs.set(missionId, run);
+  }
+  return run;
+}
+
+/** A task's progress in a run: the shared resolution in the first run, the replay's own otherwise. */
+const progressInRun = (b: FakeBackend, run: MissionRun, taskId: string) => progressIn(run.progress ?? b.practice.progress, taskId);
+const resolvedInRun = (b: FakeBackend, run: MissionRun, taskId: string) => (run.progress ? run.progress.get(taskId)?.state ?? 'UNRESOLVED' : b.practice.progress.get(taskId)?.state ?? 'UNRESOLVED') !== 'UNRESOLVED';
+const runFinished = (b: FakeBackend, run: MissionRun, m: StoredMission) => m.taskIds.every((id) => resolvedInRun(b, run, id));
 
 function localized(b: FakeBackend, cs: string, other: string | null | undefined): S['LocalizedText'] {
   const locale = b.practice.settings.secondaryTaskLocale;
@@ -307,7 +422,7 @@ function openedHint(b: FakeBackend, t: StoredTask, index: number): S['OpenedHint
 function taskView(b: FakeBackend, m: StoredMission, t: StoredTask): S['TaskView'] {
   const locale = b.practice.settings.secondaryTaskLocale;
   const tr = locale ? t.input.translations?.[locale] : undefined;
-  const p = progressOf(b, t.taskId);
+  const p = progressInRun(b, runOf(b, m.missionId), t.taskId);
   const opened = b.practice.hintsOpened.get(t.taskId) ?? 0;
   return {
     taskId: t.taskId,
@@ -327,6 +442,7 @@ function taskView(b: FakeBackend, m: StoredMission, t: StoredTask): S['TaskView'
     maxAttempts: 2,
     attemptsUsed: p.attemptsUsed,
     state: p.state,
+    // A celebration never replays: the stored result carries no rank-up (contract TaskView.lastFeedback).
     lastFeedback: p.last ? { ...p.last, rankUp: null } : null,
   };
 }
@@ -346,16 +462,32 @@ function hq(b: FakeBackend): S['HqView'] {
   const latest = [...b.practice.practised].reverse().map((id) => inProgress.find((m) => m.missionId === id)).find(Boolean) ?? inProgress[0];
   const firstOpen = latest?.taskIds.find((id) => !resolved(b, id));
   const solvedTasks = [...b.practice.progress.values()].filter((p) => p.state !== 'UNRESOLVED').length;
+  const rank = rankFor(b, b.practice.totalXp);
   return {
     displayName: b.practice.displayName,
-    totalXp: 0,
+    totalXp: b.practice.totalXp,
     solvedTasks,
-    rank: { index: 0, name: 'Kadetka', minXp: 0 },
-    nextRank: { index: 1, name: 'Parťačka', minXp: 100 },
+    rank,
+    nextRank: b.practice.ladder[rank.index + 1] ?? null,
     continueTarget: latest && firstOpen ? { missionId: latest.missionId, taskId: firstOpen } : null,
-    pendingRankUp: null,
+    pendingRankUp: b.practice.pendingRankUp,
     topics,
   };
+}
+
+function summary(b: FakeBackend, m: StoredMission): Response {
+  const run = b.practice.completedRuns.get(m.missionId);
+  if (!run) return problem(409, 'Mission not complete', { detail: 'This mission has no completed run yet.' });
+  const body: S['MissionSummary'] = {
+    missionId: m.missionId,
+    xpEarned: run.xpEarned,
+    firstTryCount: run.firstTry,
+    taskCount: m.taskIds.length,
+    replay: run.replay,
+    rankUp: run.rankUp,
+    rankReachedDuringRun: run.rankReached,
+  };
+  return json(200, body);
 }
 
 // ---------------------------------------------------------------- handlers
@@ -372,10 +504,29 @@ async function readBody(request: Request): Promise<{ tooLarge: true } | { tooLar
 
 const isObject = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 
+/** `ackRankUp`: clears the pending rank-up and an unacknowledged summary rank-up at or below the index. */
+async function ack(b: FakeBackend, request: Request): Promise<Response> {
+  if (request.method !== 'POST') return problem(405, 'Method not allowed');
+  const body = await readBody(request);
+  if (body.tooLarge) return problem(413, 'Payload too large');
+  if (!isObject(body.value)) return malformed();
+  const index = body.value.rankIndex;
+  if (typeof index !== 'number' || !Number.isInteger(index) || index < 0) return invalid('rankIndex', 'rankIndex must be a non-negative integer.');
+  b.practice.acks.push(index);
+  if (b.practice.pendingRankUp && b.practice.pendingRankUp.index <= index) b.practice.pendingRankUp = null;
+  for (const run of b.practice.completedRuns.values())
+    if (run.rankUp && run.rankUp.index <= index) {
+      run.rankReached = higher(run.rankReached, run.rankUp);
+      run.rankUp = null;
+    }
+  return new Response(null, { status: 204 });
+}
+
 async function handleChild(b: FakeBackend, request: Request, url: URL): Promise<Response> {
   const path = url.pathname;
   const method = request.method;
   if (path === '/api/child/hq') return method === 'GET' ? json(200, hq(b)) : problem(405, 'Method not allowed');
+  if (path === '/api/child/hq/rank-up-ack') return ack(b, request);
   if (path === '/api/child/profile/settings') return settings(b, request);
   const image = /^\/api\/child\/images\/([^/]+)$/.exec(path);
   if (image && method === 'GET') {
@@ -385,28 +536,31 @@ async function handleChild(b: FakeBackend, request: Request, url: URL): Promise<
     const stored = owner?.images.find((i) => i.imageId === image[1]);
     return served && stored ? new Response(stored.bytes.slice(), { status: 200, headers: { 'Content-Type': stored.type } }) : notFound();
   }
-  const match = /^\/api\/child\/missions\/([^/]+)(?:\/(current-task)|\/tasks\/([^/]+)(?:\/(attempts|hints|reports))?)?$/.exec(path);
+  const match = /^\/api\/child\/missions\/([^/]+)(?:\/(current-task|summary|replay)|\/tasks\/([^/]+)(?:\/(attempts|hints|reports))?)?$/.exec(path);
   if (!match) return notFound();
-  const [, missionId, current, taskId, sub] = match;
+  const [, missionId, action, taskId, sub] = match;
   if (!UUID.test(missionId)) return badId('missionId');
   if (taskId !== undefined && !UUID.test(taskId)) return badId('taskId');
   // A published mission without a served task is not served either.
   const m = published(b).find((x) => x.missionId === missionId && x.taskIds.some((id) => servable(b.tasks.find((t) => t.taskId === id))));
   if (!m) return notFound();
-  if (!current && !taskId) {
+  if (!action && !taskId) {
     if (method !== 'GET') return problem(405, 'Method not allowed');
     const briefing: S['MissionBriefing'] = {
       missionId: m.missionId,
       position: m.position,
       topicName: b.reference.topics.find((tp) => tp.topicId === m.topicId)?.name ?? '',
       state: missionState(b, m),
-      xpAvailable: 0,
+      xpAvailable: m.taskIds.filter((id) => !resolved(b, id)).length * b.practice.xp.first + (b.practice.bonusPaid.has(m.missionId) ? 0 : b.practice.xp.bonus),
       tasks: m.taskIds.map((id, i) => ({ taskId: id, position: i + 1, state: b.practice.progress.get(id)?.state ?? 'UNRESOLVED' })),
     };
     return json(200, briefing);
   }
-  if (current) {
-    const next = m.taskIds.find((id) => !resolved(b, id));
+  if (action === 'summary') return method === 'GET' ? summary(b, m) : problem(405, 'Method not allowed');
+  if (action === 'replay') return method === 'POST' ? replay(b, m) : problem(405, 'Method not allowed');
+  if (action === 'current-task') {
+    const run = runOf(b, m.missionId);
+    const next = m.taskIds.find((id) => !resolvedInRun(b, run, id));
     if (!next) return new Response(null, { status: 204 });
     return json(200, taskView(b, m, b.tasks.find((t) => t.taskId === next) as StoredTask));
   }
@@ -424,6 +578,18 @@ async function handleChild(b: FakeBackend, request: Request, url: URL): Promise<
   if (body.tooLarge) return problem(413, 'Payload too large', { detail: 'A child request body may be at most 16 KB.' });
   if (sub === 'reports') return report(b, m, t, body.value);
   return attempt(b, m, t, body.value);
+}
+
+/** `startReplay`: a complete mission only (409 otherwise); an unfinished replay run is returned unchanged. */
+function replay(b: FakeBackend, m: StoredMission): Response {
+  if (missionState(b, m) !== 'COMPLETE') return problem(409, 'Mission not complete', { detail: 'Only a completed mission can be replayed.' });
+  let run = runOf(b, m.missionId);
+  if (!run.replay || runFinished(b, run, m)) {
+    run = { replay: true, progress: new Map(), xpEarned: 0, firstTry: 0, rankUp: null, rankReached: null };
+    b.practice.runs.set(m.missionId, run);
+  }
+  const next = m.taskIds.find((id) => !resolvedInRun(b, run, id)) as string;
+  return json(200, taskView(b, m, b.tasks.find((t) => t.taskId === next) as StoredTask));
 }
 
 async function settings(b: FakeBackend, request: Request): Promise<Response> {
@@ -456,7 +622,8 @@ function report(b: FakeBackend, m: StoredMission, t: StoredTask, value: unknown)
   const note = typeof value.note === 'string' && value.note.trim() ? value.note.trim() : null;
   if (reason === 'OTHER' && !note) return invalid('note', 'Describe the problem.');
   if (note && codePoints(note) > 1000) return invalid('note', 'The note may have at most 1000 characters.');
-  b.practice.reports.push({ missionId: m.missionId, taskId: t.taskId, reason, note, attempt: b.practice.progress.get(t.taskId)?.lastRaw ?? null });
+  const run = runOf(b, m.missionId);
+  b.practice.reports.push({ missionId: m.missionId, taskId: t.taskId, reason, note, attempt: progressInRun(b, run, t.taskId).lastRaw });
   return new Response(null, { status: 201 });
 }
 
@@ -477,7 +644,8 @@ function attempt(b: FakeBackend, m: StoredMission, t: StoredTask, value: unknown
       if (raw.length > 20 || raw.some((x) => codePoints(x) > 100)) return invalid(field, 'Too many or too long options.');
     } else if (typeof raw !== 'string') return invalid(field, 'A typed part takes text.');
   }
-  const p = progressOf(b, t.taskId);
+  const run = runOf(b, m.missionId);
+  const p = progressInRun(b, run, t.taskId);
   if (p.state !== 'UNRESOLVED') return problem(409, 'Task already resolved', { detail: 'This task is already resolved in this run.' });
   const open = t.input.parts.filter((part) => !(part.key in p.locked));
   const graded = open.map((part) => {
@@ -517,25 +685,48 @@ function attempt(b: FakeBackend, m: StoredMission, t: StoredTask, value: unknown
   p.state = correct ? (attemptNo === 1 ? 'CORRECT_FIRST_TRY' : 'CORRECT_SECOND_TRY') : attemptNo === 2 ? 'REVEALED' : 'UNRESOLVED';
   for (const r of parts) if (r.verdict === 'CORRECT' && !r.locked) p.locked[r.key] = r.normalized ?? '';
   p.lastRaw = { ...Object.fromEntries(Object.entries(answers) as [string, string | string[]][]) };
-  b.practice.attempts.push({ missionId: m.missionId, taskId: t.taskId, attemptNo, answers: p.lastRaw });
-  b.practice.practised = [...b.practice.practised.filter((id) => id !== m.missionId), m.missionId];
+  const entry = { missionId: m.missionId, taskId: t.taskId, attemptNo, answers: p.lastRaw };
+  if (run.replay) b.practice.replayAttempts.push(entry);
+  else {
+    b.practice.attempts.push(entry);
+    b.practice.practised = [...b.practice.practised.filter((id) => id !== m.missionId), m.missionId];
+  }
   const opened = b.practice.hintsOpened.get(t.taskId) ?? 0;
-  const completed = published(b).filter((x) => missionState(b, x) === 'COMPLETE' && !completeBefore.has(x.missionId)).map((x) => x.missionId);
+  // XP only on the first resolution anywhere (a first run); a replay earns nothing (OQ-15, OQ-17).
+  const xpAwarded = run.replay ? 0 : award(b, p.state, opened);
+  const completed = run.replay ? [] : published(b).filter((x) => missionState(b, x) === 'COMPLETE' && !completeBefore.has(x.missionId)).map((x) => x.missionId);
+  const bonusXp = completed.filter((id) => !b.practice.bonusPaid.has(id)).length * b.practice.xp.bonus;
+  for (const id of completed) b.practice.bonusPaid.add(id);
+  const before = rankFor(b, b.practice.totalXp);
+  b.practice.totalXp += xpAwarded + bonusXp;
+  const after = rankFor(b, b.practice.totalXp);
+  const crossed = after.index > before.index ? after : null;
+  const missionComplete = runFinished(b, run, m);
+  run.xpEarned += xpAwarded + bonusXp;
+  if (p.state === 'CORRECT_FIRST_TRY') run.firstTry += 1;
+  if (crossed && missionComplete) {
+    // The completing answer's rank-up plays on the summary, or on HQ if the summary is never shown.
+    run.rankUp = crossed;
+    b.practice.pendingRankUp = higher(b.practice.pendingRankUp, crossed);
+  } else if (crossed) run.rankReached = higher(run.rankReached, crossed);
+  // Another mission completed through a shared task gets its own completed first run.
+  for (const id of completed) if (id !== m.missionId && !b.practice.completedRuns.has(id)) b.practice.completedRuns.set(id, runOf(b, id));
+  if (missionComplete) b.practice.completedRuns.set(m.missionId, run);
   const result: S['AttemptResult'] = {
     status: 'GRADED',
     attemptNo,
     parts,
     taskState: p.state,
     attemptsLeft: 2 - attemptNo,
-    xpAwarded: 0,
-    bonusXp: 0,
+    xpAwarded,
+    bonusXp,
     completedMissionIds: completed,
     feedback: {
       nextHintIndex: opened < t.input.hints.length ? opened + 1 : null,
       revealedAnswers: p.state === 'REVEALED' ? t.input.parts.map((part) => ({ key: part.key, answer: revealed(part) })) : null,
     },
-    rankUp: null,
-    missionComplete: m.taskIds.every((id) => resolved(b, id)),
+    rankUp: crossed && !missionComplete ? crossed : null,
+    missionComplete,
   };
   p.last = result;
   return json(200, result);
@@ -555,4 +746,28 @@ export async function childRequest(b: FakeBackend, method: string, path: string,
 /** Submits an attempt as earlier practice would have; returns the stub's answer. */
 export async function practise(b: FakeBackend, missionId: string, taskId: string, answers: Answers): Promise<S['AttemptResult']> {
   return (await childRequest(b, 'POST', `/api/child/missions/${missionId}/tasks/${taskId}/attempts`, { answers })).json();
+}
+
+/** The correct answers of every practice-seed task, for setting up earlier practice. */
+export const CORRECT: Record<string, Answers> = {
+  [PRACTICE.taskSum]: { a: '0,75' },
+  [PRACTICE.taskRound]: { a: '3,5', b: '7' },
+  [PRACTICE.taskLargest]: { a: ['A'] },
+  [PRACTICE.taskThousands]: { a: '1250' },
+  [PRACTICE.taskMulti]: { a: ['A', 'C'] },
+  [PRACTICE.taskSquare]: { a: '8 cm' },
+};
+
+/** Resolves every task of a mission correctly on the first attempt (earlier practice). */
+export async function completeMission(b: FakeBackend, missionId: string): Promise<void> {
+  const m = b.missions.find((x) => x.missionId === missionId) as StoredMission;
+  for (const taskId of m.taskIds) await practise(b, missionId, taskId, CORRECT[taskId]);
+}
+
+/**
+ * Brings the stub to the state a route's example query needs for the a11y, theme and `⟦` gates:
+ * `/summary` shows the perimeter mission, completed earlier.
+ */
+export async function prepareChildScreen(b: FakeBackend, path: string): Promise<void> {
+  if (path === '/summary') await completeMission(b, PRACTICE.missionPerimeter);
 }

@@ -9,7 +9,7 @@ import { en } from '@/i18n/en';
 import { App } from './App';
 import { routes } from './routes';
 import { stubAdminBackend, stubChildBackend, stubSignedInAdmin } from '@/test/admin-backend';
-import { allSeedStrings as seedStrings } from '@/test/fake-child-backend';
+import { allSeedStrings as seedStrings, prepareChildScreen } from '@/test/fake-child-backend';
 
 vi.mock('@/features/sources/pdf', () => import('@/test/pdf-mock'));
 
@@ -79,7 +79,7 @@ const uncovered = (texts: string[]) => texts.filter((t) => !COVERED.test(t) && !
 async function renderSettled(path: string) {
   const admin = (ADMIN_ROUTES as readonly string[]).includes(path);
   if (admin) stubSignedInAdmin();
-  else if ((CHILD_ROUTES as readonly string[]).includes(path)) stubChildBackend();
+  else if ((CHILD_ROUTES as readonly string[]).includes(path)) await prepareChildScreen(stubChildBackend(), path);
   else stubAdminBackend();
   window.history.pushState({}, '', path + (ROUTE_EXAMPLES[path as RoutePath] ?? ''));
   render(<App messages={pseudo} />);

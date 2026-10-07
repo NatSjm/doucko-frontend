@@ -6,6 +6,9 @@ import { queryParam } from '@/app/route-paths';
 import { Button, Icon, cx } from '@/design-system';
 import { ApiError } from '@/features/admin-access/problem';
 import { BackToHq, ChildDeadEnd, ChildLayout, ChildLoadState } from '@/features/child/ChildLayout';
+import type { Rank } from '@/features/rank/api';
+import { formatXp } from '@/features/rank/rank';
+import { RankUpCelebration } from '@/features/rank/RankUp';
 import { useT } from '@/i18n';
 import { format } from '@/i18n/format';
 import { fetchCurrentTask, fetchTask, openNextHint, saveTranslation, submitAttempt, type Answers, type ChildTask } from './api';
@@ -140,7 +143,16 @@ function PartField({ part, state, value, required, formatTip, onChange }: {
   );
 }
 
-/** The feedback after a server answer: correct, almost, revealed, or unreadable (FR-22, FR-27). */
+/** The XP sticker: only an award the server made, never 0 or less (FR-38). */
+function XpSticker({ xp }: { xp: number }) {
+  const t = useT();
+  return xp > 0 ? <span className="task-xp">{format(t('child.task.xp'), { xp: formatXp(xp) })}</span> : null;
+}
+
+/**
+ * The feedback after a server answer: correct, almost, revealed, or unreadable (FR-22, FR-27), with
+ * the XP the server awarded on a correct or revealed first resolution (FR-38: "+1 XP" for a reveal).
+ */
 function TaskFeedback({ task, unreadable }: { task: ChildTask; unreadable: boolean }) {
   const t = useT();
   const xp = task.lastFeedback?.xpAwarded ?? 0;
@@ -165,7 +177,7 @@ function TaskFeedback({ task, unreadable }: { task: ChildTask; unreadable: boole
         <div className="dk-fb-body">
           <div className="dk-fb-title">{t('child.task.correct')}</div>
         </div>
-        {xp > 0 && <span className="task-xp">{format(t('child.task.xp'), { xp })}</span>}
+        <XpSticker xp={xp} />
       </div>
     );
   if (task.state === 'REVEALED')
@@ -178,6 +190,7 @@ function TaskFeedback({ task, unreadable }: { task: ChildTask; unreadable: boole
           <div className="dk-fb-title">{t('child.task.revealed')}</div>
           <div className="dk-fb-text">{t('child.task.revealedText')}</div>
         </div>
+        <XpSticker xp={xp} />
       </div>
     );
   if (task.attemptsUsed > 0 && task.lastFeedback)
@@ -223,6 +236,8 @@ function TaskPractice({ initial, missionId }: { initial: ChildTask; missionId: s
   const [resync, setResync] = useState(false);
   const [gone, setGone] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
+  /** A rank-up carried by the live attempt result (mid-mission); never from a reload (FR-36). */
+  const [rankUp, setRankUp] = useState<Rank | null>(null);
   const [thanks, setThanks] = useState(false);
   /** Where focus goes after the next render; a new object per request, so the same target can be asked twice. */
   const [focusRequest, setFocusRequest] = useState<{ target: string }>(() => ({ target: initial.state === 'UNRESOLVED' ? `part:${firstOpen(initial)}` : 'next' }));
@@ -251,6 +266,8 @@ function TaskPractice({ initial, missionId }: { initial: ChildTask; missionId: s
   const states = partStates(task);
   const resolved = task.state !== 'UNRESOLVED';
   const missionDone = resolved && !!task.lastFeedback?.missionComplete;
+  // Bonuses paid by the latest answer (only a resolving answer pays one).
+  const bonusXp = task.lastFeedback?.bonusXp ?? 0;
   const unreadable = Object.keys(formatTips).length > 0;
   // The toggle shows what the screen shows: the server sends the translation exactly when the profile setting is on.
   const translationOn = task.prompt.secondary !== null;
@@ -286,6 +303,7 @@ function TaskPractice({ initial, missionId }: { initial: ChildTask; missionId: s
         return setFocusTarget(`part:${result.parts[0].key}`);
       }
       setFormatTips({});
+      setRankUp(result.rankUp);
       // A functional update: a hint or translation that arrived during the request is kept.
       setTask((cur) => applyResult(cur, result));
       setFocusTarget(result.taskState === 'UNRESOLVED' ? `part:${firstOpen(applyResult(task, result))}` : 'next');
@@ -425,6 +443,12 @@ function TaskPractice({ initial, missionId }: { initial: ChildTask; missionId: s
             ))}
             <div role="status" className="task-feedback">
               <TaskFeedback task={task} unreadable={unreadable} />
+              {bonusXp > 0 && (
+                <p className="task-bonus">
+                  <Icon name="bolt" size={18} strokeWidth={2.5} />
+                  {format(t('child.task.bonus'), { xp: formatXp(bonusXp) })}
+                </p>
+              )}
               {missionDone && (
                 <div className="dk-fb dk-fb-correct">
                   <span className="dk-fb-icon">
@@ -437,6 +461,7 @@ function TaskPractice({ initial, missionId }: { initial: ChildTask; missionId: s
                 </div>
               )}
             </div>
+            {rankUp && <RankUpCelebration rank={rankUp} />}
             {notice && (
               <p role="alert" className="task-alert">
                 {t(notice === 'save' ? 'child.task.saveFailed' : notice === 'hint' ? 'child.task.hintFailed' : 'child.task.translationFailed')}
@@ -462,8 +487,9 @@ function TaskPractice({ initial, missionId }: { initial: ChildTask; missionId: s
                 </Link>
               )}
               {missionDone && (
-                <Link className="dk-btn dk-btn-primary dk-btn-lg" href="/" data-next="">
-                  {t('child.common.backToHq')}
+                <Link className="dk-btn dk-btn-primary dk-btn-lg" href={`/summary?missionId=${missionId}`} data-next="">
+                  {t('child.mission.results')}
+                  <Icon name="arrow" size={20} strokeWidth={2.5} />
                 </Link>
               )}
             </div>
@@ -550,8 +576,11 @@ export function TaskScreen() {
       <ChildLayout title={t('child.task.missionDone')}>
         <div className="child-stack">
           <p>{t('child.task.missionDoneText')}</p>
-          <div>
-            <Link className="dk-btn dk-btn-primary" href="/">
+          <div className="task-done-actions">
+            <Link className="dk-btn dk-btn-primary" href={`/summary?missionId=${missionId}`}>
+              {t('child.mission.results')}
+            </Link>
+            <Link className="dk-btn dk-btn-secondary" href="/">
               {t('child.common.backToHq')}
             </Link>
           </div>
