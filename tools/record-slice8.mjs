@@ -16,7 +16,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { completeMission, createFakeBackend, creditOutsideSession, PLACEHOLDER_LADDER, PRACTICE, PROMPTS, practise } from '../src/test/fake-child-backend.ts';
+import { childRequest, completeMission, createFakeBackend, creditOutsideSession, PLACEHOLDER_LADDER, PRACTICE, PROMPTS, practise } from '../src/test/fake-child-backend.ts';
 import { cs } from '../src/i18n/cs.ts';
 
 const PORT = 4179;
@@ -52,6 +52,20 @@ function stop(child) {
   else child.kill('SIGTERM');
 }
 
+/**
+ * Earlier practice behind the HQ clips, so XP, solved tasks and mission states agree: missions 1 and
+ * the perimeter mission complete, task 1 of mission 2 solved (5 tasks, 90 XP). The seed has only 6
+ * tasks, so XP beyond that comes as a credit outside a session (an admin re-evaluation or a
+ * publish-time bonus in the spec); `ackRank` marks its rank-up as already celebrated.
+ */
+async function earlierPractice(backend, credit = 0, ackRank = null) {
+  await completeMission(backend, PRACTICE.missionA);
+  await completeMission(backend, PRACTICE.missionPerimeter);
+  await practise(backend, PRACTICE.missionB, PRACTICE.taskThousands, { a: '1250' });
+  if (credit) creditOutsideSession(backend, credit);
+  if (ackRank !== null) await childRequest(backend, 'POST', '/api/child/hq/rank-up-ack', { rankIndex: ackRank });
+}
+
 /** Each clip: a fresh seeded backend (optionally prepared), a flow that asserts its FRs, and the still it ends on. */
 const CLIPS = [
   {
@@ -59,15 +73,13 @@ const CLIPS = [
     title: 'HQ progress: rank, XP bar towards the next rank and solved tasks (FR-37)',
     proof: 'FR-37',
     steps:
-      'With 275 XP and two tasks solved, open HQ. Asserted: the progress panel shows the 2nd rank "' +
+      'After 5 solved tasks (90 XP) and a 185 XP credit already celebrated (275 XP), open HQ. Asserted: the progress panel shows the 2nd rank "' +
       RANK2 +
       '" (Hodnost 2), 275 XP, the bar at 125 of 250 XP with "125 z 250 XP do hodnosti ' +
       RANK3 +
-      '", and "Vyřešené úlohy: 2"; no minus sign, timer or streak. The still shows HQ.',
+      '", and "Vyřešené úlohy: 5"; no minus sign, timer or streak. The still shows HQ.',
     async prepare(backend) {
-      await practise(backend, PRACTICE.missionA, PRACTICE.taskSum, { a: '0,75' });
-      await practise(backend, PRACTICE.missionB, PRACTICE.taskThousands, { a: '1250' });
-      backend.practice.totalXp = 275;
+      await earlierPractice(backend, 185, 1);
     },
     async run(page) {
       await page.goto(`${BASE_URL}/`);
@@ -76,7 +88,7 @@ const CLIPS = [
       assert(text.includes(RANK2), 'FR-37: the 2nd rank is shown');
       assert(text.includes(fmt(cs['child.hq.rank'], { n: 2 })), 'FR-37: "Hodnost 2"');
       assert(text.includes(fmt(cs['child.hq.xpToNext'], { have: 125, need: 250, rank: RANK3 })), 'FR-37: 125 of 250 XP towards the 3rd rank');
-      assert(text.includes(fmt(cs['child.hq.solved'], { n: 2 })), 'FR-37: 2 solved tasks');
+      assert(text.includes(fmt(cs['child.hq.solved'], { n: 5 })), 'FR-37: 5 solved tasks');
       const bar = panel(page).getByRole('progressbar', { name: cs['child.hq.xpBar'] });
       assert((await bar.getAttribute('aria-valuenow')) === '125' && (await bar.getAttribute('aria-valuemax')) === '250', 'FR-37: the bar is at 125 of 250');
       const fill = await panel(page).locator('.dk-xp-fill').evaluate((el) => el.getBoundingClientRect().width / el.parentElement.getBoundingClientRect().width);
@@ -89,11 +101,11 @@ const CLIPS = [
     title: 'HQ at the top rank: a full bar marked "Nejvyšší hodnost!" with no next target (FR-37)',
     proof: 'FR-37',
     steps:
-      'With 1600 XP open HQ. Asserted: the 5th rank "' +
+      'After 5 solved tasks (90 XP) and a 1510 XP credit already celebrated (1600 XP), open HQ. Asserted: the 5th rank "' +
       RANK5 +
       '", "1 600 XP" with a no-break space, a full bar, "Nejvyšší hodnost!" and no "do hodnosti" target. The still shows HQ.',
     async prepare(backend) {
-      backend.practice.totalXp = 1600;
+      await earlierPractice(backend, 1510, 4);
     },
     async run(page) {
       await page.goto(`${BASE_URL}/`);
@@ -111,14 +123,13 @@ const CLIPS = [
     title: 'A rank-up credited outside a session is celebrated once on HQ and acknowledged (FR-36)',
     proof: 'FR-36',
     steps:
-      'With 140 XP and a 20 XP bonus credited outside a child session, open HQ. Asserted: the celebration names the new ' +
+      'After 5 solved tasks (90 XP), a 60 XP credit outside a child session takes the total to 150 XP; open HQ. Asserted: the celebration names the new ' +
       'rank "' +
       RANK2 +
       '" with the medal and "Nová hodnost!", it animates, the client acknowledges rank 1 exactly once, and a reload shows ' +
       'no celebration. The still is the celebration on HQ, taken before the reload.',
     async prepare(backend) {
-      backend.practice.totalXp = 140;
-      creditOutsideSession(backend, 20);
+      await earlierPractice(backend, 60);
     },
     async run(page, backend, still) {
       await page.goto(`${BASE_URL}/`);
@@ -143,8 +154,7 @@ const CLIPS = [
       'The same pending rank-up, with the OS asking for reduced motion. Asserted: the celebration shows the same text ' +
       '("Nová hodnost!", the rank name, the sentence) and the medal, and no animation exists on the page. The still shows it.',
     async prepare(backend) {
-      backend.practice.totalXp = 140;
-      creditOutsideSession(backend, 20);
+      await earlierPractice(backend, 60);
     },
     async run(page) {
       await page.goto(`${BASE_URL}/`);
@@ -276,7 +286,7 @@ const CLIPS = [
       assert(!(await page.locator('main').innerText()).includes('XP'), 'FR-33: a replay earns no XP');
       await page.getByRole('link', { name: cs['child.mission.results'] }).click();
       await page.getByRole('heading', { level: 1, name: cs['child.summary.replayTitle'] }).waitFor();
-      assert(await page.getByText(cs['child.summary.replayText']).isVisible(), 'FR-33: the replay note (0 XP)');
+      assert(await page.getByText(fmt(cs['child.summary.replayText'], { xp: 0 })).isVisible(), 'FR-33: the replay note (0 XP)');
       assert(backend.practice.totalXp === total, 'FR-33: total XP unchanged');
       assert(backend.practice.replayAttempts.length === 1, 'FR-33: the replay attempt is logged');
     },

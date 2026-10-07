@@ -112,7 +112,7 @@ test('replay: starts fresh from the briefing, earns no XP, and HQ keeps the miss
   await expect(page.locator('main')).not.toContainText('XP');
   await page.getByRole('link', { name: m['child.mission.results'] }).click();
   await expect(page.getByRole('heading', { level: 1, name: m['child.summary.replayTitle'] })).toBeVisible();
-  await expect(page.getByText(m['child.summary.replayText'])).toBeVisible();
+  await expect(page.getByText(format(m['child.summary.replayText'], { xp: 0 }))).toBeVisible();
   expect(backend.practice.totalXp).toBe(total);
   expect(backend.practice.replayAttempts).toHaveLength(1);
   await page.getByRole('link', { name: m['child.common.backToHq'] }).click();

@@ -130,3 +130,20 @@ describe('a replay on the task screen (FR-33)', () => {
     expect(document.body.textContent).not.toMatch(/XP/);
   });
 });
+
+describe('bonus copy (review finding F03)', () => {
+  it('an answer that completes several missions names the bonus for missions, in the plural', async () => {
+    const backend = stubChildBackend();
+    await open(at(PRACTICE.missionPerimeter, PRACTICE.taskSquare));
+    const original = backend.handle;
+    backend.handle = async (request) => {
+      const response = await original(request);
+      if (!request.url.endsWith('/attempts')) return response;
+      const body = await response.json();
+      return new Response(JSON.stringify({ ...body, bonusXp: 40, completedMissionIds: [PRACTICE.missionPerimeter, PRACTICE.missionB] }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    };
+    await userEvent.keyboard('8 cm{Enter}');
+    expect(await screen.findByText(format(m['child.task.bonusMany'], { xp: 40 }))).toBeInTheDocument();
+    expect(screen.queryByText(format(m['child.task.bonus'], { xp: 40 }))).toBeNull();
+  });
+});

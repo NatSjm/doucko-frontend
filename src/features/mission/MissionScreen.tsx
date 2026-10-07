@@ -1,5 +1,3 @@
-import { useState } from 'react';
-import { navigate } from '@/app/navigation';
 import { queryParam } from '@/app/route-paths';
 import { Link } from '@/app/Link';
 import { Button, Icon, cx } from '@/design-system';
@@ -8,7 +6,8 @@ import { BackToHq, ChildDeadEnd, ChildLayout, ChildLoadState } from '@/features/
 import { useT } from '@/i18n';
 import { format } from '@/i18n/format';
 import { formatXp } from '@/features/rank/rank';
-import { startReplay, useBriefing } from './api';
+import { useBriefing } from './api';
+import { useReplay } from './useReplay';
 import './mission.css';
 
 /**
@@ -22,8 +21,7 @@ export function MissionScreen() {
   const t = useT();
   const missionId = queryParam('missionId');
   const briefing = useBriefing(missionId);
-  const [replayFailed, setReplayFailed] = useState(false);
-  const [starting, setStarting] = useState(false);
+  const replay = useReplay(missionId ?? '', () => void briefing.refetch());
   // 404: not served; 400: a mission id that is not a UUID (refused before any lookup).
   const missing = !missionId || (briefing.error instanceof ApiError && [400, 404].includes(briefing.error.status));
   if (missing)
@@ -41,19 +39,7 @@ export function MissionScreen() {
     );
   const resolved = mission.tasks.filter((task) => task.state !== 'UNRESOLVED').length;
 
-  async function replay() {
-    setStarting(true);
-    setReplayFailed(false);
-    try {
-      const task = await startReplay(mission!.missionId);
-      navigate(`/task?missionId=${mission!.missionId}&taskId=${task.taskId}`);
-    } catch (error) {
-      setStarting(false);
-      // 409: the mission is no longer complete (content changed); show what the server holds now.
-      if (error instanceof ApiError && error.status === 409) void briefing.refetch();
-      else setReplayFailed(true);
-    }
-  }
+
 
   return (
     <ChildLayout
@@ -83,9 +69,9 @@ export function MissionScreen() {
         {mission.state === 'COMPLETE' ? (
           <>
             <p className="mission-complete">{t('child.mission.complete')}</p>
-            {replayFailed && <p role="alert">{t('child.mission.replayFailed')}</p>}
+            {replay.failed && <p role="alert">{t('child.mission.replayFailed')}</p>}
             <div className="mission-actions">
-              <Button variant="primary" size="lg" icon="retry" disabled={starting} onClick={() => void replay()}>
+              <Button variant="primary" size="lg" icon="retry" disabled={replay.starting} onClick={() => void replay.start()}>
                 {t('child.mission.replay')}
               </Button>
               <Link className="dk-btn dk-btn-secondary" href={`/summary?missionId=${mission.missionId}`}>

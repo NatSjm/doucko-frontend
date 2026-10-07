@@ -819,7 +819,8 @@
       "ownedHere": true,
       "specs": [
         "contract/openspec/specs/gamification/spec.md",
-        "openspec/changes/implement-gamification-ui/specs/gamification/spec.md"
+        "openspec/changes/implement-gamification-ui/specs/gamification/spec.md",
+        "openspec/changes/implement-gamification-ui/specs/practice-flow/spec.md"
       ],
       "planned": true,
       "tests": [

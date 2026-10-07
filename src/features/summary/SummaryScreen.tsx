@@ -1,11 +1,10 @@
-import { useState } from 'react';
 import { navigate } from '@/app/navigation';
 import { Link } from '@/app/Link';
 import { queryParam } from '@/app/route-paths';
 import { Button, Icon } from '@/design-system';
 import { ApiError } from '@/features/admin-access/problem';
 import { ChildDeadEnd, ChildLayout, ChildLoadState } from '@/features/child/ChildLayout';
-import { startReplay } from '@/features/mission/api';
+import { useReplay } from '@/features/mission/useReplay';
 import { formatXp } from '@/features/rank/rank';
 import { RankLine } from '@/features/rank/RankPanel';
 import { RankUpCelebration } from '@/features/rank/RankUp';
@@ -35,14 +34,15 @@ function XpBurst({ xp }: { xp: number }) {
  * The mission-complete screen (practice-flow "Mission complete screen", FR-32): the XP earned in the
  * run, the tasks solved on the first try, and the rank-up — the celebration while the server still
  * offers it (then acknowledged), or a static line for a rank already celebrated (FR-36). A replay's
- * summary says it earned no XP (FR-33). "Zopakovat misi" starts or resumes a replay.
+ * summary says it earned no XP (FR-33); a first run that earned none (every task resolved in other
+ * missions) shows no XP figure at all, never "+0 XP" (FR-38). "Zopakovat misi" starts or resumes a replay.
  */
 export function SummaryScreen() {
   const t = useT();
   const missionId = queryParam('missionId');
   const summary = useSummary(missionId);
-  const [replayFailed, setReplayFailed] = useState(false);
-  const [starting, setStarting] = useState(false);
+  // 409: the mission is no longer complete (content changed): its briefing shows where it stands.
+  const replay = useReplay(missionId ?? '', () => navigate(`/mission?missionId=${missionId}`));
   const status = summary.error instanceof ApiError ? summary.error.status : null;
   // 404: not served; 400: a mission id that is not a UUID (refused before any lookup).
   if (!missionId || status === 404 || status === 400)
@@ -66,23 +66,14 @@ export function SummaryScreen() {
       </ChildLayout>
     );
 
-  async function replay() {
-    setStarting(true);
-    try {
-      const task = await startReplay(data!.missionId);
-      navigate(`/task?missionId=${data!.missionId}&taskId=${task.taskId}`);
-    } catch {
-      setReplayFailed(true);
-      setStarting(false);
-    }
-  }
+
 
   return (
     <ChildLayout title={t(data.replay ? 'child.summary.replayTitle' : 'child.summary.title')}>
       <section className="dk-panel dk-panel-hero summary-hero">
-        {!data.replay && <XpBurst xp={data.xpEarned} />}
+        {!data.replay && data.xpEarned > 0 && <XpBurst xp={data.xpEarned} />}
         <div className="summary-stats">
-          <p className="dk-t-body-strong">{data.replay ? t('child.summary.replayText') : format(t('child.summary.xpText'), { xp: formatXp(data.xpEarned) })}</p>
+          <p className="dk-t-body-strong">{format(t(data.replay ? 'child.summary.replayText' : data.xpEarned > 0 ? 'child.summary.xpText' : 'child.summary.noXpText'), { xp: formatXp(data.xpEarned) })}</p>
           <p className="summary-first-try">
             <Icon name="star" size={20} strokeWidth={2.5} />
             <span>{format(t('child.summary.firstTry'), { n: data.firstTryCount })}</span>
@@ -91,7 +82,7 @@ export function SummaryScreen() {
         </div>
       </section>
       {data.rankUp ? <RankUpCelebration rank={data.rankUp} acknowledge /> : data.rankReachedDuringRun && <RankLine rank={data.rankReachedDuringRun} />}
-      {replayFailed && (
+      {replay.failed && (
         <p role="alert" className="summary-alert">
           {t('child.mission.replayFailed')}
         </p>
@@ -100,7 +91,7 @@ export function SummaryScreen() {
         <Link className="dk-btn dk-btn-primary dk-btn-lg" href="/">
           {t('child.common.backToHq')}
         </Link>
-        <Button icon="retry" disabled={starting} onClick={() => void replay()}>
+        <Button icon="retry" disabled={replay.starting} onClick={() => void replay.start()}>
           {t('child.mission.replay')}
         </Button>
       </div>

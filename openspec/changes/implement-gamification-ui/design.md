@@ -145,7 +145,9 @@ Czech keys (catalog `src/i18n/cs.ts`), feminine *ty*: `child.hq.rank`,
 `child.summary.taskCount`, `child.summary.rankReached`,
 `child.summary.notComplete`, `child.mission.replay`,
 `child.mission.replayFailed`, `child.mission.results`,
-`child.mission.xpAvailable`, `child.task.bonus`. Rank names come from the
+`child.mission.xpAvailable`, `child.task.bonus`, `child.task.bonusMany` (one answer completing several
+missions), `child.summary.noXpText` (a first run that earned no XP: no XP
+figure, never "+0 XP"). Rank names come from the
 server and are marked `data-content`. No school or mentor name appears in
 the frontend (design-system README: still open).
 

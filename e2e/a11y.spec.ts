@@ -6,7 +6,8 @@ import { expectSignedInContent, signedInAdmin } from './fixtures/admin';
 import { childBackend, expectChildContent, screenBackend } from './fixtures/child';
 import { AGAINST_STACK, expect, test } from './fixtures/test';
 import { messages } from '../src/i18n/messages';
-import { completeMission, createFakeBackend, creditOutsideSession, PLACEHOLDER_LADDER, PRACTICE } from '../src/test/fake-child-backend';
+import { completeMission, createFakeBackend, creditOutsideSession, PLACEHOLDER_LADDER, PRACTICE, type FakeBackend } from '../src/test/fake-child-backend';
+import type { Page } from '@playwright/test';
 
 for (const scheme of ['light', 'dark'] as const) {
   test.describe(`axe, ${scheme}`, () => {
@@ -59,9 +60,10 @@ test.describe('reduced motion', () => {
   }
 });
 
-// The rank-up celebration states (FR-36): HQ with a pending rank-up and the mission-complete screen
-// with a completing rank-up, scanned in both themes and checked still under reduced motion.
-const CELEBRATIONS = [
+// The rank-up celebration states (FR-36): HQ with a pending rank-up, the task feedback with a
+// mid-mission rank-up and the mission-complete screen with a completing rank-up, scanned in both
+// themes and checked still under reduced motion.
+const CELEBRATIONS: { name: string; path: string; setup: () => Promise<FakeBackend>; act?: (page: Page) => Promise<void> }[] = [
   {
     name: 'HQ with a pending rank-up',
     path: '/',
@@ -70,6 +72,19 @@ const CELEBRATIONS = [
       backend.practice.totalXp = 140;
       creditOutsideSession(backend, 20);
       return backend;
+    },
+  },
+  {
+    name: 'task feedback with a mid-mission rank-up',
+    path: `/task?missionId=${PRACTICE.missionA}&taskId=${PRACTICE.taskSum}`,
+    setup: async () => {
+      const backend = createFakeBackend();
+      backend.practice.totalXp = 145;
+      return backend;
+    },
+    act: async (page) => {
+      await page.getByRole('textbox', { name: 'a' }).fill('0,75');
+      await page.keyboard.press('Enter');
     },
   },
   {
@@ -93,6 +108,7 @@ test.describe('rank-up celebration', () => {
         await page.emulateMedia({ colorScheme: scheme });
         await childBackend(page, await state.setup());
         await page.goto(state.path);
+        await state.act?.(page);
         await expect(page.getByText(messages['child.rankUp.kicker'])).toBeVisible();
         // Let the entrance animation settle, so the scan sees the final colours.
         await page.waitForTimeout(1_000);
@@ -106,6 +122,7 @@ test.describe('rank-up celebration', () => {
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await childBackend(page, await state.setup());
       await page.goto(state.path);
+      await state.act?.(page);
       const status = page.getByRole('status').filter({ hasText: messages['child.rankUp.kicker'] });
       await expect(status).toContainText(PLACEHOLDER_LADDER[1].name);
       await expect(status.locator('svg.dk-rank-medal')).toBeVisible();

@@ -12,7 +12,7 @@
       "vision": {
         "met": true,
         "readable": true,
-        "notes": "The HQ rank card shows a red hexagon medal, the label 'HODNOST 2', the rank name 'Kadet' in bold, and '275 XP' at the top right. The yellow XP bar on its dark track is filled to about half, and below it reads '125 z 250 XP do hodnosti Strážce', followed by 'Vyřešené úlohy: 2'. There is no negative XP, timer, streak or leaderboard, and all text is Czech on the light cream/white theme. Everything is legible; the weakest spots are the small grey caption under the bar and the 'HODNOST 2' eyebrow, which look close to the AA limit by eye but still read clearly."
+        "notes": "Everything the requirement asks for is visible in the HQ rank card. It shows a red hexagon medal, the label 'HODNOST 2' and the rank name 'Kadet' in bold. '275 XP' is at the top right. The yellow XP bar is filled to about the middle of the dark track (roughly 50%), with '125 z 250 XP do hodnosti Strážce' under it, and 'Vyřešené úlohy: 5' is at the bottom of the card. There is no negative XP, timer, streak or leaderboard. The UI is Czech in the light cream/pink theme. All text is legible with dark text on light backgrounds. The weakest spots are the small grey 'HODNOST 2' label and the bar caption, which look adequate by eye but are worth confirming with an AA contrast check."
       }
     },
     {
@@ -26,7 +26,7 @@
       "vision": {
         "met": true,
         "readable": true,
-        "notes": "The HQ rank card shows the 'HODNOST 5' label, the rank name 'Legenda' in large bold type, '1 600 XP' at top right, and a fully filled yellow XP bar. 'Nejvyšší hodnost!' sits under the bar, and no 'do hodnosti' next-rank text appears anywhere. All text is dark navy or mid-grey on white or cream and reads clearly. One small point: the grey 'Nejvyšší hodnost!' caption and the 'HODNOST 5' label use very small type (about 11–12px). They're readable but would look better one size step larger."
+        "notes": "The HQ rank card shows 'HODNOST 5' / 'Legenda', '1 600 XP' top-right, a yellow XP bar filled all the way across, and 'Nejvyšší hodnost!' under the bar. There is no 'do hodnosti' next-rank text anywhere on the page, and the mission cards below rendered fully. All text is legible. The one weak spot is the 'Nejvyšší hodnost!' caption, which is very small mid-grey type on white. It probably passes AA contrast, but it's the key words for this requirement, so making it larger or bolder would make the top-rank state easier to notice."
       }
     },
     {
@@ -40,7 +40,7 @@
       "vision": {
         "met": true,
         "readable": true,
-        "notes": "The pink celebration card at the top of HQ shows the 'NOVÁ HODNOST!' eyebrow, a large display-face 'Kadet', the sentence 'Postoupila jsi na hodnost Kadet. Jen tak dál!' and a red 'Super!' button. Beside them sits an original red hexagon medal with a yellow four-point star and a gold sunburst halo, with no borrowed anime or manga art. The progress card below shows the same rank ('HODNOST 2 / Kadet', 160 XP, '10 z 250 XP do hodnosti Strážce'). All text is dark navy on pink or white, and even the small grey secondary lines meet the AA bar by eye."
+        "notes": "The HQ shows a pink rank-up card with the eyebrow 'NOVÁ HODNOST!', 'Kadet' in a large bold display face, the sentence 'Postoupila jsi na hodnost Kadet. Jen tak dál!', an original crimson hexagon medal with a gold four-point star and sunburst halo, and a crimson 'Super!' button. The progress card below matches it: 'HODNOST 2 / Kadet', '150 XP', 'Vyřešené úlohy: 5', and '0 z 250 XP do hodnosti Strážce'. All text is dark on light or white on crimson. The smallest text, the gray '0 z 250 XP…' caption, is small but still legible, and nothing is clipped or overlapping."
       }
     },
     {
@@ -54,7 +54,7 @@
       "vision": {
         "met": true,
         "readable": true,
-        "notes": "The pink rank-up banner at the top of HQ is fully rendered. It shows 'NOVÁ HODNOST!' (the requested 'Nová hodnost!' set as an uppercase eyebrow), a large dark 'Kadet' heading, the line 'Postoupila jsi na hodnost Kadet. Jen tak dál!' and a red 'Super!' button. Next to it is the complete red hexagon medal with its gold star and a static gold halo; nothing is faded, half-drawn or caught mid-animation. All text is dark navy on light pink or white, which reads well. The smallest text is the grey '10 z 250 XP do hodnosti Strážce' caption, and it is still legible. A single still can't show that no animation is running, but every element is at its final, fully opaque state."
+        "notes": "The HQ rank-up banner at the top of the page is fully shown: the small 'NOVÁ HODNOST!' label, the large 'Kadet' heading, the line 'Postoupila jsi na hodnost Kadet. Jen tak dál!', and a fully drawn red hexagon medal with a gold star and a static gold halo. Nothing in it is faded, clipped or caught mid-animation. All text is dark navy on light pink or white, and the 'Super!' and 'Pokračovat' buttons have white text on red, which meets AA contrast. The smallest grey text ('0 z 250 XP do hodnosti Strážce') is still legible."
       }
     },
     {
@@ -68,7 +68,7 @@
       "vision": {
         "met": true,
         "readable": true,
-        "notes": "The task screen shows the answer field 0,75 marked \"Správně\" in teal, and a mint feedback panel reading \"Výborně!\" with a yellow \"+10 XP\" sticker. Directly below it, a pink rank-up card with a hexagon badge reads \"NOVÁ HODNOST!\", \"Kadet\" and \"Postoupila jsi na hodnost Kadet. Jen tak dál!\". That card sits above the red \"Další úloha →\" button, and no negative XP appears anywhere. All text is legible at AA by eye. The smallest pieces are the teal \"Správně\" label, the \"zbývá 2\" chip and the grey \"Nahlásit problém\" link, and they are small but still have enough contrast."
+        "notes": "The task screen shows the correct answer 0,75 with a \"Správně\" mark, a mint feedback card reading \"Výborně!\" with a yellow \"+10 XP\" sticker, and directly below it a pink \"NOVÁ HODNOST!\" celebration card naming \"Kadet\" with a hexagon badge. That card sits above the red \"Další úloha →\" button, and no negative XP appears anywhere. All text is legible at AA contrast, and the focus ring on \"Další úloha\" is visible. Two minor points that don't fail the check: the \"Správně\" caption and the \"zbývá 2\" chip are quite small, and the copy \"Postoupila jsi\" assumes a feminine gender, so please confirm that's intended."
       }
     },
     {
@@ -82,7 +82,7 @@
       "vision": {
         "met": true,
         "readable": true,
-        "notes": "The screen is fully rendered. It has the heading 'Mise je splněná!' and a yellow starburst sticker reading '+35 XP' inside a pink card. Next to it are 'Získala jsi 35 XP.', a star icon with '1 na první pokus', and 'Úloh v misi: 2'. Below the card are a red 'Zpět na HQ' button and an outlined 'Zopakovat misi' button with a replay icon, and there is no rank-up banner. All text is legible: dark navy on cream or pink, and white on red. The lightest text, the slate-grey 'Úloh v misi: 2' on pink, still looks above WCAG AA by eye, and nothing is clipped or overlapping."
+        "notes": "The heading 'Mise je splněná!' is shown above a pink card. The card has a yellow star sticker reading '+35 XP' and the lines 'Získala jsi 35 XP.', '☆ 1 na první pokus' and 'Úloh v misi: 2'. Below the card are the red 'Zpět na HQ' button and the outlined 'Zopakovat misi' button. There's no rank-up element, and no negative XP, minus sign or '+0 XP' anywhere. All text is legible. The grey 'Úloh v misi: 2' line on light pink has the lowest contrast on the page but still looks like it passes AA by eye."
       }
     },
     {
@@ -96,7 +96,7 @@
       "vision": {
         "met": true,
         "readable": true,
-        "notes": "The screen is fully rendered under the heading \"Mise je splněná!\". The top card shows a yellow starburst with \"+30 XP\", the line \"Získala jsi 30 XP.\" and a star icon next to \"1 na první pokus\". The rank-up card shows \"NOVÁ HODNOST!\", a large \"Kadet\" title, a red hexagon medal with a gold star and a gold halo, and the sentence \"Postoupila jsi na hodnost Kadet. Jen tak dál!\". Text is dark navy on a light pink card, which passes AA by eye. The only lighter text is the grey \"Úloh v misi: 1\", which is still readable. Nothing overlaps or is cut off, and there is no loading or empty state."
+        "notes": "The page is fully rendered under the heading \"Mise je splněná!\". The first card has a yellow star badge reading \"+30 XP\", the lines \"Získala jsi 30 XP.\" and \"☆ 1 na první pokus\", and \"Úloh v misi: 1\". The second card has the red hexagon medal with a glowing halo, \"NOVÁ HODNOST!\", a large \"Kadet\", and the sentence \"Postoupila jsi na hodnost Kadet. Jen tak dál!\" All text is dark navy on light pink or cream and easy to read. The grey \"Úloh v misi: 1\" is the faintest text but still looks like it passes AA, and nothing is clipped, overlapping or caught mid-animation."
       }
     },
     {
@@ -110,7 +110,7 @@
       "vision": {
         "met": true,
         "readable": true,
-        "notes": "The screenshot shows the heading 'Opakování je hotové!' and a pink card that reads 'Získané XP: 0. Za opakování se XP nepřipisují, ty už máš z prvního průchodu.' Below that is a star with '1 na první pokus' and 'Úloh v misi: 1'. It also shows a crimson 'Zpět na HQ' button and an outlined 'Zopakovat misi' button. The wording is kind and nothing is red or punishing. The text is easy to read: dark navy on pale pink, and white on the crimson button. The weakest contrast is the grey 'Úloh v misi: 1' secondary line, but by eye it still passes WCAG AA."
+        "notes": "The screen is fully rendered. It has the heading 'Opakování je hotové!' and a pink card with all three facts: 'Získané XP: 0. Za opakování se XP nepřipisují, ty už máš z prvního průchodu.' (kind, not punishing), a star icon with '1 na první pokus', and 'Úloh v misi: 1'. Below it are a crimson 'Zpět na HQ' button and an outlined 'Zopakovat misi' button with a replay icon. All text is legible. The text with the lowest contrast is the grey 'Úloh v misi: 1' on light pink, which looks close to the WCAG-AA minimum but still passes by eye."
       }
     }
   ]

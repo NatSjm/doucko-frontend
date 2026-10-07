@@ -54,3 +54,22 @@ complete and offers no "Pokračovat" to a replay.
 - **GIVEN** a replay left after its first task
 - **WHEN** the child opens the mission from HQ and presses "Zopakovat misi"
 - **THEN** the replay's second task opens
+
+### Requirement: XP still to earn on the briefing
+
+The mission briefing SHALL show "Můžeš získat až {n} XP" with the server's
+`MissionBriefing.xpAvailable` when it is above 0, and no XP figure when it is
+0 (a complete mission), so the child sees what a mission can still bring and
+never a "0 XP" promise (FR-33, FR-38).
+
+#### Scenario: New mission
+
+- **GIVEN** a new mission of 3 tasks whose bonus was never paid
+- **WHEN** the child opens its briefing
+- **THEN** "Můžeš získat až 50 XP" is shown (as the server counts it)
+
+#### Scenario: Complete mission
+
+- **GIVEN** a complete mission
+- **WHEN** the child opens its briefing
+- **THEN** no XP figure is shown, and "Zopakovat misi" and "Výsledky mise" are offered

@@ -19,7 +19,7 @@
 - [x] 3.4 `src/features/mission/`: XP available, replay and results on a complete mission.
 - [x] 3.5 `src/features/task/`: XP on correct and revealed, bonus line, mid-mission celebration, "Výsledky mise".
 - [x] 3.6 Catalog keys (cs child); `src/features/skin/` deny-list check.
-- [ ] 3.7 Recordings: `tools/record-slice8.mjs`, asserted clips with stills in `docs/qa/demo-recordings/slice8-gamification/`; vision-verify over their stills (FR-36, FR-37).
+- [x] 3.7 Recordings: `tools/record-slice8.mjs`, asserted clips with stills in `docs/qa/demo-recordings/slice8-gamification/`; vision-verify over their stills (FR-36, FR-37): 8 of 8 clips asserted, 8 of 8 met and readable — evidence: `docs/qa/demo-recordings/slice8-gamification/manifest.json`, `docs/qa/vision-report.md`, `trace/workflow-runs/20261007-101043-vision-verify.json`.
 
 ## 4. Validation, review, archive
 

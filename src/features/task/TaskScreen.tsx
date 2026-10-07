@@ -268,6 +268,8 @@ function TaskPractice({ initial, missionId }: { initial: ChildTask; missionId: s
   const missionDone = resolved && !!task.lastFeedback?.missionComplete;
   // Bonuses paid by the latest answer (only a resolving answer pays one).
   const bonusXp = task.lastFeedback?.bonusXp ?? 0;
+  // One answer can complete several missions sharing the task (OQ-28): the copy says so.
+  const manyBonuses = (task.lastFeedback?.completedMissionIds.length ?? 0) > 1;
   const unreadable = Object.keys(formatTips).length > 0;
   // The toggle shows what the screen shows: the server sends the translation exactly when the profile setting is on.
   const translationOn = task.prompt.secondary !== null;
@@ -446,7 +448,7 @@ function TaskPractice({ initial, missionId }: { initial: ChildTask; missionId: s
               {bonusXp > 0 && (
                 <p className="task-bonus">
                   <Icon name="bolt" size={18} strokeWidth={2.5} />
-                  {format(t('child.task.bonus'), { xp: formatXp(bonusXp) })}
+                  {format(t(manyBonuses ? 'child.task.bonusMany' : 'child.task.bonus'), { xp: formatXp(bonusXp) })}
                 </p>
               )}
               {missionDone && (

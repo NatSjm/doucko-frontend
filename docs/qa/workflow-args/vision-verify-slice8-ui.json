@@ -4,7 +4,7 @@
       "id": "slice8-hq-progress",
       "proof": "FR-37",
       "screenshot": "docs/qa/demo-recordings/slice8-gamification/slice8-hq-progress.png",
-      "requirement": "HQ shows the current rank (medal, 'Hodnost 2' and the rank name 'Kadet'), the total XP (275 XP), an XP bar towards the next rank visibly about half full with '125 z 250 XP do hodnosti Strážce', and the number of solved tasks ('Vyřešené úlohy: 2'). No negative XP, timer, streak or leaderboard. Czech UI, legible in the light theme."
+      "requirement": "HQ shows the current rank (medal, 'Hodnost 2' and the rank name 'Kadet'), the total XP (275 XP), an XP bar towards the next rank visibly about half full with '125 z 250 XP do hodnosti Strážce', and the number of solved tasks ('Vyřešené úlohy: 5'). No negative XP, timer, streak or leaderboard. Czech UI, legible in the light theme."
     },
     {
       "id": "slice8-hq-top-rank",
@@ -16,7 +16,7 @@
       "id": "slice8-rankup-hq",
       "proof": "FR-36",
       "screenshot": "docs/qa/demo-recordings/slice8-gamification/slice8-rankup-hq.png",
-      "requirement": "A rank-up celebration on HQ names the new rank: 'Nová hodnost!', the rank name 'Kadet' in a large display face, the sentence 'Postoupila jsi na hodnost Kadet. Jen tak dál!', an original hexagon rank medal (no borrowed anime/manga art), and a 'Super!' button to close it; the HQ progress below shows the same rank. Celebratory but legible."
+      "requirement": "A rank-up celebration on HQ names the new rank: 'Nová hodnost!', the rank name 'Kadet' in a large display face, the sentence 'Postoupila jsi na hodnost Kadet. Jen tak dál!', an original hexagon rank medal (no borrowed anime/manga art), and a 'Super!' button to close it; the HQ progress below shows the same rank (150 XP, 'Vyřešené úlohy: 5'). Celebratory but legible."
     },
     {
       "id": "slice8-rankup-reduced-motion",
@@ -32,9 +32,9 @@
     },
     {
       "id": "slice8-mission-complete",
-      "proof": "FR-32",
+      "proof": "FR-32, FR-38",
       "screenshot": "docs/qa/demo-recordings/slice8-gamification/slice8-mission-complete.png",
-      "requirement": "The mission-complete screen titled 'Mise je splněná!' shows the XP earned in the run ('+35 XP' sticker and 'Získala jsi 35 XP.'), the first-try count ('1 na první pokus'), the number of tasks ('Úloh v misi: 2'), no rank-up, and the actions 'Zpět na HQ' and 'Zopakovat misi'."
+      "requirement": "The mission-complete screen titled 'Mise je splněná!' shows the XP earned in the run ('+35 XP' sticker and 'Získala jsi 35 XP.'), the first-try count ('1 na první pokus'), the number of tasks ('Úloh v misi: 2'), no rank-up, and the actions 'Zpět na HQ' and 'Zopakovat misi'. FR-38: every XP figure is a positive award ('+35 XP'); no negative XP, minus sign or '+0 XP' anywhere."
     },
     {
       "id": "slice8-mission-complete-rankup",
@@ -44,9 +44,9 @@
     },
     {
       "id": "slice8-replay",
-      "proof": "FR-33",
+      "proof": "FR-33, FR-32",
       "screenshot": "docs/qa/demo-recordings/slice8-gamification/slice8-replay.png",
-      "requirement": "After a replay of a completed mission, the screen 'Opakování je hotové!' says 0 XP were earned because a replay earns no XP ('Získané XP: 0. Za opakování se XP nepřipisují…'), shows the first-try count, and offers 'Zpět na HQ' and 'Zopakovat misi'; the wording is kind, not punishing."
+      "requirement": "After a replay of a completed mission, the screen 'Opakování je hotové!' says 0 XP were earned because a replay earns no XP ('Získané XP: 0. Za opakování se XP nepřipisují…'), shows the first-try count, and offers 'Zpět na HQ' and 'Zopakovat misi'; the wording is kind, not punishing. FR-32: it is the mission-complete screen of that run, showing the XP earned (0), the first-try count and the number of tasks."
     }
   ]
 }

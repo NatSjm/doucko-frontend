@@ -178,7 +178,7 @@ describe('replay from the mission-complete screen (FR-33)', () => {
     expect(backend.practice.totalXp).toBe(total);
     renderAt(<SummaryScreen />, at(PRACTICE.missionB));
     expect(await screen.findByRole('heading', { level: 1, name: m['child.summary.replayTitle'] })).toBeInTheDocument();
-    expect(screen.getByText(m['child.summary.replayText'])).toBeInTheDocument();
+    expect(screen.getByText(format(m['child.summary.replayText'], { xp: 0 }))).toBeInTheDocument();
     expect(screen.queryByText(/^\+\d+ XP$/)).toBeNull();
     expect(screen.getByText(format(m['child.summary.firstTry'], { n: 2 }))).toBeInTheDocument();
   });
@@ -190,5 +190,46 @@ describe('replay from the mission-complete screen (FR-33)', () => {
     renderAt(<SummaryScreen />, at(PRACTICE.missionB));
     expect(await screen.findByRole('heading', { level: 1, name: m['child.summary.title'] })).toBeInTheDocument();
     expect(screen.getByText(format(m['child.summary.xp'], { xp: 40 }))).toBeInTheDocument();
+  });
+});
+
+describe('review findings F01, F02 (slice 8 review gate)', () => {
+  it('a first run that earned no XP (every task resolved in other missions) shows no "+0 XP" and no XP figure (FR-38)', async () => {
+    const backend = stubChildBackend();
+    await completeMission(backend, PRACTICE.missionPerimeter);
+    backend.override = {
+      match: (method, path) => method === 'GET' && path.endsWith('/summary'),
+      status: 200,
+      body: { missionId: PRACTICE.missionPerimeter, xpEarned: 0, firstTryCount: 0, taskCount: 1, replay: false, rankUp: null, rankReachedDuringRun: null },
+    };
+    renderAt(<SummaryScreen />, at(PRACTICE.missionPerimeter));
+    expect(await screen.findByText(m['child.summary.noXpText'])).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: m['child.summary.title'] })).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/\+\s*0\s*XP|[-−]\s*\d+\s*XP/);
+    expect(screen.queryByText(format(m['child.summary.xpText'], { xp: 0 }))).toBeNull();
+  });
+
+  it('a 409 on "Zopakovat misi" (the mission is no longer complete) opens its briefing instead of an error', async () => {
+    const backend = stubChildBackend();
+    await completeMission(backend, PRACTICE.missionB);
+    renderAt(<SummaryScreen />, at(PRACTICE.missionB));
+    const button = await screen.findByRole('button', { name: m['child.mission.replay'] });
+    backend.override = { match: (method, path) => method === 'POST' && path.endsWith('/replay'), status: 409, body: {} };
+    await userEvent.click(button);
+    await waitFor(() => expect(window.location.pathname + window.location.search).toBe(`/mission?missionId=${PRACTICE.missionB}`));
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('a retry after a failed replay clears the alert and starts the replay', async () => {
+    const backend = stubChildBackend();
+    await completeMission(backend, PRACTICE.missionB);
+    renderAt(<SummaryScreen />, at(PRACTICE.missionB));
+    const button = await screen.findByRole('button', { name: m['child.mission.replay'] });
+    backend.down = true;
+    await userEvent.click(button);
+    expect(await screen.findByRole('alert')).toHaveTextContent(m['child.mission.replayFailed']);
+    backend.down = false;
+    await userEvent.click(button);
+    await waitFor(() => expect(window.location.pathname).toBe('/task'));
   });
 });

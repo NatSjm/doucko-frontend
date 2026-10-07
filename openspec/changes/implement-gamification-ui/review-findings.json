@@ -1,0 +1,133 @@
+{
+  "generatedBy": "review-gate",
+  "scope": "slice 8 gamification frontend (implement-gamification-ui): HQ progress panel (rank, XP bar, solved tasks), the rank-up celebration (one-shot, ackRankUp, reduced-motion variant), the mission-complete screen /summary, replay from the briefing and the summary, XP / bonus / rank-up on the task feedback, the skin deny-list check, the extended child contract stub",
+  "change": "implement-gamification-ui",
+  "baseRef": "48b9ff6",
+  "headRef": "HEAD",
+  "dimensions": {
+    "correctness": {
+      "confirmed": 3,
+      "contested": 1,
+      "rejected": 3
+    },
+    "security": {
+      "confirmed": 0,
+      "contested": 0,
+      "rejected": 1
+    },
+    "spec-compliance": {
+      "confirmed": 3,
+      "contested": 2,
+      "rejected": 4
+    },
+    "visual": {
+      "confirmed": 1,
+      "contested": 0,
+      "rejected": 3
+    }
+  },
+  "findings": [
+    {
+      "id": "F01",
+      "severity": "major",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "Mission-complete screen can show a \"+0 XP\" sticker and \"Získala jsi 0 XP.\" for a first run",
+      "file": "src/features/summary/SummaryScreen.tsx",
+      "line": 83,
+      "status": "open"
+    },
+    {
+      "id": "F02",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "Summary replay button ignores 409 and never clears its error, unlike the briefing",
+      "file": "src/features/summary/SummaryScreen.tsx",
+      "line": 69,
+      "status": "open"
+    },
+    {
+      "id": "F03",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "Bonus copy says \"za splněnou misi\" even when bonusXp covers several missions",
+      "file": "src/i18n/cs.ts",
+      "line": 71,
+      "status": "open"
+    },
+    {
+      "id": "F04",
+      "severity": "major",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Mission-complete screen can show \"+0 XP\" and \"Získala jsi 0 XP.\" on a first (non-replay) run",
+      "file": "src/features/summary/SummaryScreen.tsx",
+      "line": 83,
+      "status": "open"
+    },
+    {
+      "id": "F05",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Task 3.7 is unticked although its recordings and vision report exist",
+      "file": "openspec/changes/implement-gamification-ui/tasks.md",
+      "line": 23,
+      "status": "open"
+    },
+    {
+      "id": "F06",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Mid-mission celebration on the task screen is not scanned in light and dark",
+      "file": "e2e/a11y.spec.ts",
+      "line": null,
+      "status": "open"
+    },
+    {
+      "id": "F07",
+      "severity": "minor",
+      "dimension": "visual",
+      "verdict": "confirmed",
+      "title": "Stub progress data is inconsistent: XP and rank without any solved task",
+      "file": "docs/qa/demo-recordings/slice8-gamification/slice8-hq-top-rank.png",
+      "line": null,
+      "status": "open"
+    },
+    {
+      "id": "F08",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "contested",
+      "title": "Vision evidence does not cover every FR the slice 8 manifest claims",
+      "file": "docs/qa/vision-report.md",
+      "line": 28,
+      "status": "open"
+    },
+    {
+      "id": "F09",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "contested",
+      "title": "Briefing shows 'Můžeš získat až {xp} XP', which no delta requirement covers",
+      "file": "src/features/mission/MissionScreen.tsx",
+      "line": 66,
+      "status": "open"
+    },
+    {
+      "id": "F10",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "contested",
+      "title": "Coverage summary",
+      "file": "openspec/changes/implement-gamification-ui/specs",
+      "line": null,
+      "status": "open"
+    }
+  ],
+  "clean": false,
+  "generatedAt": "2026-10-07T10:02:52Z"
+}
