@@ -15,7 +15,7 @@ Result: PASS, 6 warning(s)
 | 2026-10-04-implement-platform-foundation-ui | clean | 18 | yes | - |
 | 2026-10-05-implement-authoring-missions-ui | clean | 3 | yes | missions, sources, tasks, admin-access |
 | 2026-10-05-implement-practice-flow-ui | clean | 3 | yes | hq, mission, task, child |
-| 2026-10-07-implement-gamification-ui | clean | 3 | yes | mission, summary, task, hq, rank, skin |
+| 2026-10-07-implement-gamification-ui | clean | 4 | yes | mission, summary, task, hq, rank, skin |
 
 ## Cross-slice module overlap
 

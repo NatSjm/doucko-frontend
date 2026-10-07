@@ -8,7 +8,7 @@
 - **Date and time:** 2026-10-07 (Europe/Prague)
 - **Current phase:** Phase 4
 - **Last completed gate:** G3
-- **Active change:** none. Slice 8 `implement-gamification-ui` archived 2026-10-07 (branch `slice8-gamification`, not pushed or merged); slice 7 archived 2026-10-05.
+- **Active change:** none. Slice 8 `implement-gamification-ui` archived 2026-10-07 and merged into `main` (`b4b9d81`) with the backend half; real-stack smoke PASS 2026-10-07.
 - **Contract pin:** `contract/` submodule (`url = ../docs`) at docs `0168eba`, API 0.5.1
 - **Progress:** Vite 8 / React 19 / TypeScript 5.9 scaffold (ADR-0003) plus slice 1 platform
   foundation: app shell with route registry and not-found screen, message catalogs (cs child, en
@@ -16,8 +16,9 @@
   the OS only (static invariants + e2e), axe and reduced-motion e2e in Chrome, Edge and Firefox,
   generated API client from the pinned contract, nginx image (one origin, security headers, DNS
   rebinding guard 421, no-cache shell), fixture/asset provenance test, real-name guard for e2e.
-- **Next task:** merge slice 8 (both halves) and its real-stack smoke (coordinator, task 4.4 of the archived change); then slice 9 (progress-stats) per the capability plan.
+- **Next task:** slice 9 (progress-stats) per the capability plan.
 - **Claims:**
+  - Slice 8 merged into `main` (`b4b9d81`); real-stack smoke PASS after the merge (2026-10-07, API click path through 127.0.0.1:8081; HQ rank, XP bar and solved count and the replay summary rendered from the stack) — evidence: `../backend/docs/qa/evidence/slice8-compose-smoke.md`. The celebration was not played on the stack (e2e and vision-verify cover it).
   - Slice 8 child gamification (HQ progress panel: rank, XP bar towards the next rank, solved tasks; the rank-up celebration on HQ, the task feedback and the new `/summary` mission-complete screen, acknowledged with `ackRankUp`, static under reduced motion; replay from the briefing and the summary; +n XP on correct and revealed answers, bonus line, no XP figure of 0 or less; the store's IP deny-list checked against the Czech catalog and asset names): QA battery passes (616 unit tests, coverage 100%, 552 e2e passed, 1 flaky — firefox NFR-5 stub round trip, passed on retry — 23 skipped in chromium, msedge and firefox, incl. `/summary` and the three celebration states in the a11y, theme and `⟦` gates) — evidence: `docs/qa/automated-verification-latest.md` (2026-10-07, run with `CI=1`). An earlier full run of the first commit had 1 failed and 6 flaky Firefox a11y/theme tests (browser crashes and timeouts under machine load); they passed when run on their own.
   - Slice 8 review gate clean (2 majors and 8 minors fixed in `79f9993`, none waived) — evidence: `openspec/changes/archive/2026-10-07-implement-gamification-ui/review-findings.json`, `trace/workflow-runs/20261007-095548-review-gate.json`
   - Slice 8 RED run — evidence: `docs/qa/evidence/slice8-red-run.md`; eight asserted clips with stills (FR-32, FR-33, FR-36, FR-37, FR-38, NFR-13, against the contract stub) — evidence: `docs/qa/demo-recordings/slice8-gamification/manifest.json`; vision-verify 8 of 8 met and readable, `check-vision` PASS for FR-36 and FR-37 — evidence: `docs/qa/vision-report.md`, `docs/qa/vision-report.json`, `trace/workflow-runs/20261007-101043-vision-verify.json`
@@ -44,7 +45,7 @@
     `openspec/changes/archive/*implement-platform-foundation-ui/review-findings.json`
   - G0, G2, G4, G5, G8 PASS (G4 audits the archived slice); G1 and G3 need the owner's sign-off; G6 is SKIP-planned; G7
     (release) fails until every MVP slice is archived. Evidence: `npm run gate:status`
-- **Scope NOT delivered:** the slice 8 real-stack smoke (coordinator, after the merge, task 4.4 of `implement-gamification-ui`); an eval case for the celebration copy tone (evals SKIP-planned); the final rank names, school name and mentor (placeholders from the backend's skin, OQ-1); NFR-5 measured against the stack (`e2e/practice-timing.spec.ts` skips without `E2E_BASE_URL`; the round-trip part also needs `E2E_PRACTICE_WRITES=1` on a seeded test stack; only the frontend share of the load budget is measured, against the stub); the slice 7 real-stack smoke (owner, after the merge, task 4.4); the preview-vs-child-screen pixel comparison (the child task screen exists since slice 7; the comparison is not built); the slice 6 real-stack smoke (owner, after the merge); admin screens of slice 9; eval cases for the sign-in copy (evals SKIP-planned); the admin stats and flag-queue screens (slice 9); recordings and evals
+- **Scope NOT delivered:** the rank-up celebration played on the real stack (the smoke acknowledged it through the API); an eval case for the celebration copy tone (evals SKIP-planned); the final rank names, school name and mentor (placeholders from the backend's skin, OQ-1); NFR-5 measured against the stack (`e2e/practice-timing.spec.ts` skips without `E2E_BASE_URL`; the round-trip part also needs `E2E_PRACTICE_WRITES=1` on a seeded test stack; only the frontend share of the load budget is measured, against the stub); the slice 7 real-stack smoke (owner, after the merge, task 4.4); the preview-vs-child-screen pixel comparison (the child task screen exists since slice 7; the comparison is not built); the slice 6 real-stack smoke (owner, after the merge); admin screens of slice 9; eval cases for the sign-in copy (evals SKIP-planned); the admin stats and flag-queue screens (slice 9); recordings and evals
   (planned with their slices); task 2.8's original RED run (waived:
   `docs/qa/waivers/slice1-task-2.8-red-run.md`).
 
