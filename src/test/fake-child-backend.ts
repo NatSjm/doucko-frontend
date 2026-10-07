@@ -551,7 +551,8 @@ async function handleChild(b: FakeBackend, request: Request, url: URL): Promise<
       position: m.position,
       topicName: b.reference.topics.find((tp) => tp.topicId === m.topicId)?.name ?? '',
       state: missionState(b, m),
-      xpAvailable: m.taskIds.filter((id) => !resolved(b, id)).length * b.practice.xp.first + (b.practice.bonusPaid.has(m.missionId) ? 0 : b.practice.xp.bonus),
+      // 0 once no task is left to resolve, even with an unpaid bonus (backend slice 8, 2026-10-07).
+      xpAvailable: ((open) => (open === 0 ? 0 : open * b.practice.xp.first + (b.practice.bonusPaid.has(m.missionId) ? 0 : b.practice.xp.bonus)))(m.taskIds.filter((id) => !resolved(b, id)).length),
       tasks: m.taskIds.map((id, i) => ({ taskId: id, position: i + 1, state: b.practice.progress.get(id)?.state ?? 'UNRESOLVED' })),
     };
     return json(200, briefing);

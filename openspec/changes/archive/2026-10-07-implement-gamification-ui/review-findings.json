@@ -35,7 +35,9 @@
       "title": "Mission-complete screen can show a \"+0 XP\" sticker and \"Získala jsi 0 XP.\" for a first run",
       "file": "src/features/summary/SummaryScreen.tsx",
       "line": 83,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "79f9993",
+      "resolution": "SummaryScreen renders the XP sticker and \"Získala jsi {xp} XP.\" only when xpEarned > 0; a first run with 0 shows child.summary.noXpText. Test: SummaryScreen.test.tsx \"a first run that earned no XP\"."
     },
     {
       "id": "F02",
@@ -45,7 +47,9 @@
       "title": "Summary replay button ignores 409 and never clears its error, unlike the briefing",
       "file": "src/features/summary/SummaryScreen.tsx",
       "line": 69,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "79f9993",
+      "resolution": "Shared useReplay hook (features/mission/useReplay.ts): alert cleared before each try; 409 refetches the briefing / opens the briefing from the summary. Tests in SummaryScreen.test.tsx."
     },
     {
       "id": "F03",
@@ -55,7 +59,9 @@
       "title": "Bonus copy says \"za splněnou misi\" even when bonusXp covers several missions",
       "file": "src/i18n/cs.ts",
       "line": 71,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "79f9993",
+      "resolution": "child.task.bonusMany when completedMissionIds holds more than one mission. Test in TaskXp.test.tsx."
     },
     {
       "id": "F04",
@@ -65,7 +71,9 @@
       "title": "Mission-complete screen can show \"+0 XP\" and \"Získala jsi 0 XP.\" on a first (non-replay) run",
       "file": "src/features/summary/SummaryScreen.tsx",
       "line": 83,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "79f9993",
+      "resolution": "Same fix as F01 (duplicate across dimensions)."
     },
     {
       "id": "F05",
@@ -75,7 +83,9 @@
       "title": "Task 3.7 is unticked although its recordings and vision report exist",
       "file": "openspec/changes/implement-gamification-ui/tasks.md",
       "line": 23,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "79f9993",
+      "resolution": "Task 3.7 ticked with its evidence after re-recording and re-running vision-verify (8/8 met and readable)."
     },
     {
       "id": "F06",
@@ -85,7 +95,9 @@
       "title": "Mid-mission celebration on the task screen is not scanned in light and dark",
       "file": "e2e/a11y.spec.ts",
       "line": null,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "79f9993",
+      "resolution": "e2e/a11y.spec.ts CELEBRATIONS gains \"task feedback with a mid-mission rank-up\" (axe light + dark, reduced motion)."
     },
     {
       "id": "F07",
@@ -95,7 +107,9 @@
       "title": "Stub progress data is inconsistent: XP and rank without any solved task",
       "file": "docs/qa/demo-recordings/slice8-gamification/slice8-hq-top-rank.png",
       "line": null,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "79f9993",
+      "resolution": "tools/record-slice8.mjs: HQ clips are prepared by earlier practice (5 solved tasks, 90 XP) plus an outside-session credit, so XP, solved count and mission states agree; clips re-recorded."
     },
     {
       "id": "F08",
@@ -105,7 +119,9 @@
       "title": "Vision evidence does not cover every FR the slice 8 manifest claims",
       "file": "docs/qa/vision-report.md",
       "line": 28,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "79f9993",
+      "resolution": "Vision args now carry each clip's manifest FR list and requirement text for every FR; re-judged 8/8 (trace/workflow-runs/20261007-101043-vision-verify.json)."
     },
     {
       "id": "F09",
@@ -115,7 +131,9 @@
       "title": "Briefing shows 'Můžeš získat až {xp} XP', which no delta requirement covers",
       "file": "src/features/mission/MissionScreen.tsx",
       "line": 66,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "79f9993",
+      "resolution": "Practice-flow delta gains \"XP still to earn on the briefing\" with two scenarios."
     },
     {
       "id": "F10",
@@ -125,9 +143,11 @@
       "title": "Coverage summary",
       "file": "openspec/changes/implement-gamification-ui/specs",
       "line": null,
-      "status": "open"
+      "status": "fixed",
+      "fixCommit": "79f9993",
+      "resolution": "The one partial scenario (\"Replay earns no XP\": 0 hard-coded in the catalog) now formats the server's xpEarned into child.summary.replayText."
     }
   ],
-  "clean": false,
+  "clean": true,
   "generatedAt": "2026-10-07T10:02:52Z"
 }

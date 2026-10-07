@@ -703,7 +703,7 @@
       "ownedHere": true,
       "specs": [
         "contract/openspec/specs/practice-flow/spec.md",
-        "openspec/changes/implement-gamification-ui/specs/practice-flow/spec.md"
+        "openspec/specs/practice-flow/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -724,7 +724,7 @@
       "ownedHere": true,
       "specs": [
         "contract/openspec/specs/practice-flow/spec.md",
-        "openspec/changes/implement-gamification-ui/specs/practice-flow/spec.md"
+        "openspec/specs/practice-flow/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -772,8 +772,8 @@
       "ownedHere": true,
       "specs": [
         "contract/openspec/specs/gamification/spec.md",
-        "openspec/changes/implement-gamification-ui/specs/gamification/spec.md",
-        "openspec/changes/implement-gamification-ui/specs/practice-flow/spec.md"
+        "openspec/specs/gamification/spec.md",
+        "openspec/specs/practice-flow/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -798,7 +798,7 @@
       "ownedHere": true,
       "specs": [
         "contract/openspec/specs/gamification/spec.md",
-        "openspec/changes/implement-gamification-ui/specs/gamification/spec.md"
+        "openspec/specs/gamification/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -819,8 +819,8 @@
       "ownedHere": true,
       "specs": [
         "contract/openspec/specs/gamification/spec.md",
-        "openspec/changes/implement-gamification-ui/specs/gamification/spec.md",
-        "openspec/changes/implement-gamification-ui/specs/practice-flow/spec.md"
+        "openspec/specs/gamification/spec.md",
+        "openspec/specs/practice-flow/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -841,7 +841,7 @@
       "ownedHere": true,
       "specs": [
         "contract/openspec/specs/gamification/spec.md",
-        "openspec/changes/implement-gamification-ui/specs/gamification/spec.md"
+        "openspec/specs/gamification/spec.md"
       ],
       "planned": true,
       "tests": [
@@ -1241,10 +1241,6 @@
     {
       "check": "recording-evidence",
       "msg": "FR-41 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "active-changes",
-      "msg": "active change \"implement-gamification-ui\" is not archived"
     }
   ]
 }
