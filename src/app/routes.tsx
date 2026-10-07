@@ -9,6 +9,8 @@ import { SourcesScreen } from '@/features/sources/SourcesScreen';
 import { SourceViewerScreen } from '@/features/sources/SourceViewerScreen';
 import { SummaryScreen } from '@/features/summary/SummaryScreen';
 import { TaskScreen } from '@/features/task/TaskScreen';
+import { ReportsScreen } from '@/features/reports/ReportsScreen';
+import { StatsScreen } from '@/features/stats/StatsScreen';
 import { PreviewScreen } from '@/features/tasks/PreviewScreen';
 import { TaskEditorScreen } from '@/features/tasks/TaskEditorScreen';
 import { TaskListScreen } from '@/features/tasks/TaskListScreen';
@@ -39,4 +41,6 @@ export const routes: AppRoute[] = [
   { path: '/admin/tasks/preview', element: <AdminArea><PreviewScreen /></AdminArea> },
   { path: '/admin/missions', element: <AdminArea><MissionListScreen /></AdminArea> },
   { path: '/admin/missions/edit', element: <AdminArea><MissionEditorScreen /></AdminArea> },
+  { path: '/admin/stats', element: <AdminArea><StatsScreen /></AdminArea> },
+  { path: '/admin/reports', element: <AdminArea><ReportsScreen /></AdminArea> },
 ];

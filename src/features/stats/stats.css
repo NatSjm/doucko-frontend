@@ -1,0 +1,22 @@
+.stats-metric {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.stats-metric p {
+  margin: 0;
+}
+
+.stats-weeks {
+  justify-self: start;
+}
+
+.stats-table caption {
+  text-align: left;
+  font-weight: 700;
+  padding-bottom: var(--space-2);
+}
+
+.stats-tag {
+  margin-inline-start: var(--space-2);
+}

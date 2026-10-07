@@ -16,6 +16,8 @@ export const ROUTE_PATHS = [
   '/admin/tasks/preview',
   '/admin/missions',
   '/admin/missions/edit',
+  '/admin/stats',
+  '/admin/reports',
 ] as const;
 
 export type RoutePath = (typeof ROUTE_PATHS)[number];

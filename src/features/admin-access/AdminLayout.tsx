@@ -13,6 +13,8 @@ const NAV: { href: string; label: MessageKey }[] = [
   { href: '/admin/missions', label: 'admin.nav.missions' },
   { href: '/admin/missions/edit', label: 'admin.nav.newMission' },
   { href: '/admin/sources', label: 'admin.nav.sources' },
+  { href: '/admin/stats', label: 'admin.nav.stats' },
+  { href: '/admin/reports', label: 'admin.nav.reports' },
 ];
 
 /**

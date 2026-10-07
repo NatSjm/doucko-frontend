@@ -1,4 +1,5 @@
 import type { components } from '../api/generated/schema';
+import { createProgress, handleProgress, progressSeedStrings, type ProgressState, type SeedTasks } from './fake-progress-backend.ts';
 
 /**
  * A stand-in for the admin API of the pinned contract (`contract/api/openapi.yaml`), shared by the
@@ -197,7 +198,14 @@ export function seedStrings(): Set<string> {
   walk(data.reference);
   walk(data.sources.map((s) => s.source));
   walk(data.tasks.map((t) => t.input));
+  walk(progressSeedStrings(createProgress(seedTasks(data.tasks))));
   return out;
+}
+
+/** The seed tasks the flag-queue seed reports on (slice 9). */
+function seedTasks(tasks: StoredTask[]): SeedTasks {
+  const pick = (taskId: string) => ({ taskId, prompt: tasks.find((t) => t.taskId === taskId)?.input.prompt ?? '' });
+  return { decimal: pick(SEED.taskDecimal), choice: pick(SEED.taskChoice), perimeter: pick(SEED.taskPerimeter), topicDecimals: SEED.topicDecimals, topicPerimeter: SEED.topicPerimeter };
 }
 
 // ---------------------------------------------------------------- answer checking (simplified)
@@ -334,6 +342,8 @@ export interface FakeAdminBackend {
   missions: StoredMission[];
   /** Ids of tasks that have practice records (an attempt, a problem report or an opened hint): they block deletes (FR-56, CA-D22). */
   usage: Set<string>;
+  /** Stats history and the flag queue (slice 9, `fake-progress-backend.ts`). */
+  progress: ProgressState;
   /** Ids handed out by the backend, predictable for tests. */
   nextId: number;
   handle(request: Request): Promise<Response>;
@@ -353,7 +363,8 @@ const noContent = () => new Response(null, { status: 204 });
 
 /** Creates a fake admin backend. `seeded` loads the seed data; `signedIn` starts with a session. */
 export function createFakeAdminBackend({ signedIn = false, seeded = true } = {}): FakeAdminBackend {
-  const data = seeded ? seed() : { ...seed(), sources: [], tasks: [], missions: [] };
+  const full = seed();
+  const data = seeded ? full : { ...full, sources: [], tasks: [], missions: [] };
   const backend: FakeAdminBackend = {
     signedIn,
     password: ADMIN_PASSWORD,
@@ -366,6 +377,7 @@ export function createFakeAdminBackend({ signedIn = false, seeded = true } = {})
     tasks: data.tasks,
     missions: data.missions,
     usage: new Set(),
+    progress: createProgress(seedTasks(full.tasks), seeded),
     nextId: 1,
     handle: (request) => handle(backend, request),
   };
@@ -520,6 +532,8 @@ async function handle(b: FakeAdminBackend, request: Request): Promise<Response> 
     return new Response(null, { status: 204 });
   }
   if (path === '/api/admin/reference') return json(200, b.reference);
+  const progress = handleProgress(b, request, url, check);
+  if (progress) return progress;
 
   if (path === '/api/admin/sources' && method === 'GET') return json(200, b.sources.map((s) => s.source));
   if (path === '/api/admin/sources' && method === 'POST') return uploadSource(b, request);
