@@ -5,6 +5,14 @@ import { unwrap } from '@/features/admin-access/problem';
 
 export type MissionBriefing = components['schemas']['MissionBriefing'];
 
+/**
+ * Starts a replay of a completed mission, or returns its unfinished replay run unchanged
+ * (`startReplay`, FR-33): the first unresolved task of that run. 409 when the mission is not complete.
+ */
+export async function startReplay(missionId: string): Promise<components['schemas']['TaskView']> {
+  return unwrap(await childClient.POST('/api/child/missions/{missionId}/replay', { params: { path: { missionId } } }));
+}
+
 /** The mission briefing (`getMissionBriefing`); disabled without an id. Unknown or draft → ApiError 404. */
 export function useBriefing(missionId: string | null) {
   return useQuery({

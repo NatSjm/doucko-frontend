@@ -1,6 +1,6 @@
 import { expect, type Page } from '@playwright/test';
 import { messages } from '../../src/i18n/messages';
-import { createFakeBackend, type FakeBackend } from '../../src/test/fake-child-backend';
+import { createFakeBackend, prepareChildScreen, type FakeBackend } from '../../src/test/fake-child-backend';
 
 /**
  * Answers `/api/**` from the shared fake backend with the child API (`src/test/fake-child-backend.ts`)
@@ -34,4 +34,11 @@ export async function childBackend(page: Page, backend: FakeBackend = createFake
 export async function expectChildContent(page: Page): Promise<void> {
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   await expect(page.getByText(messages['child.common.loading'])).toHaveCount(0);
+}
+
+/** A fresh stub in the state the route's example query needs (`/summary`: a completed mission). */
+export async function screenBackend(path: string): Promise<FakeBackend> {
+  const backend = createFakeBackend();
+  await prepareChildScreen(backend, path);
+  return backend;
 }

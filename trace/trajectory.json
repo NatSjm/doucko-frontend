@@ -52,6 +52,20 @@
         "child"
       ],
       "processComplete": true
+    },
+    {
+      "slice": "2026-10-07-implement-gamification-ui",
+      "reviewEvidence": "clean",
+      "trailerCommits": 3,
+      "libDomains": [
+        "mission",
+        "summary",
+        "task",
+        "hq",
+        "rank",
+        "skin"
+      ],
+      "processComplete": true
     }
   ],
   "overlaps": [
@@ -81,7 +95,22 @@
       "domain": "task",
       "slices": [
         "2026-10-04-implement-authoring-tasks-ui",
-        "2026-10-05-implement-practice-flow-ui"
+        "2026-10-05-implement-practice-flow-ui",
+        "2026-10-07-implement-gamification-ui"
+      ]
+    },
+    {
+      "domain": "hq",
+      "slices": [
+        "2026-10-05-implement-practice-flow-ui",
+        "2026-10-07-implement-gamification-ui"
+      ]
+    },
+    {
+      "domain": "mission",
+      "slices": [
+        "2026-10-05-implement-practice-flow-ui",
+        "2026-10-07-implement-gamification-ui"
       ]
     }
   ],
@@ -101,7 +130,15 @@
     },
     {
       "check": "in-scope",
-      "msg": "lib/task/ modified by 2 slices (2026-10-04-implement-authoring-tasks-ui, 2026-10-05-implement-practice-flow-ui) — review for scope drift"
+      "msg": "lib/task/ modified by 3 slices (2026-10-04-implement-authoring-tasks-ui, 2026-10-05-implement-practice-flow-ui, 2026-10-07-implement-gamification-ui) — review for scope drift"
+    },
+    {
+      "check": "in-scope",
+      "msg": "lib/hq/ modified by 2 slices (2026-10-05-implement-practice-flow-ui, 2026-10-07-implement-gamification-ui) — review for scope drift"
+    },
+    {
+      "check": "in-scope",
+      "msg": "lib/mission/ modified by 2 slices (2026-10-05-implement-practice-flow-ui, 2026-10-07-implement-gamification-ui) — review for scope drift"
     }
   ]
 }

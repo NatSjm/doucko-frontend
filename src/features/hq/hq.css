@@ -1,10 +1,22 @@
-/* HQ: the hero panel with "Pokračovat", then the missions by topic (tokens only). */
+/* HQ: the hero panel with the rank, the XP bar and "Pokračovat", then the missions by topic (tokens only). */
 .hq-hero {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-5);
+  gap: var(--space-6);
   border-radius: var(--radius-xl);
+}
+
+.hq-hero .rank-panel {
+  flex: 1;
+}
+
+.hq-hero-go {
+  flex: none;
+  width: calc(var(--space-8) * 5);
+  display: grid;
+  justify-items: start;
+  gap: var(--space-4);
 }
 
 .hq-intro {

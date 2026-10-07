@@ -1,0 +1,117 @@
+{
+  "kind": "demo",
+  "results": [
+    {
+      "id": "slice8-hq-progress",
+      "title": "HQ progress: rank, XP bar towards the next rank and solved tasks (FR-37)",
+      "proof": "FR-37",
+      "video": "docs/qa/demo-recordings/slice8-gamification/slice8-hq-progress.webm",
+      "screenshot": "docs/qa/demo-recordings/slice8-gamification/slice8-hq-progress.png",
+      "explainer": "docs/qa/demo-recordings/slice8-gamification/slice8-hq-progress.md",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "Everything the requirement asks for is visible in the HQ rank card. It shows a red hexagon medal, the label 'HODNOST 2' and the rank name 'Kadet' in bold. '275 XP' is at the top right. The yellow XP bar is filled to about the middle of the dark track (roughly 50%), with '125 z 250 XP do hodnosti Strážce' under it, and 'Vyřešené úlohy: 5' is at the bottom of the card. There is no negative XP, timer, streak or leaderboard. The UI is Czech in the light cream/pink theme. All text is legible with dark text on light backgrounds. The weakest spots are the small grey 'HODNOST 2' label and the bar caption, which look adequate by eye but are worth confirming with an AA contrast check."
+      }
+    },
+    {
+      "id": "slice8-hq-top-rank",
+      "title": "HQ at the top rank: a full bar marked \"Nejvyšší hodnost!\" with no next target (FR-37)",
+      "proof": "FR-37",
+      "video": "docs/qa/demo-recordings/slice8-gamification/slice8-hq-top-rank.webm",
+      "screenshot": "docs/qa/demo-recordings/slice8-gamification/slice8-hq-top-rank.png",
+      "explainer": "docs/qa/demo-recordings/slice8-gamification/slice8-hq-top-rank.md",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The HQ rank card shows 'HODNOST 5' / 'Legenda', '1 600 XP' top-right, a yellow XP bar filled all the way across, and 'Nejvyšší hodnost!' under the bar. There is no 'do hodnosti' next-rank text anywhere on the page, and the mission cards below rendered fully. All text is legible. The one weak spot is the 'Nejvyšší hodnost!' caption, which is very small mid-grey type on white. It probably passes AA contrast, but it's the key words for this requirement, so making it larger or bolder would make the top-rank state easier to notice."
+      }
+    },
+    {
+      "id": "slice8-rankup-hq",
+      "title": "A rank-up credited outside a session is celebrated once on HQ and acknowledged (FR-36)",
+      "proof": "FR-36",
+      "video": "docs/qa/demo-recordings/slice8-gamification/slice8-rankup-hq.webm",
+      "screenshot": "docs/qa/demo-recordings/slice8-gamification/slice8-rankup-hq.png",
+      "explainer": "docs/qa/demo-recordings/slice8-gamification/slice8-rankup-hq.md",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The HQ shows a pink rank-up card with the eyebrow 'NOVÁ HODNOST!', 'Kadet' in a large bold display face, the sentence 'Postoupila jsi na hodnost Kadet. Jen tak dál!', an original crimson hexagon medal with a gold four-point star and sunburst halo, and a crimson 'Super!' button. The progress card below matches it: 'HODNOST 2 / Kadet', '150 XP', 'Vyřešené úlohy: 5', and '0 z 250 XP do hodnosti Strážce'. All text is dark on light or white on crimson. The smallest text, the gray '0 z 250 XP…' caption, is small but still legible, and nothing is clipped or overlapping."
+      }
+    },
+    {
+      "id": "slice8-rankup-reduced-motion",
+      "title": "The rank-up celebration under reduced motion: same text and medal, nothing moves (FR-36, NFR-13)",
+      "proof": "FR-36, NFR-13",
+      "video": "docs/qa/demo-recordings/slice8-gamification/slice8-rankup-reduced-motion.webm",
+      "screenshot": "docs/qa/demo-recordings/slice8-gamification/slice8-rankup-reduced-motion.png",
+      "explainer": "docs/qa/demo-recordings/slice8-gamification/slice8-rankup-reduced-motion.md",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The HQ rank-up banner at the top of the page is fully shown: the small 'NOVÁ HODNOST!' label, the large 'Kadet' heading, the line 'Postoupila jsi na hodnost Kadet. Jen tak dál!', and a fully drawn red hexagon medal with a gold star and a static gold halo. Nothing in it is faded, clipped or caught mid-animation. All text is dark navy on light pink or white, and the 'Super!' and 'Pokračovat' buttons have white text on red, which meets AA contrast. The smallest grey text ('0 z 250 XP do hodnosti Strážce') is still legible."
+      }
+    },
+    {
+      "id": "slice8-rankup-task",
+      "title": "A task award crossing a threshold mid-mission celebrates on the feedback with \"+10 XP\" (FR-36, FR-38)",
+      "proof": "FR-36, FR-38",
+      "video": "docs/qa/demo-recordings/slice8-gamification/slice8-rankup-task.webm",
+      "screenshot": "docs/qa/demo-recordings/slice8-gamification/slice8-rankup-task.png",
+      "explainer": "docs/qa/demo-recordings/slice8-gamification/slice8-rankup-task.md",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The task screen shows the correct answer 0,75 with a \"Správně\" mark, a mint feedback card reading \"Výborně!\" with a yellow \"+10 XP\" sticker, and directly below it a pink \"NOVÁ HODNOST!\" celebration card naming \"Kadet\" with a hexagon badge. That card sits above the red \"Další úloha →\" button, and no negative XP appears anywhere. All text is legible at AA contrast, and the focus ring on \"Další úloha\" is visible. Two minor points that don't fail the check: the \"Správně\" caption and the \"zbývá 2\" chip are quite small, and the copy \"Postoupila jsi\" assumes a feminine gender, so please confirm that's intended."
+      }
+    },
+    {
+      "id": "slice8-mission-complete",
+      "title": "Mission complete: XP earned in the run, first-try count, from the last task by keyboard (FR-32)",
+      "proof": "FR-32, FR-38",
+      "video": "docs/qa/demo-recordings/slice8-gamification/slice8-mission-complete.webm",
+      "screenshot": "docs/qa/demo-recordings/slice8-gamification/slice8-mission-complete.png",
+      "explainer": "docs/qa/demo-recordings/slice8-gamification/slice8-mission-complete.md",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The heading 'Mise je splněná!' is shown above a pink card. The card has a yellow star sticker reading '+35 XP' and the lines 'Získala jsi 35 XP.', '☆ 1 na první pokus' and 'Úloh v misi: 2'. Below the card are the red 'Zpět na HQ' button and the outlined 'Zopakovat misi' button. There's no rank-up element, and no negative XP, minus sign or '+0 XP' anywhere. All text is legible. The grey 'Úloh v misi: 2' line on light pink has the lowest contrast on the page but still looks like it passes AA by eye."
+      }
+    },
+    {
+      "id": "slice8-mission-complete-rankup",
+      "title": "Mission complete with a rank-up: the celebration on the summary, then a static line on return (FR-32, FR-36)",
+      "proof": "FR-32, FR-36",
+      "video": "docs/qa/demo-recordings/slice8-gamification/slice8-mission-complete-rankup.webm",
+      "screenshot": "docs/qa/demo-recordings/slice8-gamification/slice8-mission-complete-rankup.png",
+      "explainer": "docs/qa/demo-recordings/slice8-gamification/slice8-mission-complete-rankup.md",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The page is fully rendered under the heading \"Mise je splněná!\". The first card has a yellow star badge reading \"+30 XP\", the lines \"Získala jsi 30 XP.\" and \"☆ 1 na první pokus\", and \"Úloh v misi: 1\". The second card has the red hexagon medal with a glowing halo, \"NOVÁ HODNOST!\", a large \"Kadet\", and the sentence \"Postoupila jsi na hodnost Kadet. Jen tak dál!\" All text is dark navy on light pink or cream and easy to read. The grey \"Úloh v misi: 1\" is the faintest text but still looks like it passes AA, and nothing is clipped, overlapping or caught mid-animation."
+      }
+    },
+    {
+      "id": "slice8-replay",
+      "title": "Replay a completed mission: fresh attempts, no XP, mission stays complete on HQ (FR-33)",
+      "proof": "FR-33, FR-32",
+      "video": "docs/qa/demo-recordings/slice8-gamification/slice8-replay.webm",
+      "screenshot": "docs/qa/demo-recordings/slice8-gamification/slice8-replay.png",
+      "explainer": "docs/qa/demo-recordings/slice8-gamification/slice8-replay.md",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The screen is fully rendered. It has the heading 'Opakování je hotové!' and a pink card with all three facts: 'Získané XP: 0. Za opakování se XP nepřipisují, ty už máš z prvního průchodu.' (kind, not punishing), a star icon with '1 na první pokus', and 'Úloh v misi: 1'. Below it are a crimson 'Zpět na HQ' button and an outlined 'Zopakovat misi' button with a replay icon. All text is legible. The text with the lowest contrast is the grey 'Úloh v misi: 1' on light pink, which looks close to the WCAG-AA minimum but still passes by eye."
+      }
+    }
+  ]
+}

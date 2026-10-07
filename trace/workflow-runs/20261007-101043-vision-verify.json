@@ -1,0 +1,250 @@
+{
+  "workflow": "vision-verify",
+  "file": "./.claude/workflows/vision-verify.js",
+  "description": "Eyes-on-pixels validation: a fresh judge LOOKS AT each recorded settled still and decides whether it visibly demonstrates the requirement and is legible {met, readable}. Catches what code review, DOM assertions, and even axe miss (dead controls, poor contrast, wrong-moment frames). Pairs with record-demos + check-recordings; on any miss, fix -> re-record -> re-verify until met.",
+  "dryRun": false,
+  "startedAt": "2026-10-07T10:10:43.883Z",
+  "finishedAt": "2026-10-07T10:12:36.287Z",
+  "args": {
+    "clips": [
+      {
+        "id": "slice8-hq-progress",
+        "proof": "FR-37",
+        "screenshot": "docs/qa/demo-recordings/slice8-gamification/slice8-hq-progress.png",
+        "requirement": "HQ shows the current rank (medal, 'Hodnost 2' and the rank name 'Kadet'), the total XP (275 XP), an XP bar towards the next rank visibly about half full with '125 z 250 XP do hodnosti Strážce', and the number of solved tasks ('Vyřešené úlohy: 5'). No negative XP, timer, streak or leaderboard. Czech UI, legible in the light theme."
+      },
+      {
+        "id": "slice8-hq-top-rank",
+        "proof": "FR-37",
+        "screenshot": "docs/qa/demo-recordings/slice8-gamification/slice8-hq-top-rank.png",
+        "requirement": "At the top rank HQ shows the 5th rank 'Legenda', 1 600 XP, a full XP bar and the words 'Nejvyšší hodnost!' with no 'do hodnosti' next-rank target."
+      },
+      {
+        "id": "slice8-rankup-hq",
+        "proof": "FR-36",
+        "screenshot": "docs/qa/demo-recordings/slice8-gamification/slice8-rankup-hq.png",
+        "requirement": "A rank-up celebration on HQ names the new rank: 'Nová hodnost!', the rank name 'Kadet' in a large display face, the sentence 'Postoupila jsi na hodnost Kadet. Jen tak dál!', an original hexagon rank medal (no borrowed anime/manga art), and a 'Super!' button to close it; the HQ progress below shows the same rank (150 XP, 'Vyřešené úlohy: 5'). Celebratory but legible."
+      },
+      {
+        "id": "slice8-rankup-reduced-motion",
+        "proof": "FR-36, NFR-13",
+        "screenshot": "docs/qa/demo-recordings/slice8-gamification/slice8-rankup-reduced-motion.png",
+        "requirement": "Under reduced motion the rank-up celebration is shown as a static message with the same text ('Nová hodnost!', 'Kadet', 'Postoupila jsi na hodnost Kadet. Jen tak dál!') and the rank medal, fully visible and legible (nothing faded, half-drawn or mid-animation)."
+      },
+      {
+        "id": "slice8-rankup-task",
+        "proof": "FR-36, FR-38",
+        "screenshot": "docs/qa/demo-recordings/slice8-gamification/slice8-rankup-task.png",
+        "requirement": "On the task screen a correct answer shows 'Výborně!' with a '+10 XP' sticker, and the rank-up celebration naming the new rank 'Kadet' appears with the feedback, above the 'Další úloha' button; no negative XP anywhere."
+      },
+      {
+        "id": "slice8-mission-complete",
+        "proof": "FR-32, FR-38",
+        "screenshot": "docs/qa/demo-recordings/slice8-gamification/slice8-mission-complete.png",
+        "requirement": "The mission-complete screen titled 'Mise je splněná!' shows the XP earned in the run ('+35 XP' sticker and 'Získala jsi 35 XP.'), the first-try count ('1 na první pokus'), the number of tasks ('Úloh v misi: 2'), no rank-up, and the actions 'Zpět na HQ' and 'Zopakovat misi'. FR-38: every XP figure is a positive award ('+35 XP'); no negative XP, minus sign or '+0 XP' anywhere."
+      },
+      {
+        "id": "slice8-mission-complete-rankup",
+        "proof": "FR-32, FR-36",
+        "screenshot": "docs/qa/demo-recordings/slice8-gamification/slice8-mission-complete-rankup.png",
+        "requirement": "The mission-complete screen shows '+30 XP', '1 na první pokus' and the rank-up celebration with the new rank name 'Kadet' ('Nová hodnost!', the medal and the sentence), legible."
+      },
+      {
+        "id": "slice8-replay",
+        "proof": "FR-33, FR-32",
+        "screenshot": "docs/qa/demo-recordings/slice8-gamification/slice8-replay.png",
+        "requirement": "After a replay of a completed mission, the screen 'Opakování je hotové!' says 0 XP were earned because a replay earns no XP ('Získané XP: 0. Za opakování se XP nepřipisují…'), shows the first-try count, and offers 'Zpět na HQ' and 'Zopakovat misi'; the wording is kind, not punishing. FR-32: it is the mission-complete screen of that run, showing the XP earned (0), the first-try count and the number of tasks."
+      }
+    ]
+  },
+  "settings": {
+    "allowedTools": null,
+    "concurrency": 4,
+    "model": null,
+    "budgetPerAgentUsd": 2,
+    "maxTotalUsd": 6,
+    "untypedTools": "Read,Grep,Glob,Write,Edit",
+    "permissionMode": "acceptEdits"
+  },
+  "outcome": "ok",
+  "stoppedBecause": null,
+  "error": null,
+  "totalCostUsd": 2.0492,
+  "steps": [
+    {
+      "label": "see:slice8-hq-progress",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 631,
+      "durationMs": 25957,
+      "sessionId": "c4c6fc40-2169-4d4c-9942-b2be0a7431fe",
+      "costUsd": 0.1925448,
+      "numTurns": 3,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "Everything the requirement asks for is visible in the HQ rank card. It shows a red hexagon medal, the label 'HODNOST 2' and the rank name 'Kadet' in bold. '275 XP' is at the top right. The yellow XP bar is filled to about the middle of the dark track (roughly 50%), with '125 z 250 XP do hodnosti Strážce' under it, and 'Vyřešené úlohy: 5' is at the bottom of the card. There is no negative XP, timer, streak or leaderboard. The UI is Czech in the light cream/pink theme. All text is legible with dark text on light backgrounds. The weakest spots are the small grey 'HODNOST 2' label and the bar caption, which look adequate by eye but are worth confirming with an AA contrast check."
+      }
+    },
+    {
+      "label": "see:slice8-hq-top-rank",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 446,
+      "durationMs": 27768,
+      "sessionId": "b7ab104e-45bf-42c7-ab3d-ecfec8136316",
+      "costUsd": 0.1906808,
+      "numTurns": 3,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "The HQ rank card shows 'HODNOST 5' / 'Legenda', '1 600 XP' top-right, a yellow XP bar filled all the way across, and 'Nejvyšší hodnost!' under the bar. There is no 'do hodnosti' next-rank text anywhere on the page, and the mission cards below rendered fully. All text is legible. The one weak spot is the 'Nejvyšší hodnost!' caption, which is very small mid-grey type on white. It probably passes AA contrast, but it's the key words for this requirement, so making it larger or bolder would make the top-rank state easier to notice."
+      }
+    },
+    {
+      "label": "see:slice8-rankup-hq",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 666,
+      "durationMs": 24614,
+      "sessionId": "d001e4be-32a9-4dd5-b139-c68becf0cb47",
+      "costUsd": 0.1949368,
+      "numTurns": 3,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "The HQ shows a pink rank-up card with the eyebrow 'NOVÁ HODNOST!', 'Kadet' in a large bold display face, the sentence 'Postoupila jsi na hodnost Kadet. Jen tak dál!', an original crimson hexagon medal with a gold four-point star and sunburst halo, and a crimson 'Super!' button. The progress card below matches it: 'HODNOST 2 / Kadet', '150 XP', 'Vyřešené úlohy: 5', and '0 z 250 XP do hodnosti Strážce'. All text is dark on light or white on crimson. The smallest text, the gray '0 z 250 XP…' caption, is small but still legible, and nothing is clipped or overlapping."
+      }
+    },
+    {
+      "label": "see:slice8-rankup-reduced-motion",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 578,
+      "durationMs": 25471,
+      "sessionId": "2e391a51-7b6d-40c6-9bf2-f7594d2a48ae",
+      "costUsd": 0.19473279999999998,
+      "numTurns": 3,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "The HQ rank-up banner at the top of the page is fully shown: the small 'NOVÁ HODNOST!' label, the large 'Kadet' heading, the line 'Postoupila jsi na hodnost Kadet. Jen tak dál!', and a fully drawn red hexagon medal with a gold star and a static gold halo. Nothing in it is faded, clipped or caught mid-animation. All text is dark navy on light pink or white, and the 'Super!' and 'Pokračovat' buttons have white text on red, which meets AA contrast. The smallest grey text ('0 z 250 XP do hodnosti Strážce') is still legible."
+      }
+    },
+    {
+      "label": "see:slice8-rankup-task",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 524,
+      "durationMs": 17216,
+      "sessionId": "2e360a68-04ac-4e01-a167-f60a78d45885",
+      "costUsd": 0.1921968,
+      "numTurns": 3,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "The task screen shows the correct answer 0,75 with a \"Správně\" mark, a mint feedback card reading \"Výborně!\" with a yellow \"+10 XP\" sticker, and directly below it a pink \"NOVÁ HODNOST!\" celebration card naming \"Kadet\" with a hexagon badge. That card sits above the red \"Další úloha →\" button, and no negative XP appears anywhere. All text is legible at AA contrast, and the focus ring on \"Další úloha\" is visible. Two minor points that don't fail the check: the \"Správně\" caption and the \"zbývá 2\" chip are quite small, and the copy \"Postoupila jsi\" assumes a feminine gender, so please confirm that's intended."
+      }
+    },
+    {
+      "label": "see:slice8-mission-complete",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 689,
+      "durationMs": 15780,
+      "sessionId": "4655b1cb-47c3-4b28-b665-ee5595f53da2",
+      "costUsd": 0.1887648,
+      "numTurns": 3,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "The heading 'Mise je splněná!' is shown above a pink card. The card has a yellow star sticker reading '+35 XP' and the lines 'Získala jsi 35 XP.', '☆ 1 na první pokus' and 'Úloh v misi: 2'. Below the card are the red 'Zpět na HQ' button and the outlined 'Zopakovat misi' button. There's no rank-up element, and no negative XP, minus sign or '+0 XP' anywhere. All text is legible. The grey 'Úloh v misi: 2' line on light pink has the lowest contrast on the page but still looks like it passes AA by eye."
+      }
+    },
+    {
+      "label": "see:slice8-mission-complete-rankup",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 496,
+      "durationMs": 16185,
+      "sessionId": "235f4544-3050-42cb-826a-4abc9d1065fe",
+      "costUsd": 0.1879208,
+      "numTurns": 3,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "The page is fully rendered under the heading \"Mise je splněná!\". The first card has a yellow star badge reading \"+30 XP\", the lines \"Získala jsi 30 XP.\" and \"☆ 1 na první pokus\", and \"Úloh v misi: 1\". The second card has the red hexagon medal with a glowing halo, \"NOVÁ HODNOST!\", a large \"Kadet\", and the sentence \"Postoupila jsi na hodnost Kadet. Jen tak dál!\" All text is dark navy on light pink or cream and easy to read. The grey \"Úloh v misi: 1\" is the faintest text but still looks like it passes AA, and nothing is clipped, overlapping or caught mid-animation."
+      }
+    },
+    {
+      "label": "see:slice8-replay",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 712,
+      "durationMs": 17298,
+      "sessionId": "c4fa9b29-2921-4435-8474-e9e271b16e22",
+      "costUsd": 0.1892208,
+      "numTurns": 3,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "The screen is fully rendered. It has the heading 'Opakování je hotové!' and a pink card with all three facts: 'Získané XP: 0. Za opakování se XP nepřipisují, ty už máš z prvního průchodu.' (kind, not punishing), a star icon with '1 na první pokus', and 'Úloh v misi: 1'. Below it are a crimson 'Zpět na HQ' button and an outlined 'Zopakovat misi' button with a replay icon. All text is legible. The text with the lowest contrast is the grey 'Úloh v misi: 1' on light pink, which looks close to the WCAG-AA minimum but still passes by eye."
+      }
+    },
+    {
+      "label": "write-vision",
+      "phase": "Report",
+      "agentType": null,
+      "structured": false,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Write,Edit",
+      "promptChars": 6890,
+      "durationMs": 67266,
+      "sessionId": "24564657-058d-4c95-bba5-c4ec460a2e40",
+      "costUsd": 0.5182294000000001,
+      "numTurns": 10,
+      "result": "I wrote the vision report and added the verdicts to the manifest. I could not stamp the exact UTC time: I had no shell or clock in this session, so I couldn't run `date -u`.\n\n**Timestamp:** the report's \"Generated at\" line says `2026-10-07, after 10:02:52Z` and explains why. The 10:02:52Z time is from the last `trace/ledger.jsonl` entry (the review-gate run), so it's the earliest the verdicts could have been written. The `WORKFLOW_FILL_ISO_UTC` placeholder doesn't appear in either file. If you need the exact ISO time, persisting through `scripts/run-workflow.mjs` stamps it automatically (line 293).\n\n**`docs/qa/demo-recordings/slice8-gamification/manifest.json`**\n- All 8 clips now have `\"vision\": { \"met\": true, \"readable\": true, \"notes\": \"…\" }` with the judge's notes word for word.\n- Nothing else in the manifest changed. The other three manifests weren't touched, since none of their clips were in this verdict set.\n\n**`docs/qa/vision-report.md`**\n- I replaced the report left by the earlier vision run with these verdicts.\n- The table has the columns you asked for (clip | proves | met | readable | notes). The notes in it are shortened; the full text is in the manifest.\n- The judge's \"proves\" values now match the manifest for every clip. The earlier report had a mismatch for `slice8-mission-complete` and `slice8-replay`, so I dropped that advisory.\n- **Failures:** none. All 8 clips met their requirement and all 8 are readable.\n- **Advisories (not failures):**\n  - The \"Nejvyšší hodnost!\" caption on the top-rank screen is very small; the judge suggested making it larger or bolder.\n  - Several small grey captions look close to the AA contrast limit by eye. The automated a11y contrast check should decide those.\n  - The copy \"Postoupila jsi\" / \"Získala jsi\" assumes the child is a girl. Please confirm that's intended.\n  - A still screenshot can't prove the reduced-motion clip has no animation (NFR-13). That proof depends on the e2e/a11y reduced-motion checks."
+    }
+  ],
+  "logs": [
+    {
+      "phase": "Collect",
+      "message": "8 clip still(s) to look at"
+    },
+    {
+      "phase": "Report",
+      "message": "8/8 clips met + readable"
+    }
+  ],
+  "persisted": [],
+  "returned": {
+    "clips": 8,
+    "passed": 8,
+    "failed": [],
+    "verdict": "all clips visibly prove their requirement and are readable"
+  }
+}

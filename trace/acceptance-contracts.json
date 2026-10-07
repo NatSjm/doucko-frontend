@@ -207,22 +207,22 @@
       {
         "method": "local-verifiable",
         "mechanism": "npm:test:run",
-        "artifact": null,
-        "status": "planned"
+        "artifact": "src/features/mission/MissionScreen.test.tsx",
+        "status": "artifact-ok"
       }
     ],
     "FR-36": [
       {
         "method": "local-verifiable",
         "mechanism": "npm:test:run",
-        "artifact": null,
-        "status": "planned"
+        "artifact": "src/features/hq/HqProgress.test.tsx",
+        "status": "artifact-ok"
       },
       {
         "method": "vision-verify",
         "mechanism": "npm:check:vision",
-        "artifact": null,
-        "status": "planned"
+        "artifact": "docs/qa/vision-report.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-37": [
@@ -235,24 +235,24 @@
       {
         "method": "vision-verify",
         "mechanism": "npm:check:vision",
-        "artifact": null,
-        "status": "planned"
+        "artifact": "docs/qa/vision-report.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-38": [
       {
         "method": "local-verifiable",
         "mechanism": "npm:test:run",
-        "artifact": null,
-        "status": "planned"
+        "artifact": "src/features/hq/HqProgress.test.tsx",
+        "status": "artifact-ok"
       }
     ],
     "FR-39": [
       {
         "method": "local-verifiable",
         "mechanism": "npm:test:run",
-        "artifact": null,
-        "status": "planned"
+        "artifact": "src/features/skin/denylist.test.ts",
+        "status": "artifact-ok"
       }
     ],
     "FR-58": [

@@ -1,0 +1,46 @@
+/* The mission-complete screen: the XP sticker and the stats, the rank-up, the actions (tokens only). */
+.summary-hero {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  border-radius: var(--radius-xl);
+  max-width: calc(var(--space-8) * 12);
+}
+
+/* The sticker sits in the panel, not hanging over its edge as in the task feedback. */
+.summary-burst {
+  margin: 0;
+  width: calc(var(--space-8) * 2.5);
+  height: calc(var(--space-8) * 2.5);
+}
+
+.summary-stats {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.summary-stats p {
+  margin: 0;
+}
+
+.summary-first-try {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 700;
+}
+
+.summary-count {
+  color: var(--ink-muted);
+}
+
+.summary-alert {
+  margin: 0;
+}
+
+.summary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
