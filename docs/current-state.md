@@ -8,7 +8,7 @@
 - **Date and time:** 2026-10-07 (Europe/Prague)
 - **Current phase:** Phase 4
 - **Last completed gate:** G3
-- **Active change:** none. Slice 9 `implement-progress-stats-ui` archived 2026-10-07 on branch `slice9-progress-stats` (not yet merged into `main`; the coordinator merges both slice 9 halves and runs the real-stack smoke). Slice 8 `implement-gamification-ui` merged into `main` (`b4b9d81`); real-stack smoke PASS 2026-10-07.
+- **Active change:** none. Slice 9 `implement-progress-stats-ui` (the last MVP slice) archived 2026-10-07 and merged into `main` (`d08f576`) with the backend half; real-stack smoke PASS 2026-10-08. Slice 8 `implement-gamification-ui` merged into `main` (`b4b9d81`); real-stack smoke PASS 2026-10-07.
 - **Contract pin:** `contract/` submodule (`url = ../docs`) at docs `0168eba`, API 0.5.1
 - **Progress:** Vite 8 / React 19 / TypeScript 5.9 scaffold (ADR-0003) plus slice 1 platform
   foundation: app shell with route registry and not-found screen, message catalogs (cs child, en
@@ -16,8 +16,9 @@
   the OS only (static invariants + e2e), axe and reduced-motion e2e in Chrome, Edge and Firefox,
   generated API client from the pinned contract, nginx image (one origin, security headers, DNS
   rebinding guard 421, no-cache shell), fixture/asset provenance test, real-name guard for e2e.
-- **Next task:** merge slice 9 (both halves) and run its real-stack smoke (task 4.4 of the archived change); then Phase 5 hardening — slice 9 is the last MVP slice.
+- **Next task:** Phase 5 hardening (G5) per the playbook; every MVP slice is archived and merged.
 - **Claims:**
+  - Slice 9 merged into `main` (`d08f576`); real-stack smoke PASS after the merge (2026-10-08: flag queue OPEN→re-evaluate no change→fix spec→re-evaluate +4 XP FIXED, dismiss, 409/404/400/401/403 paths, stats weeks and first-try rate, both admin screens rendered from the stack, clean log; restore of the pre-smoke V5 dump restarted the V6 backend itself); `/admin/stats` and `/admin/reports` rendered the served values in headless Chromium at 1280×720 (12 weeks → 12 rows). The backend behaviour the UI assumed held on the stack. Observation: the queue names answer parts by key (`p1`), not label — `LoggedAttempt` carries keys only (contract change if wanted) — evidence: `../backend/docs/qa/evidence/slice9-compose-smoke.md`
   - Slice 9 admin screens (`/admin/stats`: success metric as served with the short metric weeks marked, weekly table newest first with this week and the four metric weeks marked, week count 5/8/12/26/52, first-try rate per topic with "—", empty state; `/admin/reports`: flag queue in the server's order with a status filter, task excerpt and link to fix its answer spec, reason, note, attached attempt with every part's raw input in full (wrapped; locked parts noted), checker and re-evaluated verdicts with times, re-evaluate and dismiss with a focused outcome or refusal; both in the admin navigation; numeric ISO admin dates, Europe/Prague): QA battery passes (673 unit tests, coverage 100%, 636 e2e passed, 0 flaky, 24 skipped in chromium, msedge and firefox, incl. both routes in the a11y, theme and `⟦` gates) — evidence: `docs/qa/automated-verification-latest.md` (2026-10-07, run with `CI=1 PW_WORKERS=2`). Earlier full runs with 4 workers failed on Firefox browser timeouts under machine load (mostly routes this slice does not touch; passed when re-run with fewer workers); `playwright.config.ts` gained the opt-in `PW_WORKERS` cap.
   - Slice 9 review gate clean (4 majors and 9 minors fixed in `bd732c8` / `8a40a4e`, 1 minor waived) — evidence: `openspec/changes/archive/2026-10-07-implement-progress-stats-ui/review-findings.json`, `trace/workflow-runs/20261007-195534-review-gate.json`
   - Slice 9 RED run — evidence: `docs/qa/evidence/slice9-red-run.md`. No recordings in this slice (FR-40 and FR-41 are e2e-only in `trace/acceptance-contracts.json`).
