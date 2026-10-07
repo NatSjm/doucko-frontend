@@ -36,6 +36,9 @@ describe('admin layout', () => {
     // @trace FR-9 — missions are reached from every admin screen.
     expect(link(messages['admin.nav.missions'])).toHaveAttribute('href', '/admin/missions');
     expect(link(messages['admin.nav.newMission'])).toHaveAttribute('href', '/admin/missions/edit');
+    // @trace FR-40 — the stats page, @trace FR-41 — the flag queue, from every admin screen.
+    expect(link(messages['admin.nav.stats'])).toHaveAttribute('href', '/admin/stats');
+    expect(link(messages['admin.nav.reports'])).toHaveAttribute('href', '/admin/reports');
   });
 
   it('signs out from any admin screen', async () => {

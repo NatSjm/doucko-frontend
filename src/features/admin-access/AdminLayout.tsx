@@ -13,6 +13,8 @@ const NAV: { href: string; label: MessageKey }[] = [
   { href: '/admin/missions', label: 'admin.nav.missions' },
   { href: '/admin/missions/edit', label: 'admin.nav.newMission' },
   { href: '/admin/sources', label: 'admin.nav.sources' },
+  { href: '/admin/stats', label: 'admin.nav.stats' },
+  { href: '/admin/reports', label: 'admin.nav.reports' },
 ];
 
 /**
@@ -66,6 +68,21 @@ export function AdminLayout({ title, wide = false, children }: { title: ReactNod
         <h1 className="dk-t-title">{title}</h1>
         {children}
       </main>
+    </div>
+  );
+}
+
+/**
+ * A non-blocking alert while a screen shows earlier data whose refresh failed (after an action or a
+ * refetch): the data may be out of date, with a retry.
+ */
+export function RefreshFailed({ show, onRetry }: { show: boolean; onRetry: () => void }) {
+  const t = useT();
+  if (!show) return null;
+  return (
+    <div className="admin-alert admin-actions" role="alert">
+      <span>{t('admin.common.refreshFailed')}</span>
+      <Button onClick={onRetry}>{t('admin.session.retry')}</Button>
     </div>
   );
 }

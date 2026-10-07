@@ -1,0 +1,1140 @@
+{
+  "workflow": "review-gate",
+  "file": "./.claude/workflows/review-gate.js",
+  "description": "Multi-dimensional adversarial review of a diff or capability: correctness, security, and spec compliance, with every finding adversarially verified before it is reported.",
+  "dryRun": false,
+  "startedAt": "2026-10-07T19:55:34.508Z",
+  "finishedAt": "2026-10-07T20:01:51.036Z",
+  "args": {
+    "scope": "slice 9 progress-stats frontend (implement-progress-stats-ui): the admin stats page /admin/stats (success metric, weekly table, week count, first-try rate per topic, empty state), the admin flag queue /admin/reports (reports with task, reason, note, attached attempt, raw input in full, both verdicts, status filter, re-evaluate, dismiss, outcome line), the admin navigation entries, ISO admin dates, and the admin contract stub's stats and flag queue (src/test/fake-progress-backend.ts)",
+    "baseRef": "14ded76",
+    "headRef": "HEAD",
+    "focus": "Check against the change's spec delta (openspec/changes/implement-progress-stats-ui/specs/progress-stats/spec.md), the store spec progress-stats (contract/openspec/specs/progress-stats/spec.md: 'Practice statistics page', 'Flag queue', 'Re-evaluation of a reported attempt', 'Dismissing a report', 'Attempt log is append-only', 'Stats and flag queue are admin-only') and contract/api/openapi.yaml for getStats, listReports, reevaluateReport, dismissReport, Stats, WeekStats, Report, LoggedAttempt and ReevaluationResult. Pay attention to: anything the UI computes that the server should own (the metric verdict, sessions, XP), the metric and short-week presentation for every week count and for too little history, raw input shown in full and wrapped (no truncation, no horizontal scroll, U+00A0 kept, locked parts), the outcome messages for every ReevaluationResult shape (changed/unchanged, replay, XP, bonus) and for 409, focus and announcement after an action, the status filter sending only exact contract values, literal UI text bypassing the en catalog (NFR-9), WCAG AA in light and dark (NFR-13), the e2e for FR-40 and FR-41 in chromium, msedge and firefox (NFR-6), and the stub's fidelity to the contract and to the backend half's notes (../scratch/slice9-backend-behaviour.md).",
+    "change": "implement-progress-stats-ui"
+  },
+  "settings": {
+    "allowedTools": null,
+    "concurrency": 4,
+    "model": null,
+    "budgetPerAgentUsd": 2,
+    "maxTotalUsd": 20,
+    "untypedTools": "Read,Grep,Glob",
+    "permissionMode": "acceptEdits"
+  },
+  "outcome": "ok",
+  "stoppedBecause": null,
+  "error": null,
+  "totalCostUsd": 11.5859,
+  "steps": [
+    {
+      "label": "find:correctness",
+      "phase": "Find",
+      "agentType": "code-reviewer",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 2158,
+      "durationMs": 125638,
+      "sessionId": "fe6daa80-4aaa-4b85-a5d2-099e0739d7f6",
+      "costUsd": 0.8693029999999999,
+      "numTurns": 26,
+      "result": {
+        "findings": [
+          {
+            "title": "A 409 refusal moves no focus, and the pressed button can unmount, dropping focus to <body>",
+            "file": "src/features/reports/ReportsScreen.tsx",
+            "line": 60,
+            "severity": "major",
+            "confidence": "medium",
+            "evidence": "On 409 the catch block runs `setOutcome((o) => ({ text: '', seq: o.seq }))`. Because `seq` is not bumped, the focus effect (`if (outcome.seq) outcomeLine.current?.focus()`) never runs. It then calls `await reload()`. If the report was already handled elsewhere, it is no longer OPEN, so `ReportEntry` stops rendering its action buttons and the focused Re-evaluate/Dismiss button unmounts. Keyboard focus falls to the document. The spec delta says that after an action 'the outcome SHALL be announced and receive focus'. The only feedback here is the `role=\"alert\"` text, which nothing focuses.",
+            "suggestion": "Give the error paragraph `tabIndex={-1}` and a ref, and focus it after the error is set (for example with an error sequence counter). Or route the refusal text through the focused outcome line. Add a unit/e2e assertion that the alert has focus after a 409."
+          },
+          {
+            "title": "Short weeks are hidden when the shown weeks are empty but older practice exists (the 'no practice' check only looks at the shown weeks)",
+            "file": "src/features/stats/stats.ts",
+            "line": 44,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "`short: metric && !stats.metricMet && !empty && w.qualifyingSessions < METRIC_SESSIONS` turns off every Short marker when `noPractice(stats)` is true. `noPractice` only checks the weeks in the response (`stats.weeks.every(...)`). If the child practised before the 5-week window, the metric is 'Not met', all four metric weeks have 0 qualifying sessions, and yet no week is marked short. The page also shows 'No practice recorded yet', while `firstTryRateByTopic` can show non-zero resolved counts on the same page. The spec only exempts the 'no practice recorded' case and otherwise requires 'every metric week in the response with fewer than 3 qualifying sessions SHALL be marked as short'.",
+            "suggestion": "Treat the page as empty only when the topic table also has nothing resolved (every `resolved === 0`). Or keep the Short markers whenever `metricMet` is false and limit the empty state to the explanatory message. Add a test where old practice exists and the visible weeks are all zero."
+          },
+          {
+            "title": "The 'unchanged' outcome always says the attempt is still not correct, which is wrong for other changed:false reasons",
+            "file": "src/features/reports/ReportsScreen.tsx",
+            "line": 21,
+            "severity": "minor",
+            "confidence": "low",
+            "evidence": "`if (!result.changed) return format(t('admin.reports.unchanged'), { task })`. The catalog string reads 'under the current answer spec the attempt is still not correct'. The stub (and likely the backend) also returns `changed:false` when the attempt was already correct (`wasCorrect`) or when the task already has an outcome at or above the re-evaluated one (`RANK[outcome] <= RANK[stored.taskState]`). In those cases the admin is told something false.",
+            "suggestion": "Use neutral copy such as 'Nothing changed … the report stays open', or check `result.report.attempt?.reevaluation` and the verdicts to tell 'still wrong' apart from 'already resolved'. Confirm the backend's changed:false cases against the backend notes."
+          },
+          {
+            "title": "The 409 message shows the server's `problem.detail` directly, bypassing the en catalog",
+            "file": "src/features/reports/ReportsScreen.tsx",
+            "line": 62,
+            "severity": "minor",
+            "confidence": "low",
+            "evidence": "`setError(e.problem?.detail ?? t('admin.reports.alreadyHandled'))` renders whatever English text the backend sends. In the stub this is, for example, 'Only an open report can be dismissed; this one is FIXED.', which includes a raw enum value. NFR-9 requires externalized UI strings. The spec does ask to 'show the server's reason', so this is a judgement call, but the shown text is not under the frontend's control.",
+            "suggestion": "Map the refusal to catalog strings, for example using the report's new status after the reload ('This report is already Fixed/Dismissed'). Or record a documented NFR-9 exception for server-provided problem details."
+          },
+          {
+            "title": "The part-key column is very narrow and its keys do not wrap under table-layout: fixed",
+            "file": "src/features/reports/reports.css",
+            "line": 75,
+            "severity": "minor",
+            "confidence": "low",
+            "evidence": "`.report-parts { table-layout: fixed; }` combined with `.report-parts th:first-child { width: calc(var(--space-8) * 1); }` fixes the Part column to a single spacing step. The key cell `<td data-content>{key}</td>` has no `overflow-wrap`, so a longer part key overflows into the Raw input column instead of wrapping. The spec asks that content wrap inside the entry. Also, `calc(x * 1)` does nothing.",
+            "suggestion": "Add `overflow-wrap: anywhere` to the table cells (or at least the first column), and size the column with a token-based min width instead of a fixed `--space-8`."
+          },
+          {
+            "title": "The e2e wrap assertion for long raw input is vacuous for an inline span",
+            "file": "e2e/flag-queue.spec.ts",
+            "line": 125,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "`raw.evaluate((el) => el.getClientRects().length > 1 || el.scrollWidth <= el.clientWidth)` runs on `.report-raw`, which is an inline `<span>`. For inline elements both `scrollWidth` and `clientWidth` are 0, so the second disjunct is always true and the check passes even if the text does not wrap. It also never checks that the text stays inside its table cell or entry, which matters under `table-layout: fixed`.",
+            "suggestion": "Assert that the span's bounding rect fits inside the `.report-entry` (or the cell) rect, and that `getClientRects().length > 1` at 1280×720 for the 100-code-point input."
+          },
+          {
+            "title": "A failed refetch after an action is ignored while cached data exists, so a stale queue still offers actions",
+            "file": "src/features/reports/ReportsScreen.tsx",
+            "line": 74,
+            "severity": "minor",
+            "confidence": "low",
+            "evidence": "The screen only renders `LoadState` when `!reports.data`. After `invalidateQueries` in `reload()`, a failed refetch leaves the old data in place with `isError` true. The handled report still shows as OPEN with Re-evaluate/Dismiss, and nothing tells the admin the list is stale. `StatsScreen` follows the same pattern (`if (!stats.data)`).",
+            "suggestion": "When `reports.isError && reports.data` is true, show a non-blocking alert with a retry button (catalog string)."
+          },
+          {
+            "title": "Stale doc comments describe a date format the code no longer produces",
+            "file": "src/features/stats/stats.ts",
+            "line": 73,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "`formatWeek` is documented as returning '\"5 Oct 2026\"', but it calls `adminDate`, which returns ISO `YYYY-MM-DD`. Likewise `formatTime` in `src/features/reports/reports.ts:3` says '\"5 Oct 2026, 16:20\"', while `adminDateTime` returns '2026-10-05 16:20'. Both wrappers are thin pass-throughs.",
+            "suggestion": "Fix the comments to match the ISO output, or drop the wrappers and call `adminDate`/`adminDateTime` directly."
+          }
+        ]
+      }
+    },
+    {
+      "label": "find:security",
+      "phase": "Find",
+      "agentType": "security-reviewer",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 2186,
+      "durationMs": 48773,
+      "sessionId": "d04dacfe-37d9-41c3-b6b6-4e382f331c00",
+      "costUsd": 0.4724672,
+      "numTurns": 16,
+      "result": {
+        "findings": []
+      }
+    },
+    {
+      "label": "find:spec-compliance",
+      "phase": "Find",
+      "agentType": "spec-compliance-auditor",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 2129,
+      "durationMs": 157193,
+      "sessionId": "0ef6815b-5d6e-403c-b6b0-a309f1eaaca8",
+      "costUsd": 1.1601021999999999,
+      "numTurns": 23,
+      "result": {
+        "findings": [
+          {
+            "title": "Empty state is decided from the shown weeks only: it hides every Short mark and can say 'No practice recorded yet' when practice did happen",
+            "file": "src/features/stats/stats.ts",
+            "line": 36,
+            "severity": "major",
+            "confidence": "high",
+            "evidence": "Spec delta, 'Admin stats page': \"When the metric is not met, every metric week in the response with fewer than 3 qualifying sessions SHALL be marked as short … When no practice is recorded the page SHALL show an empty-state message.\" Code: `const empty = noPractice(stats);` … `short: metric && !stats.metricMet && !empty && w.qualifyingSessions < METRIC_SESSIONS`, and `noPractice` only looks at `stats.weeks.every(w => w.sessions === 0 && …)`, which covers just the served window (5 weeks by default). Example: the child last practised 6 or more weeks ago. With the default 5 weeks every served week is zero, so the page shows 'No practice recorded yet. The figures fill in as the child answers tasks.' (that is false) and marks none of the four metric weeks Short, even though the metric is Not met because of exactly those weeks. Even in the true 'No data yet' case, the requirement text says the four zero metric weeks SHALL be Short. design.md:42 decided otherwise ('no week is singled out as short'), so design and spec disagree. stats.test.ts:74 locks in the suppression.",
+            "suggestion": "Either mark Short whenever `!metricMet` (drop `!empty`), and word the empty-state copy so it fits the shown window only ('No practice in the weeks shown'), or amend the spec delta so the requirement says that with no practice at all no week is marked Short. Add a test where practice sits outside the window."
+          },
+          {
+            "title": "After a 409 refusal, focus is not moved to the outcome and can fall to <body>",
+            "file": "src/features/reports/ReportsScreen.tsx",
+            "line": 58,
+            "severity": "major",
+            "confidence": "high",
+            "evidence": "Spec delta, 'Admin flag queue': \"After an action the outcome SHALL be announced and receive focus: … a refusal (409) shows the server's reason and the queue reloads.\" Code in the catch branch: `setOutcome((o) => ({ text: '', seq: o.seq }))` leaves seq unchanged, so the focus effect does not run. The reason goes to `<p role=\"alert\">`, which never gets focus. After `reload()` the report is no longer OPEN, so the clicked Re-evaluate/Dismiss button is unmounted and keyboard focus is lost to the document body. The unit test at ReportsScreen.test.tsx:265 checks only the alert text and the reload, not focus. No e2e covers the 409 path.",
+            "suggestion": "On a 409 (and on other failures), move focus to the alert (give it tabIndex=-1 and focus it), or put the refusal text in the focused outcome line. Add assertions for `toHaveFocus()` in the unit test and in an e2e case for FR-41."
+          },
+          {
+            "title": "The e2e 'wrapped' assertion for long raw input can never fail; wrapping and U+00A0 inputs are not actually checked",
+            "file": "e2e/flag-queue.spec.ts",
+            "line": 122,
+            "severity": "major",
+            "confidence": "high",
+            "evidence": "Scenario 'Long raw input': \"the whole input is shown, wrapped within the entry, with no ellipsis and no horizontal page scroll\". The test runs `raw.evaluate((el) => el.getClientRects().length > 1 || el.scrollWidth <= el.clientWidth)`. `raw` is an inline `<span class=\"report-raw\">`, and for an inline element scrollWidth and clientWidth are both 0, so the second operand is always true and the check passes whether or not the text wraps. LONG_RAW (fake-progress-backend.ts:63) also contains ordinary spaces, so `overflow-wrap: anywhere` is never tested. No test, unit or e2e, renders a long input with no break opportunities, such as a run of digits joined by U+00A0. The unit test at ReportsScreen.test.tsx:126 checks only that the NBSP is preserved, not how it lays out.",
+            "suggestion": "Assert wrapping on the cell instead, for example `getClientRects().length > 1` on the span, or compare the cell height with its line-height. Add a seed or a test case of 100 code points with no spaces, or joined by U+00A0, and check that the raw box stays within the entry and that `scrollWidth <= clientWidth` holds for the document in all 3 browsers."
+          },
+          {
+            "title": "Dismiss outcome copy differs from the scenario text",
+            "file": "src/i18n/en.ts",
+            "line": 354,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "Spec delta scenario 'Dismiss': \"THEN \\\"Report dismissed.\\\" is announced\". Catalog: `'admin.reports.dismissed': 'Report on “{task}” dismissed.'`. design.md:86 also says \"Report dismissed.\". The store spec makes the copy a design choice, but the delta scenario quotes exact text that the UI does not show.",
+            "suggestion": "Change the delta scenario (and design.md) to the copy that names the task, or match the catalog to the scenario."
+          },
+          {
+            "title": "Literal list separators and sentence joins are built in code, outside the en catalog (NFR-9)",
+            "file": "src/features/reports/ReportsScreen.tsx",
+            "line": 23,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "`return result.bonusXp > 0 ? `${fixed} ${format(t('admin.reports.bonus'), …)}` : fixed;` joins two sentences in code. `rawText` (reports.ts:10), `row.sizes.join(', ')` (StatsScreen.tsx:107) and `short.map(formatWeek).join(', ')` (StatsScreen.tsx:66) use a hard-coded `', '`. AGENTS.md: \"All UI strings externalized (NFR-9)\".",
+            "suggestion": "Add catalog keys such as `admin.common.listSeparator` and `admin.reports.fixedXpWithBonus` (with {xp} and {bonus}), or use Intl.ListFormat with the admin locale."
+          },
+          {
+            "title": "Doc comments still describe the old word-style dates",
+            "file": "src/features/stats/stats.ts",
+            "line": 73,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "stats.ts:73: \"A week start … as \\\"5 Oct 2026\\\"\". reports.ts:3: \"\\\"5 Oct 2026, 16:20\\\", Europe/Prague\". The implementation (format.ts:24-31) and design.md:112 use numeric ISO dates: \"2026-10-05\" and \"2026-10-05 16:20\".",
+            "suggestion": "Update both comments to the ISO format."
+          },
+          {
+            "title": "Stub fidelity: the excerpt cuts UTF-16 code units, the topic list differs, and the re-evaluation rule is simplified",
+            "file": "src/test/fake-progress-backend.ts",
+            "line": 81,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "design.md:133 records the backend note: \"`taskPromptExcerpt` is the first 80 code points of the current prompt plus '…'\". The stub uses `prompt.slice(0, 80)`, which counts UTF-16 code units. The stub also lists every reference topic in firstTryRateByTopic (line 246), while the backend lists only topics with a published TEXT task (this one is acknowledged in the design). For replay re-evaluation (lines 275-287) the stub requires every part to be CORRECT. The store spec says \"If the new verdict is better than the attempt's recorded verdict\". I could not read the backend notes file (`../scratch/slice9-backend-behaviour.md`) because it is outside the allowed directories, so the stub was checked only against what design.md says those notes contain.",
+            "suggestion": "Use `[...prompt].slice(0, 80).join('')`. Optionally filter topics to those with a published TEXT task. Re-read the backend notes before the review gate (task 4.3), as design.md:137 promises."
+          },
+          {
+            "title": "The 'Not re-entered: correct on attempt 1' label appears for any part missing from rawInput",
+            "file": "src/features/reports/ReportsScreen.tsx",
+            "line": 186,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "Backend note (design.md:126): \"a part locked as correct on attempt 1 is absent from attempt 2's `rawInput` but has its verdict\". Code: `value === undefined ? <span>{t('admin.reports.lockedPart')}</span>` does not check that `attempt.attemptNo === 2` or that `verdict === 'CORRECT'`. A part missing from rawInput for any other reason would be labelled wrongly as locked.",
+            "suggestion": "Show lockedPart only when the attempt is attempt 2 and the part's verdict is CORRECT. Otherwise show a neutral '—'."
+          },
+          {
+            "title": "Coverage summary",
+            "file": "openspec/changes/implement-progress-stats-ui/specs/progress-stats/spec.md",
+            "line": 1,
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "13 delta scenarios: 12 implemented, 1 partial (Long raw input: the wrap assertion cannot fail), 0 missing, 0 contradicted. On top of that, 2 requirement statements are not met: Short marks are hidden in the empty state, and focus is not moved after a 409. The UI-facing store scenarios (Practice statistics page, Flag queue, Re-evaluation outcomes, Dismiss, Attempt log both verdicts, admin-only and child UI has no link) are covered by unit and e2e tests on chromium, msedge and firefox at 1280×720 (playwright.config projects). No UI computation duplicates server-owned figures: the verdict comes from `metricMet`, and sessions and XP are shown as served. The status filter sends only OPEN, FIXED or DISMISSED, or no parameter. The weeks parameter is a digit string from the fixed choices. Ticked tasks 1.x–3.x have artifacts on disk (red-run evidence, specs, routes, catalog). 4.x is open, which is correct. The NFR-13 light/dark a11y gates take in both routes through ADMIN_ROUTES; I did not run them here.",
+            "suggestion": "Fix the three major findings. Then run `CI=1 npm run qa:verify` (task 4.1) to get exit-coded a11y, theme and e2e evidence before ticking 4.x."
+          }
+        ]
+      }
+    },
+    {
+      "label": "find:visual",
+      "phase": "Find",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 2398,
+      "durationMs": 28129,
+      "sessionId": "ee040aa3-9e00-414f-95ce-0c372244d589",
+      "costUsd": 0.2243356,
+      "numTurns": 4,
+      "result": {
+        "findings": []
+      }
+    },
+    {
+      "label": "verify:src/features/reports/ReportsScreen.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1492,
+      "durationMs": 36420,
+      "sessionId": "b2c0cce7-6b11-436d-892c-ae9190d6fbb3",
+      "costUsd": 0.3095356,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the mechanism in the code. In `ReportsScreen.tsx:59-64`, the catch block runs `setOutcome((o) => ({ text: '', seq: o.seq }))` without bumping `seq`. The effect at lines 45-47 only depends on `outcome.seq`, so it does not run and nothing gets focus. The 409 branch then sets the error and awaits `reload()`, which invalidates `REPORTS_KEY`. A 409 means the report was already handled, so the refetched report is no longer OPEN.\n- With the 'OPEN' filter, the whole `<li>` disappears.\n- With 'All', `ReportEntry` stops rendering its `admin-actions` div (line 222: `report.status === 'OPEN' &&`).\n\nEither way, the Re-evaluate/Dismiss button that had focus unmounts and focus drops to `<body>`. Nothing guards against this. The `role=\"alert\"` paragraph (lines 97-101) has no ref and no `tabIndex`, and no code focuses it.\n\nThe spec claim needs a caveat. `progress-stats/spec.md:63-66` says \"the outcome SHALL be announced and receive focus: fixed…, fixed on a replay…, or nothing changed…; a refusal (409) shows the server's reason and the queue reloads.\" The 409 clause comes after the semicolon, so it is debatable whether the focus requirement covers it. Losing focus to `<body>` when the focused control unmounts is still a real keyboard/a11y defect (WCAG 2.4.3), and it is inconsistent with the success path, which deliberately moves focus.\n\nI'm downgrading the severity because `role=\"alert\"` still announces the refusal to screen readers. Only the focus position is lost, and that happens only on the 409 race.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/features/reports/ReportsScreen.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1525,
+      "durationMs": 31482,
+      "sessionId": "cc7aaf67-8e11-42df-97fc-0fc1ffd9b5c2",
+      "costUsd": 0.30712100000000003,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "severityAdjustment": "downgrade",
+        "reasoning": "I confirmed the mechanism in `src/features/reports/ReportsScreen.tsx`.\n\n**What happens on a 409:**\n- Line 60 keeps `seq` the same, so the focus effect (lines 45–47) does not run.\n- Line 63 then awaits `reload()`, which invalidates `REPORTS_KEY`.\n- The backend sends a 409 when the report was already handled (design.md:136). After the refetch, that report is FIXED or DISMISSED.\n- `ReportEntry` only shows the action buttons when `report.status === 'OPEN'` (line 222). With the OPEN filter on, the whole list item is removed instead.\n- Either way, the focused Re-evaluate or Dismiss button unmounts. Nothing else takes focus, so it falls to `<body>`.\n\n**Can a real user hit it?** Yes. The admin only has to act on a stale list, for example with a second tab open, or after a report was handled elsewhere. Re-evaluating a report with no attempt can also return 409, but the UI hides that button.\n\n**Why I downgraded it:**\n- The spec line the finding quotes (\"After an action the outcome SHALL be announced and receive focus\") lists the success outcomes. It then describes the 409 case separately: \"a refusal (409) shows the server's reason and the queue reloads\". That clause does not explicitly require focus.\n- The refusal is still announced. The `role=\"alert\"` paragraph is inserted with its text, and screen readers read inserted alerts.\n- What remains is a real keyboard and accessibility problem: after the refusal, focus drops to the document start. It is not a correctness failure or a clear spec violation, so medium/minor fits better than major."
+      }
+    },
+    {
+      "label": "verify:src/features/stats/stats.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1650,
+      "durationMs": 33576,
+      "sessionId": "ac5398b2-0a00-4339-8ee4-df974fe92b31",
+      "costUsd": 0.34609080000000003,
+      "numTurns": 7,
+      "result": {
+        "refuted": false,
+        "reasoning": "The finding holds up. In `stats.ts:35`, `empty = noPractice(stats)`, and `noPractice` (`stats.ts:64-65`) only checks the weeks in the response: no sessions, hints or reveals. When that is true, `stats.ts:44` turns off every `short` flag. `shortWeeks` builds on `weekRows`, so the metric's list of short weeks is empty too. `StatsScreen.tsx:31` uses the same check to show the 'admin.stats.empty' message.\n\nThe case can really happen. The contract spec (`contract/openspec/specs/progress-stats/spec.md:165-188`) says the response has exactly N weeks, so older activity is not in `weeks`. The first-try rate per topic is counted over all resolved tasks, with no time limit. If the child practised before the window and nothing since, the result is: the metric shows 'Not met', all four metric weeks have 0 qualifying sessions, no week is marked Short, the page says no practice is recorded, and the topic table still shows non-zero resolved counts.\n\nThe frontend change spec (`openspec/changes/implement-progress-stats-ui/specs/progress-stats/spec.md:11-13`) says: \"When the metric is not met, every metric week in the response with fewer than 3 qualifying sessions SHALL be marked as short.\" It gives no exception for the empty state. The 'No data yet' scenario only requires zeros, 'Not met', the empty message and no error. It never says to hide the Short markers. So the code breaks the frontend spec in the old-practice case. Arguably it does in the true-empty case as well. The contract spec calls short-week presentation a frontend design choice, but this repo's own spec turned that choice into a SHALL.\n\nNothing else guards this, and no test covers old practice with all-zero visible weeks. The effect is only on what the admin page shows, so minor severity is right.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/features/stats/stats.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1683,
+      "durationMs": 38164,
+      "sessionId": "6fa664e4-9ceb-48fb-82dd-9b7f8df1d4ad",
+      "costUsd": 0.34731080000000003,
+      "numTurns": 8,
+      "result": {
+        "refuted": false,
+        "reasoning": "The finding is confirmed. In `stats.ts:44`, `short` requires `!empty`. `empty = noPractice(stats)` (line 64–65) is true only when every *served* week has 0 sessions, 0 hints and 0 reveals. It never looks at `firstTryRateByTopic`.\n\nThe store spec (`contract/openspec/specs/progress-stats/spec.md:165-178`) limits the weekly figures to the N requested weeks. The first-try rate, by contrast, covers every task \"resolved at least once\" with no time window. So a response can easily have all-zero weeks, `metricMet=false` and non-zero `resolved` counts.\n\nReal-user scenario: the child practised, then took a break of 5 or more weeks (summer holidays, illness). The admin opens Stats with the default 5 weeks and sees:\n- \"No practice recorded yet. The figures fill in as the child answers tasks.\"\n- No \"Short\" chips on any of the four metric weeks, even though each has 0 qualifying sessions and the verdict is Not met.\n- No \"Short weeks:\" list.\n- A topic table on the same page with, for example, \"75%, 6 of 8 first try\".\n\nThe empty-state message is then factually wrong, and the frontend change spec's rule is broken: \"When the metric is not met, every metric week in the response with fewer than 3 qualifying sessions SHALL be marked as short.\" That spec only exempts the case where \"no practice is recorded\", and practice *was* recorded.\n\nThe design doc's choice to treat all-zero served weeks as empty does not cover this. It assumes no practice at all (\"With no practice at all the empty-state message speaks\"). The existing tests (`stats.test.ts:74`, `StatsScreen.test.tsx:119`) only cover a truly empty history.\n\nNo other code guards against this: the backend serves exactly N zero weeks for inactive periods (spec line 170–171). The bug needs an ordinary situation, not an edge case. The impact is a misleading admin display with no security or data effect, so the minor severity is right.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/features/reports/ReportsScreen.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1368,
+      "durationMs": 29039,
+      "sessionId": "c8879bc6-9f02-4a22-9f21-cd93a613fcfb",
+      "costUsd": 0.3056826,
+      "numTurns": 7,
+      "result": {
+        "refuted": false,
+        "reasoning": "I could not refute this. The finding holds.\n\nAt `ReportsScreen.tsx:21`, every `changed: false` result is mapped to `admin.reports.unchanged`. In `en.ts:353` that string reads \"under the current answer spec the attempt is still not correct\". Nothing in the code tells the different no-change reasons apart.\n\n**The contract has `changed: false` cases where that sentence is false.** The progress-stats spec, \"Re-evaluation of a reported attempt\" (lines 331-358), returns no change whenever \"the new verdict would not improve the outcome\", not only when the attempt is still wrong. Its own scenarios show this:\n- **\"Re-evaluation never lowers XP\"** (lines 398-400): the reported attempt was marked `CORRECT` and the API returns `changed: false`. \"Still not correct\" is wrong here, because the attempt was correct when it was logged.\n- **\"Unchanged spec changes nothing\"** (lines 402-406): the report can carry a `CORRECT` attempt. Under the current spec that attempt is correct, yet the admin is told it is not.\n- **Outcome already at or above the new one:** the attempt is now correct, but the task already has an equal or better outcome. One way this happens is two reports on the same task, where the first re-evaluation already made it correct on the 1st attempt. The spec says nothing changes, but the message says \"not correct\", which is false.\n- **Replay attempts:** the same applies when the new verdict is not better than the recorded one.\n\n**The test fake does the same.** `src/test/fake-progress-backend.ts` returns `unchanged()` when the task is missing (line 273), when the attempt was already correct (`wasCorrect`, line 280), and when the task's outcome already ranks at or above the new one (`RANK[outcome] <= RANK[stored.taskState]`, line 290).\n\n**Nothing guards against it.** The screen does not look at `report.attempt.verdicts` or `reevaluation` before choosing the copy. The spec only requires that \"the admin is told that nothing changed\", and the current string adds a reason that the code cannot know.\n\nI'm keeping severity at minor: the problem is only misleading admin copy. No data or XP is affected, and the report still correctly stays OPEN.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/features/reports/ReportsScreen.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1401,
+      "durationMs": 31294,
+      "sessionId": "f659f8c3-14c3-4b2e-95e5-4c3648036382",
+      "costUsd": 0.3151684,
+      "numTurns": 9,
+      "result": {
+        "refuted": false,
+        "reasoning": "I could not refute this one. The admin can get a false message through normal use of the queue.\n\n**The code.** At `ReportsScreen.tsx:21`, any `changed:false` result shows `admin.reports.unchanged`. That string (`src/i18n/en.ts:353`) tells the admin the attempt \"is still not correct\".\n\n**When the server returns `changed:false`.** The contract (`openapi.yaml:1879`) says only that `changed:false` means \"nothing changed and the report stays OPEN\". The fake backend (`src/test/fake-progress-backend.ts:271-290`) returns it in four cases:\n- the task is missing;\n- the re-checked attempt is still wrong;\n- the attempt was already correct (`wasCorrect`);\n- the new outcome ranks no higher than the stored task state (`RANK`).\n\nOnly the second case matches the copy.\n\n**How a real admin reaches the false message:**\n1. **A correct attempt gets attached.** `reportProblem` attaches \"the latest raw attempt of the current run\" (`openapi.yaml:979`) whether or not it was correct. Reports can have the reasons `UNCLEAR_PROMPT` or `OTHER` (`openapi.yaml:1477`). So a child who answers correctly and then flags the prompt as unclear creates an OPEN report with a correct attempt. The screen offers re-evaluate for any OPEN report with an attempt. The re-check returns `changed:false` (`wasCorrect`), and the admin is told the attempt \"is still not correct\", which is false.\n2. **Two reports on one task.** One report covers attempt 1 and another covers attempt 2. Re-evaluating the first raises the task to `CORRECT_FIRST_TRY`. Re-evaluating the second then passes the answer check, but the outcome ranks no higher than the stored state, so the result is `changed:false` and the same false message appears.\n\n**What softens it.** The real backend wasn't checked; only the fake was. But the contract doesn't limit `changed:false` to \"still wrong\", so the frontend shouldn't assume it. The impact is a misleading admin message only: no data or XP is affected, and the report correctly stays open. Severity stays minor.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/features/reports/ReportsScreen.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1264,
+      "durationMs": 26583,
+      "sessionId": "b9470eed-2848-4af5-a012-9dfdd3325e06",
+      "costUsd": 0.28385379999999993,
+      "numTurns": 11,
+      "result": {
+        "refuted": true,
+        "reasoning": "The finding is refuted. `ReportsScreen.tsx:62` does show `e.problem?.detail`, but that is what the spec asks for. It is not a correctness bug.\n\n1. **The spec requires it.** The change's own spec, `openspec/changes/implement-progress-stats-ui/specs/progress-stats/spec.md:66`, says \"a refusal (409) shows the server's reason and the queue reloads\". The design table (`design.md:27`) says the same: \"409 shown with the server's reason\". Using the server's text with a catalog fallback (`t('admin.reports.alreadyHandled')`) does exactly that.\n\n2. **NFR-9 already makes an exception for server text.** In the project's spec, `openspec/specs/content-authoring/spec.md:155-158` requires every string to come from the catalogs \"except content the admin entered or the server sent\". So server-provided problem details are a documented exception. No new waiver is needed.\n\n3. **The whole admin app already works this way.** `src/features/admin-access/problem.ts:34` `problemMessage()` returns `problem.detail ?? problem.title`. It is used to show server reasons as-is in `SourcesScreen`, `ImagesEditor`, `PreviewScreen`, `TaskEditorScreen` and `ConflictAlert`. ReportsScreen follows the same pattern, only inline.\n\n4. **Language is not a problem.** The admin UI is English, and so is the backend's `detail`, so there is no language mismatch for the user.\n\n**Possible nit:** the `<p role=\"alert\">` at line 98 is not marked `data-content`. The spec says server text should be marked as content. That is a separate tagging point, not the mechanism this finding describes. The finding itself calls this \"a judgement call\", and the spec settles it in favour of the current code.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/features/reports/ReportsScreen.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1297,
+      "durationMs": 17957,
+      "sessionId": "a4e0da43-1338-4a4d-b9ea-a987c7c13a36",
+      "costUsd": 0.24802760000000001,
+      "numTurns": 7,
+      "result": {
+        "refuted": true,
+        "reasoning": "The finding describes the code correctly: line 62 renders `e.problem?.detail`, falling back to the catalog string. But this is the specified behaviour, not a defect. `openspec/changes/implement-progress-stats-ui/design.md:87-88` says \"a 409 → the server's `detail` (or \"This report was already handled.\") and the queue reloads\". The change's spec delta says \"a refusal (409) shows the server's reason\" (specs/progress-stats/spec.md:66). The repo also documents this treatment of server text under NFR-9 as an accepted project convention: the authoring-missions design says \"Server text (`detail`, `errors[].message`) … are shown as received\" (archive/2026-10-05-implement-authoring-missions-ui/design.md:96-97). The shared helper `src/features/admin-access/problem.ts:36` follows the same pattern (`detail ?? title`), and the content-authoring spec requires a 409 alert to show the problem's `detail`. So the \"documented NFR-9 exception\" the finding asks for already exists. The admin UI is English and the backend's `detail` is English, so no language mismatch can occur either. The finding raises no security or reproducibility problem: the text comes from the authenticated first-party backend and React renders it as text, so there is no injection. What remains is a style preference that contradicts the written design.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/features/reports/reports.css",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1187,
+      "durationMs": 39277,
+      "sessionId": "53f56347-115e-41a2-939a-e9012b05fd19",
+      "costUsd": 0.3243928,
+      "numTurns": 10,
+      "result": {
+        "refuted": false,
+        "reasoning": "The overflow does happen. It only shows up with keys this frontend never creates, so I'm downgrading it.\n\n**Code facts:**\n- `reports.css:71-77`: `.report-parts { table-layout: fixed }` and `th:first-child { width: calc(var(--space-8) * 1) }`. `--space-8` is 64px (`tokens.css:126`), and `.admin-table` cells have `padding: var(--space-2) var(--space-3)` (`admin-access.css:216`). That leaves roughly 40px for content.\n- `ReportsScreen.tsx:192`: `<td data-content>{key}</td>`. Neither `.report-parts` nor `.admin-table` sets `overflow-wrap` or `word-break` on cells. Only `.report-raw`, `.report-task` and `.report-facts dd` set `overflow-wrap: anywhere`.\n- The contract (`contract/api/openapi.yaml:1636`) allows part keys matching `^[a-z0-9]{1,20}$`. That is up to 20 characters with no break opportunity, about 140px or more at body size.\n- Under `table-layout: fixed`, the column width comes from the header cell and is not widened by content. A key that can't break overflows (overflow is visible by default) into the Raw input column. So the mechanism is right, and `calc(x * 1)` really is a no-op.\n\n**Why it's minor in practice:**\n- This client's task editor makes keys as `p${n}` (`taskForm.ts:72`), e.g. `p1` or `p12`, which fit easily in 40px.\n- The overflow only happens with contract-valid keys made elsewhere (backend seeds, other clients, direct API calls).\n- It is cosmetic: the key text overlaps the next cell and no data is lost.\n\n**Side note:** the contract says part keys are \"never shown to the admin or the child\", yet this column shows them. That spec mismatch is arguably the bigger problem, but it is a separate finding.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/features/reports/reports.css",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1220,
+      "durationMs": 37599,
+      "sessionId": "84f98035-5c04-4dea-995d-b75b8c64a4de",
+      "costUsd": 0.3007146,
+      "numTurns": 12,
+      "result": {
+        "refuted": true,
+        "reasoning": "The CSS mechanism is real, but a real user is very unlikely to hit it. `.report-parts` (reports.css:71-77) uses `table-layout: fixed`, the first `th` is 64px wide (`--space-8`), and `.admin-table` cells have `--space-3` (12px) padding on each side. That leaves about 40px for the key. The `<td data-content>{key}</td>` (ReportsScreen.tsx:192) has no `overflow-wrap`, and no global rule supplies one. So an unbreakable key wider than about 40px would spill into the Raw input cell.\n\nThe keys this app actually produces are short. The contract (openapi.yaml:1636) limits a key to `^[a-z0-9]{1,20}$` and says the client assigns it, and the code says the admin never sees or types it. The only client that creates keys is `taskForm.ts:69-72`, which assigns `p${n}` (p1, p2, … p10). Fixtures use `a`, `b`, `c`. Two to three narrow characters fit easily in 40px. A key long enough to overflow (roughly 6 or more characters, up to 20) could only exist if someone wrote it straight to the API, bypassing the app's own form. Even then the result is a small cosmetic overlap on an admin-only screen, with no data loss.\n\nThe `calc(x * 1)` comment is correct but only a style nit. The finding is hypothetical for real data, so I'm marking it refuted; at most it is a minor hardening nit.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:e2e/flag-queue.spec.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1189,
+      "durationMs": 26840,
+      "sessionId": "5f3f3433-8e27-4b02-a6c5-20de354fae48",
+      "costUsd": 0.22571600000000003,
+      "numTurns": 6,
+      "result": {
+        "refuted": false,
+        "reasoning": "The main claim holds; one secondary claim is wrong.\n\nWhat the code does: `ReportsScreen.tsx:197` renders `<span className=\"report-raw\" data-content>` directly inside a plain `<td>`. The only CSS for `.report-raw` (`reports.css:79-82`) sets `white-space: pre-wrap; overflow-wrap: anywhere`. Nothing changes its display, and nothing in `src` styles `[data-content]`. So the span is an inline box.\n\nWhy the check is empty: the CSSOM spec says `clientWidth` and `scrollWidth` return 0 for an inline box. That makes `el.scrollWidth <= el.clientWidth` always `0 <= 0`, so it is always true. The expression at `e2e/flag-queue.spec.ts:125` therefore passes whether or not the text wraps, and the comment \"The text wraps: the cell is taller than one line\" is not what gets tested. The only part that actually tests wrapping is the first disjunct (`getClientRects().length > 1`), and the always-true second disjunct cancels it.\n\nWhere the finding is wrong: it says the test \"never checks that the text stays inside its table cell or entry.\" Line 122 already checks that the span's right edge sits within the `.report-entry` article's bounding box. Line 123 checks that the page has no horizontal scroll. Those checks partly cover the no-overflow concern. They compare against the entry, not the cell, but the finding overstates the gap.\n\nVerdict: the mechanism is real and the wrapping assertion is vacuous, but it is limited to test strength, so the severity stays minor. Suggested fix: drop the `||` fallback and assert `getClientRects().length > 1`. Optionally also check that the span stays inside the `td` box.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:e2e/flag-queue.spec.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1222,
+      "durationMs": 25174,
+      "sessionId": "fed11a0b-0bf7-4cf0-b6f0-b2aa3cc89381",
+      "costUsd": 0.218582,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "The core claim holds. `.report-raw` is a plain `<span>` (ReportsScreen.tsx:197). Its only CSS (reports.css:79-82) sets `white-space: pre-wrap` and `overflow-wrap: anywhere`. No `display` override exists, and no rule targets `[data-content]`, so the span stays an inline box. Under CSSOM View, `scrollWidth` and `clientWidth` are 0 for inline boxes. That makes `el.scrollWidth <= el.clientWidth` always true (0 <= 0), so the assertion at e2e/flag-queue.spec.ts:125 passes whether or not the text wraps. The comment above it, \"The text wraps\", is not checked by anything. You can reproduce this by setting `white-space: nowrap` on `.report-raw`: line 125 still passes.\n\nOne part of the finding is overstated. It says the test \"never checks that the text stays inside its table cell or entry\". In fact, line 122 checks that the span's right edge stays inside the entry's (`<article>`) right edge, and line 123 checks that the page has no horizontal scroll. Containment in the entry is covered. Containment in the cell is not, and the `table-layout: fixed` concern still applies to the cell. Line 122 also doesn't prove wrapping: at 1280px, 100 unwrapped characters could fit inside a wide entry.\n\nUsers and attackers aren't affected; this is a test-quality gap. A wrap regression would get through this check silently. Severity stays minor.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/features/reports/ReportsScreen.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1104,
+      "durationMs": 20572,
+      "sessionId": "6697884c-ef94-4876-8442-ea3d727d7c82",
+      "costUsd": 0.2526758,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I could not refute the mechanism; the code works the way the finding says.\n\n1. `ReportsScreen.tsx:74` only shows `LoadState` (the error and retry) when `!reports.data`. The main render never looks at `reports.isError`.\n2. `reload()` (line 70) calls `queryClient.invalidateQueries` for the reports and stats queries. By default `invalidateQueries` does not throw when its refetch fails, so `act()` never reaches its catch block for a failed reload. It sets the success outcome line and returns.\n3. TanStack Query keeps the last good `data` when a background refetch fails and sets `isError`/`status: 'error'`. The app's query client (`src/app/queryClient.ts`: `retry: 1`) retries once, then gives up. It has no global `QueryCache` `onError` or toast, so nothing else reports the failure.\n4. The result: after a successful dismiss or re-evaluate followed by a failed refetch, the report still shows as OPEN. Its Re-evaluate and Dismiss buttons stay enabled because `busy` is reset. Nothing on screen says the list is stale.\n\nThis is a real problem but a minor one. It needs the action to succeed and the follow-up refetch to fail, which is a transient network or server failure. The status line correctly says the action happened, so the admin isn't misled about the result. If the admin clicks the stale buttons again, the server's 409 conflict shows the \"already handled\" message and triggers another reload, so it partly fixes itself. The same pattern applies to `StatsScreen` (`if (!stats.data)`). Severity minor is appropriate.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/features/reports/ReportsScreen.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1137,
+      "durationMs": 19034,
+      "sessionId": "fafec4ca-6d89-498b-aed5-bf86b6a10358",
+      "costUsd": 0.2860334,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "The mechanism is real. In ReportsScreen.tsx:74 the screen shows LoadState only when `!reports.data`. `reload()` (line 70–72) calls `invalidateQueries`. Under TanStack Query semantics, a refetch that fails keeps the previous `data` and sets `isError`. The app's QueryClient uses `retry: 1` (src/app/queryClient.ts:6), so the error does surface after one retry. Nothing in the render path reads `reports.isError` once data exists, so a handled report still shows as OPEN with Re-evaluate/Dismiss buttons and no staleness warning. StatsScreen uses the same pattern.\n\nIt can be reproduced, but only in a narrow window: the POST must succeed and then the GET refetch must fail, for example from a network blip or a 5xx right after the action. The impact is small:\n1. The status line already announces the successful outcome and names the task, so the admin knows the action happened.\n2. If the admin clicks the stale button, the backend rejects it with 409. `act()` catches this (lines 61–63), shows the \"already handled\" message and reloads again.\n3. There's no double-apply, XP corruption or security impact. The server is the guard.\n\nThe finding stands as a UX correctness gap, but it's at most minor and arguably a nit. I recommend a downgrade.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/features/stats/stats.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1010,
+      "durationMs": 13579,
+      "sessionId": "947dde3e-23c0-4752-b9b4-ef7fc15fafe2",
+      "costUsd": 0.19268760000000001,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "The finding is correct. The two doc comments describe a date format the code no longer returns.\n\n- **`formatWeek`** (`src/features/stats/stats.ts:73-76`): the comment says it returns \"5 Oct 2026\". The function only calls `adminDate(date)`, and `src/i18n/format.ts:24-26` defines that as `isoDate.slice(0, 10)`. That returns `YYYY-MM-DD`, for example `2026-10-05`.\n- **`formatTime`** (`src/features/reports/reports.ts:3-6`): the comment says \"5 Oct 2026, 16:20\". It only calls `adminDateTime(instant)`, which builds `${year}-${month}-${day} ${hour}:${minute}` (`format.ts:29-32`), for example `2026-10-05 16:20`. The comment on `adminDateTime` itself (`format.ts:28`) already shows that ISO-style format, so the wrapper comments are the stale ones.\n\nNothing else changes the output. Both wrappers pass the value straight through, with no other formatting step or fallback.\n\nThis only affects the comments; nothing goes wrong when the code runs. The ISO output appears to be what was intended, since the shared formatter's own comment matches it. The real problem is that the comments could mislead anyone reading or writing tests against these functions. Minor severity is right for that, so I'm keeping it.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/features/stats/stats.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1043,
+      "durationMs": 11736,
+      "sessionId": "f4d2a9b6-5151-419d-936b-657f4c275bf2",
+      "costUsd": 0.1911716,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "Confirmed against the code. `src/features/stats/stats.ts:73` says `formatWeek` returns a date \"as \\\"5 Oct 2026\\\"\", but its body is just `return adminDate(date)`. `adminDate` (`src/i18n/format.ts:24-26`) is `isoDate.slice(0, 10)`, so it returns `2026-10-05`. Likewise, `src/features/reports/reports.ts:3` says `formatTime` returns \"5 Oct 2026, 16:20\", but it only calls `adminDateTime` (`format.ts:29-32`), which builds `${year}-${month}-${day} ${hour}:${minute}`. Its own comment says \"2026-10-05 16:20\". Both wrappers are thin pass-throughs, so the comments are simply wrong about the output. Nothing in the code produces the documented format.\n\nFrom an exploitability or reproducibility view, no user or attacker can trigger a runtime fault here: the UI shows a consistent ISO date. The real harm is that a developer or test author could trust the comment and write wrong assertions or expectations. So the mismatch is real and reproducible, but it is a documentation and maintainability problem, not a behaviour bug. Severity \"minor\" fits.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/features/stats/stats.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 2070,
+      "durationMs": 17678,
+      "sessionId": "b26164ce-67c9-489b-833f-e9de6994dfbd",
+      "costUsd": 0.2508286,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "I could not refute the finding; the code does what it describes. In `src/features/stats/stats.ts`, line 35 sets `empty = noPractice(stats)`, and line 44 sets `short: metric && !stats.metricMet && !empty && w.qualifyingSessions < METRIC_SESSIONS`. `noPractice` (lines 64-66) only checks the weeks the server returned, which is 5 weeks by default.\n\nThe spec delta (`openspec/changes/implement-progress-stats-ui/specs/progress-stats/spec.md`, lines 11-13) says: \"When the metric is not met, every metric week in the response with fewer than 3 qualifying sessions SHALL be marked as short.\" Nothing in it allows an exception for the empty state. The 'No data yet' scenario (lines 47-51) only asks for zeros, \"Not met\", the empty-state message and no error. It never says no week should be marked Short. Only design.md lines 42-43 make that exception, so the design and the spec disagree, and the code follows the design.\n\nThe case of practice outside the window is real. If the child last practised 6 or more weeks ago, all 5 returned weeks are zero. The page then shows 'No practice recorded yet', which is false. It also hides all four Short marks, even though the backend says the metric is not met because of those weeks. Nothing else guards against this: `shortWeeks` and the row marks both go through `weekRows`.\n\nThis is a real spec-compliance bug with a misleading message to the admin. It only affects admin display (no data is lost and the child is not affected), but it fits the major rating, so I'm keeping it.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/features/stats/stats.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 2103,
+      "durationMs": 37031,
+      "sessionId": "d9d0091c-5742-4eeb-af4d-ef5a219cbb28",
+      "costUsd": 0.2828506,
+      "numTurns": 9,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the mechanism in the code, and a real user can hit it. `noPractice` (stats.ts:64-66) only checks `stats.weeks`, which holds the weeks the server returned (5 by default, DEFAULT_WEEKS). There is no all-time total field. `weekRows` sets `empty = noPractice(stats)` and adds `!empty` to the `short` condition (stats.ts:35,44). `shortWeeks` builds on `weekRows`, so the metric panel's \"short weeks\" line is hidden too. StatsScreen.tsx:31 shows `admin.stats.empty` whenever `noPractice` is true, and en.ts:315 makes that \"No practice recorded yet. The figures fill in as the child answers tasks.\"\n\nHow it happens: the child practises, then stops for 5 or more weeks (a school holiday, for example). The admin opens /admin/stats with the default 5 weeks. All served weeks are zero, so the page claims no practice was ever recorded. That is false, and the topic table (`firstTryRateByTopic`) may still list resolved tasks right next to it. The metric shows Not met, yet none of the four zero metric weeks is marked Short. The spec requirement says \"When the metric is not met, every metric week in the response with fewer than 3 qualifying sessions SHALL be marked as short\", with no exception for the empty state.\n\nThings that could have refuted it, and why they don't: nothing elsewhere guards this; the path is reachable through default settings; and design.md plus the test at stats.test.ts:74 deliberately lock in the suppression, which confirms it is intended behaviour that conflicts with the requirement text. The \"No data yet\" scenario does not ask for Short marks, but it does not forbid them either, while the normative requirement text requires them.\n\nWhy I lowered the severity: this only affects how one admin page reads. The verdict (`metricMet`) and the weekly figures are still correct and visible. No data is lost, nothing is exposed and there is no security impact. The harm is misleading copy and a missing Short marker. It is a real spec deviation, but minor rather than major.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/features/reports/ReportsScreen.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1498,
+      "durationMs": 21422,
+      "sessionId": "0d7f0c2e-28b7-4f7e-a8d7-46d5c0cf7814",
+      "costUsd": 0.241955,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I could not refute the mechanism; the code works as the finding describes. In ReportsScreen.tsx, the catch branch (line 60) runs `setOutcome((o) => ({ text: '', seq: o.seq }))` and leaves `seq` unchanged. The focus effect at lines 45-47 depends only on `[outcome.seq]`, so it does not run. The 409 reason is rendered in `<p role=\"alert\">` (lines 97-101), which has no tabIndex and is never focused. The clicked button is also disabled while `busy` is true, so it may already have dropped focus. Then `reload()` invalidates REPORTS_KEY, and a report that was refused because it was already handled is no longer OPEN. If the filter is OPEN, the whole entry disappears. Under \"All\" or other filters, the entry stays but its action buttons are not rendered, because they only show when `report.status === 'OPEN'` (line 222). Either way the focused element is unmounted and focus falls to <body>. Nothing else restores focus: AdminLayout gets no focus prop and there is no other focus handling. The spec delta (openspec/changes/implement-progress-stats-ui/specs/progress-stats/spec.md:63-66) says \"After an action the outcome SHALL be announced and receive focus:\" and then lists the outcomes, with the refusal (409) as the last item. The plain reading puts the 409 path under the focus requirement, so this is a real spec gap. I suggest downgrading the severity. The refusal is still announced through role=\"alert\", and the queue reloads correctly. What is missing is focus management, which matters for accessibility and keyboard use, but the function still works. That makes \"major\" generous; it is closer to a moderate issue. Because the spec's sentence structure can arguably be read so that the 409 clause only requires the reason and a reload, my confidence is a little lower than \"high\".",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/features/reports/ReportsScreen.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1531,
+      "durationMs": 21782,
+      "sessionId": "9fb9059b-9a71-4054-b8f9-f0869d453ec3",
+      "costUsd": 0.24773640000000002,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "The finding holds. In `src/features/reports/ReportsScreen.tsx:59-64`, the catch branch runs `setOutcome((o) => ({ text: '', seq: o.seq }))`. That leaves `seq` unchanged, so the focus effect at lines 45-47 (which depends on `[outcome.seq]`) never runs on failure. The refusal text goes into `<p role=\"alert\">` at line 98. That paragraph has no tabIndex and no ref, and nothing focuses it.\n\n**How focus is lost:** a 409 means the report is already handled. After `reload()`, its status is no longer OPEN, so the `report.status === 'OPEN'` block at line 222 stops rendering the Re-evaluate and Dismiss buttons. If the filter is OPEN, the whole entry leaves the list. Focus was on the clicked button, so it falls to `<body>`. Focus may already be lost earlier: `busy` disables that button during the request, and browsers blur a focused button when it becomes disabled. The success path recovers from this by focusing the outcome line. The 409 path does not.\n\n**Spec:** `openspec/changes/implement-progress-stats-ui/specs/progress-stats/spec.md:64-66` says the outcome SHALL \"be announced and receive focus\", and lists the 409 refusal as one of the outcomes. Screen readers still announce the alert, but nothing receives focus, so the code breaks the SHALL.\n\n**Can it happen?** Yes, with no special setup. An admin opens the queue in two tabs, or a stale view. They handle a report in one tab, then press Dismiss for it in the other using the keyboard. The server returns 409 and focus ends up on the body.\n\n**Severity:** I suggest downgrading to minor. Only the admin, a single trusted user, is affected, and only in this uncommon concurrent or stale-view case. Screen-reader users still hear the reason through `role=\"alert\"`. The impact is focus management and usability, not data or security.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:e2e/flag-queue.spec.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1780,
+      "durationMs": 20306,
+      "sessionId": "d3492d03-628b-4b58-aef8-841bee2fe6ef",
+      "costUsd": 0.2322226,
+      "numTurns": 6,
+      "result": {
+        "refuted": false,
+        "reasoning": "The mechanism is real, but the finding cites the wrong line and overstates the impact.\n\nWhat holds up: the vacuous check is at e2e/flag-queue.spec.ts:125, not line 122. It reads `raw.evaluate((el) => el.getClientRects().length > 1 || el.scrollWidth <= el.clientWidth)`. `raw` is the inline `<span className=\"report-raw\">` at ReportsScreen.tsx:197, and its CSS (reports.css:79) sets only `white-space: pre-wrap` and `overflow-wrap: anywhere`, so it stays inline. Under CSSOM, an inline box has clientWidth 0 and scrollWidth 0, so `0 <= 0` is always true. That means the \"the text wraps\" assertion can never fail. LONG_RAW (fake-progress-backend.ts:63) is normal Czech prose with many spaces, so `overflow-wrap: anywhere` is never exercised. No test renders a long string with no break opportunities, such as one joined by U+00A0.\n\nWhat it overstates: line 122 (the right edge of the span's bounding box stays within the entry's box) and line 123 (no horizontal scroll on the document) are real checks that can fail. With this input, if the text did not wrap (say `white-space: nowrap`), the span would run past the entry and line 122 would fail. So wrapping of the seeded input is checked indirectly, and line 125 is redundant rather than the only guard. The real gap is the missing case with no break opportunities. That is a coverage hole, not a defect in the product, so \"major\" is too high. I'd downgrade it.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:e2e/flag-queue.spec.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1813,
+      "durationMs": 17288,
+      "sessionId": "c3bea89b-3fde-4f42-a073-bfb256098233",
+      "costUsd": 0.22404100000000002,
+      "numTurns": 6,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the mechanism from the code. `.report-raw` is an inline `<span>` (ReportsScreen.tsx:197). Its CSS (reports.css:79) sets only white-space and overflow-wrap, not display. Under CSSOM, an inline box reports 0 for both clientWidth and scrollWidth. That makes `el.scrollWidth <= el.clientWidth` always true, so the assertion at line 125, labelled \"the text wraps\", can never fail. LONG_RAW (fake-progress-backend.ts:63) is ordinary prose with many spaces, so it wraps at normal break points. `overflow-wrap: anywhere` is never exercised, and no NBSP or no-space long input is laid out in any test.\n\nThat said, the finding overstates how much of the test is vacuous. Lines 122–123 still check two real things: the span's bounding box stays inside the entry, and the document has no horizontal scroll. So the \"within entry, no page scroll\" part of the scenario is tested for the seeded input. The gap is narrower than claimed: the explicit wrap check is a no-op, and nothing tests the case with no break opportunities.\n\nThis is a weakness in the tests, not a defect a user can trigger. The production CSS (`pre-wrap` + `overflow-wrap: anywhere`) handles long unbroken input correctly in all modern browsers. \"Major\" is too high; this is a minor test-quality issue.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/i18n/en.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1004,
+      "durationMs": 13318,
+      "sessionId": "064e2be4-e8ca-4a96-b5a9-ce1bf0ef00db",
+      "costUsd": 0.19610900000000003,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "The mismatch is real. In the change delta `openspec/changes/implement-progress-stats-ui/specs/progress-stats/spec.md:109`, the Dismiss scenario says: THEN \"Report dismissed.\" is announced. `design.md:86-87` gives the same copy: dismiss → \"Report dismissed.\". But the catalog at `src/i18n/en.ts:354` has 'Report on “{task}” dismissed.', and `ReportsScreen.tsx:56` fills it in with `report.taskPromptExcerpt`. The tests check the catalog string, not the scenario text: `ReportsScreen.test.tsx:259` and `:305`, and `e2e/flag-queue.spec.ts:106`. So the UI never announces the exact quoted text. Nothing else reconciles the two, such as another catalog key or a fallback that shows the plain copy. This is a documentation gap, not a behaviour bug: the announcement works and is arguably more informative. Minor severity fits.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/i18n/en.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1037,
+      "durationMs": 15206,
+      "sessionId": "9078dbf8-38ff-4820-b17e-0212cbfd1e26",
+      "costUsd": 0.19851020000000003,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "Confirmed. Every admin who dismisses an open report sees text that differs from the scenario.\n- The change's spec delta scenario 'Dismiss' (`openspec/changes/implement-progress-stats-ui/specs/progress-stats/spec.md:109`) says: THEN \"Report dismissed.\" is announced.\n- `design.md:86-87` gives the same wording: dismiss → \"Report dismissed.\".\n- The catalog at `src/i18n/en.ts:354` has 'Report on “{task}” dismissed.'.\n- `ReportsScreen.tsx:56` uses that catalog string, filled in with `report.taskPromptExcerpt`, for every successful dismiss. No other code path shows the shorter text.\n- The unit test (`ReportsScreen.test.tsx:259`) and the e2e test (`e2e/flag-queue.spec.ts:106`) both check against the catalog string, not the scenario's text. So the drift is built into the tests rather than caught by them.\nThe finding is correct. It only affects docs and spec wording, not behaviour, so minor is the right severity. Fixing it means editing the delta scenario and `design.md` to match the catalog, or the other way round.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/features/reports/ReportsScreen.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1134,
+      "durationMs": 18906,
+      "sessionId": "0d487172-381a-4cbc-9491-77a19d2e3974",
+      "costUsd": 0.20858240000000003,
+      "numTurns": 5,
+      "result": {
+        "refuted": true,
+        "reasoning": "The code matches the finding's description: `ReportsScreen.tsx:24` puts the `fixed` and `bonus` sentences together with a space, and `reports.ts:10`, `StatsScreen.tsx:66` and `StatsScreen.tsx:109` join lists with a hard-coded `', '`. But viewed as a correctness issue, nothing here is wrong.\n\n1. **Every word goes through the catalog.** Each sentence (`admin.reports.fixedXp`, `fixedNoXp`, `bonus`, `unchanged`, `fixedReplay`, `shortWeeks`, `noValue`) comes from `t()`. The only literals are a space and a comma. NFR-9 says \"All UI strings are externalized\"; punctuation used to join data values is not a UI string.\n\n2. **The output is correct.** NFR-9 and OQ-6 make the admin UI English-only. In English, a space between two sentences and `', '` between list items is exactly right, so no user can see a defect.\n\n3. **`rawText` is meant to show raw data.** It displays the attempt's submitted values as given (\"raw\"), so this is data formatting, not translatable copy.\n\n4. **Merged code already does the same.** `src/features/task/practice.ts:108-109` joins values with `', '` in the Czech child UI. That code passed earlier slices, so treating this pattern as a spec violation would contradict how the project already reads NFR-9.\n\nAt most, this is optional future-proofing for an admin locale that doesn't exist yet, such as switching to `Intl.ListFormat`. It is not a wrong mechanism or a real NFR-9 violation.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/features/reports/ReportsScreen.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1167,
+      "durationMs": 20207,
+      "sessionId": "bfe251b8-4889-4e8a-b4d1-c941bcbf08b5",
+      "costUsd": 0.2155028,
+      "numTurns": 6,
+      "result": {
+        "refuted": true,
+        "reasoning": "The cited code exists: ReportsScreen.tsx:24 joins two catalog sentences with a space, and reports.ts:10 and StatsScreen.tsx:66/109 join lists with ', '. But no real user sees a defect.\n\n1. The project's own NFR-9 enforcement allows this on purpose. src/app/i18n-coverage.test.tsx:22-24 counts text as covered when it is made of catalog segments plus \"whitespace, digits and punctuation between them\". The comment says: \"Separators and numbers carry no words; the lint rule allows them too.\" So `${fixed} ${bonus}` and `.join(', ')` are compliant by the repo's definition: every word comes from the catalog.\n\n2. The admin UI is English only (AGENTS.md). There is no second admin locale where ', ' or a space between sentences would be wrong. The rendered text is correct for the only audience that can see it.\n\n3. This is an existing idiom, not a regression. The child app already joins with ', ' in src/features/task/practice.ts:108-109, and nothing in src/ defines a list-separator key.\n\nAt most this is a localisation nicety for a future locale that is not planned. It is not a reproducible NFR-9 violation.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/features/stats/stats.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 866,
+      "durationMs": 13310,
+      "sessionId": "c90cb3a3-9b53-4178-b14c-d41fb850ce53",
+      "costUsd": 0.1887972,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "Confirmed. The comment at stats.ts:73 says formatWeek renders a date \"as \\\"5 Oct 2026\\\"\", and the comment at reports.ts:3 says formatTime renders \"\\\"5 Oct 2026, 16:20\\\"\". Both functions hand off to adminDate/adminDateTime, which return numeric ISO-style output. The tests pin that format: stats.test.ts:107 expects formatWeek('2026-10-05') to return '2026-10-05', and ReportsScreen.test.tsx:311 expects formatTime('2026-10-05T14:20:00Z') to return '2026-10-05 16:20'. So both comments are out of date. They affect documentation only, not runtime behaviour, so minor severity is right.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/features/stats/stats.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 899,
+      "durationMs": 13026,
+      "sessionId": "5df1642e-7f13-47c5-9be2-9d7c6e81d01f",
+      "costUsd": 0.1826956,
+      "numTurns": 4,
+      "result": {
+        "refuted": false,
+        "reasoning": "I confirmed the finding, but it describes a doc-only mismatch. Two comments are out of date:\n- `src/features/stats/stats.ts:73` says a week start displays as \"5 Oct 2026\".\n- `src/features/reports/reports.ts:3` says a report time displays as \"5 Oct 2026, 16:20\".\n\nThe code and tests produce ISO dates instead:\n- `src/i18n/format.ts:28` describes and returns \"2026-10-05 16:20\".\n- `stats.test.ts:107` asserts `formatWeek('2026-10-05')` returns '2026-10-05'.\n- `ReportsScreen.test.tsx:311` asserts `formatTime` returns '2026-10-05 16:20'.\n- `format.test.ts:27` and `StatsScreen.test.tsx:44` show the same ISO output.\n\nUsers see the correct ISO dates on screen. The only problem is that the two comments are wrong, so a developer reading them could be misled. No user or attacker can trigger any wrong behaviour from this. I'm downgrading it to a cosmetic nit with no runtime impact; the fix is still to update both comments.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/test/fake-progress-backend.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1612,
+      "durationMs": 18036,
+      "sessionId": "0f44196c-53a5-4570-bf42-0179e55da0b5",
+      "costUsd": 0.27356339999999996,
+      "numTurns": 5,
+      "result": {
+        "refuted": false,
+        "reasoning": "The main claim holds. `src/test/fake-progress-backend.ts:81` is `prompt.length > 80 ? `${prompt.slice(0, 80)}…` : prompt`. Both `.length` and `.slice` count UTF-16 code units. `design.md:133` records the backend rule as \"the first 80 code points of the current prompt plus '…'\". So with an astral character (an emoji or a math alphanumeric symbol) inside the first 80, the stub would cut a surrogate pair or keep fewer code points than the backend. Nothing elsewhere corrects this: `report()` (line 117–120) calls `excerpt` directly, and the UI shows what it is served. The repo already counts code points in other places (LONG_RAW, the 100-code-point input rule, and an archived finding about the same UTF-16 vs code-point mismatch), so this is a real inconsistency, not a misreading. Practical impact is low: the seed prompts are Czech text in the BMP, so no current test shows a difference. Of the other two points, one doesn't count against the code and one is shaky. The topic-list difference is openly acknowledged at `design.md:134-135` (\"the stub lists every reference topic — the UI renders whatever is served\"). The re-evaluation \"every part CORRECT\" rule (lines 275-280) fits a task-level outcome model and handles locked parts, so calling it a divergence is speculative without the backend notes. The finding stands as minor on the excerpt mechanism alone.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:src/test/fake-progress-backend.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1645,
+      "durationMs": 17591,
+      "sessionId": "1e70b0a0-7e84-4c55-b543-f052401208a0",
+      "costUsd": 0.2667944,
+      "numTurns": 5,
+      "result": {
+        "refuted": true,
+        "reasoning": "No real user or attacker can reach this. `src/test/fake-progress-backend.ts` is a test-only contract stub, so nothing in it ships to users. The three points also fail on their own terms:\n(1) Excerpt: the truncation branch (`prompt.length > 80`, line 81) never runs. Every seeded prompt is under 80 characters (fake-admin-backend.ts:121/137/152/167: 'Zapiš jednu polovinu jako desetinné číslo.', 'Vypočítej obvod obdélníku se stranami 3 cm a 4 cm.', and so on). They are all Czech text from the Basic Multilingual Plane (BMP), where UTF-16 code units equal code points, so the two counts could not differ even if the branch did run. The production UI just renders whatever `taskPromptExcerpt` the real backend sends.\n(2) Topic list: the finding admits design.md already records this deviation. It only changes which rows the stub returns and has no effect on product behaviour.\n(3) Re-evaluation rule: the seeded reports that can be re-evaluated are all single-part (key 'a'). For a single part, 'every part CORRECT' and 'new verdict better than the recorded WRONG' mean the same thing, so no test outcome changes. The rule also only exists inside the fake.\nAt most this is a note on how closely a test stub matches the spec, with no reproducible defect in any current test path and no real-world impact.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/features/reports/ReportsScreen.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1133,
+      "durationMs": 26946,
+      "sessionId": "5d4d4f81-9e05-4c27-a876-ed824acd1566",
+      "costUsd": 0.29051340000000003,
+      "numTurns": 9,
+      "result": {
+        "refuted": true,
+        "reasoning": "The code does what the finding says: at ReportsScreen.tsx:194, `lockedPart` is shown whenever `rawInput[key]` is undefined. `partKeys` (line 121) merges the keys of `verdicts` and `rawInput`, so this only happens when a part has a verdict but no raw input. The finding needs another way for that to happen, and the contract gives none:\n\n- openapi.yaml:192–196 says `submitAttempt` is \"Submit all parts of a task\" and that only \"Parts locked as correct from attempt 1 may be omitted on attempt 2 (OQ-11)\".\n- An attempt that can't be read is never stored (`status: UNPARSEABLE` → \"no attempt was used or stored\").\n- `LoggedAttempt.verdicts` holds only CORRECT or WRONG.\n\nSo a logged attempt can't be missing a part on attempt 1. A part with a verdict but no raw input can only be a part locked as correct on attempt 1, which is the label's exact meaning. design.md:126 says the same, and the test at ReportsScreen.test.tsx:146 covers this case.\n\nThe suggested guard (`attemptNo === 2 && verdict === 'CORRECT'`) is defensive against data the contract rules out. It doesn't fix a reachable bug. I found no path where the label is wrong, so the mechanism is not confirmed.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/features/reports/ReportsScreen.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1166,
+      "durationMs": 34027,
+      "sessionId": "07752287-e841-4750-86af-c2061a4d5926",
+      "costUsd": 0.2618336,
+      "numTurns": 8,
+      "result": {
+        "refuted": true,
+        "reasoning": "The code does what the finding says. `ReportsScreen.tsx:194` shows lockedPart whenever `rawInput[key] === undefined`. `partKeys` (line 121) takes the union of the verdict keys and the rawInput keys. The finding assumes a part can be missing from rawInput for some other reason, but it names none, and the specs give none.\n\n- The practice-flow design (archive design.md:124) says a submission carries \"the answers of every part that is not locked\". On attempt 1 nothing is locked, so every part is sent. An empty input is still sent as a string, so it is not undefined.\n- The progress-stats design (design.md:74, :126) names locking as the only reason a part has no raw input: \"a part locked as correct on attempt 1 is absent from attempt 2's rawInput but has its verdict\".\n- Only a part that was correct can be locked, so a missing part's verdict is CORRECT by construction. A check on attemptNo or the verdict would therefore never change the output for data the spec allows.\n\nThe only way to reach the mislabel is a backend that breaks its own contract. That is not something a real user or attacker can trigger, and the impact would just be a cosmetic label in the admin UI. A unit test (ReportsScreen.test.tsx:146) covers exactly the documented case. A defensive guard would do no harm, but no real problem is shown.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:openspec/changes/implement-progress-stats-ui/specs/progress-stats/spec.md",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1756,
+      "durationMs": 29364,
+      "sessionId": "70b55166-aed8-453f-8988-975966fca9fc",
+      "costUsd": 0.2694014,
+      "numTurns": 8,
+      "result": {
+        "refuted": false,
+        "reasoning": "This is a summary finding. Each factual claim it makes matches the code:\n- The delta spec has exactly 13 scenarios: 6 under the stats page requirement and 7 under the flag queue requirement.\n- In playwright.config.ts (lines 22-24), the chromium, msedge and firefox projects all run at 1280×720, as the finding says.\n- Short marks are hidden in the empty state. In src/features/stats/stats.ts:44, `short` is computed as `metric && !stats.metricMet && !empty && ...`, and the comment at line 34 says no week is singled out. The spec (spec.md:11-13) says that when the metric is not met, every metric week with fewer than 3 qualifying sessions SHALL be marked short. The No data scenario has the metric \"Not met\" with all zeros, so those weeks should be marked. The code does not meet the requirement statement.\n- Focus is not moved after a 409. In ReportsScreen.tsx:60, the catch branch leaves `seq` unchanged, so the focus effect at line 46 never fires. Only `setError` runs. The spec (spec.md:63-66) says the outcome SHALL be announced and receive focus after an action. The 409 clause in the same sentence is ambiguous about focus, so this point can be argued, but the claim about what the code does is correct.\nI found no wrong file or wrong mechanism. Minor severity fits a roll-up whose substance repeats other findings.",
+        "severityAdjustment": "keep"
+      }
+    },
+    {
+      "label": "verify:openspec/changes/implement-progress-stats-ui/specs/progress-stats/spec.md",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1789,
+      "durationMs": 36606,
+      "sessionId": "756d515e-74ea-434a-bbdf-26c8fe6ce2f0",
+      "costUsd": 0.37295280000000003,
+      "numTurns": 11,
+      "result": {
+        "refuted": false,
+        "severityAdjustment": "keep",
+        "reasoning": "All three specific gaps in the summary are confirmed in code and reachable by a real admin. (1) Short marks hidden in empty state: src/features/stats/stats.ts:44 gates short on `!empty` (noPractice = all weeks have zero sessions/hints/reveals). Spec spec.md:11-13 says every metric week with <3 qualifying sessions SHALL be marked short when metric is not met, with no empty-state exception. Fresh install reproduces it: 'Not met' shown with no week marked Short. (2) No focus after 409: ReportsScreen.tsx:59-64 catch branch keeps outcome.seq unchanged, so the focus effect (lines 45-47) never fires. The error is a role=alert <p> (line 98) that is never focused. reload() then removes the action buttons from the now-handled report, so focus drops to body. Reproducible with two tabs or two admins acting on the same report. Spec spec.md:63-66 requires the action outcome to be announced and focused, and lists the 409 refusal as an outcome. (3) The wrap check can't fail: e2e/flag-queue.spec.ts:125 ORs `el.scrollWidth <= el.clientWidth` on an inline <span class=report-raw>. Inline elements report 0 for both, so 0<=0 is always true. The other checks in that test (bounding box, no page scroll) are real, so 'partial' is accurate. Other claims spot-checked hold: metricMet used directly, status filter limited to OPEN/FIXED/DISMISSED or none, WEEK_CHOICES fixed. Minor severity is right for a summary finding."
+      }
+    }
+  ],
+  "logs": [
+    {
+      "phase": "Find",
+      "message": "17 unique findings across 4 dimensions"
+    },
+    {
+      "phase": "Report",
+      "message": "confirmed: 12, contested: 2, rejected: 3"
+    }
+  ],
+  "persisted": [
+    "openspec/changes/implement-progress-stats-ui/review-findings.json"
+  ],
+  "returned": {
+    "scope": "slice 9 progress-stats frontend (implement-progress-stats-ui): the admin stats page /admin/stats (success metric, weekly table, week count, first-try rate per topic, empty state), the admin flag queue /admin/reports (reports with task, reason, note, attached attempt, raw input in full, both verdicts, status filter, re-evaluate, dismiss, outcome line), the admin navigation entries, ISO admin dates, and the admin contract stub's stats and flag queue (src/test/fake-progress-backend.ts)",
+    "summary": "Review gate for slice 9 progress-stats frontend (implement-progress-stats-ui): the admin stats page /admin/stats (success metric, weekly table, week count, first-try rate per topic, empty state), the admin flag queue /admin/reports (reports with task, reason, note, attached attempt, raw input in full, both verdicts, status filter, re-evaluate, dismiss, outcome line), the admin navigation entries, ISO admin dates, and the admin contract stub's stats and flag queue (src/test/fake-progress-backend.ts): 12 confirmed, 2 contested (treat as confirmed unless trivially wrong), 3 rejected.",
+    "confirmed": [
+      {
+        "title": "A 409 refusal moves no focus, and the pressed button can unmount, dropping focus to <body>",
+        "file": "src/features/reports/ReportsScreen.tsx",
+        "line": 60,
+        "severity": "major",
+        "confidence": "medium",
+        "evidence": "On 409 the catch block runs `setOutcome((o) => ({ text: '', seq: o.seq }))`. Because `seq` is not bumped, the focus effect (`if (outcome.seq) outcomeLine.current?.focus()`) never runs. It then calls `await reload()`. If the report was already handled elsewhere, it is no longer OPEN, so `ReportEntry` stops rendering its action buttons and the focused Re-evaluate/Dismiss button unmounts. Keyboard focus falls to the document. The spec delta says that after an action 'the outcome SHALL be announced and receive focus'. The only feedback here is the `role=\"alert\"` text, which nothing focuses.",
+        "suggestion": "Give the error paragraph `tabIndex={-1}` and a ref, and focus it after the error is set (for example with an error sequence counter). Or route the refusal text through the focused outcome line. Add a unit/e2e assertion that the alert has focus after a 409.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I confirmed the mechanism in the code. In `ReportsScreen.tsx:59-64`, the catch block runs `setOutcome((o) => ({ text: '', seq: o.seq }))` without bumping `seq`. The effect at lines 45-47 only depends on `outcome.seq`, so it does not run and nothing gets focus. The 409 branch then sets the error and awaits `reload()`, which invalidates `REPORTS_KEY`. A 409 means the report was already handled, so the refetched report is no longer OPEN.\n- With the 'OPEN' filter, the whole `<li>` disappears.\n- With 'All', `ReportEntry` stops rendering its `admin-actions` div (line 222: `report.status === 'OPEN' &&`).\n\nEither way, the Re-evaluate/Dismiss button that had focus unmounts and focus drops to `<body>`. Nothing guards against this. The `role=\"alert\"` paragraph (lines 97-101) has no ref and no `tabIndex`, and no code focuses it.\n\nThe spec claim needs a caveat. `progress-stats/spec.md:63-66` says \"the outcome SHALL be announced and receive focus: fixed…, fixed on a replay…, or nothing changed…; a refusal (409) shows the server's reason and the queue reloads.\" The 409 clause comes after the semicolon, so it is debatable whether the focus requirement covers it. Losing focus to `<body>` when the focused control unmounts is still a real keyboard/a11y defect (WCAG 2.4.3), and it is inconsistent with the success path, which deliberately moves focus.\n\nI'm downgrading the severity because `role=\"alert\"` still announces the refusal to screen readers. Only the focus position is lost, and that happens only on the 409 race.",
+          "I confirmed the mechanism in `src/features/reports/ReportsScreen.tsx`.\n\n**What happens on a 409:**\n- Line 60 keeps `seq` the same, so the focus effect (lines 45–47) does not run.\n- Line 63 then awaits `reload()`, which invalidates `REPORTS_KEY`.\n- The backend sends a 409 when the report was already handled (design.md:136). After the refetch, that report is FIXED or DISMISSED.\n- `ReportEntry` only shows the action buttons when `report.status === 'OPEN'` (line 222). With the OPEN filter on, the whole list item is removed instead.\n- Either way, the focused Re-evaluate or Dismiss button unmounts. Nothing else takes focus, so it falls to `<body>`.\n\n**Can a real user hit it?** Yes. The admin only has to act on a stale list, for example with a second tab open, or after a report was handled elsewhere. Re-evaluating a report with no attempt can also return 409, but the UI hides that button.\n\n**Why I downgraded it:**\n- The spec line the finding quotes (\"After an action the outcome SHALL be announced and receive focus\") lists the success outcomes. It then describes the 409 case separately: \"a refusal (409) shows the server's reason and the queue reloads\". That clause does not explicitly require focus.\n- The refusal is still announced. The `role=\"alert\"` paragraph is inserted with its text, and screen readers read inserted alerts.\n- What remains is a real keyboard and accessibility problem: after the refusal, focus drops to the document start. It is not a correctness failure or a clear spec violation, so medium/minor fits better than major."
+        ]
+      },
+      {
+        "title": "Short weeks are hidden when the shown weeks are empty but older practice exists (the 'no practice' check only looks at the shown weeks)",
+        "file": "src/features/stats/stats.ts",
+        "line": 44,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "`short: metric && !stats.metricMet && !empty && w.qualifyingSessions < METRIC_SESSIONS` turns off every Short marker when `noPractice(stats)` is true. `noPractice` only checks the weeks in the response (`stats.weeks.every(...)`). If the child practised before the 5-week window, the metric is 'Not met', all four metric weeks have 0 qualifying sessions, and yet no week is marked short. The page also shows 'No practice recorded yet', while `firstTryRateByTopic` can show non-zero resolved counts on the same page. The spec only exempts the 'no practice recorded' case and otherwise requires 'every metric week in the response with fewer than 3 qualifying sessions SHALL be marked as short'.",
+        "suggestion": "Treat the page as empty only when the topic table also has nothing resolved (every `resolved === 0`). Or keep the Short markers whenever `metricMet` is false and limit the empty state to the explanatory message. Add a test where old practice exists and the visible weeks are all zero.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "The finding holds up. In `stats.ts:35`, `empty = noPractice(stats)`, and `noPractice` (`stats.ts:64-65`) only checks the weeks in the response: no sessions, hints or reveals. When that is true, `stats.ts:44` turns off every `short` flag. `shortWeeks` builds on `weekRows`, so the metric's list of short weeks is empty too. `StatsScreen.tsx:31` uses the same check to show the 'admin.stats.empty' message.\n\nThe case can really happen. The contract spec (`contract/openspec/specs/progress-stats/spec.md:165-188`) says the response has exactly N weeks, so older activity is not in `weeks`. The first-try rate per topic is counted over all resolved tasks, with no time limit. If the child practised before the window and nothing since, the result is: the metric shows 'Not met', all four metric weeks have 0 qualifying sessions, no week is marked Short, the page says no practice is recorded, and the topic table still shows non-zero resolved counts.\n\nThe frontend change spec (`openspec/changes/implement-progress-stats-ui/specs/progress-stats/spec.md:11-13`) says: \"When the metric is not met, every metric week in the response with fewer than 3 qualifying sessions SHALL be marked as short.\" It gives no exception for the empty state. The 'No data yet' scenario only requires zeros, 'Not met', the empty message and no error. It never says to hide the Short markers. So the code breaks the frontend spec in the old-practice case. Arguably it does in the true-empty case as well. The contract spec calls short-week presentation a frontend design choice, but this repo's own spec turned that choice into a SHALL.\n\nNothing else guards this, and no test covers old practice with all-zero visible weeks. The effect is only on what the admin page shows, so minor severity is right.",
+          "The finding is confirmed. In `stats.ts:44`, `short` requires `!empty`. `empty = noPractice(stats)` (line 64–65) is true only when every *served* week has 0 sessions, 0 hints and 0 reveals. It never looks at `firstTryRateByTopic`.\n\nThe store spec (`contract/openspec/specs/progress-stats/spec.md:165-178`) limits the weekly figures to the N requested weeks. The first-try rate, by contrast, covers every task \"resolved at least once\" with no time window. So a response can easily have all-zero weeks, `metricMet=false` and non-zero `resolved` counts.\n\nReal-user scenario: the child practised, then took a break of 5 or more weeks (summer holidays, illness). The admin opens Stats with the default 5 weeks and sees:\n- \"No practice recorded yet. The figures fill in as the child answers tasks.\"\n- No \"Short\" chips on any of the four metric weeks, even though each has 0 qualifying sessions and the verdict is Not met.\n- No \"Short weeks:\" list.\n- A topic table on the same page with, for example, \"75%, 6 of 8 first try\".\n\nThe empty-state message is then factually wrong, and the frontend change spec's rule is broken: \"When the metric is not met, every metric week in the response with fewer than 3 qualifying sessions SHALL be marked as short.\" That spec only exempts the case where \"no practice is recorded\", and practice *was* recorded.\n\nThe design doc's choice to treat all-zero served weeks as empty does not cover this. It assumes no practice at all (\"With no practice at all the empty-state message speaks\"). The existing tests (`stats.test.ts:74`, `StatsScreen.test.tsx:119`) only cover a truly empty history.\n\nNo other code guards against this: the backend serves exactly N zero weeks for inactive periods (spec line 170–171). The bug needs an ordinary situation, not an edge case. The impact is a misleading admin display with no security or data effect, so the minor severity is right."
+        ]
+      },
+      {
+        "title": "The 'unchanged' outcome always says the attempt is still not correct, which is wrong for other changed:false reasons",
+        "file": "src/features/reports/ReportsScreen.tsx",
+        "line": 21,
+        "severity": "minor",
+        "confidence": "low",
+        "evidence": "`if (!result.changed) return format(t('admin.reports.unchanged'), { task })`. The catalog string reads 'under the current answer spec the attempt is still not correct'. The stub (and likely the backend) also returns `changed:false` when the attempt was already correct (`wasCorrect`) or when the task already has an outcome at or above the re-evaluated one (`RANK[outcome] <= RANK[stored.taskState]`). In those cases the admin is told something false.",
+        "suggestion": "Use neutral copy such as 'Nothing changed … the report stays open', or check `result.report.attempt?.reevaluation` and the verdicts to tell 'still wrong' apart from 'already resolved'. Confirm the backend's changed:false cases against the backend notes.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I could not refute this. The finding holds.\n\nAt `ReportsScreen.tsx:21`, every `changed: false` result is mapped to `admin.reports.unchanged`. In `en.ts:353` that string reads \"under the current answer spec the attempt is still not correct\". Nothing in the code tells the different no-change reasons apart.\n\n**The contract has `changed: false` cases where that sentence is false.** The progress-stats spec, \"Re-evaluation of a reported attempt\" (lines 331-358), returns no change whenever \"the new verdict would not improve the outcome\", not only when the attempt is still wrong. Its own scenarios show this:\n- **\"Re-evaluation never lowers XP\"** (lines 398-400): the reported attempt was marked `CORRECT` and the API returns `changed: false`. \"Still not correct\" is wrong here, because the attempt was correct when it was logged.\n- **\"Unchanged spec changes nothing\"** (lines 402-406): the report can carry a `CORRECT` attempt. Under the current spec that attempt is correct, yet the admin is told it is not.\n- **Outcome already at or above the new one:** the attempt is now correct, but the task already has an equal or better outcome. One way this happens is two reports on the same task, where the first re-evaluation already made it correct on the 1st attempt. The spec says nothing changes, but the message says \"not correct\", which is false.\n- **Replay attempts:** the same applies when the new verdict is not better than the recorded one.\n\n**The test fake does the same.** `src/test/fake-progress-backend.ts` returns `unchanged()` when the task is missing (line 273), when the attempt was already correct (`wasCorrect`, line 280), and when the task's outcome already ranks at or above the new one (`RANK[outcome] <= RANK[stored.taskState]`, line 290).\n\n**Nothing guards against it.** The screen does not look at `report.attempt.verdicts` or `reevaluation` before choosing the copy. The spec only requires that \"the admin is told that nothing changed\", and the current string adds a reason that the code cannot know.\n\nI'm keeping severity at minor: the problem is only misleading admin copy. No data or XP is affected, and the report still correctly stays OPEN.",
+          "I could not refute this one. The admin can get a false message through normal use of the queue.\n\n**The code.** At `ReportsScreen.tsx:21`, any `changed:false` result shows `admin.reports.unchanged`. That string (`src/i18n/en.ts:353`) tells the admin the attempt \"is still not correct\".\n\n**When the server returns `changed:false`.** The contract (`openapi.yaml:1879`) says only that `changed:false` means \"nothing changed and the report stays OPEN\". The fake backend (`src/test/fake-progress-backend.ts:271-290`) returns it in four cases:\n- the task is missing;\n- the re-checked attempt is still wrong;\n- the attempt was already correct (`wasCorrect`);\n- the new outcome ranks no higher than the stored task state (`RANK`).\n\nOnly the second case matches the copy.\n\n**How a real admin reaches the false message:**\n1. **A correct attempt gets attached.** `reportProblem` attaches \"the latest raw attempt of the current run\" (`openapi.yaml:979`) whether or not it was correct. Reports can have the reasons `UNCLEAR_PROMPT` or `OTHER` (`openapi.yaml:1477`). So a child who answers correctly and then flags the prompt as unclear creates an OPEN report with a correct attempt. The screen offers re-evaluate for any OPEN report with an attempt. The re-check returns `changed:false` (`wasCorrect`), and the admin is told the attempt \"is still not correct\", which is false.\n2. **Two reports on one task.** One report covers attempt 1 and another covers attempt 2. Re-evaluating the first raises the task to `CORRECT_FIRST_TRY`. Re-evaluating the second then passes the answer check, but the outcome ranks no higher than the stored state, so the result is `changed:false` and the same false message appears.\n\n**What softens it.** The real backend wasn't checked; only the fake was. But the contract doesn't limit `changed:false` to \"still wrong\", so the frontend shouldn't assume it. The impact is a misleading admin message only: no data or XP is affected, and the report correctly stays open. Severity stays minor."
+        ]
+      },
+      {
+        "title": "The e2e wrap assertion for long raw input is vacuous for an inline span",
+        "file": "e2e/flag-queue.spec.ts",
+        "line": 125,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "`raw.evaluate((el) => el.getClientRects().length > 1 || el.scrollWidth <= el.clientWidth)` runs on `.report-raw`, which is an inline `<span>`. For inline elements both `scrollWidth` and `clientWidth` are 0, so the second disjunct is always true and the check passes even if the text does not wrap. It also never checks that the text stays inside its table cell or entry, which matters under `table-layout: fixed`.",
+        "suggestion": "Assert that the span's bounding rect fits inside the `.report-entry` (or the cell) rect, and that `getClientRects().length > 1` at 1280×720 for the 100-code-point input.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "The main claim holds; one secondary claim is wrong.\n\nWhat the code does: `ReportsScreen.tsx:197` renders `<span className=\"report-raw\" data-content>` directly inside a plain `<td>`. The only CSS for `.report-raw` (`reports.css:79-82`) sets `white-space: pre-wrap; overflow-wrap: anywhere`. Nothing changes its display, and nothing in `src` styles `[data-content]`. So the span is an inline box.\n\nWhy the check is empty: the CSSOM spec says `clientWidth` and `scrollWidth` return 0 for an inline box. That makes `el.scrollWidth <= el.clientWidth` always `0 <= 0`, so it is always true. The expression at `e2e/flag-queue.spec.ts:125` therefore passes whether or not the text wraps, and the comment \"The text wraps: the cell is taller than one line\" is not what gets tested. The only part that actually tests wrapping is the first disjunct (`getClientRects().length > 1`), and the always-true second disjunct cancels it.\n\nWhere the finding is wrong: it says the test \"never checks that the text stays inside its table cell or entry.\" Line 122 already checks that the span's right edge sits within the `.report-entry` article's bounding box. Line 123 checks that the page has no horizontal scroll. Those checks partly cover the no-overflow concern. They compare against the entry, not the cell, but the finding overstates the gap.\n\nVerdict: the mechanism is real and the wrapping assertion is vacuous, but it is limited to test strength, so the severity stays minor. Suggested fix: drop the `||` fallback and assert `getClientRects().length > 1`. Optionally also check that the span stays inside the `td` box.",
+          "The core claim holds. `.report-raw` is a plain `<span>` (ReportsScreen.tsx:197). Its only CSS (reports.css:79-82) sets `white-space: pre-wrap` and `overflow-wrap: anywhere`. No `display` override exists, and no rule targets `[data-content]`, so the span stays an inline box. Under CSSOM View, `scrollWidth` and `clientWidth` are 0 for inline boxes. That makes `el.scrollWidth <= el.clientWidth` always true (0 <= 0), so the assertion at e2e/flag-queue.spec.ts:125 passes whether or not the text wraps. The comment above it, \"The text wraps\", is not checked by anything. You can reproduce this by setting `white-space: nowrap` on `.report-raw`: line 125 still passes.\n\nOne part of the finding is overstated. It says the test \"never checks that the text stays inside its table cell or entry\". In fact, line 122 checks that the span's right edge stays inside the entry's (`<article>`) right edge, and line 123 checks that the page has no horizontal scroll. Containment in the entry is covered. Containment in the cell is not, and the `table-layout: fixed` concern still applies to the cell. Line 122 also doesn't prove wrapping: at 1280px, 100 unwrapped characters could fit inside a wide entry.\n\nUsers and attackers aren't affected; this is a test-quality gap. A wrap regression would get through this check silently. Severity stays minor."
+        ]
+      },
+      {
+        "title": "A failed refetch after an action is ignored while cached data exists, so a stale queue still offers actions",
+        "file": "src/features/reports/ReportsScreen.tsx",
+        "line": 74,
+        "severity": "minor",
+        "confidence": "low",
+        "evidence": "The screen only renders `LoadState` when `!reports.data`. After `invalidateQueries` in `reload()`, a failed refetch leaves the old data in place with `isError` true. The handled report still shows as OPEN with Re-evaluate/Dismiss, and nothing tells the admin the list is stale. `StatsScreen` follows the same pattern (`if (!stats.data)`).",
+        "suggestion": "When `reports.isError && reports.data` is true, show a non-blocking alert with a retry button (catalog string).",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I could not refute the mechanism; the code works the way the finding says.\n\n1. `ReportsScreen.tsx:74` only shows `LoadState` (the error and retry) when `!reports.data`. The main render never looks at `reports.isError`.\n2. `reload()` (line 70) calls `queryClient.invalidateQueries` for the reports and stats queries. By default `invalidateQueries` does not throw when its refetch fails, so `act()` never reaches its catch block for a failed reload. It sets the success outcome line and returns.\n3. TanStack Query keeps the last good `data` when a background refetch fails and sets `isError`/`status: 'error'`. The app's query client (`src/app/queryClient.ts`: `retry: 1`) retries once, then gives up. It has no global `QueryCache` `onError` or toast, so nothing else reports the failure.\n4. The result: after a successful dismiss or re-evaluate followed by a failed refetch, the report still shows as OPEN. Its Re-evaluate and Dismiss buttons stay enabled because `busy` is reset. Nothing on screen says the list is stale.\n\nThis is a real problem but a minor one. It needs the action to succeed and the follow-up refetch to fail, which is a transient network or server failure. The status line correctly says the action happened, so the admin isn't misled about the result. If the admin clicks the stale buttons again, the server's 409 conflict shows the \"already handled\" message and triggers another reload, so it partly fixes itself. The same pattern applies to `StatsScreen` (`if (!stats.data)`). Severity minor is appropriate.",
+          "The mechanism is real. In ReportsScreen.tsx:74 the screen shows LoadState only when `!reports.data`. `reload()` (line 70–72) calls `invalidateQueries`. Under TanStack Query semantics, a refetch that fails keeps the previous `data` and sets `isError`. The app's QueryClient uses `retry: 1` (src/app/queryClient.ts:6), so the error does surface after one retry. Nothing in the render path reads `reports.isError` once data exists, so a handled report still shows as OPEN with Re-evaluate/Dismiss buttons and no staleness warning. StatsScreen uses the same pattern.\n\nIt can be reproduced, but only in a narrow window: the POST must succeed and then the GET refetch must fail, for example from a network blip or a 5xx right after the action. The impact is small:\n1. The status line already announces the successful outcome and names the task, so the admin knows the action happened.\n2. If the admin clicks the stale button, the backend rejects it with 409. `act()` catches this (lines 61–63), shows the \"already handled\" message and reloads again.\n3. There's no double-apply, XP corruption or security impact. The server is the guard.\n\nThe finding stands as a UX correctness gap, but it's at most minor and arguably a nit. I recommend a downgrade."
+        ]
+      },
+      {
+        "title": "Stale doc comments describe a date format the code no longer produces",
+        "file": "src/features/stats/stats.ts",
+        "line": 73,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "`formatWeek` is documented as returning '\"5 Oct 2026\"', but it calls `adminDate`, which returns ISO `YYYY-MM-DD`. Likewise `formatTime` in `src/features/reports/reports.ts:3` says '\"5 Oct 2026, 16:20\"', while `adminDateTime` returns '2026-10-05 16:20'. Both wrappers are thin pass-throughs.",
+        "suggestion": "Fix the comments to match the ISO output, or drop the wrappers and call `adminDate`/`adminDateTime` directly.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "The finding is correct. The two doc comments describe a date format the code no longer returns.\n\n- **`formatWeek`** (`src/features/stats/stats.ts:73-76`): the comment says it returns \"5 Oct 2026\". The function only calls `adminDate(date)`, and `src/i18n/format.ts:24-26` defines that as `isoDate.slice(0, 10)`. That returns `YYYY-MM-DD`, for example `2026-10-05`.\n- **`formatTime`** (`src/features/reports/reports.ts:3-6`): the comment says \"5 Oct 2026, 16:20\". It only calls `adminDateTime(instant)`, which builds `${year}-${month}-${day} ${hour}:${minute}` (`format.ts:29-32`), for example `2026-10-05 16:20`. The comment on `adminDateTime` itself (`format.ts:28`) already shows that ISO-style format, so the wrapper comments are the stale ones.\n\nNothing else changes the output. Both wrappers pass the value straight through, with no other formatting step or fallback.\n\nThis only affects the comments; nothing goes wrong when the code runs. The ISO output appears to be what was intended, since the shared formatter's own comment matches it. The real problem is that the comments could mislead anyone reading or writing tests against these functions. Minor severity is right for that, so I'm keeping it.",
+          "Confirmed against the code. `src/features/stats/stats.ts:73` says `formatWeek` returns a date \"as \\\"5 Oct 2026\\\"\", but its body is just `return adminDate(date)`. `adminDate` (`src/i18n/format.ts:24-26`) is `isoDate.slice(0, 10)`, so it returns `2026-10-05`. Likewise, `src/features/reports/reports.ts:3` says `formatTime` returns \"5 Oct 2026, 16:20\", but it only calls `adminDateTime` (`format.ts:29-32`), which builds `${year}-${month}-${day} ${hour}:${minute}`. Its own comment says \"2026-10-05 16:20\". Both wrappers are thin pass-throughs, so the comments are simply wrong about the output. Nothing in the code produces the documented format.\n\nFrom an exploitability or reproducibility view, no user or attacker can trigger a runtime fault here: the UI shows a consistent ISO date. The real harm is that a developer or test author could trust the comment and write wrong assertions or expectations. So the mismatch is real and reproducible, but it is a documentation and maintainability problem, not a behaviour bug. Severity \"minor\" fits."
+        ]
+      },
+      {
+        "title": "Empty state is decided from the shown weeks only: it hides every Short mark and can say 'No practice recorded yet' when practice did happen",
+        "file": "src/features/stats/stats.ts",
+        "line": 36,
+        "severity": "major",
+        "confidence": "high",
+        "evidence": "Spec delta, 'Admin stats page': \"When the metric is not met, every metric week in the response with fewer than 3 qualifying sessions SHALL be marked as short … When no practice is recorded the page SHALL show an empty-state message.\" Code: `const empty = noPractice(stats);` … `short: metric && !stats.metricMet && !empty && w.qualifyingSessions < METRIC_SESSIONS`, and `noPractice` only looks at `stats.weeks.every(w => w.sessions === 0 && …)`, which covers just the served window (5 weeks by default). Example: the child last practised 6 or more weeks ago. With the default 5 weeks every served week is zero, so the page shows 'No practice recorded yet. The figures fill in as the child answers tasks.' (that is false) and marks none of the four metric weeks Short, even though the metric is Not met because of exactly those weeks. Even in the true 'No data yet' case, the requirement text says the four zero metric weeks SHALL be Short. design.md:42 decided otherwise ('no week is singled out as short'), so design and spec disagree. stats.test.ts:74 locks in the suppression.",
+        "suggestion": "Either mark Short whenever `!metricMet` (drop `!empty`), and word the empty-state copy so it fits the shown window only ('No practice in the weeks shown'), or amend the spec delta so the requirement says that with no practice at all no week is marked Short. Add a test where practice sits outside the window.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I could not refute the finding; the code does what it describes. In `src/features/stats/stats.ts`, line 35 sets `empty = noPractice(stats)`, and line 44 sets `short: metric && !stats.metricMet && !empty && w.qualifyingSessions < METRIC_SESSIONS`. `noPractice` (lines 64-66) only checks the weeks the server returned, which is 5 weeks by default.\n\nThe spec delta (`openspec/changes/implement-progress-stats-ui/specs/progress-stats/spec.md`, lines 11-13) says: \"When the metric is not met, every metric week in the response with fewer than 3 qualifying sessions SHALL be marked as short.\" Nothing in it allows an exception for the empty state. The 'No data yet' scenario (lines 47-51) only asks for zeros, \"Not met\", the empty-state message and no error. It never says no week should be marked Short. Only design.md lines 42-43 make that exception, so the design and the spec disagree, and the code follows the design.\n\nThe case of practice outside the window is real. If the child last practised 6 or more weeks ago, all 5 returned weeks are zero. The page then shows 'No practice recorded yet', which is false. It also hides all four Short marks, even though the backend says the metric is not met because of those weeks. Nothing else guards against this: `shortWeeks` and the row marks both go through `weekRows`.\n\nThis is a real spec-compliance bug with a misleading message to the admin. It only affects admin display (no data is lost and the child is not affected), but it fits the major rating, so I'm keeping it.",
+          "I confirmed the mechanism in the code, and a real user can hit it. `noPractice` (stats.ts:64-66) only checks `stats.weeks`, which holds the weeks the server returned (5 by default, DEFAULT_WEEKS). There is no all-time total field. `weekRows` sets `empty = noPractice(stats)` and adds `!empty` to the `short` condition (stats.ts:35,44). `shortWeeks` builds on `weekRows`, so the metric panel's \"short weeks\" line is hidden too. StatsScreen.tsx:31 shows `admin.stats.empty` whenever `noPractice` is true, and en.ts:315 makes that \"No practice recorded yet. The figures fill in as the child answers tasks.\"\n\nHow it happens: the child practises, then stops for 5 or more weeks (a school holiday, for example). The admin opens /admin/stats with the default 5 weeks. All served weeks are zero, so the page claims no practice was ever recorded. That is false, and the topic table (`firstTryRateByTopic`) may still list resolved tasks right next to it. The metric shows Not met, yet none of the four zero metric weeks is marked Short. The spec requirement says \"When the metric is not met, every metric week in the response with fewer than 3 qualifying sessions SHALL be marked as short\", with no exception for the empty state.\n\nThings that could have refuted it, and why they don't: nothing elsewhere guards this; the path is reachable through default settings; and design.md plus the test at stats.test.ts:74 deliberately lock in the suppression, which confirms it is intended behaviour that conflicts with the requirement text. The \"No data yet\" scenario does not ask for Short marks, but it does not forbid them either, while the normative requirement text requires them.\n\nWhy I lowered the severity: this only affects how one admin page reads. The verdict (`metricMet`) and the weekly figures are still correct and visible. No data is lost, nothing is exposed and there is no security impact. The harm is misleading copy and a missing Short marker. It is a real spec deviation, but minor rather than major."
+        ]
+      },
+      {
+        "title": "After a 409 refusal, focus is not moved to the outcome and can fall to <body>",
+        "file": "src/features/reports/ReportsScreen.tsx",
+        "line": 58,
+        "severity": "major",
+        "confidence": "high",
+        "evidence": "Spec delta, 'Admin flag queue': \"After an action the outcome SHALL be announced and receive focus: … a refusal (409) shows the server's reason and the queue reloads.\" Code in the catch branch: `setOutcome((o) => ({ text: '', seq: o.seq }))` leaves seq unchanged, so the focus effect does not run. The reason goes to `<p role=\"alert\">`, which never gets focus. After `reload()` the report is no longer OPEN, so the clicked Re-evaluate/Dismiss button is unmounted and keyboard focus is lost to the document body. The unit test at ReportsScreen.test.tsx:265 checks only the alert text and the reload, not focus. No e2e covers the 409 path.",
+        "suggestion": "On a 409 (and on other failures), move focus to the alert (give it tabIndex=-1 and focus it), or put the refusal text in the focused outcome line. Add assertions for `toHaveFocus()` in the unit test and in an e2e case for FR-41.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "I could not refute the mechanism; the code works as the finding describes. In ReportsScreen.tsx, the catch branch (line 60) runs `setOutcome((o) => ({ text: '', seq: o.seq }))` and leaves `seq` unchanged. The focus effect at lines 45-47 depends only on `[outcome.seq]`, so it does not run. The 409 reason is rendered in `<p role=\"alert\">` (lines 97-101), which has no tabIndex and is never focused. The clicked button is also disabled while `busy` is true, so it may already have dropped focus. Then `reload()` invalidates REPORTS_KEY, and a report that was refused because it was already handled is no longer OPEN. If the filter is OPEN, the whole entry disappears. Under \"All\" or other filters, the entry stays but its action buttons are not rendered, because they only show when `report.status === 'OPEN'` (line 222). Either way the focused element is unmounted and focus falls to <body>. Nothing else restores focus: AdminLayout gets no focus prop and there is no other focus handling. The spec delta (openspec/changes/implement-progress-stats-ui/specs/progress-stats/spec.md:63-66) says \"After an action the outcome SHALL be announced and receive focus:\" and then lists the outcomes, with the refusal (409) as the last item. The plain reading puts the 409 path under the focus requirement, so this is a real spec gap. I suggest downgrading the severity. The refusal is still announced through role=\"alert\", and the queue reloads correctly. What is missing is focus management, which matters for accessibility and keyboard use, but the function still works. That makes \"major\" generous; it is closer to a moderate issue. Because the spec's sentence structure can arguably be read so that the 409 clause only requires the reason and a reload, my confidence is a little lower than \"high\".",
+          "The finding holds. In `src/features/reports/ReportsScreen.tsx:59-64`, the catch branch runs `setOutcome((o) => ({ text: '', seq: o.seq }))`. That leaves `seq` unchanged, so the focus effect at lines 45-47 (which depends on `[outcome.seq]`) never runs on failure. The refusal text goes into `<p role=\"alert\">` at line 98. That paragraph has no tabIndex and no ref, and nothing focuses it.\n\n**How focus is lost:** a 409 means the report is already handled. After `reload()`, its status is no longer OPEN, so the `report.status === 'OPEN'` block at line 222 stops rendering the Re-evaluate and Dismiss buttons. If the filter is OPEN, the whole entry leaves the list. Focus was on the clicked button, so it falls to `<body>`. Focus may already be lost earlier: `busy` disables that button during the request, and browsers blur a focused button when it becomes disabled. The success path recovers from this by focusing the outcome line. The 409 path does not.\n\n**Spec:** `openspec/changes/implement-progress-stats-ui/specs/progress-stats/spec.md:64-66` says the outcome SHALL \"be announced and receive focus\", and lists the 409 refusal as one of the outcomes. Screen readers still announce the alert, but nothing receives focus, so the code breaks the SHALL.\n\n**Can it happen?** Yes, with no special setup. An admin opens the queue in two tabs, or a stale view. They handle a report in one tab, then press Dismiss for it in the other using the keyboard. The server returns 409 and focus ends up on the body.\n\n**Severity:** I suggest downgrading to minor. Only the admin, a single trusted user, is affected, and only in this uncommon concurrent or stale-view case. Screen-reader users still hear the reason through `role=\"alert\"`. The impact is focus management and usability, not data or security."
+        ]
+      },
+      {
+        "title": "The e2e 'wrapped' assertion for long raw input can never fail; wrapping and U+00A0 inputs are not actually checked",
+        "file": "e2e/flag-queue.spec.ts",
+        "line": 122,
+        "severity": "major",
+        "confidence": "high",
+        "evidence": "Scenario 'Long raw input': \"the whole input is shown, wrapped within the entry, with no ellipsis and no horizontal page scroll\". The test runs `raw.evaluate((el) => el.getClientRects().length > 1 || el.scrollWidth <= el.clientWidth)`. `raw` is an inline `<span class=\"report-raw\">`, and for an inline element scrollWidth and clientWidth are both 0, so the second operand is always true and the check passes whether or not the text wraps. LONG_RAW (fake-progress-backend.ts:63) also contains ordinary spaces, so `overflow-wrap: anywhere` is never tested. No test, unit or e2e, renders a long input with no break opportunities, such as a run of digits joined by U+00A0. The unit test at ReportsScreen.test.tsx:126 checks only that the NBSP is preserved, not how it lays out.",
+        "suggestion": "Assert wrapping on the cell instead, for example `getClientRects().length > 1` on the span, or compare the cell height with its line-height. Add a seed or a test case of 100 code points with no spaces, or joined by U+00A0, and check that the raw box stays within the entry and that `scrollWidth <= clientWidth` holds for the document in all 3 browsers.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "The mechanism is real, but the finding cites the wrong line and overstates the impact.\n\nWhat holds up: the vacuous check is at e2e/flag-queue.spec.ts:125, not line 122. It reads `raw.evaluate((el) => el.getClientRects().length > 1 || el.scrollWidth <= el.clientWidth)`. `raw` is the inline `<span className=\"report-raw\">` at ReportsScreen.tsx:197, and its CSS (reports.css:79) sets only `white-space: pre-wrap` and `overflow-wrap: anywhere`, so it stays inline. Under CSSOM, an inline box has clientWidth 0 and scrollWidth 0, so `0 <= 0` is always true. That means the \"the text wraps\" assertion can never fail. LONG_RAW (fake-progress-backend.ts:63) is normal Czech prose with many spaces, so `overflow-wrap: anywhere` is never exercised. No test renders a long string with no break opportunities, such as one joined by U+00A0.\n\nWhat it overstates: line 122 (the right edge of the span's bounding box stays within the entry's box) and line 123 (no horizontal scroll on the document) are real checks that can fail. With this input, if the text did not wrap (say `white-space: nowrap`), the span would run past the entry and line 122 would fail. So wrapping of the seeded input is checked indirectly, and line 125 is redundant rather than the only guard. The real gap is the missing case with no break opportunities. That is a coverage hole, not a defect in the product, so \"major\" is too high. I'd downgrade it.",
+          "I confirmed the mechanism from the code. `.report-raw` is an inline `<span>` (ReportsScreen.tsx:197). Its CSS (reports.css:79) sets only white-space and overflow-wrap, not display. Under CSSOM, an inline box reports 0 for both clientWidth and scrollWidth. That makes `el.scrollWidth <= el.clientWidth` always true, so the assertion at line 125, labelled \"the text wraps\", can never fail. LONG_RAW (fake-progress-backend.ts:63) is ordinary prose with many spaces, so it wraps at normal break points. `overflow-wrap: anywhere` is never exercised, and no NBSP or no-space long input is laid out in any test.\n\nThat said, the finding overstates how much of the test is vacuous. Lines 122–123 still check two real things: the span's bounding box stays inside the entry, and the document has no horizontal scroll. So the \"within entry, no page scroll\" part of the scenario is tested for the seeded input. The gap is narrower than claimed: the explicit wrap check is a no-op, and nothing tests the case with no break opportunities.\n\nThis is a weakness in the tests, not a defect a user can trigger. The production CSS (`pre-wrap` + `overflow-wrap: anywhere`) handles long unbroken input correctly in all modern browsers. \"Major\" is too high; this is a minor test-quality issue."
+        ]
+      },
+      {
+        "title": "Dismiss outcome copy differs from the scenario text",
+        "file": "src/i18n/en.ts",
+        "line": 354,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "Spec delta scenario 'Dismiss': \"THEN \\\"Report dismissed.\\\" is announced\". Catalog: `'admin.reports.dismissed': 'Report on “{task}” dismissed.'`. design.md:86 also says \"Report dismissed.\". The store spec makes the copy a design choice, but the delta scenario quotes exact text that the UI does not show.",
+        "suggestion": "Change the delta scenario (and design.md) to the copy that names the task, or match the catalog to the scenario.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "The mismatch is real. In the change delta `openspec/changes/implement-progress-stats-ui/specs/progress-stats/spec.md:109`, the Dismiss scenario says: THEN \"Report dismissed.\" is announced. `design.md:86-87` gives the same copy: dismiss → \"Report dismissed.\". But the catalog at `src/i18n/en.ts:354` has 'Report on “{task}” dismissed.', and `ReportsScreen.tsx:56` fills it in with `report.taskPromptExcerpt`. The tests check the catalog string, not the scenario text: `ReportsScreen.test.tsx:259` and `:305`, and `e2e/flag-queue.spec.ts:106`. So the UI never announces the exact quoted text. Nothing else reconciles the two, such as another catalog key or a fallback that shows the plain copy. This is a documentation gap, not a behaviour bug: the announcement works and is arguably more informative. Minor severity fits.",
+          "Confirmed. Every admin who dismisses an open report sees text that differs from the scenario.\n- The change's spec delta scenario 'Dismiss' (`openspec/changes/implement-progress-stats-ui/specs/progress-stats/spec.md:109`) says: THEN \"Report dismissed.\" is announced.\n- `design.md:86-87` gives the same wording: dismiss → \"Report dismissed.\".\n- The catalog at `src/i18n/en.ts:354` has 'Report on “{task}” dismissed.'.\n- `ReportsScreen.tsx:56` uses that catalog string, filled in with `report.taskPromptExcerpt`, for every successful dismiss. No other code path shows the shorter text.\n- The unit test (`ReportsScreen.test.tsx:259`) and the e2e test (`e2e/flag-queue.spec.ts:106`) both check against the catalog string, not the scenario's text. So the drift is built into the tests rather than caught by them.\nThe finding is correct. It only affects docs and spec wording, not behaviour, so minor is the right severity. Fixing it means editing the delta scenario and `design.md` to match the catalog, or the other way round."
+        ]
+      },
+      {
+        "title": "Doc comments still describe the old word-style dates",
+        "file": "src/features/stats/stats.ts",
+        "line": 73,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "stats.ts:73: \"A week start … as \\\"5 Oct 2026\\\"\". reports.ts:3: \"\\\"5 Oct 2026, 16:20\\\", Europe/Prague\". The implementation (format.ts:24-31) and design.md:112 use numeric ISO dates: \"2026-10-05\" and \"2026-10-05 16:20\".",
+        "suggestion": "Update both comments to the ISO format.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "Confirmed. The comment at stats.ts:73 says formatWeek renders a date \"as \\\"5 Oct 2026\\\"\", and the comment at reports.ts:3 says formatTime renders \"\\\"5 Oct 2026, 16:20\\\"\". Both functions hand off to adminDate/adminDateTime, which return numeric ISO-style output. The tests pin that format: stats.test.ts:107 expects formatWeek('2026-10-05') to return '2026-10-05', and ReportsScreen.test.tsx:311 expects formatTime('2026-10-05T14:20:00Z') to return '2026-10-05 16:20'. So both comments are out of date. They affect documentation only, not runtime behaviour, so minor severity is right.",
+          "I confirmed the finding, but it describes a doc-only mismatch. Two comments are out of date:\n- `src/features/stats/stats.ts:73` says a week start displays as \"5 Oct 2026\".\n- `src/features/reports/reports.ts:3` says a report time displays as \"5 Oct 2026, 16:20\".\n\nThe code and tests produce ISO dates instead:\n- `src/i18n/format.ts:28` describes and returns \"2026-10-05 16:20\".\n- `stats.test.ts:107` asserts `formatWeek('2026-10-05')` returns '2026-10-05'.\n- `ReportsScreen.test.tsx:311` asserts `formatTime` returns '2026-10-05 16:20'.\n- `format.test.ts:27` and `StatsScreen.test.tsx:44` show the same ISO output.\n\nUsers see the correct ISO dates on screen. The only problem is that the two comments are wrong, so a developer reading them could be misled. No user or attacker can trigger any wrong behaviour from this. I'm downgrading it to a cosmetic nit with no runtime impact; the fix is still to update both comments."
+        ]
+      },
+      {
+        "title": "Coverage summary",
+        "file": "openspec/changes/implement-progress-stats-ui/specs/progress-stats/spec.md",
+        "line": 1,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "13 delta scenarios: 12 implemented, 1 partial (Long raw input: the wrap assertion cannot fail), 0 missing, 0 contradicted. On top of that, 2 requirement statements are not met: Short marks are hidden in the empty state, and focus is not moved after a 409. The UI-facing store scenarios (Practice statistics page, Flag queue, Re-evaluation outcomes, Dismiss, Attempt log both verdicts, admin-only and child UI has no link) are covered by unit and e2e tests on chromium, msedge and firefox at 1280×720 (playwright.config projects). No UI computation duplicates server-owned figures: the verdict comes from `metricMet`, and sessions and XP are shown as served. The status filter sends only OPEN, FIXED or DISMISSED, or no parameter. The weeks parameter is a digit string from the fixed choices. Ticked tasks 1.x–3.x have artifacts on disk (red-run evidence, specs, routes, catalog). 4.x is open, which is correct. The NFR-13 light/dark a11y gates take in both routes through ADMIN_ROUTES; I did not run them here.",
+        "suggestion": "Fix the three major findings. Then run `CI=1 npm run qa:verify` (task 4.1) to get exit-coded a11y, theme and e2e evidence before ticking 4.x.",
+        "dimension": "spec-compliance",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "This is a summary finding. Each factual claim it makes matches the code:\n- The delta spec has exactly 13 scenarios: 6 under the stats page requirement and 7 under the flag queue requirement.\n- In playwright.config.ts (lines 22-24), the chromium, msedge and firefox projects all run at 1280×720, as the finding says.\n- Short marks are hidden in the empty state. In src/features/stats/stats.ts:44, `short` is computed as `metric && !stats.metricMet && !empty && ...`, and the comment at line 34 says no week is singled out. The spec (spec.md:11-13) says that when the metric is not met, every metric week with fewer than 3 qualifying sessions SHALL be marked short. The No data scenario has the metric \"Not met\" with all zeros, so those weeks should be marked. The code does not meet the requirement statement.\n- Focus is not moved after a 409. In ReportsScreen.tsx:60, the catch branch leaves `seq` unchanged, so the focus effect at line 46 never fires. Only `setError` runs. The spec (spec.md:63-66) says the outcome SHALL be announced and receive focus after an action. The 409 clause in the same sentence is ambiguous about focus, so this point can be argued, but the claim about what the code does is correct.\nI found no wrong file or wrong mechanism. Minor severity fits a roll-up whose substance repeats other findings.",
+          "All three specific gaps in the summary are confirmed in code and reachable by a real admin. (1) Short marks hidden in empty state: src/features/stats/stats.ts:44 gates short on `!empty` (noPractice = all weeks have zero sessions/hints/reveals). Spec spec.md:11-13 says every metric week with <3 qualifying sessions SHALL be marked short when metric is not met, with no empty-state exception. Fresh install reproduces it: 'Not met' shown with no week marked Short. (2) No focus after 409: ReportsScreen.tsx:59-64 catch branch keeps outcome.seq unchanged, so the focus effect (lines 45-47) never fires. The error is a role=alert <p> (line 98) that is never focused. reload() then removes the action buttons from the now-handled report, so focus drops to body. Reproducible with two tabs or two admins acting on the same report. Spec spec.md:63-66 requires the action outcome to be announced and focused, and lists the 409 refusal as an outcome. (3) The wrap check can't fail: e2e/flag-queue.spec.ts:125 ORs `el.scrollWidth <= el.clientWidth` on an inline <span class=report-raw>. Inline elements report 0 for both, so 0<=0 is always true. The other checks in that test (bounding box, no page scroll) are real, so 'partial' is accurate. Other claims spot-checked hold: metricMet used directly, status filter limited to OPEN/FIXED/DISMISSED or none, WEEK_CHOICES fixed. Minor severity is right for a summary finding."
+        ]
+      }
+    ],
+    "contested": [
+      {
+        "title": "The part-key column is very narrow and its keys do not wrap under table-layout: fixed",
+        "file": "src/features/reports/reports.css",
+        "line": 75,
+        "severity": "minor",
+        "confidence": "low",
+        "evidence": "`.report-parts { table-layout: fixed; }` combined with `.report-parts th:first-child { width: calc(var(--space-8) * 1); }` fixes the Part column to a single spacing step. The key cell `<td data-content>{key}</td>` has no `overflow-wrap`, so a longer part key overflows into the Raw input column instead of wrapping. The spec asks that content wrap inside the entry. Also, `calc(x * 1)` does nothing.",
+        "suggestion": "Add `overflow-wrap: anywhere` to the table cells (or at least the first column), and size the column with a token-based min width instead of a fixed `--space-8`.",
+        "dimension": "correctness",
+        "verdict": "contested",
+        "verifierNotes": [
+          "The overflow does happen. It only shows up with keys this frontend never creates, so I'm downgrading it.\n\n**Code facts:**\n- `reports.css:71-77`: `.report-parts { table-layout: fixed }` and `th:first-child { width: calc(var(--space-8) * 1) }`. `--space-8` is 64px (`tokens.css:126`), and `.admin-table` cells have `padding: var(--space-2) var(--space-3)` (`admin-access.css:216`). That leaves roughly 40px for content.\n- `ReportsScreen.tsx:192`: `<td data-content>{key}</td>`. Neither `.report-parts` nor `.admin-table` sets `overflow-wrap` or `word-break` on cells. Only `.report-raw`, `.report-task` and `.report-facts dd` set `overflow-wrap: anywhere`.\n- The contract (`contract/api/openapi.yaml:1636`) allows part keys matching `^[a-z0-9]{1,20}$`. That is up to 20 characters with no break opportunity, about 140px or more at body size.\n- Under `table-layout: fixed`, the column width comes from the header cell and is not widened by content. A key that can't break overflows (overflow is visible by default) into the Raw input column. So the mechanism is right, and `calc(x * 1)` really is a no-op.\n\n**Why it's minor in practice:**\n- This client's task editor makes keys as `p${n}` (`taskForm.ts:72`), e.g. `p1` or `p12`, which fit easily in 40px.\n- The overflow only happens with contract-valid keys made elsewhere (backend seeds, other clients, direct API calls).\n- It is cosmetic: the key text overlaps the next cell and no data is lost.\n\n**Side note:** the contract says part keys are \"never shown to the admin or the child\", yet this column shows them. That spec mismatch is arguably the bigger problem, but it is a separate finding.",
+          "The CSS mechanism is real, but a real user is very unlikely to hit it. `.report-parts` (reports.css:71-77) uses `table-layout: fixed`, the first `th` is 64px wide (`--space-8`), and `.admin-table` cells have `--space-3` (12px) padding on each side. That leaves about 40px for the key. The `<td data-content>{key}</td>` (ReportsScreen.tsx:192) has no `overflow-wrap`, and no global rule supplies one. So an unbreakable key wider than about 40px would spill into the Raw input cell.\n\nThe keys this app actually produces are short. The contract (openapi.yaml:1636) limits a key to `^[a-z0-9]{1,20}$` and says the client assigns it, and the code says the admin never sees or types it. The only client that creates keys is `taskForm.ts:69-72`, which assigns `p${n}` (p1, p2, … p10). Fixtures use `a`, `b`, `c`. Two to three narrow characters fit easily in 40px. A key long enough to overflow (roughly 6 or more characters, up to 20) could only exist if someone wrote it straight to the API, bypassing the app's own form. Even then the result is a small cosmetic overlap on an admin-only screen, with no data loss.\n\nThe `calc(x * 1)` comment is correct but only a style nit. The finding is hypothetical for real data, so I'm marking it refuted; at most it is a minor hardening nit."
+        ]
+      },
+      {
+        "title": "Stub fidelity: the excerpt cuts UTF-16 code units, the topic list differs, and the re-evaluation rule is simplified",
+        "file": "src/test/fake-progress-backend.ts",
+        "line": 81,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "design.md:133 records the backend note: \"`taskPromptExcerpt` is the first 80 code points of the current prompt plus '…'\". The stub uses `prompt.slice(0, 80)`, which counts UTF-16 code units. The stub also lists every reference topic in firstTryRateByTopic (line 246), while the backend lists only topics with a published TEXT task (this one is acknowledged in the design). For replay re-evaluation (lines 275-287) the stub requires every part to be CORRECT. The store spec says \"If the new verdict is better than the attempt's recorded verdict\". I could not read the backend notes file (`../scratch/slice9-backend-behaviour.md`) because it is outside the allowed directories, so the stub was checked only against what design.md says those notes contain.",
+        "suggestion": "Use `[...prompt].slice(0, 80).join('')`. Optionally filter topics to those with a published TEXT task. Re-read the backend notes before the review gate (task 4.3), as design.md:137 promises.",
+        "dimension": "spec-compliance",
+        "verdict": "contested",
+        "verifierNotes": [
+          "The main claim holds. `src/test/fake-progress-backend.ts:81` is `prompt.length > 80 ? `${prompt.slice(0, 80)}…` : prompt`. Both `.length` and `.slice` count UTF-16 code units. `design.md:133` records the backend rule as \"the first 80 code points of the current prompt plus '…'\". So with an astral character (an emoji or a math alphanumeric symbol) inside the first 80, the stub would cut a surrogate pair or keep fewer code points than the backend. Nothing elsewhere corrects this: `report()` (line 117–120) calls `excerpt` directly, and the UI shows what it is served. The repo already counts code points in other places (LONG_RAW, the 100-code-point input rule, and an archived finding about the same UTF-16 vs code-point mismatch), so this is a real inconsistency, not a misreading. Practical impact is low: the seed prompts are Czech text in the BMP, so no current test shows a difference. Of the other two points, one doesn't count against the code and one is shaky. The topic-list difference is openly acknowledged at `design.md:134-135` (\"the stub lists every reference topic — the UI renders whatever is served\"). The re-evaluation \"every part CORRECT\" rule (lines 275-280) fits a task-level outcome model and handles locked parts, so calling it a divergence is speculative without the backend notes. The finding stands as minor on the excerpt mechanism alone.",
+          "No real user or attacker can reach this. `src/test/fake-progress-backend.ts` is a test-only contract stub, so nothing in it ships to users. The three points also fail on their own terms:\n(1) Excerpt: the truncation branch (`prompt.length > 80`, line 81) never runs. Every seeded prompt is under 80 characters (fake-admin-backend.ts:121/137/152/167: 'Zapiš jednu polovinu jako desetinné číslo.', 'Vypočítej obvod obdélníku se stranami 3 cm a 4 cm.', and so on). They are all Czech text from the Basic Multilingual Plane (BMP), where UTF-16 code units equal code points, so the two counts could not differ even if the branch did run. The production UI just renders whatever `taskPromptExcerpt` the real backend sends.\n(2) Topic list: the finding admits design.md already records this deviation. It only changes which rows the stub returns and has no effect on product behaviour.\n(3) Re-evaluation rule: the seeded reports that can be re-evaluated are all single-part (key 'a'). For a single part, 'every part CORRECT' and 'new verdict better than the recorded WRONG' mean the same thing, so no test outcome changes. The rule also only exists inside the fake.\nAt most this is a note on how closely a test stub matches the spec, with no reproducible defect in any current test path and no real-world impact."
+        ]
+      }
+    ],
+    "rejected": [
+      {
+        "title": "The 409 message shows the server's `problem.detail` directly, bypassing the en catalog",
+        "file": "src/features/reports/ReportsScreen.tsx",
+        "line": 62,
+        "severity": "minor",
+        "confidence": "low",
+        "evidence": "`setError(e.problem?.detail ?? t('admin.reports.alreadyHandled'))` renders whatever English text the backend sends. In the stub this is, for example, 'Only an open report can be dismissed; this one is FIXED.', which includes a raw enum value. NFR-9 requires externalized UI strings. The spec does ask to 'show the server's reason', so this is a judgement call, but the shown text is not under the frontend's control.",
+        "suggestion": "Map the refusal to catalog strings, for example using the report's new status after the reload ('This report is already Fixed/Dismissed'). Or record a documented NFR-9 exception for server-provided problem details.",
+        "dimension": "correctness",
+        "verdict": "rejected",
+        "verifierNotes": [
+          "The finding is refuted. `ReportsScreen.tsx:62` does show `e.problem?.detail`, but that is what the spec asks for. It is not a correctness bug.\n\n1. **The spec requires it.** The change's own spec, `openspec/changes/implement-progress-stats-ui/specs/progress-stats/spec.md:66`, says \"a refusal (409) shows the server's reason and the queue reloads\". The design table (`design.md:27`) says the same: \"409 shown with the server's reason\". Using the server's text with a catalog fallback (`t('admin.reports.alreadyHandled')`) does exactly that.\n\n2. **NFR-9 already makes an exception for server text.** In the project's spec, `openspec/specs/content-authoring/spec.md:155-158` requires every string to come from the catalogs \"except content the admin entered or the server sent\". So server-provided problem details are a documented exception. No new waiver is needed.\n\n3. **The whole admin app already works this way.** `src/features/admin-access/problem.ts:34` `problemMessage()` returns `problem.detail ?? problem.title`. It is used to show server reasons as-is in `SourcesScreen`, `ImagesEditor`, `PreviewScreen`, `TaskEditorScreen` and `ConflictAlert`. ReportsScreen follows the same pattern, only inline.\n\n4. **Language is not a problem.** The admin UI is English, and so is the backend's `detail`, so there is no language mismatch for the user.\n\n**Possible nit:** the `<p role=\"alert\">` at line 98 is not marked `data-content`. The spec says server text should be marked as content. That is a separate tagging point, not the mechanism this finding describes. The finding itself calls this \"a judgement call\", and the spec settles it in favour of the current code.",
+          "The finding describes the code correctly: line 62 renders `e.problem?.detail`, falling back to the catalog string. But this is the specified behaviour, not a defect. `openspec/changes/implement-progress-stats-ui/design.md:87-88` says \"a 409 → the server's `detail` (or \"This report was already handled.\") and the queue reloads\". The change's spec delta says \"a refusal (409) shows the server's reason\" (specs/progress-stats/spec.md:66). The repo also documents this treatment of server text under NFR-9 as an accepted project convention: the authoring-missions design says \"Server text (`detail`, `errors[].message`) … are shown as received\" (archive/2026-10-05-implement-authoring-missions-ui/design.md:96-97). The shared helper `src/features/admin-access/problem.ts:36` follows the same pattern (`detail ?? title`), and the content-authoring spec requires a 409 alert to show the problem's `detail`. So the \"documented NFR-9 exception\" the finding asks for already exists. The admin UI is English and the backend's `detail` is English, so no language mismatch can occur either. The finding raises no security or reproducibility problem: the text comes from the authenticated first-party backend and React renders it as text, so there is no injection. What remains is a style preference that contradicts the written design."
+        ]
+      },
+      {
+        "title": "Literal list separators and sentence joins are built in code, outside the en catalog (NFR-9)",
+        "file": "src/features/reports/ReportsScreen.tsx",
+        "line": 23,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "`return result.bonusXp > 0 ? `${fixed} ${format(t('admin.reports.bonus'), …)}` : fixed;` joins two sentences in code. `rawText` (reports.ts:10), `row.sizes.join(', ')` (StatsScreen.tsx:107) and `short.map(formatWeek).join(', ')` (StatsScreen.tsx:66) use a hard-coded `', '`. AGENTS.md: \"All UI strings externalized (NFR-9)\".",
+        "suggestion": "Add catalog keys such as `admin.common.listSeparator` and `admin.reports.fixedXpWithBonus` (with {xp} and {bonus}), or use Intl.ListFormat with the admin locale.",
+        "dimension": "spec-compliance",
+        "verdict": "rejected",
+        "verifierNotes": [
+          "The code matches the finding's description: `ReportsScreen.tsx:24` puts the `fixed` and `bonus` sentences together with a space, and `reports.ts:10`, `StatsScreen.tsx:66` and `StatsScreen.tsx:109` join lists with a hard-coded `', '`. But viewed as a correctness issue, nothing here is wrong.\n\n1. **Every word goes through the catalog.** Each sentence (`admin.reports.fixedXp`, `fixedNoXp`, `bonus`, `unchanged`, `fixedReplay`, `shortWeeks`, `noValue`) comes from `t()`. The only literals are a space and a comma. NFR-9 says \"All UI strings are externalized\"; punctuation used to join data values is not a UI string.\n\n2. **The output is correct.** NFR-9 and OQ-6 make the admin UI English-only. In English, a space between two sentences and `', '` between list items is exactly right, so no user can see a defect.\n\n3. **`rawText` is meant to show raw data.** It displays the attempt's submitted values as given (\"raw\"), so this is data formatting, not translatable copy.\n\n4. **Merged code already does the same.** `src/features/task/practice.ts:108-109` joins values with `', '` in the Czech child UI. That code passed earlier slices, so treating this pattern as a spec violation would contradict how the project already reads NFR-9.\n\nAt most, this is optional future-proofing for an admin locale that doesn't exist yet, such as switching to `Intl.ListFormat`. It is not a wrong mechanism or a real NFR-9 violation.",
+          "The cited code exists: ReportsScreen.tsx:24 joins two catalog sentences with a space, and reports.ts:10 and StatsScreen.tsx:66/109 join lists with ', '. But no real user sees a defect.\n\n1. The project's own NFR-9 enforcement allows this on purpose. src/app/i18n-coverage.test.tsx:22-24 counts text as covered when it is made of catalog segments plus \"whitespace, digits and punctuation between them\". The comment says: \"Separators and numbers carry no words; the lint rule allows them too.\" So `${fixed} ${bonus}` and `.join(', ')` are compliant by the repo's definition: every word comes from the catalog.\n\n2. The admin UI is English only (AGENTS.md). There is no second admin locale where ', ' or a space between sentences would be wrong. The rendered text is correct for the only audience that can see it.\n\n3. This is an existing idiom, not a regression. The child app already joins with ', ' in src/features/task/practice.ts:108-109, and nothing in src/ defines a list-separator key.\n\nAt most this is a localisation nicety for a future locale that is not planned. It is not a reproducible NFR-9 violation."
+        ]
+      },
+      {
+        "title": "The 'Not re-entered: correct on attempt 1' label appears for any part missing from rawInput",
+        "file": "src/features/reports/ReportsScreen.tsx",
+        "line": 186,
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "Backend note (design.md:126): \"a part locked as correct on attempt 1 is absent from attempt 2's `rawInput` but has its verdict\". Code: `value === undefined ? <span>{t('admin.reports.lockedPart')}</span>` does not check that `attempt.attemptNo === 2` or that `verdict === 'CORRECT'`. A part missing from rawInput for any other reason would be labelled wrongly as locked.",
+        "suggestion": "Show lockedPart only when the attempt is attempt 2 and the part's verdict is CORRECT. Otherwise show a neutral '—'.",
+        "dimension": "spec-compliance",
+        "verdict": "rejected",
+        "verifierNotes": [
+          "The code does what the finding says: at ReportsScreen.tsx:194, `lockedPart` is shown whenever `rawInput[key]` is undefined. `partKeys` (line 121) merges the keys of `verdicts` and `rawInput`, so this only happens when a part has a verdict but no raw input. The finding needs another way for that to happen, and the contract gives none:\n\n- openapi.yaml:192–196 says `submitAttempt` is \"Submit all parts of a task\" and that only \"Parts locked as correct from attempt 1 may be omitted on attempt 2 (OQ-11)\".\n- An attempt that can't be read is never stored (`status: UNPARSEABLE` → \"no attempt was used or stored\").\n- `LoggedAttempt.verdicts` holds only CORRECT or WRONG.\n\nSo a logged attempt can't be missing a part on attempt 1. A part with a verdict but no raw input can only be a part locked as correct on attempt 1, which is the label's exact meaning. design.md:126 says the same, and the test at ReportsScreen.test.tsx:146 covers this case.\n\nThe suggested guard (`attemptNo === 2 && verdict === 'CORRECT'`) is defensive against data the contract rules out. It doesn't fix a reachable bug. I found no path where the label is wrong, so the mechanism is not confirmed.",
+          "The code does what the finding says. `ReportsScreen.tsx:194` shows lockedPart whenever `rawInput[key] === undefined`. `partKeys` (line 121) takes the union of the verdict keys and the rawInput keys. The finding assumes a part can be missing from rawInput for some other reason, but it names none, and the specs give none.\n\n- The practice-flow design (archive design.md:124) says a submission carries \"the answers of every part that is not locked\". On attempt 1 nothing is locked, so every part is sent. An empty input is still sent as a string, so it is not undefined.\n- The progress-stats design (design.md:74, :126) names locking as the only reason a part has no raw input: \"a part locked as correct on attempt 1 is absent from attempt 2's rawInput but has its verdict\".\n- Only a part that was correct can be locked, so a missing part's verdict is CORRECT by construction. A check on attemptNo or the verdict would therefore never change the output for data the spec allows.\n\nThe only way to reach the mislabel is a backend that breaks its own contract. That is not something a real user or attacker can trigger, and the impact would just be a cosmetic label in the admin UI. A unit test (ReportsScreen.test.tsx:146) covers exactly the documented case. A defensive guard would do no harm, but no real problem is shown."
+        ]
+      }
+    ],
+    "reviewEvidence": "openspec/changes/implement-progress-stats-ui/review-findings.json"
+  }
+}

@@ -874,10 +874,16 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/progress-stats/spec.md"
+        "contract/openspec/specs/progress-stats/spec.md",
+        "openspec/specs/progress-stats/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "src/features/admin-access/AdminLayout.test.tsx",
+        "src/features/stats/stats.test.ts",
+        "src/features/stats/StatsScreen.test.tsx",
+        "e2e/progress-stats.spec.ts"
+      ],
       "recordings": []
     },
     {
@@ -888,10 +894,15 @@
       ],
       "ownedHere": true,
       "specs": [
-        "contract/openspec/specs/progress-stats/spec.md"
+        "contract/openspec/specs/progress-stats/spec.md",
+        "openspec/specs/progress-stats/spec.md"
       ],
       "planned": true,
-      "tests": [],
+      "tests": [
+        "src/features/admin-access/AdminLayout.test.tsx",
+        "src/features/reports/ReportsScreen.test.tsx",
+        "e2e/flag-queue.spec.ts"
+      ],
       "recordings": []
     },
     {
@@ -1182,14 +1193,6 @@
   ],
   "failures": [],
   "warnings": [
-    {
-      "check": "test-trace",
-      "msg": "FR-40 (owned by frontend) has no test annotated \"@trace FR-40\""
-    },
-    {
-      "check": "test-trace",
-      "msg": "FR-41 (owned by frontend) has no test annotated \"@trace FR-41\""
-    },
     {
       "check": "recording-evidence",
       "msg": "FR-1 is not referenced by any recording manifest under docs/qa/"

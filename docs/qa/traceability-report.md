@@ -5,7 +5,7 @@ requirements/spec/test/recording change; CI runs `--check-fresh`.
 
 Repo: frontend (contract: submodule).
 Scope: 48 MVP functional requirements, 30 owned by frontend.
-Result: PASS, 15 warning(s)
+Result: PASS, 13 warning(s)
 
 | FR | Spec | Plan | Owner repo(s) | Test trace here | Recording here |
 |---|---|---|---|---|---|
@@ -52,8 +52,8 @@ Result: PASS, 15 warning(s)
 | FR-38 | yes | yes | backend, frontend | 3 | yes |
 | FR-39 | yes | yes | backend, frontend | 1 | - |
 | FR-58 | yes | yes | frontend | 2 | - |
-| FR-40 | yes | yes | backend, frontend | - | - |
-| FR-41 | yes | yes | backend, frontend | - | - |
+| FR-40 | yes | yes | backend, frontend | 4 | - |
+| FR-41 | yes | yes | backend, frontend | 3 | - |
 | FR-42 | yes | yes | backend | n/a | n/a |
 | FR-43 | yes | yes | backend | n/a | n/a |
 | FR-44 | yes | yes | backend | n/a | n/a |
@@ -97,8 +97,6 @@ None.
 
 ## Warnings
 
-- **test-trace**: FR-40 (owned by frontend) has no test annotated "@trace FR-40"
-- **test-trace**: FR-41 (owned by frontend) has no test annotated "@trace FR-41"
 - **recording-evidence**: FR-1 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-2 is not referenced by any recording manifest under docs/qa/
 - **recording-evidence**: FR-4 is not referenced by any recording manifest under docs/qa/

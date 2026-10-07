@@ -13,6 +13,9 @@ describe('route registry', () => {
   it('marks every /admin path as an admin route', () => {
     expect(ADMIN_ROUTES).toEqual(ROUTE_PATHS.filter((p) => p.startsWith('/admin')));
     expect(ADMIN_ROUTES).toContain('/admin/tasks/edit');
+    // Slice 9: the stats page and the flag queue join the a11y, theme and ⟦ gates (NFR-9, NFR-13).
+    expect(ADMIN_ROUTES).toContain('/admin/stats');
+    expect(ADMIN_ROUTES).toContain('/admin/reports');
   });
 
   it('marks every other path as a child route', () => {

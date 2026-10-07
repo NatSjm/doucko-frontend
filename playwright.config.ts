@@ -10,6 +10,8 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
+  // PW_WORKERS caps parallel browsers on a loaded machine (Firefox times out under load); default: Playwright's.
+  workers: process.env.PW_WORKERS ? Number(process.env.PW_WORKERS) : undefined,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: externalBaseUrl ?? `http://localhost:${previewPort}`,

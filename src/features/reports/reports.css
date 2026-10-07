@@ -1,0 +1,91 @@
+.report-filter {
+  justify-self: start;
+}
+
+/* Always in the page (a live region announces only what changes inside it); no box while empty. */
+.report-outcome:empty {
+  padding: 0;
+}
+
+.report-outcome:focus-visible,
+.report-error:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.report-list {
+  display: grid;
+  gap: var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.report-entry {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.report-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+}
+
+.report-task {
+  margin: 0;
+  font-size: inherit;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.report-facts {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+}
+
+.report-facts dt {
+  font-weight: 700;
+}
+
+.report-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.report-attempt {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.report-strong {
+  font-weight: 700;
+}
+
+/* Raw input is shown whole: it wraps inside the entry, never truncated, never scrolled sideways. */
+.report-parts {
+  table-layout: fixed;
+}
+
+.report-parts th:first-child {
+  width: var(--space-8);
+}
+
+.report-parts td {
+  overflow-wrap: anywhere;
+}
+
+.report-raw {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.report-when {
+  margin-inline-start: var(--space-2);
+}
