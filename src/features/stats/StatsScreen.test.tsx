@@ -150,6 +150,24 @@ describe('stats page (FR-40)', () => {
     await vi.waitFor(async () => expect(rows(await weekly())).toHaveLength(8));
   });
 
+  it('keeps the figures shown when a background refresh fails, says they may be out of date, and retries (review F05)', async () => {
+    const { act } = await import('@testing-library/react');
+    const { focusManager } = await import('@tanstack/react-query');
+    const backend = stubSignedInAdmin();
+    open();
+    await weekly();
+    backend.override = { match: (method, path) => method === 'GET' && path === '/api/admin/stats', status: 500, body: { title: 'Server error' } };
+    act(() => {
+      focusManager.setFocused(false);
+      focusManager.setFocused(true);
+    });
+    expect(await screen.findByText(m['admin.common.refreshFailed'])).toBeInTheDocument();
+    expect(rows(await weekly())).toHaveLength(5);
+    await userEvent.click(screen.getByRole('button', { name: m['admin.session.retry'] }));
+    await vi.waitFor(() => expect(screen.queryByText(m['admin.common.refreshFailed'])).not.toBeInTheDocument());
+    act(() => focusManager.setFocused(undefined));
+  });
+
   it('practice older than the shown weeks is not the empty state: the short weeks are marked (review F07)', async () => {
     const backend = stubSignedInAdmin();
     backend.progress.history = [];
