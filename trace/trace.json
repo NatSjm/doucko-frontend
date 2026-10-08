@@ -1240,10 +1240,5 @@
     }
   ],
   "failures": [],
-  "warnings": [
-    {
-      "check": "active-changes",
-      "msg": "active change \"qa-phase6-ui\" is not archived"
-    }
-  ]
+  "warnings": []
 }

@@ -5,7 +5,7 @@ requirements/spec/test/recording change; CI runs `--check-fresh`.
 
 Repo: frontend (contract: submodule).
 Scope: 48 MVP functional requirements, 30 owned by frontend.
-Result: PASS, 1 warning(s)
+Result: PASS
 
 | FR | Spec | Plan | Owner repo(s) | Test trace here | Recording here |
 |---|---|---|---|---|---|
@@ -97,4 +97,4 @@ None.
 
 ## Warnings
 
-- **active-changes**: active change "qa-phase6-ui" is not archived
+None.
