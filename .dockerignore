@@ -13,6 +13,8 @@ openspec/
 **/coverage/
 **/playwright-report/
 **/test-results/
+**/test-results-stack/
+**/playwright-report-stack/
 **/*.log
 **/.idea/
 **/.vscode/

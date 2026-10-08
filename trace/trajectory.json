@@ -70,7 +70,7 @@
     {
       "slice": "2026-10-07-implement-progress-stats-ui",
       "reviewEvidence": "clean",
-      "trailerCommits": 5,
+      "trailerCommits": 6,
       "libDomains": [
         "stats",
         "admin-access",

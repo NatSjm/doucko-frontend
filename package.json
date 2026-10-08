@@ -11,6 +11,8 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:e2e:stack": "node tools/e2e-stack-run.mjs",
+    "test:e2e:stack:only": "playwright test -c playwright.stack.config.ts",
     "api:generate": "node tools/generate-api-client.mjs",
     "qa:verify": "node scripts/qa-verify.mjs",
     "gate:status": "node scripts/gate-status.mjs",
