@@ -1,0 +1,363 @@
+{
+  "generatedBy": "review-gate",
+  "scope": "Phase 6 QA proof frontend (qa-phase6-ui): the recording clips e2e/recordings/admin-and-theme.spec.ts, playwright.record.config.ts, tools/record-e2e-clips.mjs (Playwright JSON report -> recordings manifest), the e2e suite's testIgnore, and the product fix in src/features/missions/MissionEditorScreen.tsx (refetch the topic task list after a publish/unpublish or a refused status change) with its unit test",
+  "change": "qa-phase6-ui",
+  "baseRef": "93c60ad",
+  "headRef": "HEAD",
+  "dimensions": {
+    "correctness": {
+      "confirmed": 5,
+      "contested": 1,
+      "rejected": 3
+    },
+    "security": {
+      "confirmed": 3,
+      "contested": 2,
+      "rejected": 2
+    },
+    "spec-compliance": {
+      "confirmed": 12,
+      "contested": 1,
+      "rejected": 0
+    },
+    "visual": {
+      "confirmed": 9,
+      "contested": 0,
+      "rejected": 0
+    }
+  },
+  "findings": [
+    {
+      "id": "F01",
+      "severity": "major",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "rec-task-list-provenance claims FR-11 but never exercises the grade, topic or modality filters",
+      "file": "e2e/recordings/admin-and-theme.spec.ts",
+      "line": 156,
+      "status": "open"
+    },
+    {
+      "id": "F02",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "Manifest entry always lists a screenshot path, even when no still was attached",
+      "file": "tools/record-e2e-clips.mjs",
+      "line": 46,
+      "status": "open"
+    },
+    {
+      "id": "F03",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "Clips that don't match the title regex are silently dropped, and the tool doesn't check for expected clips",
+      "file": "tools/record-e2e-clips.mjs",
+      "line": 37,
+      "status": "open"
+    },
+    {
+      "id": "F04",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "rec-source-upload never sets grade or subject; it relies on form defaults",
+      "file": "e2e/recordings/admin-and-theme.spec.ts",
+      "line": 51,
+      "status": "open"
+    },
+    {
+      "id": "F05",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "New unit test doesn't cover the refused-publish refetch path",
+      "file": "src/features/missions/MissionEditorScreen.test.tsx",
+      "line": 345,
+      "status": "open"
+    },
+    {
+      "id": "F06",
+      "severity": "minor",
+      "dimension": "security",
+      "verdict": "confirmed",
+      "title": "rec-parts-hints-translations claims FR-8 but only proves entering one hint translation; the prompt translation is seed data and part-label translations are never asserted",
+      "file": "e2e/recordings/admin-and-theme.spec.ts",
+      "line": 201,
+      "status": "open"
+    },
+    {
+      "id": "F07",
+      "severity": "minor",
+      "dimension": "security",
+      "verdict": "confirmed",
+      "title": "rec-source-upload claims grade and subject for FR-1 but never sets them; it only checks stub defaults",
+      "file": "e2e/recordings/admin-and-theme.spec.ts",
+      "line": 132,
+      "status": "open"
+    },
+    {
+      "id": "F08",
+      "severity": "minor",
+      "dimension": "security",
+      "verdict": "confirmed",
+      "title": "The refused-publish task-list refresh (catch branch) has no test: removing it keeps the suite green",
+      "file": "src/features/missions/MissionEditorScreen.test.tsx",
+      "line": 405,
+      "status": "open"
+    },
+    {
+      "id": "F09",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Coverage summary (FRs claimed by the Phase 6 clips plus the mission editor fix)",
+      "file": "e2e/recordings/admin-and-theme.spec.ts",
+      "line": 1,
+      "status": "open"
+    },
+    {
+      "id": "F10",
+      "severity": "major",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "FR-39 clip asserts the IP deny-list, not a swappable skin",
+      "file": "e2e/recordings/admin-and-theme.spec.ts",
+      "line": 257,
+      "status": "open"
+    },
+    {
+      "id": "F11",
+      "severity": "major",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "FR-11 clip covers only source, status, page and text search; grade, topic and modality filters are not asserted",
+      "file": "e2e/recordings/admin-and-theme.spec.ts",
+      "line": 231,
+      "status": "open"
+    },
+    {
+      "id": "F12",
+      "severity": "major",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "FR-8 clip enters only a hint translation; the prompt translation it asserts is pre-seeded and part-label translation is absent",
+      "file": "e2e/recordings/admin-and-theme.spec.ts",
+      "line": 189,
+      "status": "open"
+    },
+    {
+      "id": "F13",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "FR-1 clip never selects grade or subject; it asserts the form defaults",
+      "file": "e2e/recordings/admin-and-theme.spec.ts",
+      "line": 121,
+      "status": "open"
+    },
+    {
+      "id": "F14",
+      "severity": "major",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "record-e2e-clips silently drops expected clips that are missing from the report",
+      "file": "tools/record-e2e-clips.mjs",
+      "line": 481,
+      "status": "open"
+    },
+    {
+      "id": "F15",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "An asserted clip can be written with no video or still on disk",
+      "file": "tools/record-e2e-clips.mjs",
+      "line": 490,
+      "status": "open"
+    },
+    {
+      "id": "F16",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Re-running the recorder wipes the vision verdicts stored in the committed manifest",
+      "file": "tools/record-e2e-clips.mjs",
+      "line": 475,
+      "status": "open"
+    },
+    {
+      "id": "F17",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Proposal says 'No product behaviour changes' but the slice ships a product fix in MissionEditorScreen",
+      "file": "openspec/changes/qa-phase6-ui/proposal.md",
+      "line": 13,
+      "status": "open"
+    },
+    {
+      "id": "F18",
+      "severity": "major",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Ticked tasks 3.1–3.3 have no artifacts: no review-findings.json, current-state not updated, qa:verify not re-run after the code change",
+      "file": "openspec/changes/qa-phase6-ui/tasks.md",
+      "line": 15,
+      "status": "open"
+    },
+    {
+      "id": "F19",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Mission editor fix is correct, but the refused-status refetch path has no test",
+      "file": "src/features/missions/MissionEditorScreen.tsx",
+      "line": 161,
+      "status": "open"
+    },
+    {
+      "id": "F20",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "FR-58 'no in-app toggle' check uses a narrow selector heuristic",
+      "file": "e2e/recordings/admin-and-theme.spec.ts",
+      "line": 279,
+      "status": "open"
+    },
+    {
+      "id": "F21",
+      "severity": "major",
+      "dimension": "visual",
+      "verdict": "confirmed",
+      "title": "FR-39 clip does not assert the requirement (one swappable skin)",
+      "file": "e2e/recordings/admin-and-theme.spec.ts",
+      "line": 176,
+      "status": "open"
+    },
+    {
+      "id": "F22",
+      "severity": "major",
+      "dimension": "visual",
+      "verdict": "confirmed",
+      "title": "FR-11 clip covers only 3 of the 6 required filters (grade, topic and modality are never used)",
+      "file": "e2e/recordings/admin-and-theme.spec.ts",
+      "line": 150,
+      "status": "open"
+    },
+    {
+      "id": "F23",
+      "severity": "minor",
+      "dimension": "visual",
+      "verdict": "confirmed",
+      "title": "FR-8 / FR-6 assertions partly check seed data, not admin input; translated part labels never asserted",
+      "file": "e2e/recordings/admin-and-theme.spec.ts",
+      "line": 119,
+      "status": "open"
+    },
+    {
+      "id": "F24",
+      "severity": "minor",
+      "dimension": "visual",
+      "verdict": "confirmed",
+      "title": "FR-1 clip never chooses grade/subject and fills publisher/edition by blind Tab order",
+      "file": "e2e/recordings/admin-and-theme.spec.ts",
+      "line": 42,
+      "status": "open"
+    },
+    {
+      "id": "F25",
+      "severity": "minor",
+      "dimension": "visual",
+      "verdict": "confirmed",
+      "title": "FR-4 'shown to the child' is asserted only in the admin preview; JPG never exercised",
+      "file": "e2e/recordings/admin-and-theme.spec.ts",
+      "line": 92,
+      "status": "open"
+    },
+    {
+      "id": "F26",
+      "severity": "minor",
+      "dimension": "visual",
+      "verdict": "confirmed",
+      "title": "FR-58 'no in-app toggle' check uses a narrow selector",
+      "file": "e2e/recordings/admin-and-theme.spec.ts",
+      "line": 198,
+      "status": "open"
+    },
+    {
+      "id": "F27",
+      "severity": "minor",
+      "dimension": "visual",
+      "verdict": "confirmed",
+      "title": "record-e2e-clips silently drops specs without results or a non-matching title; no expected clip list",
+      "file": "tools/record-e2e-clips.mjs",
+      "line": 37,
+      "status": "open"
+    },
+    {
+      "id": "F28",
+      "severity": "minor",
+      "dimension": "visual",
+      "verdict": "confirmed",
+      "title": "Manifest entry claims video/still paths even when no attachment exists",
+      "file": "tools/record-e2e-clips.mjs",
+      "line": 56,
+      "status": "open"
+    },
+    {
+      "id": "F29",
+      "severity": "minor",
+      "dimension": "visual",
+      "verdict": "confirmed",
+      "title": "Refused-status refetch path (catch → refreshTaskRows) is not covered by a test",
+      "file": "src/features/missions/MissionEditorScreen.test.tsx",
+      "line": 345,
+      "status": "open"
+    },
+    {
+      "id": "F30",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "contested",
+      "title": "FR-7 and FR-8 claims leave parts of the requirement unasserted (hint-less task, part-label translation)",
+      "file": "e2e/recordings/admin-and-theme.spec.ts",
+      "line": 118,
+      "status": "open"
+    },
+    {
+      "id": "F31",
+      "severity": "minor",
+      "dimension": "security",
+      "verdict": "contested",
+      "title": "FR-2 and FR-4 clips skip part of the requirement ('side by side'; 'shown to the child')",
+      "file": "e2e/recordings/admin-and-theme.spec.ts",
+      "line": 140,
+      "status": "open"
+    },
+    {
+      "id": "F32",
+      "severity": "minor",
+      "dimension": "security",
+      "verdict": "contested",
+      "title": "Recorder can mark a clip asserted while its screenshot is missing, and silently drops clips that have no result",
+      "file": "tools/record-e2e-clips.mjs",
+      "line": 492,
+      "status": "open"
+    },
+    {
+      "id": "F33",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "contested",
+      "title": "FR-2 'side by side with the task editor' is not asserted",
+      "file": "e2e/recordings/admin-and-theme.spec.ts",
+      "line": 136,
+      "status": "open"
+    }
+  ],
+  "clean": false,
+  "generatedAt": "2026-10-08T18:20:06Z"
+}

@@ -355,6 +355,17 @@ describe('publishing (FR-9, store rules FR-57)', () => {
     expect(within(taskList()).getAllByText(m['admin.status.PUBLISHED'])).toHaveLength(2);
   });
 
+  it('after a refused publish, the task rows show a task published meanwhile (review F08)', async () => {
+    const backend = await openSaved();
+    expect(within(taskList()).getAllByText(m['admin.status.DRAFT'])).toHaveLength(2);
+    // One task is published elsewhere; the other still blocks the mission.
+    backend.tasks.find((t) => t.taskId === SEED.taskDecimal)!.status = 'PUBLISHED';
+    await userEvent.click(button(m['admin.missionEditor.publish']));
+    await screen.findByRole('alert');
+    await waitFor(() => expect(within(taskList()).getAllByText(m['admin.status.DRAFT'])).toHaveLength(1));
+    expect(within(taskList()).getAllByText(m['admin.status.PUBLISHED'])).toHaveLength(1);
+  });
+
   it('asks to save changes before publishing', async () => {
     await openSaved();
     await userEvent.click(button(format(m['admin.missionEditor.moveDown'], { n: 1 })));

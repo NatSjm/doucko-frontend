@@ -12,3 +12,14 @@ AssertionError: expected [ <span …(1)></span>, …(1) ] to have a length of +0
 ```
 
 RED on the assertion (2 rows still Draft after the successful publish), not on setup.
+
+## Review F08: the refused-status refetch
+
+Test added for review finding F08 (the catch branch), run with that branch removed (2026-10-08), then restored (60/60 pass):
+
+```text
+     × after a refused publish, the task rows show a task published meanwhile (review F08) 1467ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+AssertionError: expected [ <span …(1)></span>, …(1) ] to have a length of 1 but got 2
+      Tests  1 failed | 34 skipped (35)
+```

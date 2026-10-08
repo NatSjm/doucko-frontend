@@ -1,0 +1,7 @@
+{
+  "scope": "Phase 6 QA proof frontend (qa-phase6-ui): the recording clips e2e/recordings/admin-and-theme.spec.ts, playwright.record.config.ts, tools/record-e2e-clips.mjs (Playwright JSON report -> recordings manifest), the e2e suite's testIgnore, and the product fix in src/features/missions/MissionEditorScreen.tsx (refetch the topic task list after a publish/unpublish or a refused status change) with its unit test",
+  "baseRef": "93c60ad",
+  "headRef": "HEAD",
+  "focus": "Do the clips really ASSERT each FR they claim in their proof annotation (FR-1, FR-2, FR-4, FR-6, FR-7, FR-8, FR-10, FR-11, FR-13, FR-39, FR-40, FR-41, FR-58; requirement text in contract/docs/requirements.md) rather than just mentioning it? Can tools/record-e2e-clips.mjs ever write asserted: true for a failed, skipped, flaky or missing clip, or a manifest entry without a video/still on disk (scripts/check-recordings.mjs contract)? Is the mission editor fix correct (TanStack Query key prefixes, TASKS_KEY vs ['admin','task']), does it cause a stale or racing state, and does the new test fail without it? No real names/PII or workbook content in fixtures or stills (NFR-3/NFR-4).",
+  "change": "qa-phase6-ui"
+}

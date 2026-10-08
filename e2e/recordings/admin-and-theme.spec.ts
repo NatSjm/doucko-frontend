@@ -11,13 +11,15 @@ import { findDenied, parseDenyList } from '../../src/features/skin/denylist';
 import { format } from '../../src/i18n/format';
 import { messages as m } from '../../src/i18n/messages';
 import { makePdf, SEED } from '../../src/test/fake-admin-backend';
-import { PLACEHOLDER_LADDER } from '../../src/test/fake-child-backend';
+import { createFakeBackend, PLACEHOLDER_LADDER } from '../../src/test/fake-child-backend';
 import { REPORTS } from '../../src/test/fake-progress-backend';
 import { signedInAdmin } from '../fixtures/admin';
 import { childBackend, expectChildContent } from '../fixtures/child';
 import { expect, test } from '../fixtures/test';
 
 const PAPER = { light: 'rgb(255, 247, 239)', dark: 'rgb(14, 19, 48)' } as const;
+/** A control that would switch the theme, by its name (en admin, cs child). The full click-every-control check is e2e/theme.spec.ts. */
+const THEME_NAME = /theme|dark|light|motiv|tmav|světl|režim/i;
 const field = (page: Page, name: string) => page.getByLabel(name, { exact: true });
 const canvas = (page: Page, n: number) => page.getByRole('img', { name: format(m['admin.viewer.canvas'], { page: n }) });
 
@@ -39,11 +41,14 @@ test('rec-source-upload: upload a PDF source with title, publisher, edition, gra
   await page.goto('/admin/sources');
   await page.getByLabel(m['admin.sources.file']).setInputFiles({ name: 'sesit.pdf', mimeType: 'application/pdf', buffer: Buffer.from(makePdf(12)) });
   await page.getByLabel(m['admin.sources.sourceTitle']).fill('Matematika 6 – pracovní sešit');
-  await page.keyboard.press('Tab');
-  await page.keyboard.type('Testovací nakladatelství');
-  await page.keyboard.press('Tab');
-  await page.keyboard.type('1');
-  await page.keyboard.press('Enter');
+  await field(page, m['admin.sources.publisher']).fill('Testovací nakladatelství');
+  await field(page, m['admin.sources.edition']).fill('1');
+  // Grade and subject are chosen, not left to the form defaults.
+  await field(page, m['admin.sources.grade']).selectOption('6');
+  await field(page, m['admin.sources.subject']).selectOption('math');
+  await expect(field(page, m['admin.sources.grade'])).toHaveValue('6');
+  await expect(field(page, m['admin.sources.subject'])).toHaveValue('math');
+  await field(page, m['admin.sources.edition']).press('Enter');
   await expect(page.getByRole('status')).toHaveText(m['admin.sources.uploaded']);
   const row = page.getByRole('row', { name: /Matematika 6 – pracovní sešit/ });
   await expect(row.getByRole('cell', { name: '12', exact: true })).toBeVisible();
@@ -65,6 +70,11 @@ test('rec-pdf-beside-editor: the PDF viewer beside the task editor jumps to a pa
   await expect(canvas(page, 30)).toBeVisible();
   expect(await canvas(page, 30).evaluate((c) => (c as HTMLCanvasElement).width > 0)).toBe(true);
   await expect(field(page, m['admin.editor.prompt'])).toHaveValue('Rozepsaná úloha');
+  // Side by side: the viewer and the editor share the viewport, one beside the other.
+  const viewerBox = await canvas(page, 30).boundingBox();
+  const editorBox = await field(page, m['admin.editor.prompt']).boundingBox();
+  expect(viewerBox && editorBox).toBeTruthy();
+  expect(viewerBox!.x >= editorBox!.x + editorBox!.width || editorBox!.x >= viewerBox!.x + viewerBox!.width).toBe(true);
   await still(page);
 });
 
@@ -105,6 +115,8 @@ test('rec-parts-hints-translations: a task with two answer parts, ordered hints 
   await field(page, format(m['admin.editor.accepted'], { n: 1 })).last().fill('3');
   await page.getByRole('button', { name: m['admin.editor.addHint'] }).click();
   await field(page, format(m['admin.editor.hint'], { n: 3 })).fill('Desetina je jedna děleno deseti.');
+  await field(page, format(m['admin.editor.trPrompt'], { locale: 'uk' })).fill('Запиши половину як десятковий дріб, а потім число три.');
+  await field(page, format(m['admin.editor.trPartLabel'], { n: 2, locale: 'uk' })).fill('б');
   await field(page, format(m['admin.editor.trHint'], { n: 1, locale: 'uk' })).fill('Половина — це один поділити на два.');
   await page.getByRole('button', { name: m['admin.editor.save'] }).click();
   await expect(page.getByText(m['admin.editor.updated'])).toBeVisible();
@@ -116,8 +128,9 @@ test('rec-parts-hints-translations: a task with two answer parts, ordered hints 
   expect(saved.parts.map((p) => p.label).every((l) => l.length > 0)).toBe(true);
   // FR-7: three hints in order.
   expect(saved.hints).toEqual(['Polovina je jedna děleno dvěma.', 'Kolik je pět desetin?', 'Desetina je jedna děleno deseti.']);
-  // FR-8: the uk translation of prompt and hint 1.
-  expect(saved.translations?.uk?.prompt).toBe('Запиши одну половину як десятковий дріб.');
+  // FR-8: the uk translations of the prompt, part 2's label and hint 1, all entered in this clip.
+  expect(saved.translations?.uk?.prompt).toBe('Запиши половину як десятковий дріб, а потім число три.');
+  expect(saved.translations?.uk?.partLabels?.[saved.parts[1].key]).toBe('б');
   expect(saved.translations?.uk?.hints?.[0]).toBe('Половина — це один поділити на два.');
   await expect(parts.first()).toBeVisible();
   await still(page);
@@ -163,6 +176,15 @@ test('rec-task-list-provenance: filter and search the task list, see the source 
   await field(page, m['admin.tasks.search']).press('Enter');
   await expect(rows).toHaveCount(1);
   await expect(rows.first()).toContainText('obvod obdélníku');
+  // Grade, topic and modality (the seed: 4 grade-6 tasks, 2 in "Obvod a obsah", 1 of them GRAPHIC).
+  await page.goto('/admin/tasks');
+  await field(page, m['admin.tasks.grade']).selectOption('6');
+  await expect(rows).toHaveCount(4);
+  await field(page, m['admin.tasks.topic']).selectOption({ label: 'Obvod a obsah' });
+  await expect(rows).toHaveCount(2);
+  await field(page, m['admin.tasks.modality']).selectOption({ label: m['admin.modality.GRAPHIC'] });
+  await expect(rows).toHaveCount(1);
+  await expect(rows.first()).toContainText('Narýsuj čtverec o straně 5 cm.');
   await page.goto('/admin/tasks');
   const row = page.getByRole('row', { name: /Zapiš jednu polovinu/ });
   await expect(row.getByText('Matematika 6 – pracovní sešit')).toBeVisible();
@@ -173,13 +195,20 @@ test('rec-task-list-provenance: filter and search the task list, see the source 
   await still(page);
 });
 
-test('rec-skin-hq: HQ shows the rank from the server ladder and no deny-listed term anywhere on the child screen (FR-39)', async ({ page }) => {
+test('rec-skin-hq: the rank names are skin data (a swapped ladder renames the rank on HQ) and no deny-listed term shows (FR-39)', async ({ page }) => {
   proves('FR-39');
-  await childBackend(page);
+  const backend = createFakeBackend();
+  await childBackend(page, backend);
   await page.goto('/');
   await expectChildContent(page);
   const panel = page.getByRole('region', { name: m['child.hq.progressTitle'] });
   await expect(panel.getByText(PLACEHOLDER_LADDER[0].name, { exact: true })).toBeVisible();
+  // Swap the skin's rank names (server data, not frontend code): HQ follows without a rebuild.
+  backend.practice.ladder = backend.practice.ladder.map((r, i) => ({ ...r, name: ['Poutník', 'Hlídač', 'Strážce věže', 'Mistr', 'Velmistr'][i] ?? r.name }));
+  await page.reload();
+  await expectChildContent(page);
+  await expect(panel.getByText('Poutník', { exact: true })).toBeVisible();
+  await expect(panel.getByText(PLACEHOLDER_LADDER[0].name, { exact: true })).toHaveCount(0);
   const terms = parseDenyList(readFileSync('contract/docs/skin/ip-denylist.txt', 'utf8'));
   expect(terms.length).toBeGreaterThan(0);
   expect(findDenied(await page.locator('body').innerText(), terms)).toEqual([]);
@@ -196,12 +225,18 @@ for (const scheme of ['light', 'dark'] as const) {
       await expect(page.getByRole('heading', { level: 1, name: m['admin.stats.title'] })).toBeVisible();
       await expect(page.locator('body')).toHaveCSS('background-color', PAPER[scheme]);
       await expect(page.locator('[data-theme], .dk-toggle, [role=switch]')).toHaveCount(0);
+      await expect(page.getByRole('button', { name: THEME_NAME })).toHaveCount(0);
+      await expect(page.getByRole('checkbox', { name: THEME_NAME })).toHaveCount(0);
+      await expect(page.getByRole('combobox', { name: THEME_NAME })).toHaveCount(0);
       await page.unrouteAll({ behavior: 'ignoreErrors' });
       await childBackend(page);
       await page.goto('/');
       await expectChildContent(page);
       await expect(page.locator('body')).toHaveCSS('background-color', PAPER[scheme]);
       await expect(page.locator('[data-theme], .dk-toggle, [role=switch]')).toHaveCount(0);
+      await expect(page.getByRole('button', { name: THEME_NAME })).toHaveCount(0);
+      await expect(page.getByRole('checkbox', { name: THEME_NAME })).toHaveCount(0);
+      await expect(page.getByRole('combobox', { name: THEME_NAME })).toHaveCount(0);
       await still(page);
     });
   });

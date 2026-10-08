@@ -8,7 +8,7 @@ ratchet and a vision-verify pass by fresh judges. G7 runs
 `check-traceability --release --strict-tests --strict-recordings`, which
 failed: 13 frontend-owned MVP FRs (FR-1, FR-2, FR-4, FR-6, FR-7, FR-8, FR-10,
 FR-11, FR-13, FR-39, FR-40, FR-41, FR-58) had no recording. The per-slice
-recorders covered slices 6–8 and NFR-8 only. No product behaviour changes.
+recorders covered slices 6–8 and NFR-8 only.
 
 ## What Changes
 
@@ -24,12 +24,15 @@ recorders covered slices 6–8 and NFR-8 only. No product behaviour changes.
   and writes `docs/qa/demo-recordings/phase6-admin-theme/` (video, still,
   explainer, manifest in the `record-demos.mjs` shape); a failed clip is
   `asserted: false` and exits 1.
+- Product fix: the mission editor refetches the topic task list after a
+  publish, unpublish or refused status change (task rows showed a stale Draft;
+  found by vision-verify).
 - Evidence: vision-verify over every clip without a verdict, a11y report,
   OPEN correction COR-1 recorded for the slice-1 waiver (owner disposition).
 
 ## Capabilities
 
-None changed: QA tooling and evidence only.
+None changed in the specs: QA tooling and evidence, plus one fix that makes the mission editor match the existing store spec (task statuses shown current).
 
 ## Impact
 

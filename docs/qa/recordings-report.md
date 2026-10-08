@@ -10,17 +10,17 @@ Result: PASS
 | Clip | Proves | Video bytes | Shot | Asserted | Vision |
 |---|---|---|---|---|---|
 | nfr8-single-part-task-entry | NFR-8, FR-3 | 1136675 | yes | yes | met |
-| rec-source-upload | FR-1 | 341286 | yes | yes | met |
-| rec-pdf-beside-editor | FR-2 | 219645 | yes | yes | met |
-| rec-task-images | FR-4 | 456113 | yes | yes | met |
-| rec-parts-hints-translations | FR-6, FR-7, FR-8 | 204013 | yes | yes | met |
-| rec-preview-tester | FR-10, FR-7, FR-8 | 274767 | yes | yes | met |
-| rec-task-list-provenance | FR-11, FR-13 | 241788 | yes | yes | met |
-| rec-skin-hq | FR-39 | 135065 | yes | yes | met |
-| rec-stats | FR-40 | 183120 | yes | yes | met |
-| rec-flag-queue | FR-41 | 310330 | yes | yes | met |
-| rec-theme-light | FR-58 | 257878 | yes | yes | met |
-| rec-theme-dark | FR-58 | 158886 | yes | yes | met |
+| rec-source-upload | FR-1 | 144086 | yes | yes | - |
+| rec-pdf-beside-editor | FR-2 | 229207 | yes | yes | - |
+| rec-task-images | FR-4 | 10512 | yes | yes | - |
+| rec-parts-hints-translations | FR-6, FR-7, FR-8 | 231637 | yes | yes | - |
+| rec-preview-tester | FR-10, FR-7, FR-8 | 261454 | yes | yes | - |
+| rec-task-list-provenance | FR-11, FR-13 | 278524 | yes | yes | - |
+| rec-skin-hq | FR-39 | 263761 | yes | yes | - |
+| rec-stats | FR-40 | 170343 | yes | yes | - |
+| rec-flag-queue | FR-41 | 318942 | yes | yes | - |
+| rec-theme-light | FR-58 | 258573 | yes | yes | - |
+| rec-theme-dark | FR-58 | 268445 | yes | yes | - |
 | slice6-mission-create-reorder-publish | FR-9, FR-55 | 679452 | yes | yes | met |
 | slice6-mission-publish-refused | FR-9 | 267214 | yes | yes | met |
 | slice6-mission-list | FR-9 | 114716 | yes | yes | met |

@@ -1,5 +1,7 @@
 # Vision verification report
 
+> **Superseded for `phase6-admin-theme` (2026-10-08):** after this run the 11 `rec-*` clips were re-recorded to address review-gate findings (stronger FR-1/FR-2/FR-8/FR-11/FR-39/FR-58 assertions), which replaced their stills and dropped their `vision` verdicts from the manifest. Their rows below judge the previous stills and are NOT current; a vision-verify re-run over those 11 clips is open (not run: the session cost cap was reached). The slice6, slice7, slice8 and nfr8 verdicts are current.
+
 - Generated at (UTC): 2026-10-08, after 18:05:07Z. The exact time of day wasn't recorded because the writer had no clock. The lower bound is the `finishedAt` of the previous vision-verify run, `trace/workflow-runs/20261008-180053-vision-verify.json`, which this re-run (round 2, args `docs/qa/workflow-args/vision-verify-phase6-r2.json`) follows.
 - Scope of this run: 16 clip(s) re-judged after re-recording, from `docs/qa/demo-recordings/{phase6-admin-theme,slice6-authoring-missions}/manifest.json`.
 - Method: a vision judge checked each clip's final screenshot against the requirement the clip claims to prove. Each verdict is stored as `vision` in its manifest, which `check-recordings` / `check-vision` gate on. The table notes are shortened; the full text is in `vision.notes`.
