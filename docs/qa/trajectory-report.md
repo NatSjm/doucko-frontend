@@ -18,7 +18,7 @@ Result: PASS, 8 warning(s)
 | 2026-10-07-implement-gamification-ui | clean | 4 | yes | mission, summary, task, hq, rank, skin |
 | 2026-10-07-implement-progress-stats-ui | clean | 6 | yes | stats, admin-access, reports |
 | 2026-10-08-harden-phase5-ui | clean | 10 | yes | - |
-| 2026-10-08-qa-phase6-ui | **unclean** | 2 | yes | missions |
+| 2026-10-08-qa-phase6-ui | **unclean** | 3 | yes | missions |
 
 ## Cross-slice module overlap
 

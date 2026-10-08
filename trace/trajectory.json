@@ -88,7 +88,7 @@
     {
       "slice": "2026-10-08-qa-phase6-ui",
       "reviewEvidence": "unclean",
-      "trailerCommits": 2,
+      "trailerCommits": 3,
       "libDomains": [
         "missions"
       ],
