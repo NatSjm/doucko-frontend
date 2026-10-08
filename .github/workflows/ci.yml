@@ -36,10 +36,11 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       # The battery: lint, typecheck, unit + coverage + ratchet, Playwright
-      # E2E, eval ratchet, build, recordings gate, acceptance join, integrity
-      # lock, OpenSpec. E2E runs against the compose stack (backend image +
-      # Postgres) once Phase 5 wires it — until then the member renders
-      # MISSING/SKIP-pending explicitly, never PASS.
+      # E2E (mocked: browser-e2e-tests), real-stack evidence freshness
+      # (e2e-stack-evidence: the committed docs/qa/e2e-stack-latest.md must be
+      # a PASS at a commit whose diff to HEAD touches only docs/qa/ and trace/),
+      # eval ratchet, build, recordings gate, acceptance join, integrity lock,
+      # OpenSpec. The real-stack suite itself runs in the e2e-stack job below.
       - name: qa-verify battery
         run: node scripts/qa-verify.mjs
 
@@ -60,4 +61,44 @@ jobs:
             coverage/coverage-summary.json
             playwright-report/
             test-results/
+          if-no-files-found: ignore
+
+  # PD-16 (G5): the real-stack Playwright suite e2e/stack/ against the isolated
+  # compose project doucko-e2e (Postgres + backend + this repo's nginx image),
+  # no route mocks. The backend checkout owns the stack (tools/e2e-stack.mjs);
+  # the wrapper always takes it down and fails on any failed/flaky/skipped test.
+  e2e-stack:
+    runs-on: ubuntu-latest # Docker + compose v2 preinstalled
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - name: Check out the backend
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.DOUCKO_BACKEND_REPO }} # <owner>/<backend repo>: set this repository variable
+          token: ${{ secrets.DOUCKO_BACKEND_TOKEN || github.token }}
+          path: backend
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Backend tooling
+        working-directory: backend
+        run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Real-stack E2E (writes docs/qa/e2e-stack-latest.md)
+        env:
+          DOUCKO_BACKEND_DIR: ${{ github.workspace }}/backend
+        run: npm run test:e2e:stack
+      - name: Upload real-stack evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-stack-evidence
+          path: |
+            docs/qa/e2e-stack-latest.md
+            test-results-stack/
           if-no-files-found: ignore

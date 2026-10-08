@@ -106,7 +106,8 @@
       "planned": true,
       "tests": [
         "src/features/sources/SourcesScreen.test.tsx",
-        "e2e/authoring-sources.spec.ts"
+        "e2e/authoring-sources.spec.ts",
+        "e2e/stack/authoring-to-practice.spec.ts"
       ],
       "recordings": []
     },
@@ -148,7 +149,8 @@
       "tests": [
         "src/features/tasks/TaskEditorScreen.test.tsx",
         "src/features/tasks/taskForm.test.ts",
-        "e2e/authoring-tasks.spec.ts"
+        "e2e/authoring-tasks.spec.ts",
+        "e2e/stack/authoring-to-practice.spec.ts"
       ],
       "recordings": [
         "docs/qa/demo-recordings/nfr8-task-entry/manifest.json"
@@ -262,7 +264,8 @@
         "src/features/missions/MissionEditorScreen.test.tsx",
         "src/features/missions/missionForm.test.ts",
         "src/features/missions/MissionListScreen.test.tsx",
-        "e2e/authoring-missions.spec.ts"
+        "e2e/authoring-missions.spec.ts",
+        "e2e/stack/authoring-to-practice.spec.ts"
       ],
       "recordings": [
         "docs/qa/demo-recordings/slice6-authoring-missions/manifest.json"
@@ -356,7 +359,8 @@
         "src/features/sources/SourcesScreen.test.tsx",
         "src/features/tasks/TaskStatusPanel.test.tsx",
         "e2e/authoring-edit.spec.ts",
-        "e2e/authoring-missions.spec.ts"
+        "e2e/authoring-missions.spec.ts",
+        "e2e/stack/flag-queue.spec.ts"
       ],
       "recordings": [
         "docs/qa/demo-recordings/slice6-authoring-missions/manifest.json"
@@ -544,7 +548,9 @@
       "tests": [
         "src/app/App.test.tsx",
         "src/features/hq/HqScreen.test.tsx",
-        "e2e/practice-hq.spec.ts"
+        "e2e/practice-hq.spec.ts",
+        "e2e/stack/authoring-to-practice.spec.ts",
+        "e2e/stack/seed.spec.ts"
       ],
       "recordings": [
         "docs/qa/demo-recordings/slice7-practice-flow/manifest.json"
@@ -565,7 +571,9 @@
       "tests": [
         "src/features/hq/HqScreen.test.tsx",
         "src/features/mission/MissionScreen.test.tsx",
-        "e2e/practice-hq.spec.ts"
+        "e2e/practice-hq.spec.ts",
+        "e2e/stack/authoring-to-practice.spec.ts",
+        "e2e/stack/seed.spec.ts"
       ],
       "recordings": [
         "docs/qa/demo-recordings/slice7-practice-flow/manifest.json"
@@ -586,7 +594,10 @@
       "tests": [
         "src/features/task/practice.test.ts",
         "src/features/task/TaskScreen.test.tsx",
-        "e2e/practice-task.spec.ts"
+        "e2e/practice-task.spec.ts",
+        "e2e/stack/authoring-to-practice.spec.ts",
+        "e2e/stack/practice.spec.ts",
+        "e2e/stack/seed.spec.ts"
       ],
       "recordings": [
         "docs/qa/demo-recordings/slice7-practice-flow/manifest.json"
@@ -607,7 +618,9 @@
       "tests": [
         "src/features/task/practice.test.ts",
         "src/features/task/TaskScreen.test.tsx",
-        "e2e/practice-task.spec.ts"
+        "e2e/practice-task.spec.ts",
+        "e2e/stack/authoring-to-practice.spec.ts",
+        "e2e/stack/practice.spec.ts"
       ],
       "recordings": [
         "docs/qa/demo-recordings/slice7-practice-flow/manifest.json"
@@ -627,7 +640,8 @@
       "planned": true,
       "tests": [
         "src/features/task/TaskScreen.test.tsx",
-        "e2e/practice-help.spec.ts"
+        "e2e/practice-help.spec.ts",
+        "e2e/stack/practice.spec.ts"
       ],
       "recordings": [
         "docs/qa/demo-recordings/slice7-practice-flow/manifest.json"
@@ -667,7 +681,8 @@
       "planned": true,
       "tests": [
         "src/features/task/TaskScreen.test.tsx",
-        "e2e/practice-help.spec.ts"
+        "e2e/practice-help.spec.ts",
+        "e2e/stack/flag-queue.spec.ts"
       ],
       "recordings": [
         "docs/qa/demo-recordings/slice7-practice-flow/manifest.json"
@@ -709,7 +724,8 @@
       "tests": [
         "src/features/summary/SummaryScreen.test.tsx",
         "src/features/task/TaskScreen.test.tsx",
-        "e2e/gamification-summary.spec.ts"
+        "e2e/gamification-summary.spec.ts",
+        "e2e/stack/practice.spec.ts"
       ],
       "recordings": [
         "docs/qa/demo-recordings/slice8-gamification/manifest.json"
@@ -804,7 +820,9 @@
       "tests": [
         "src/features/hq/HqProgress.test.tsx",
         "src/features/rank/rank.test.ts",
-        "e2e/gamification-hq.spec.ts"
+        "e2e/gamification-hq.spec.ts",
+        "e2e/stack/authoring-to-practice.spec.ts",
+        "e2e/stack/practice.spec.ts"
       ],
       "recordings": [
         "docs/qa/demo-recordings/slice8-gamification/manifest.json"
@@ -882,7 +900,8 @@
         "src/features/admin-access/AdminLayout.test.tsx",
         "src/features/stats/stats.test.ts",
         "src/features/stats/StatsScreen.test.tsx",
-        "e2e/progress-stats.spec.ts"
+        "e2e/progress-stats.spec.ts",
+        "e2e/stack/stats.spec.ts"
       ],
       "recordings": []
     },
@@ -901,7 +920,8 @@
       "tests": [
         "src/features/admin-access/AdminLayout.test.tsx",
         "src/features/reports/ReportsScreen.test.tsx",
-        "e2e/flag-queue.spec.ts"
+        "e2e/flag-queue.spec.ts",
+        "e2e/stack/flag-queue.spec.ts"
       ],
       "recordings": []
     },
@@ -1002,7 +1022,8 @@
       "ownedHere": true,
       "tests": [
         "e2e/admin-sign-in.spec.ts",
-        "e2e/app-shell.spec.ts"
+        "e2e/app-shell.spec.ts",
+        "e2e/stack/admin-session.spec.ts"
       ]
     },
     {
@@ -1045,7 +1066,8 @@
         "src/features/admin-access/AdminLayout.test.tsx",
         "src/i18n/format.test.ts",
         "src/test/lint-rule.test.ts",
-        "e2e/admin-sign-in.spec.ts"
+        "e2e/admin-sign-in.spec.ts",
+        "e2e/stack/admin-session.spec.ts"
       ]
     },
     {

@@ -1,0 +1,420 @@
+{
+  "generatedBy": "review-gate",
+  "scope": "Phase 5 hardening frontend (harden-phase5-ui): the real-stack Playwright suite e2e/stack/ (support.ts and six specs, no route mocks), playwright.stack.config.ts, the wrapper tools/e2e-stack-run.mjs (npm run test:e2e:stack), the mocked suite's testIgnore, ignore files",
+  "change": "harden-phase5-ui",
+  "baseRef": "54917ec",
+  "headRef": "HEAD",
+  "dimensions": {
+    "correctness": {
+      "confirmed": 6,
+      "contested": 2,
+      "rejected": 2
+    },
+    "security": {
+      "confirmed": 5,
+      "contested": 2,
+      "rejected": 1
+    },
+    "spec-compliance": {
+      "confirmed": 10,
+      "contested": 1,
+      "rejected": 3
+    },
+    "visual": {
+      "confirmed": 9,
+      "contested": 0,
+      "rejected": 1
+    }
+  },
+  "findings": [
+    {
+      "id": "F01",
+      "severity": "major",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "The wrapper does not tear the stack down on SIGTERM/SIGHUP, and the SIGINT handler cannot run while spawnSync blocks",
+      "file": "tools/e2e-stack-run.mjs",
+      "line": 51,
+      "status": "fixed",
+      "fixCommit": "c0d0c7c"
+    },
+    {
+      "id": "F02",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "A failed teardown is ignored, and the verdict can still be PASS",
+      "file": "tools/e2e-stack-run.mjs",
+      "line": 48,
+      "status": "fixed",
+      "fixCommit": "c0d0c7c"
+    },
+    {
+      "id": "F03",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "`--keep` is detected anywhere in argv, including Playwright args after `--`",
+      "file": "tools/e2e-stack-run.mjs",
+      "line": 21,
+      "status": "fixed",
+      "fixCommit": "c0d0c7c"
+    },
+    {
+      "id": "F04",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "Flaky (retried) tests count toward a PASS verdict",
+      "file": "tools/e2e-stack-run.mjs",
+      "line": 71,
+      "status": "fixed",
+      "fixCommit": "c0d0c7c"
+    },
+    {
+      "id": "F05",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "The committed G5 evidence was produced from a dirty tree at a commit that predates the suite",
+      "file": "docs/qa/e2e-stack-latest.md",
+      "line": 8,
+      "status": "fixed",
+      "fixCommit": "cd84043"
+    },
+    {
+      "id": "F06",
+      "severity": "major",
+      "dimension": "correctness",
+      "verdict": "confirmed",
+      "title": "tasks.md marks items done that have no evidence in the change",
+      "file": "openspec/changes/harden-phase5-ui/tasks.md",
+      "line": 14,
+      "status": "fixed",
+      "fixCommit": "cd84043"
+    },
+    {
+      "id": "F07",
+      "severity": "minor",
+      "dimension": "security",
+      "verdict": "confirmed",
+      "title": "Wrapper tears the stack down only on SIGINT, and ignores a failed `down`",
+      "file": "tools/e2e-stack-run.mjs",
+      "line": 45,
+      "status": "fixed",
+      "fixCommit": "c0d0c7c"
+    },
+    {
+      "id": "F08",
+      "severity": "minor",
+      "dimension": "security",
+      "verdict": "confirmed",
+      "title": "A narrowed run overwrites the G5 evidence with `Result: PASS`",
+      "file": "tools/e2e-stack-run.mjs",
+      "line": 78,
+      "status": "fixed",
+      "fixCommit": "c0d0c7c"
+    },
+    {
+      "id": "F09",
+      "severity": "minor",
+      "dimension": "security",
+      "verdict": "confirmed",
+      "title": "Committed evidence is tied to a commit that does not contain the suite it reports",
+      "file": "docs/qa/e2e-stack-latest.md",
+      "line": 9,
+      "status": "fixed",
+      "fixCommit": "cd84043"
+    },
+    {
+      "id": "F10",
+      "severity": "minor",
+      "dimension": "security",
+      "verdict": "confirmed",
+      "title": "Isolation guard runs after the test, so `test:e2e:stack:only` or an overridden E2E_STACK_URL can write to the owner's stack",
+      "file": "e2e/stack/support.ts",
+      "line": 165,
+      "status": "fixed",
+      "fixCommit": "c0d0c7c"
+    },
+    {
+      "id": "F11",
+      "severity": "minor",
+      "dimension": "security",
+      "verdict": "confirmed",
+      "title": "Stats week comparison fails when a run crosses the Monday week boundary",
+      "file": "e2e/stack/stats.spec.ts",
+      "line": 30,
+      "status": "fixed",
+      "fixCommit": "c0d0c7c"
+    },
+    {
+      "id": "F12",
+      "severity": "critical",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "G5 gate has no mechanism for the real-stack suite: test:e2e stays mocked and gate-status G5 checks coverage only",
+      "file": "scripts/gate-status.mjs",
+      "line": 214,
+      "status": "fixed",
+      "reason": "Fixed by the factory change PD-16 (docs f04f481), installed here as 28478f9: gate-status G5 key e2eStack and battery member e2e-stack-evidence (scripts/check-e2e-stack.mjs).",
+      "fixCommit": "28478f9"
+    },
+    {
+      "id": "F13",
+      "severity": "major",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Wrapper does not take the stack down on SIGTERM, SIGHUP or SIGBREAK; only SIGINT is handled",
+      "file": "tools/e2e-stack-run.mjs",
+      "line": 834,
+      "status": "fixed",
+      "fixCommit": "c0d0c7c"
+    },
+    {
+      "id": "F14",
+      "severity": "major",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "No pre-flight guard against an overridden target: E2E_STACK_URL, the password or the child name can point the mutating suite at the owner's stack",
+      "file": "e2e/stack/support.ts",
+      "line": 499,
+      "status": "fixed",
+      "fixCommit": "c0d0c7c"
+    },
+    {
+      "id": "F15",
+      "severity": "major",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "A narrowed or filtered run overwrites the evidence file with Result: PASS",
+      "file": "tools/e2e-stack-run.mjs",
+      "line": 861,
+      "status": "fixed",
+      "fixCommit": "c0d0c7c"
+    },
+    {
+      "id": "F16",
+      "severity": "major",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Evidence file is not tied to the committed tree and does not record the backend commit",
+      "file": "docs/qa/e2e-stack-latest.md",
+      "line": 9,
+      "status": "fixed",
+      "fixCommit": "cd84043"
+    },
+    {
+      "id": "F17",
+      "severity": "major",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Ticked tasks 3.3 and 3.4 have no artifacts",
+      "file": "openspec/changes/harden-phase5-ui/tasks.md",
+      "line": 16,
+      "status": "fixed",
+      "fixCommit": "cd84043"
+    },
+    {
+      "id": "F18",
+      "severity": "major",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Task 3.1 claims two green wrapper runs, but there is evidence for only one",
+      "file": "openspec/changes/harden-phase5-ui/tasks.md",
+      "line": 14,
+      "status": "fixed",
+      "fixCommit": "cd84043"
+    },
+    {
+      "id": "F19",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Stats spec: weak session assertion and failure at the week boundary",
+      "file": "e2e/stack/stats.spec.ts",
+      "line": 447,
+      "status": "fixed",
+      "fixCommit": "c0d0c7c"
+    },
+    {
+      "id": "F20",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "flag-queue spec matches hard-coded English admin copy instead of message keys",
+      "file": "e2e/stack/flag-queue.spec.ts",
+      "line": 250,
+      "status": "fixed",
+      "fixCommit": "c0d0c7c"
+    },
+    {
+      "id": "F21",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "confirmed",
+      "title": "Stale results.json could be read when Playwright exits early",
+      "file": "tools/e2e-stack-run.mjs",
+      "line": 847,
+      "status": "fixed",
+      "fixCommit": "c0d0c7c"
+    },
+    {
+      "id": "F22",
+      "severity": "minor",
+      "dimension": "visual",
+      "verdict": "confirmed",
+      "title": "Wrapper only handles SIGINT; SIGTERM, SIGHUP or SIGBREAK leave doucko-e2e running",
+      "file": "tools/e2e-stack-run.mjs",
+      "line": 51,
+      "status": "fixed",
+      "fixCommit": "c0d0c7c"
+    },
+    {
+      "id": "F23",
+      "severity": "minor",
+      "dimension": "visual",
+      "verdict": "confirmed",
+      "title": "A failed `down` is ignored: PASS evidence can be written while the stack is still up",
+      "file": "tools/e2e-stack-run.mjs",
+      "line": 48,
+      "status": "fixed",
+      "fixCommit": "c0d0c7c"
+    },
+    {
+      "id": "F24",
+      "severity": "minor",
+      "dimension": "visual",
+      "verdict": "confirmed",
+      "title": "Narrowed runs (--project, --grep) overwrite the G5 evidence file with PASS",
+      "file": "tools/e2e-stack-run.mjs",
+      "line": 80,
+      "status": "fixed",
+      "fixCommit": "c0d0c7c"
+    },
+    {
+      "id": "F25",
+      "severity": "minor",
+      "dimension": "visual",
+      "verdict": "confirmed",
+      "title": "Flaky (retried) tests count toward PASS",
+      "file": "tools/e2e-stack-run.mjs",
+      "line": 71,
+      "status": "fixed",
+      "fixCommit": "c0d0c7c"
+    },
+    {
+      "id": "F26",
+      "severity": "minor",
+      "dimension": "visual",
+      "verdict": "confirmed",
+      "title": "Stats spec breaks if run across the week boundary",
+      "file": "e2e/stack/stats.spec.ts",
+      "line": 30,
+      "status": "fixed",
+      "fixCommit": "c0d0c7c"
+    },
+    {
+      "id": "F27",
+      "severity": "minor",
+      "dimension": "visual",
+      "verdict": "confirmed",
+      "title": "Pending rank-up is not settled before the seed spec, and settleRankUp ignores failures",
+      "file": "e2e/stack/seed.spec.ts",
+      "line": 26,
+      "status": "fixed",
+      "fixCommit": "c0d0c7c"
+    },
+    {
+      "id": "F28",
+      "severity": "minor",
+      "dimension": "visual",
+      "verdict": "confirmed",
+      "title": "The isolation fixture's owner-data check is mostly vacuous",
+      "file": "e2e/stack/support.ts",
+      "line": 32,
+      "status": "fixed",
+      "fixCommit": "c0d0c7c"
+    },
+    {
+      "id": "F29",
+      "severity": "minor",
+      "dimension": "visual",
+      "verdict": "confirmed",
+      "title": "Evidence file was produced from the parent commit with a dirty tree, not from the reviewed HEAD",
+      "file": "docs/qa/e2e-stack-latest.md",
+      "line": 8,
+      "status": "fixed",
+      "fixCommit": "cd84043"
+    },
+    {
+      "id": "F30",
+      "severity": "minor",
+      "dimension": "visual",
+      "verdict": "confirmed",
+      "title": "The real-stack verdict is not consumed by qa:verify or gate:status",
+      "file": "tools/e2e-stack-run.mjs",
+      "line": 11,
+      "status": "fixed",
+      "reason": "Fixed by the factory change PD-16 (docs f04f481), installed here as 28478f9: gate-status G5 key e2eStack and battery member e2e-stack-evidence (scripts/check-e2e-stack.mjs).",
+      "fixCommit": "28478f9"
+    },
+    {
+      "id": "F31",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "contested",
+      "title": "settleRankUp ignores the ack response",
+      "file": "e2e/stack/support.ts",
+      "line": 160,
+      "status": "fixed",
+      "fixCommit": "c0d0c7c"
+    },
+    {
+      "id": "F32",
+      "severity": "minor",
+      "dimension": "correctness",
+      "verdict": "contested",
+      "title": "The stats spec assumes the current week does not change mid-test and depends on column positions",
+      "file": "e2e/stack/stats.spec.ts",
+      "line": 154,
+      "status": "fixed",
+      "fixCommit": "c0d0c7c"
+    },
+    {
+      "id": "F33",
+      "severity": "minor",
+      "dimension": "security",
+      "verdict": "contested",
+      "title": "Real-stack specs hard-code XP values that FR-34 defines as configuration",
+      "file": "e2e/stack/practice.spec.ts",
+      "line": 62,
+      "status": "waived",
+      "reason": "The e2e stack runs the shipped default XP configuration (tools/e2e-stack.env overrides none). The values pinned (10/1/8, +4 on re-evaluation) are what the server sends; pinning them on the composed stack is deliberate, to catch a drifted default end to end. FR-34 is backend-owned, so it is not traced here; the completion bonus, which the spec calls configurable, is read from the response, not pinned."
+    },
+    {
+      "id": "F34",
+      "severity": "minor",
+      "dimension": "security",
+      "verdict": "contested",
+      "title": "Real-stack suite never checks the NFR-1 authorization boundary or FR-27 answer-key hiding end to end",
+      "file": "e2e/stack/seed.spec.ts",
+      "line": 29,
+      "status": "fixed",
+      "fixCommit": "c0d0c7c"
+    },
+    {
+      "id": "F35",
+      "severity": "minor",
+      "dimension": "spec-compliance",
+      "verdict": "contested",
+      "title": "Coverage summary (harden-phase5-ui has skip_specs: true, so the checklist is PLAYBOOK Phase 5 / GATES G5 plus the proposal's What Changes)",
+      "file": "openspec/changes/harden-phase5-ui/proposal.md",
+      "line": 1,
+      "status": "waived",
+      "reason": "Informational coverage summary of the review, no defect to fix."
+    }
+  ],
+  "clean": true,
+  "generatedAt": "2026-10-08T05:08:20Z"
+}

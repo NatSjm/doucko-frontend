@@ -37,6 +37,7 @@
     { "name": "coverage", "command": "npm", "args": ["run", "test:coverage"] },
     { "name": "coverage-ratchet", "command": "node", "args": ["scripts/check-coverage-ratchet.mjs"] },
     { "name": "browser-e2e-tests", "command": "npm", "args": ["run", "test:e2e"] },
+    { "name": "e2e-stack-evidence", "command": "node", "args": ["scripts/check-e2e-stack.mjs"] },
     { "name": "eval-ratchet", "command": "node", "args": ["scripts/check-eval-ratchet.mjs"] },
     { "name": "production-build", "command": "npm", "args": ["run", "build"] },
     { "name": "openspec-all", "command": "npx", "args": ["openspec", "validate", "--all", "--strict"] },

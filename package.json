@@ -11,6 +11,8 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:e2e:stack": "node tools/e2e-stack-run.mjs",
+    "test:e2e:stack:only": "playwright test -c playwright.stack.config.ts",
     "api:generate": "node tools/generate-api-client.mjs",
     "qa:verify": "node scripts/qa-verify.mjs",
     "gate:status": "node scripts/gate-status.mjs",
@@ -37,7 +39,8 @@
     "qa:record-nfr8": "npm run build && node tools/record-nfr8.mjs",
     "qa:record-slice6": "npm run build && node tools/record-slice6.mjs",
     "qa:record-slice7": "npm run build && node tools/record-slice7.mjs",
-    "qa:record-slice8": "npm run build && node tools/record-slice8.mjs"
+    "qa:record-slice8": "npm run build && node tools/record-slice8.mjs",
+    "check:e2e-stack": "node scripts/check-e2e-stack.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",

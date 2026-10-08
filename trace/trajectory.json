@@ -70,12 +70,19 @@
     {
       "slice": "2026-10-07-implement-progress-stats-ui",
       "reviewEvidence": "clean",
-      "trailerCommits": 5,
+      "trailerCommits": 6,
       "libDomains": [
         "stats",
         "admin-access",
         "reports"
       ],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-10-08-harden-phase5-ui",
+      "reviewEvidence": "clean",
+      "trailerCommits": 8,
+      "libDomains": [],
       "processComplete": true
     }
   ],
