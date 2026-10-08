@@ -55,6 +55,7 @@ allowed to change strictness. It implements mechanisms 5 and 7 of
 | `check-coverage-ratchet` | hard (grandfathered upstream) | 2026-09-28 | upstream field study; adapted: JaCoCo XML reader (backend) | n/a |
 | `check-eval-ratchet` (frontend) | hard (grandfathered upstream) | 2026-09-28 | upstream field study | n/a |
 | `check-a11y` (frontend) | hard (grandfathered upstream) | 2026-09-28 | upstream field study — pairs with vision-verify | n/a |
+| `check-e2e-stack` (frontend) | **hard from day one** (PD-16) | 2026-10-08 | review-gate F12 on harden-phase5-ui; re-reads the runner's own verdict (`tools/e2e-stack-run.mjs`) and every non-PASS path is NOT-EARNED/FAIL, so it can only err toward red; red→green proof `docs/qa/evidence/pd-16-e2e-stack-gate-proof.md` (docs repo) | n/a — demotion needs owner-signed row |
 | `qa-verify` (battery runner) | hard (grandfathered upstream) | 2026-09-28 | upstream pixel forensics; adapted: battery from `factory.config.json` | n/a |
 | `gate-status` (aggregator) | hard (grandfathered upstream) | 2026-09-28 | upstream field study; adapted: role-excluded gates render `n/a (<repo> role)`, never PASS | n/a |
 | `check-acceptance-methods` | **hard from day one** (upstream exception) | 2026-09-28 | upstream design mechanism 2; adapted: per-repo ownership scope, Maven mechanisms, Verification-column parsing | n/a — demotion needs owner-signed row |
@@ -71,4 +72,5 @@ allowed to change strictness. It implements mechanisms 5 and 7 of
 
 | Date | Check | Change | Evidence | Signed |
 |---|---|---|---|---|
+| 2026-10-08 | `check-e2e-stack` | Added (PD-16): G5 key `e2eStack` (frontend only; other roles n/a) + battery member `e2e-stack-evidence`; PASS only on fresh full real-stack evidence | docs/qa/evidence/pd-16-e2e-stack-gate-proof.md | — (coordinator request 2026-10-08; owner sign-off pending) |
 | 2026-09-28 | all | Adopted from upstream Project Factory @ 0d7286a1 and adapted for 3 repos (docs store + Kotlin/Maven backend + React/Vite frontend); `check-workspace` registered **experimental**; parity/visual-fidelity checks not adopted (no pixel-parity requirement) | ADR-0002; factory/UPSTREAM.md | — |

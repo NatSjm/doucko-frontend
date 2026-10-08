@@ -39,7 +39,8 @@
     "qa:record-nfr8": "npm run build && node tools/record-nfr8.mjs",
     "qa:record-slice6": "npm run build && node tools/record-slice6.mjs",
     "qa:record-slice7": "npm run build && node tools/record-slice7.mjs",
-    "qa:record-slice8": "npm run build && node tools/record-slice8.mjs"
+    "qa:record-slice8": "npm run build && node tools/record-slice8.mjs",
+    "check:e2e-stack": "node scripts/check-e2e-stack.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
