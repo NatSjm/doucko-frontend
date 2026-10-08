@@ -33,3 +33,5 @@ AssertionError: expected [ <span …(1)></span>, …(1) ] to have a length of 1 
 - Run 2 (same commit, same command): 21 passed, Result PASS — `docs/qa/e2e-stack-latest.md`.
 - Recorded as a load flake to watch, not a pass: if it recurs, investigate the upload timeout
   under load.
+- Run 3 at the final code commit `2683a5b` (after the review-findings fix): 21 passed, Result PASS —
+  `docs/qa/e2e-stack-latest.md`.
