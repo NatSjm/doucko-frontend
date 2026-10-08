@@ -8,7 +8,7 @@ import { DeleteControl } from '@/features/admin-access/DeleteControl';
 import { Field, FormAlert } from '@/features/admin-access/form';
 import { ApiError, fieldErrors } from '@/features/admin-access/problem';
 import { useReference, type ReferenceData } from '@/features/sources/api';
-import { useTasks, type TaskSummary } from '@/features/tasks/api';
+import { TASKS_KEY, useTasks, type TaskSummary } from '@/features/tasks/api';
 import { useT } from '@/i18n';
 import { format } from '@/i18n/format';
 import { deleteMission, MISSIONS_KEY, missionKey, saveMission, setMissionStatus, useMission, type AdminMission } from './api';
@@ -101,6 +101,12 @@ function MissionEditor({ initial, reference }: { initial: AdminMission | null; r
     // Membership shows on each task (`missionIds`), and the list shows the counter and status.
     await queryClient.invalidateQueries({ queryKey: MISSIONS_KEY });
     await queryClient.invalidateQueries({ queryKey: ['admin', 'task'] });
+    await refreshTaskRows();
+  }
+
+  /** The rows show each task's status: tasks published or unpublished elsewhere must not stay stale. */
+  async function refreshTaskRows() {
+    await queryClient.invalidateQueries({ queryKey: TASKS_KEY });
   }
 
   async function save(event: FormEvent) {
@@ -152,6 +158,7 @@ function MissionEditor({ initial, reference }: { initial: AdminMission | null; r
       await refresh(result);
     } catch (error) {
       setActionError(error);
+      await refreshTaskRows();
     }
     setBusy(false);
   }

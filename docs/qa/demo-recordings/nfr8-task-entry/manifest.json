@@ -11,7 +11,12 @@
       "asserted": true,
       "elapsedMs": 8615,
       "keyDelayMs": 150,
-      "pauseMs": 700
+      "pauseMs": 700,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The settled frame shows the 'New task' editor after the save. A mint 'Task saved as draft.' banner with 'Edit saved task' and 'Preview' links is visible, the sticky Source 'Matematika 6 – pracovní sešit' and Page '57' are kept (the viewer also reads 'Page 57 of 120'), the form is reset, and the blue focus ring is back on the empty 'Prompt (Czech)' field. Part 1's answer type 'Whole number' matches INTEGER. The 60-second timing and the stored DRAFT record can't be seen in a still and depend on the clip's assertions; adding an on-screen elapsed-time caption would make them visible. All text is legible at AA. Only the 'Move part 1 up/down' buttons are faint grey on beige, which is allowed because they are disabled."
+      }
     }
   ]
 }

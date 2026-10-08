@@ -5,23 +5,23 @@ requirements/spec/test/recording change; CI runs `--check-fresh`.
 
 Repo: frontend (contract: submodule).
 Scope: 48 MVP functional requirements, 30 owned by frontend.
-Result: PASS, 13 warning(s)
+Result: PASS, 1 warning(s)
 
 | FR | Spec | Plan | Owner repo(s) | Test trace here | Recording here |
 |---|---|---|---|---|---|
-| FR-1 | yes | yes | backend, frontend | 3 | - |
-| FR-2 | yes | yes | backend, frontend | 7 | - |
+| FR-1 | yes | yes | backend, frontend | 3 | yes |
+| FR-2 | yes | yes | backend, frontend | 7 | yes |
 | FR-3 | yes | yes | backend, frontend | 4 | yes |
-| FR-4 | yes | yes | backend, frontend | 3 | - |
+| FR-4 | yes | yes | backend, frontend | 3 | yes |
 | FR-5 | yes | yes | backend | n/a | n/a |
-| FR-6 | yes | yes | backend, frontend | 2 | - |
-| FR-7 | yes | yes | backend, frontend | 4 | - |
-| FR-8 | yes | yes | backend, frontend | 5 | - |
+| FR-6 | yes | yes | backend, frontend | 2 | yes |
+| FR-7 | yes | yes | backend, frontend | 4 | yes |
+| FR-8 | yes | yes | backend, frontend | 5 | yes |
 | FR-9 | yes | yes | backend, frontend | 6 | yes |
-| FR-10 | yes | yes | backend, frontend | 3 | - |
-| FR-11 | yes | yes | backend, frontend | 2 | - |
+| FR-10 | yes | yes | backend, frontend | 3 | yes |
+| FR-11 | yes | yes | backend, frontend | 2 | yes |
 | FR-12 | yes | yes | backend | n/a | n/a |
-| FR-13 | yes | yes | backend, frontend | 3 | - |
+| FR-13 | yes | yes | backend, frontend | 3 | yes |
 | FR-55 | yes | yes | backend, frontend | 8 | yes |
 | FR-56 | yes | yes | backend | n/a | n/a |
 | FR-57 | yes | yes | backend | n/a | n/a |
@@ -50,10 +50,10 @@ Result: PASS, 13 warning(s)
 | FR-36 | yes | yes | backend, frontend | 7 | yes |
 | FR-37 | yes | yes | backend, frontend | 5 | yes |
 | FR-38 | yes | yes | backend, frontend | 3 | yes |
-| FR-39 | yes | yes | backend, frontend | 1 | - |
-| FR-58 | yes | yes | frontend | 2 | - |
-| FR-40 | yes | yes | backend, frontend | 5 | - |
-| FR-41 | yes | yes | backend, frontend | 4 | - |
+| FR-39 | yes | yes | backend, frontend | 1 | yes |
+| FR-58 | yes | yes | frontend | 2 | yes |
+| FR-40 | yes | yes | backend, frontend | 5 | yes |
+| FR-41 | yes | yes | backend, frontend | 4 | yes |
 | FR-42 | yes | yes | backend | n/a | n/a |
 | FR-43 | yes | yes | backend | n/a | n/a |
 | FR-44 | yes | yes | backend | n/a | n/a |
@@ -97,16 +97,4 @@ None.
 
 ## Warnings
 
-- **recording-evidence**: FR-1 is not referenced by any recording manifest under docs/qa/
-- **recording-evidence**: FR-2 is not referenced by any recording manifest under docs/qa/
-- **recording-evidence**: FR-4 is not referenced by any recording manifest under docs/qa/
-- **recording-evidence**: FR-6 is not referenced by any recording manifest under docs/qa/
-- **recording-evidence**: FR-7 is not referenced by any recording manifest under docs/qa/
-- **recording-evidence**: FR-8 is not referenced by any recording manifest under docs/qa/
-- **recording-evidence**: FR-10 is not referenced by any recording manifest under docs/qa/
-- **recording-evidence**: FR-11 is not referenced by any recording manifest under docs/qa/
-- **recording-evidence**: FR-13 is not referenced by any recording manifest under docs/qa/
-- **recording-evidence**: FR-39 is not referenced by any recording manifest under docs/qa/
-- **recording-evidence**: FR-58 is not referenced by any recording manifest under docs/qa/
-- **recording-evidence**: FR-40 is not referenced by any recording manifest under docs/qa/
-- **recording-evidence**: FR-41 is not referenced by any recording manifest under docs/qa/
+- **active-changes**: active change "qa-phase6-ui" is not archived

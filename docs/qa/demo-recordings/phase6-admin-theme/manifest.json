@@ -1,0 +1,159 @@
+{
+  "kind": "demo",
+  "results": [
+    {
+      "id": "rec-source-upload",
+      "title": "upload a PDF source with title, publisher, edition, grade and subject (FR-1)",
+      "proof": "FR-1",
+      "video": "docs/qa/demo-recordings/phase6-admin-theme/rec-source-upload.webm",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-source-upload.png",
+      "explainer": "docs/qa/demo-recordings/phase6-admin-theme/rec-source-upload.md",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The English admin Sources screen shows a mint \"Source uploaded.\" confirmation. Under \"All sources\" there is a row for 'Matematika 6 – pracovní sešit' with publisher 'Testovací nakladatelství', edition 1, grade 6, subject Math, 12 pages, and View PDF/New task/Edit links. All text is dark navy on a cream or white background with good contrast, and nothing is clipped. The only weak spot is the \"PDF, at most 50 MB.\" helper text, which is mid-grey but still looks like it passes AA."
+      }
+    },
+    {
+      "id": "rec-pdf-beside-editor",
+      "title": "the PDF viewer beside the task editor jumps to a page; the form keeps its content (FR-2)",
+      "proof": "FR-2",
+      "video": "docs/qa/demo-recordings/phase6-admin-theme/rec-pdf-beside-editor.webm",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-pdf-beside-editor.png",
+      "explainer": "docs/qa/demo-recordings/phase6-admin-theme/rec-pdf-beside-editor.md",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The \"New task\" editor sits to the right of a PDF viewer. The viewer shows a rendered white page with \"Page 30\" printed on it, the status \"Page 30 of 120\", \"Previous page\" and \"Next page\" buttons, and a \"Go to page\" field holding 30 (with a visible blue focus ring) next to a \"Go\" button. The Prompt (Czech) field still says \"Rozepsaná úloha\". All text is dark navy on cream and easy to read. The only faint text is on the disabled \"Move part 1 up/down\" buttons, which are exempt from contrast rules. One minor point: the editor's own Page field says 57 while the viewer is on page 30. That doesn't break FR-2, but it could confuse someone reading the screenshot as evidence."
+      }
+    },
+    {
+      "id": "rec-task-images",
+      "title": "attach two PNG images and reorder them; the child preview shows them in order (FR-4)",
+      "proof": "FR-4",
+      "video": "docs/qa/demo-recordings/phase6-admin-theme/rec-task-images.webm",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-task-images.png",
+      "explainer": "docs/qa/demo-recordings/phase6-admin-theme/rec-task-images.md",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The admin Preview page's \"Child view\" card shows the task \"Které číslo je větší než 4?\" with two images fully rendered side by side. The green tile labelled \"2\" comes first and the blue tile labelled \"1\" second, which matches the reordered order. All text is legible at good contrast: the dark heading, the white numerals on saturated green and blue, the blue nav links on white, and the dark answer options on white. The only lighter text is the grey \"Nothing is recorded\" helper line, and it still reads clearly."
+      }
+    },
+    {
+      "id": "rec-parts-hints-translations",
+      "title": "a task with two answer parts, ordered hints and a Ukrainian translation is saved (FR-6, FR-7, FR-8)",
+      "proof": "FR-6, FR-7, FR-8",
+      "video": "docs/qa/demo-recordings/phase6-admin-theme/rec-parts-hints-translations.webm",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-parts-hints-translations.png",
+      "explainer": "docs/qa/demo-recordings/phase6-admin-theme/rec-parts-hints-translations.md",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The screen shows everything the requirement asks for. The green \"Task saved.\" banner sits above Save task. Part 1 is \"Decimal number\" with accepted answer 0.5 and label \"a\". Part 2 is \"Whole number\" with accepted answer 3 and label \"b\". Hints 1–3 are filled in order, each with its own move/remove buttons. \"Translation (uk)\" has the Ukrainian prompt and Hint 1 filled in; the part labels and Hints 2–3 are empty. Text is dark on cream and legible. The faint beige buttons are only the disabled edge moves (e.g. \"Move part 1 up\"), which WCAG exempts. One small thing to fix: the nav highlights \"New task\" while the page heading says \"Edit task\"."
+      }
+    },
+    {
+      "id": "rec-preview-tester",
+      "title": "preview as the child sees it, hints one by one, the translation, then the answer tester (FR-10, FR-7, FR-8)",
+      "proof": "FR-10, FR-7, FR-8",
+      "video": "docs/qa/demo-recordings/phase6-admin-theme/rec-preview-tester.webm",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-preview-tester.png",
+      "explainer": "docs/qa/demo-recordings/phase6-admin-theme/rec-preview-tester.md",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The Child view card shows the Czech prompt \"Zapiš jednu polovinu jako desetinné číslo.\" with the Ukrainian translation \"Запиши одну половину як десятковий дріб.\" in a tinted block directly below it. The toggle reads \"Skrýt ukrajinštinu\", and hint 1 of 2 is open (\"NÁPOVĚDA 1 Z 2 – Polovina je jedna děleno dvěma.\"). The Answer tester has 0,50 entered and shows a teal CORRECT badge with \"Read as 0.5\". All text is legible at AA contrast. Two small issues don't block the pass: the translation sits below the Czech rather than literally beside it, and a stray dot is rendered just under the translation block."
+      }
+    },
+    {
+      "id": "rec-task-list-provenance",
+      "title": "filter and search the task list, see the source of a task and open the PDF at its page (FR-11, FR-13)",
+      "proof": "FR-11, FR-13",
+      "video": "docs/qa/demo-recordings/phase6-admin-theme/rec-task-list-provenance.webm",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-task-list-provenance.png",
+      "explainer": "docs/qa/demo-recordings/phase6-admin-theme/rec-task-list-provenance.md",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The admin PDF viewer is titled 'Matematika 6 – pracovní sešit'. Its controls show 'Go to page' with 57 entered and 'Page 57 of 120', and the canvas has rendered a white page reading 'Page 57', so the viewer has opened at the task's page. A single still can't show that it was reached through the FR-11 filtered list and the 'Open source' link; that part rests on the recording. The text is legible: dark navy on cream and white, with blue underlined nav links and clear button labels."
+      }
+    },
+    {
+      "id": "rec-skin-hq",
+      "title": "HQ shows the rank from the server ladder and no deny-listed term anywhere on the child screen (FR-39)",
+      "proof": "FR-39",
+      "video": "docs/qa/demo-recordings/phase6-admin-theme/rec-skin-hq.webm",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-skin-hq.png",
+      "explainer": "docs/qa/demo-recordings/phase6-admin-theme/rec-skin-hq.md",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The fully rendered Czech HQ greets the child with \"Ahoj, Agent Nova!\" and shows a rank card with \"HODNOST 1\" and the ladder rank \"Nováček\". Next to it is an original crimson hexagon medal with a gold star, plus \"0 XP\" and a progress bar labelled \"0 z 150 XP do hodnosti Kadet\". Below are the hero-themed \"Síla: Desetinná čísla\" and \"Síla: Obvod a obsah\" sections with mission cards marked with red \"NOVÁ\" pills. All copy is original, with no manga or anime names, logos or terms. The dark navy text on cream, white and pink is legible; the small grey secondary text (\"0 z 150 XP…\", \"Vyřešené úlohy: 0\") is light but still meets the AA bar by eye."
+      }
+    },
+    {
+      "id": "rec-stats",
+      "title": "the stats page shows sessions per week, tasks per session, first-try rate per topic, hints and revealed tasks (FR-40)",
+      "proof": "FR-40",
+      "video": "docs/qa/demo-recordings/phase6-admin-theme/rec-stats.webm",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-stats.png",
+      "explainer": "docs/qa/demo-recordings/phase6-admin-theme/rec-stats.md",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The Practice statistics page is fully rendered. The Success metric card shows a \"NOT MET\" badge and the line \"Short weeks: 2026-09-14\". The Weekly practice table has columns for sessions, tasks per session (for example \"12, 10, 11\" in the 2026-09-28 row), hints used (7) and revealed tasks (3). The First-try rate per topic table shows \"Desetinná čísla\" at 75% with \"6 of 8 first try\". All text is dark navy or grey on white or cream and easy to read. The pale orange NOT MET and SHORT badges with orange-brown text are the faintest elements, but they still look readable."
+      }
+    },
+    {
+      "id": "rec-flag-queue",
+      "title": "a report lists task, raw input and verdict; dismiss one, fix the spec and re-evaluate another (+4 XP) (FR-41)",
+      "proof": "FR-41",
+      "video": "docs/qa/demo-recordings/phase6-admin-theme/rec-flag-queue.webm",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-flag-queue.png",
+      "explainer": "docs/qa/demo-recordings/phase6-admin-theme/rec-flag-queue.md",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "A mint status banner reads 'Fixed: the attempt on \"Zapiš jednu polovinu jako desetinné číslo.\" is now correct. +4 XP added for the child.' Each entry shows the task, raw input, checker verdict and a status badge. The '0,5' entry is FIXED, with a WRONG checker verdict and a CORRECT re-evaluated verdict on 2026-10-07 18:00. Two entries are DISMISSED, and one OPEN entry still has its Re-evaluate and Dismiss buttons. The text is legible with dark-on-cream contrast; the only borderline spot is the small orange 'WRONG' pill text on a pale orange fill, which is still readable but would be clearer at a slightly darker orange."
+      }
+    },
+    {
+      "id": "rec-theme-light",
+      "title": "HQ and the admin stats page follow the light OS setting; no in-app toggle (FR-58)",
+      "proof": "FR-58",
+      "video": "docs/qa/demo-recordings/phase6-admin-theme/rec-theme-light.webm",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-theme-light.png",
+      "explainer": "docs/qa/demo-recordings/phase6-admin-theme/rec-theme-light.md",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The child HQ is fully rendered in the light theme. The page background is light cream, and the headings are dark navy (\"Ahoj, Agent Nova!\", \"Síla: Desetinná čísla\", \"Síla: Obvod a obsah\"). The cards are white, the rank card sits in a pale-pink panel, and the mission cards are light blue with red \"NOVÁ\" badges. There is no theme toggle anywhere in the header or the page. All text is legible at AA by eye. The weakest elements are the small grey caption \"0 z 150 XP do hodnosti Kadet\" and the very faint beige progress dots on the mission cards. The dots carry no text, so I'm not failing it for them, but they're worth a contrast check."
+      }
+    },
+    {
+      "id": "rec-theme-dark",
+      "title": "HQ and the admin stats page follow the dark OS setting; no in-app toggle (FR-58)",
+      "proof": "FR-58",
+      "video": "docs/qa/demo-recordings/phase6-admin-theme/rec-theme-dark.webm",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-theme-dark.png",
+      "explainer": "docs/qa/demo-recordings/phase6-admin-theme/rec-theme-dark.md",
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The child HQ is fully rendered in the dark theme. The page background is dark navy, the headings are white (\"Ahoj, Agent Nova!\", \"Síla: Desetinná čísla\", \"Síla: Obvod a obsah\"), the rank card shows \"Nováček\" and \"0 XP\", and three mission cards each show a \"NOVÁ\" badge. The header holds only the \"Doučko\" wordmark and nothing on the page looks like a theme toggle. All text is legible by eye; the weakest contrast is the small lavender \"0 z 150 XP do hodnosti Kadet\" and \"HODNOST 1\" on the navy card, which still looks like it passes AA. The empty-progress dots on the mission cards are dark on dark, but they're decorative and the \"0/3 vyřešeno\" text beside them carries the same information."
+      }
+    }
+  ]
+}

@@ -1,0 +1,671 @@
+{
+  "workflow": "vision-verify",
+  "file": "./.claude/workflows/vision-verify.js",
+  "description": "Eyes-on-pixels validation: a fresh judge LOOKS AT each recorded settled still and decides whether it visibly demonstrates the requirement and is legible {met, readable}. Catches what code review, DOM assertions, and even axe miss (dead controls, poor contrast, wrong-moment frames). Pairs with record-demos + check-recordings; on any miss, fix -> re-record -> re-verify until met.",
+  "dryRun": false,
+  "startedAt": "2026-10-08T18:00:53.613Z",
+  "finishedAt": "2026-10-08T18:05:07.214Z",
+  "args": {
+    "clips": [
+      {
+        "id": "nfr8-single-part-task-entry",
+        "proof": "NFR-8, FR-3",
+        "screenshot": "docs/qa/demo-recordings/nfr8-task-entry/nfr8-single-part-task-entry.png",
+        "requirement": "Typical single-part task entered with the keyboard (NFR-8) — Steps (keyboard only, 150 ms per key, 700 ms between fields): the editor opens with the sticky source and page 57 and focus in the prompt; type the prompt, Tab to the topic and pick it with an arrow key, Tab to the task number and type it, Tab past the sub-part and the answer type, type the expected value, press Enter. Asserted: the task is stored as DRAFT with that source reference and one INTEGER part, the time is within 60 s, the page stays 57 and focus returns to the prompt. The still is the settled end state of the clip; it must visibly show this and be legible (WCAG AA by eye)."
+      },
+      {
+        "id": "rec-source-upload",
+        "proof": "FR-1",
+        "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-source-upload.png",
+        "requirement": "FR-1: the admin Sources screen after uploading a PDF: the list shows the source 'Matematika 6 – pracovní sešit' with publisher 'Testovací nakladatelství', edition 1, grade 6, subject and 12 pages, and an upload confirmation. English admin UI, legible."
+      },
+      {
+        "id": "rec-pdf-beside-editor",
+        "proof": "FR-2",
+        "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-pdf-beside-editor.png",
+        "requirement": "FR-2: the task editor with the source PDF rendered page by page beside it; the viewer shows page 30 (a rendered page, status like 'Page 30 of 120') with a page-number jump field and previous/next controls, while the editor prompt keeps 'Rozepsaná úloha'. Legible."
+      },
+      {
+        "id": "rec-task-images",
+        "proof": "FR-4",
+        "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-task-images.png",
+        "requirement": "FR-4: the admin task preview (as the child sees it) showing the task with its two attached images (PNG) in the reordered order. Legible."
+      },
+      {
+        "id": "rec-parts-hints-translations",
+        "proof": "FR-6, FR-7, FR-8",
+        "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-parts-hints-translations.png",
+        "requirement": "FR-6, FR-7, FR-8: the task editor after saving ('Task saved.'): two answer parts (Part 1 decimal 0.5, Part 2 whole number 3), each with a label and its own answer type/accepted answer; three ordered hints; a Ukrainian (uk) translation group with the prompt and hint 1 filled in. Legible."
+      },
+      {
+        "id": "rec-preview-tester",
+        "proof": "FR-10, FR-7, FR-8",
+        "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-preview-tester.png",
+        "requirement": "FR-10 (FR-7, FR-8): the admin preview shows the task as the child sees it (Czech prompt, the first hint opened, the Ukrainian translation shown beside the Czech text) and the answer tester showing verdict CORRECT for 0,50 with the normalized value 0.5. Legible."
+      },
+      {
+        "id": "rec-task-list-provenance",
+        "proof": "FR-11, FR-13",
+        "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-task-list-provenance.png",
+        "requirement": "FR-13 (reached from the FR-11 filtered task list): the PDF viewer opened from a task's 'Open source' link at the task's page, page 57 of 'Matematika 6 – pracovní sešit' rendered. Legible."
+      },
+      {
+        "id": "rec-skin-hq",
+        "proof": "FR-39",
+        "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-skin-hq.png",
+        "requirement": "FR-39: the child HQ (Czech) in the hero-academy skin: rank name from the ladder ('Nováček'), original medal art, theme copy and colours; no names, logos or terms from existing manga/anime; legible."
+      },
+      {
+        "id": "rec-stats",
+        "proof": "FR-40",
+        "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-stats.png",
+        "requirement": "FR-40: the admin Practice statistics page: a weekly table (sessions per week, tasks per session e.g. '12, 10, 11', hints used, revealed tasks), the success-metric verdict (not met), and first-try rate per topic (Desetinná čísla 75%, 6 of 8). Legible."
+      },
+      {
+        "id": "rec-flag-queue",
+        "proof": "FR-41",
+        "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-flag-queue.png",
+        "requirement": "FR-41: the admin Flag queue after re-evaluating one report (a status message about +4 XP / fixed) and dismissing another: entries list the task, raw input, checker verdict and status (Fixed / Dismissed). Legible."
+      },
+      {
+        "id": "rec-theme-light",
+        "proof": "FR-58",
+        "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-theme-light.png",
+        "requirement": "FR-58: with the OS in LIGHT mode the child HQ renders in the light theme (light cream paper background, dark text) and there is no in-app theme toggle. Legible, WCAG AA by eye."
+      },
+      {
+        "id": "rec-theme-dark",
+        "proof": "FR-58",
+        "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-theme-dark.png",
+        "requirement": "FR-58: with the OS in DARK mode the child HQ renders in the dark theme (dark navy background, light text) and there is no in-app theme toggle. Legible, WCAG AA by eye."
+      },
+      {
+        "id": "slice6-mission-create-reorder-publish",
+        "proof": "FR-9, FR-55",
+        "screenshot": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-mission-create-reorder-publish.png",
+        "requirement": "Create a mission, reorder it and publish it (FR-9, FR-55) — Open New mission, choose the topic, type position 2, add three tasks of the topic, move the third to the first place with the keyboard, save; publish is refused with the draft tasks named; the tasks get published; publish again. Asserted: the stored mission is DRAFT with the tasks in the new order and the counter 3/10 tasks, the refusal names the blocking tasks, and the mission ends PUBLISHED. The still shows the published mission editor. The still is the settled end state of the clip; it must visibly show this and be legible (WCAG AA by eye)."
+      },
+      {
+        "id": "slice6-mission-publish-refused",
+        "proof": "FR-9",
+        "screenshot": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-mission-publish-refused.png",
+        "requirement": "A refused mission publish names the blocking tasks (FR-9) — Open the seeded draft mission whose two tasks are drafts and publish it. Asserted: the alert shows the server reason and links both draft tasks; the mission stays DRAFT. The still shows the refusal next to the task list. The still is the settled end state of the clip; it must visibly show this and be legible (WCAG AA by eye)."
+      },
+      {
+        "id": "slice6-mission-list",
+        "proof": "FR-9",
+        "screenshot": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-mission-list.png",
+        "requirement": "Mission list by topic and position with counter and status (FR-9) — With a draft and a published mission, open Missions from the admin navigation. Asserted: both are listed with topic, position, counter and status. The still shows the list. The still is the settled end state of the clip; it must visibly show this and be legible (WCAG AA by eye)."
+      },
+      {
+        "id": "slice6-source-edit-delete-refused",
+        "proof": "FR-55",
+        "screenshot": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-source-edit-delete-refused.png",
+        "requirement": "Edit a source; a referenced source cannot be deleted (FR-55) — From the source list choose Edit, change the edition to 2 and press Enter, then delete the source and confirm. Asserted: there is no file field, the edition is stored, and the delete is refused with its reason and the three referencing tasks named. The still shows the refusal under the edit form. The still is the settled end state of the clip; it must visibly show this and be legible (WCAG AA by eye)."
+      },
+      {
+        "id": "slice6-task-status-blocked",
+        "proof": "FR-55",
+        "screenshot": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-task-status-blocked.png",
+        "requirement": "A task in a published mission: unpublish refused, delete blocked (FR-55) — With the seeded mission and its tasks published, open the task editor and unpublish the task. Asserted: the refusal names the mission with a link, the task stays PUBLISHED, and delete is disabled with the explanation offering to unpublish instead. The still shows the status and deletion panel. The still is the settled end state of the clip; it must visibly show this and be legible (WCAG AA by eye)."
+      },
+      {
+        "id": "slice7-hq-missions",
+        "proof": "FR-24, FR-25, NFR-7",
+        "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-hq-missions.png",
+        "requirement": "HQ without login: missions by topic with x/N vyřešeno and their states (FR-24, FR-25, NFR-7) — With one task of mission 1 resolved and the perimeter mission revealed, open the app. Asserted: HQ greets the fictional profile with no login form, the topics are grouped with mission 1 before mission 2, the cards show 1/3 in progress, 0/2 new and 1/1 complete, the draft mission has no card, and \"Pokračovat\" is offered. The still shows HQ. The still is the settled end state of the clip; it must visibly show this and be legible (WCAG AA by eye)."
+      },
+      {
+        "id": "slice7-start-two-clicks",
+        "proof": "FR-25, FR-26, NFR-7",
+        "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-start-two-clicks.png",
+        "requirement": "Start a new mission in two clicks: card, then \"Začít misi\" (FR-25, FR-26, NFR-7) — On HQ click mission 2, see its briefing, click \"Začít misi\". Asserted: two clicks open task 1 of mission 2 with its prompt and focus in input a. The still shows the task screen. The still is the settled end state of the clip; it must visibly show this and be legible (WCAG AA by eye)."
+      },
+      {
+        "id": "slice7-correct-next",
+        "proof": "FR-26, FR-27, NFR-7",
+        "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-correct-next.png",
+        "requirement": "Correct on the first attempt: \"Výborně!\" and \"Další úloha\" (FR-26, FR-27, NFR-7) — On the task with an image, type 0,75 and press Enter. Asserted: the image is shown, the answer is graded correct, the part locks and \"Další úloha\" takes focus. The still shows the solved task. The still is the settled end state of the clip; it must visibly show this and be legible (WCAG AA by eye)."
+      },
+      {
+        "id": "slice7-wrong-then-reveal",
+        "proof": "FR-27",
+        "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-wrong-then-reveal.png",
+        "requirement": "Two attempts, then the reveal: wrong part in \"almost\", right part locked, answers shown neutrally (FR-27) — On the two-part task answer a right and b wrong, then b wrong again. Asserted: after attempt 1 b shows \"Zkus znovu\", a is locked and 1 of 2 attempts is used, without the correct value of b; after attempt 2 \"Nevadí, příště!\" and the correct answers are shown, the inputs are read-only and nothing says \"Špatně\" or \"Chyba\". The still shows the reveal. The still is the settled end state of the clip; it must visibly show this and be legible (WCAG AA by eye)."
+      },
+      {
+        "id": "slice7-unparseable",
+        "proof": "FR-22",
+        "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-unparseable.png",
+        "requirement": "Unreadable input: a format tip, the typed text kept, no attempt used (FR-22) — On the two-part task type 3,5 and 5,,2 and press Enter. Asserted: b shows the format tip, keeps 5,,2, and the indicator still shows 0 of 2 attempts used; no attempt is stored. The still shows the tip. The still is the settled end state of the clip; it must visibly show this and be legible (WCAG AA by eye)."
+      },
+      {
+        "id": "slice7-hints-translation",
+        "proof": "FR-28, FR-29",
+        "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-hints-translation.png",
+        "requirement": "Hints in order and the Ukrainian translation next to the Czech (FR-28, FR-29) — Open both hints one at a time, then turn on \"Zobrazit ukrajinsky\". Asserted: the hint counter goes 2 → 1 → 0 and the button ends disabled, both hints are recorded, the profile setting is uk and the Ukrainian prompt and hint 1 show next to the Czech while the buttons stay Czech. The still shows the translated task with its hints. The still is the settled end state of the clip; it must visibly show this and be legible (WCAG AA by eye)."
+      },
+      {
+        "id": "slice7-report",
+        "proof": "FR-30",
+        "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-report.png",
+        "requirement": "\"Nahlásit problém\": the attempt attached, thanks, attempts unchanged; \"Jiné\" needs a note (FR-30) — After a wrong attempt report \"Myslím, že moje odpověď je správně\", then open the dialog again and send \"Jiné\" without a note. Asserted: the first report is stored with the raw attempt, \"Díky, podívám se na to!\" is shown and 1 attempt is still left; the second is refused with \"Napiš prosím krátce, co nesedí.\" The still shows the dialog. The still is the settled end state of the clip; it must visibly show this and be legible (WCAG AA by eye)."
+      },
+      {
+        "id": "slice7-save-resume",
+        "proof": "FR-31",
+        "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-save-resume.png",
+        "requirement": "Save and resume: a failed save keeps the input; reopening continues at the stored attempt (FR-31) — With the backend unreachable submit 7,1 on the two-part task; with it back submit again; then open the app afresh and press \"Pokračovat\". Asserted: the failure message shows and nothing is stored, the retry is graded as attempt 1 (one attempt in the log), and the reopened app lands on that task with 1 of 2 used and b marked. The still shows the resumed task. The still is the settled end state of the clip; it must visibly show this and be legible (WCAG AA by eye)."
+      }
+    ]
+  },
+  "settings": {
+    "allowedTools": null,
+    "concurrency": 4,
+    "model": null,
+    "budgetPerAgentUsd": 1.5,
+    "maxTotalUsd": 12,
+    "untypedTools": "Read,Grep,Glob,Write,Edit",
+    "permissionMode": "acceptEdits"
+  },
+  "outcome": "ok",
+  "stoppedBecause": null,
+  "error": null,
+  "totalCostUsd": 3.6219,
+  "steps": [
+    {
+      "label": "see:nfr8-single-part-task-entry",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 1.5 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 962,
+      "durationMs": 21061,
+      "sessionId": "33c2b665-98a3-415d-b8e7-f992f92d0c61",
+      "costUsd": 0.2383752,
+      "numTurns": 4,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "The settled frame shows the 'New task' editor after the save. A mint 'Task saved as draft.' banner with 'Edit saved task' and 'Preview' links is visible, the sticky Source 'Matematika 6 – pracovní sešit' and Page '57' are kept (the viewer also reads 'Page 57 of 120'), the form is reset, and the blue focus ring is back on the empty 'Prompt (Czech)' field. Part 1's answer type 'Whole number' matches INTEGER. The 60-second timing and the stored DRAFT record can't be seen in a still and depend on the clip's assertions; adding an on-screen elapsed-time caption would make them visible. All text is legible at AA. Only the 'Move part 1 up/down' buttons are faint grey on beige, which is allowed because they are disabled."
+      }
+    },
+    {
+      "label": "see:rec-source-upload",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 1.5 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 548,
+      "durationMs": 17515,
+      "sessionId": "0b8f1d2e-f9ca-4e39-b0b9-7acf01307a82",
+      "costUsd": 0.2209912,
+      "numTurns": 3,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "The English admin Sources page shows a mint \"Source uploaded.\" confirmation. Under \"All sources\", the table has the row 'Matematika 6 – pracovní sešit' with publisher Testovací nakladatelství, edition 1, grade 6, subject Math and 12 pages, plus View PDF / New task / Edit actions. All text is legible: dark navy on white or cream, with grey-blue table headers and a grey \"PDF, at most 50 MB.\" hint that both look like they pass AA by eye; nothing is clipped or overlapping, and the blue ring on the Edition field is just keyboard focus."
+      }
+    },
+    {
+      "label": "see:rec-pdf-beside-editor",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 1.5 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 564,
+      "durationMs": 19942,
+      "sessionId": "df82925b-59c0-4e7d-bb94-e08b03cd8a4e",
+      "costUsd": 0.2351352,
+      "numTurns": 4,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "The viewer sits to the left of the \"New task\" editor and shows the rendered page, with large \"Page 30\" text on a white canvas. It also has \"Page 30 of 120\" status text, \"Previous page\" and \"Next page\" buttons, and a \"Go to page\" field set to 30 with a \"Go\" button. The editor's \"Prompt (Czech)\" box still reads \"Rozepsaná úloha\". All text is legible: dark navy on cream. The only faded text is the greyed \"Move part 1 up/down\" buttons, which look disabled and so don't need to meet the contrast rule. The grey helper line (\"Enter in a single-line field…\") is small but readable. The viewer shows page 30 while the editor's Page field says 57; this doesn't break the requirement, but check it's intended."
+      }
+    },
+    {
+      "label": "see:rec-task-images",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 1.5 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 431,
+      "durationMs": 17372,
+      "sessionId": "fdf15600-dce4-46e1-84c2-5525cd4fe52f",
+      "costUsd": 0.21773920000000002,
+      "numTurns": 3,
+      "result": {
+        "met": false,
+        "readable": true,
+        "notes": "The Preview page's \"Child view\" card shows the task \"Které číslo je větší než 4?\" with answer options A 3 / B 4 / C 5. The two attached PNGs show up only as two tiny pink specks, about 2px each, under the question at roughly (85,402) and (98,402). No real image content is visible, so you can't see that two images rendered or what order they're in. Fix: use test PNGs that are visibly sized and clearly different from each other (for example, ≥120px with distinct colours or labels \"1\" and \"2\"), or make sure the preview sets a minimum image size. Then re-record so the reordered order can be seen. All text is legible, with dark navy on white or cream at good contrast."
+      }
+    },
+    {
+      "label": "see:rec-parts-hints-translations",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 1.5 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 607,
+      "durationMs": 13574,
+      "sessionId": "584d6577-5a30-406e-9cb9-9351f20d4b7d",
+      "costUsd": 0.1812436,
+      "numTurns": 4,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "The Edit task page shows the green 'Task saved.' banner. Under Answer parts, Part 1 is 'Decimal number' with accepted answer 0.5 ('Read as 0.5') and label 'a', and Part 2 is 'Whole number' with accepted answer 3 and label 'b'. Hints 1–3 are filled in order with Move/Remove controls, and the 'Translation (uk)' group has the Prompt (uk) and Hint 1 (uk) filled in Ukrainian while the part labels and hints 2–3 are empty. The text is dark on cream and legible; only the disabled move buttons ('Move part 1 up', 'Move hint 3 down') and the small grey 'Read as' hints are faint, which is acceptable for disabled and secondary text."
+      }
+    },
+    {
+      "label": "see:rec-preview-tester",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 1.5 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 572,
+      "durationMs": 14509,
+      "sessionId": "ece65b22-c908-4bcd-a4f7-d30c075be25d",
+      "costUsd": 0.1807558,
+      "numTurns": 3,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "Child view shows the Czech prompt \"Zapiš jednu polovinu jako desetinné číslo.\" with the Ukrainian translation \"Запиши одну половину як десятковий дріб.\" in a box right under it. \"Skrýt ukrajinštinu\" confirms the translation is turned on. The first hint is open (\"NÁPOVĚDA 1 Z 2 — Polovina je jedna děleno dvěma.\"). The Answer tester has \"0,50\" in the input and shows a teal CORRECT badge with \"Read as 0.5\". All text is legible. The grey Ukrainian line on beige and the grey helper line are the lowest-contrast text but still look like they pass AA. Minor cosmetic issue, not a blocker: a stray dot shows just under the translation box."
+      }
+    },
+    {
+      "label": "see:rec-task-list-provenance",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 1.5 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 499,
+      "durationMs": 17565,
+      "sessionId": "c68dfa2f-8033-4e28-b298-56156179a585",
+      "costUsd": 0.0749002,
+      "numTurns": 3,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "The admin PDF viewer is titled 'Matematika 6 – pracovní sešit'. The go-to-page input reads 57, the status reads 'Page 57 of 120', and the white canvas shows a rendered 'Page 57' with no spinner or empty state. All text is dark navy or black on cream or white and passes AA contrast; the nav links are a legible blue. One limit: this still shows only where the flow ends. The FR-11 filtered list and the 'Open source' click are not visible, so that path is proven only by the recording's assertions, not by this frame."
+      }
+    },
+    {
+      "label": "see:rec-skin-hq",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 1.5 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 489,
+      "durationMs": 17450,
+      "sessionId": "5e7abe2e-649c-477f-9ab2-97d7b4c11682",
+      "costUsd": 0.07608279999999999,
+      "numTurns": 3,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "The Czech HQ has fully rendered. It shows the \"Ahoj, Agent Nova!\" greeting, a rank card reading \"HODNOST 1 / Nováček\" next to a red hexagon medal with a gold star (original art), and a lightning-bolt XP badge. The card also shows 0 XP with the line \"0 z 150 XP do hodnosti Kadet\", plus the theme copy \"Síla: Desetinná čísla\" and \"Síla: Obvod a obsah\" with pink \"NOVÁ\" mission chips. I saw no manga or anime names or logos, and all text is dark navy on cream or white with good contrast. One small point: the pale beige progress dots on the mission cards are barely visible, but they are decorative and the \"0/3 vyřešeno\" text carries the same information."
+      }
+    },
+    {
+      "label": "see:rec-stats",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 1.5 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 540,
+      "durationMs": 23491,
+      "sessionId": "10e9a562-bc33-47fc-8d3e-c9969e957f33",
+      "costUsd": 0.074916,
+      "numTurns": 3,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "The Practice statistics page renders fully. The Success metric card shows an orange \"NOT MET\" badge and \"Short weeks: 2026-09-14\". The Weekly practice table has columns for Sessions, Qualifying sessions, Tasks per session (\"12, 10, 11\" in the 2026-09-28 row), Hints used and Revealed tasks. Under First-try rate per topic, the row reads \"Desetinná čísla 75%, 6 of 8 first try\". All text is dark on a cream or white background and passes AA by eye. The only lighter text is the grey metric description, which is still clearly legible. Nothing is clipped and there is no loading state."
+      }
+    },
+    {
+      "label": "see:rec-flag-queue",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 1.5 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 507,
+      "durationMs": 16553,
+      "sessionId": "c7f6d7f5-afcb-4d12-a814-7744b3eea03a",
+      "costUsd": 0.0951,
+      "numTurns": 4,
+      "result": {
+        "met": false,
+        "readable": true,
+        "notes": "The Flag queue renders with entries showing the task, raw input, checker verdict (orange WRONG) and status (OPEN / DISMISSED / FIXED), but the only status banner says 'Report on \"Které číslo je větší než 4?\" dismissed.' No '+4 XP' or fixed message appears anywhere. Both FIXED entries show re-evaluated dates of 2026-10-03 and 2026-10-07, which look like seed data, not a re-evaluation done in this run, and the first card is still OPEN with Re-evaluate and Dismiss buttons. Fix: capture the frame after the Re-evaluate step too (or keep both banners visible), so the +4 XP / fixed message and a freshly fixed entry show up. Text is legible: dark text on a cream background and clear badges."
+      }
+    },
+    {
+      "label": "see:rec-theme-light",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 1.5 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 472,
+      "durationMs": 12174,
+      "sessionId": "1f1491da-7ddb-4e55-a0ba-69a54326f85e",
+      "costUsd": 0.0746818,
+      "numTurns": 3,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "The child HQ renders in the light theme. The page background is light cream, the \"Doučko\" header and \"Ahoj, Agent Nova!\" title are dark navy, and the rank card, XP bar and mission cards (Síla: Desetinná čísla / Obvod a obsah) are all fully painted. There is no theme toggle anywhere in the header or on the page. All text is legible at the AA bar by eye, including the small grey \"0 z 150 XP do hodnosti Kadet\" and \"Vyřešené úlohy: 0\" on white. The only low-contrast pixels are the beige progress dots on the mission cards, which look decorative because the \"0/N vyřešeno\" text carries the same information."
+      }
+    },
+    {
+      "label": "see:rec-theme-dark",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 1.5 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 462,
+      "durationMs": 15341,
+      "sessionId": "760af11a-dbf6-49bb-bf26-e0e2f4f2a542",
+      "costUsd": 0.0785776,
+      "numTurns": 3,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "The child HQ is fully rendered in the dark theme. The page background is dark navy (#0d1130-ish) with white headings (\"Ahoj, Agent Nova!\", \"Síla: Desetinná čísla\", \"Síla: Obvod a obsah\"), a navy rank card (\"Nováček\", 0 XP, progress bar) on a maroon hero panel, and three mission cards with pink \"NOVÁ\" badges. There is no theme toggle anywhere, including the header, which shows only \"Doučko\". All text, including the small muted \"HODNOST 1\" and \"0 z 150 XP do hodnosti Kadet\", reads clearly at about AA contrast. The only weak spot is the navy-on-navy task-progress dots in the mission cards, which are hard to see; brightening their outline would get them to the 3:1 non-text contrast bar."
+      }
+    },
+    {
+      "label": "see:slice6-mission-create-reorder-publish",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 1.5 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 940,
+      "durationMs": 14676,
+      "sessionId": "3f6547df-56bf-465d-a906-23b65e2d6bf5",
+      "costUsd": 0.0867718,
+      "numTurns": 3,
+      "result": {
+        "met": false,
+        "readable": true,
+        "notes": "The Edit mission still shows topic \"Desetinná čísla\", position 2, \"3/10 tasks\", a PUBLISHED status badge and a \"Mission published.\" banner, with the first-place task reordered (\"Zaokrouhli 3,46 na desetiny.\"). But tasks 2 and 3 still carry DRAFT badges, so the frame contradicts \"the tasks get published\" and shows a published mission with draft tasks. Nothing in the frame shows the refusal step either. Fix: refetch or invalidate the mission's task list after the tasks are published and before publishing again, so every row shows PUBLISHED, then re-record. Text is legible; the only faint labels are the disabled \"Move task 1 up\" and \"Move task 3 down\" buttons, which is acceptable."
+      }
+    },
+    {
+      "label": "see:slice6-mission-publish-refused",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 1.5 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 704,
+      "durationMs": 11719,
+      "sessionId": "9b5848be-9139-47af-9526-c5ebe1193868",
+      "costUsd": 0.0834506,
+      "numTurns": 3,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "The settled frame shows the refusal. An orange alert under \"Status and deletion\" reads \"Only published text tasks can be in a published mission: 2 tasks block publishing.\" Below it, \"Blocked by:\" links both draft tasks (\"Zapiš jednu polovinu jako desetinné číslo.\" and \"Které číslo je větší než 4?\"). Those same two DRAFT tasks appear in the task list above, and the mission's status badge still says DRAFT. All text is legible with dark text on light surfaces. The greyed \"Move task 1 up\" and \"Move task 2 down\" buttons are disabled controls, which WCAG exempts from contrast. One small issue that doesn't block the verdict: the nav highlights \"New mission\" as the current page even though this is Edit mission."
+      }
+    },
+    {
+      "label": "see:slice6-mission-list",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 1.5 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 653,
+      "durationMs": 13586,
+      "sessionId": "be77d01f-cfad-46c6-9f5e-563756995f38",
+      "costUsd": 0.076713,
+      "numTurns": 3,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "The admin Missions page is open and \"Missions\" is highlighted in the top nav. The table has Topic, Position, Tasks, Status and Actions columns and shows two missions: \"Desetinná čísla\", position 1, \"2/10 tasks\", with a DRAFT badge; and \"Obvod a obsah\", position 1, \"1/10 tasks\", with a teal PUBLISHED badge. All text is legible. The dark text on the cream background, on the DRAFT badge and on the teal PUBLISHED badge all has enough contrast to pass WCAG AA by eye. Nothing is clipped or overlapping, and there is no loading state."
+      }
+    },
+    {
+      "label": "see:slice6-source-edit-delete-refused",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 1.5 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 788,
+      "durationMs": 11259,
+      "sessionId": "c292c063-2be5-4e8e-b23f-46bbf0553820",
+      "costUsd": 0.075651,
+      "numTurns": 3,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "The 'Edit source' form has no file input. It shows the note 'The PDF file cannot be replaced…', and the Edition field reads '2'. Under the form, the Deletion panel shows the refusal 'Delete or move those tasks first.' and lists the three referencing tasks by name as blue links. All text is legible at AA by eye: dark navy on cream and white, blue links on peach, and white on the crimson 'Save source' button. The pixels can't show whether the edition was persisted, only that the field holds 2."
+      }
+    },
+    {
+      "label": "see:slice6-task-status-blocked",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 1.5 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 790,
+      "durationMs": 14549,
+      "sessionId": "14fe7b35-44a8-4fce-b5cd-fd1f6566e326",
+      "costUsd": 0.079296,
+      "numTurns": 4,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "The task still shows the green PUBLISHED badge at the top. The Status and deletion panel shows an orange refusal box: \"The task is in a published mission. Unpublish the mission first. Blocked by: Desetinná čísla · Mission 1\", where the mission name is an underlined link. Below it, \"Delete task\" is greyed out and disabled, with the explanation \"This task cannot be deleted: … Unpublish it instead.\" All body text is dark on light and legible. The only faint text is on disabled controls (Delete task, Move…up/down), which WCAG exempts from contrast rules. The large empty left column is a layout oddity, not a readability problem."
+      }
+    },
+    {
+      "label": "see:slice7-hq-missions",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 1.5 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 858,
+      "durationMs": 12651,
+      "sessionId": "eb1a7a27-cbd0-437e-824e-fcd4675d7142",
+      "costUsd": 0.07659540000000001,
+      "numTurns": 3,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "The HQ screen is fully rendered and shows no login form. It greets the fictional profile with \"Ahoj, Agent Nova!\" and has a red \"Pokračovat →\" button. Under \"Síla: Desetinná čísla\", Mise 1 (ROZDĚLANÁ, 1/3 vyřešeno) comes before Mise 2 (NOVÁ, 0/2 vyřešeno), and under \"Síla: Obvod a obsah\", Mise 1 shows SPLNĚNO, 1/1 vyřešeno. No draft card appears. All text is dark on light or has strong badge contrast. The only weak spot is the empty progress dots, which are very faint beige on white, but the \"x/N vyřešeno\" text says the same thing, so this is minor."
+      }
+    },
+    {
+      "label": "see:slice7-start-two-clicks",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 1.5 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 687,
+      "durationMs": 13229,
+      "sessionId": "886574a3-a983-423d-af80-969d1e741e30",
+      "costUsd": 0.07359,
+      "numTurns": 3,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "The task screen has fully rendered. It shows the heading \"Úloha 1\", the prompt \"Kolik je 1 000 + 250?\" and the counter \"Použité pokusy: 0 ze 2\". Input \"a\" has a clear blue focus ring and the red \"Odeslat\" button is visible, so the end state of the two-click start is shown. All text is legible on the cream and white backgrounds, but nothing on screen says this is mission 2. Adding the mission name or number to the task header would let the still prove that without the clip's assertion."
+      }
+    },
+    {
+      "label": "see:slice7-correct-next",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 1.5 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 698,
+      "durationMs": 13431,
+      "sessionId": "1f34ea13-0a75-4263-a275-dd7449a2411a",
+      "costUsd": 0.07367480000000001,
+      "numTurns": 3,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "The solved \"Úloha 1\" (Sečti 0,5 + 0,25.) is shown with its number-line image painted. The locked input holds 0,75 with a teal check and the label \"Správně\", and the mint banner reads \"Výborně!\". The header says \"Použité pokusy: 1 ze 2\", which confirms it was the first attempt, and the red \"Další úloha →\" button has a visible blue focus ring. All text is legible: dark navy or teal on white or mint. The smallest items, the \"Správně\" label and \"Nahlásit problém\", are small but still readable by eye at AA."
+      }
+    },
+    {
+      "label": "see:slice7-wrong-then-reveal",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 1.5 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 871,
+      "durationMs": 14497,
+      "sessionId": "84437b57-eb70-4bfa-9caa-370f4375ebd3",
+      "costUsd": 0.0791676,
+      "numTurns": 3,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "The still shows the settled reveal: the header reads \"Použité pokusy: 2 ze 2\". Part a (\"3,5\") is locked in teal with a check and \"Správně\". Part b sits in a neutral dashed read-only field with an eye icon, and below it \"Tvoje odpověď: 7,2  Správná odpověď: 7\". A beige panel says \"Nevadí, příště! Tady jsou správné odpovědi.\" Nothing is red and nothing says \"Špatně\" or \"Chyba\". The text is legible against its backgrounds; the smallest is the grey \"Tvoje odpověď / Správná odpověď\" line, which is small but still looks AA. One minor point: rounding 7,04 to tenths would usually be shown as \"7,0\", not \"7\"."
+      }
+    },
+    {
+      "label": "see:slice7-unparseable",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 1.5 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 687,
+      "durationMs": 11309,
+      "sessionId": "82ecb34a-ef83-4978-b16a-80a32cc3c945",
+      "costUsd": 0.072422,
+      "numTurns": 3,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "Field a shows 3,5 and field b keeps \"5,,2\" (focused, with a blue ring). Under b is the tip \"Tohle číslo neumím přečíst. Zkus třeba 5,2.\" and a yellow callout reading \"Tohle neumím přečíst — Tenhle pokus se nepočítá…\". The header still shows \"Použité pokusy: 0 ze 2\", and nothing is red or mocking. All text is dark on a light background and passes AA by eye. The only weak spot is the inline tip under b, which is small (about 12px) but still legible."
+      }
+    },
+    {
+      "label": "see:slice7-hints-translation",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 1.5 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 831,
+      "durationMs": 15657,
+      "sessionId": "1d66abe8-b527-406e-a98d-5ba4112785d1",
+      "costUsd": 0.0829478,
+      "numTurns": 3,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "The still shows \"Úloha 1\" with the Czech prompt \"Sečti 0,5 + 0,25.\" and the Ukrainian line \"Додай 0,5 + 0,25.\" directly below it. \"NÁPOVĚDA 1 Z 2\" and \"NÁPOVĚDA 2 Z 2\" appear in order, and hint 1 has its Ukrainian line (\"Запиши обидва числа в сотих.\") under the Czech text. The hint button shows \"zbývá 0\" and looks muted (disabled), the toggle reads \"Skrýt ukrajinštinu\" (so the translation is on), and every button stays in Czech (\"Odeslat\", \"Nápověda\", \"Nahlásit problém\"). The text is easy to read: the dark navy text is crisp, and the grey Ukrainian lines on the beige and pale yellow backgrounds look like they meet the WCAG AA contrast bar by eye. The muted look of the disabled hint button is expected for a disabled control."
+      }
+    },
+    {
+      "label": "see:slice7-report",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 1.5 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 840,
+      "durationMs": 13520,
+      "sessionId": "ff5a561c-4f96-4887-b556-b6d0e94a54d0",
+      "costUsd": 0.08538079999999999,
+      "numTurns": 3,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "The settled still shows the \"Nahlásit problém\" dialog with \"Jiné\" selected, an empty Poznámka field, and the orange refusal \"Napiš prosím krátce, co nesedí.\" under it. Attempts are unchanged: the header reads \"Použité pokusy: 1 ze 2\" and the almost-banner says \"Máš ještě jeden pokus\" after the wrong answer 0,7. The first report's \"Díky, podívám se na to!\" message and the stored raw attempt can't be seen in this end-state still, because they come from earlier in the clip and the clip assertions cover them. All text is legible at AA by eye, including the small grey helper text \"U možnosti „Jiné“ ji prosím napiš.\""
+      }
+    },
+    {
+      "label": "see:slice7-save-resume",
+      "phase": "See",
+      "agentType": "vision-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 1.5 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 868,
+      "durationMs": 13200,
+      "sessionId": "093a40a7-1635-4780-af56-d17b45537aea",
+      "costUsd": 0.0783538,
+      "numTurns": 3,
+      "result": {
+        "met": true,
+        "readable": true,
+        "notes": "The settled still shows the reopened app on \"Úloha 2\" (the two-part task \"Zaokrouhli na desetiny: a) 3,46; b) 7,04.\"). The header reads \"Použité pokusy: 1 ze 2\", part a keeps 3,5 with a green \"Správně\" check, and part b is marked orange \"Zkus znovu\" with the \"Skoro! Zkus to znovu. Máš ještě jeden pokus.\" banner, so the image shows the resumed state at the stored attempt. The failed-save message and the one-entry attempt log are not in this frame; only the clip's assertions cover them. All text is legible and contrast looks AA by eye: dark navy on cream or white, deep orange-brown on light peach, and white on the crimson \"Odeslat\" button. The placeholder and the \"Nahlásit problém\" link are the faintest text, but they still read clearly."
+      }
+    },
+    {
+      "label": "write-vision",
+      "phase": "Report",
+      "agentType": null,
+      "structured": false,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 1.5 --tools Read,Grep,Glob,Write,Edit",
+      "promptChars": 21921,
+      "durationMs": 152998,
+      "sessionId": "86ec8caa-8ae3-412c-9e68-ddbaa8bb63e1",
+      "costUsd": 0.8493582000000001,
+      "numTurns": 15,
+      "result": "I saved the vision verdicts for 25 clips: 22 meet their requirement, 3 don't, and all 25 are readable.\n\n**Timestamp:** I couldn't stamp the real current UTC time because I had no way to read a clock in this session. The report gives a lower bound instead: \"2026-10-08, after 17:49:26Z\", which is the last entry in `trace/ledger.jsonl`. The previous report did the same. If you need the exact time, give me a timestamp or run the step with a shell and I'll replace it.\n\n**What I wrote:**\n- **Manifests:** I added a `\"vision\": { met, readable, notes }` entry to every clip in 4 manifests (`nfr8-task-entry`, `phase6-admin-theme`, `slice6-authoring-missions`, `slice7-practice-flow`), with the notes copied word for word. Nothing else in them changed.\n- **`docs/qa/vision-report.md`:** I replaced the old report, which covered only slice8. The new one has the table (clip | proves | met | readable | notes, with notes shortened; the full text is in each manifest), a Failures section and a list of minor issues. The slice8 clips weren't in this batch, so they keep their earlier verdicts (8/8 met and readable) in their manifest, and the report says so.\n- **`docs/qa/vision-report.json`:** I left this alone. `check-vision` writes it.\n\n**Failures, which should make the vision and recordings gates fail:**\n1. **`rec-task-images` (FR-4):** the two images show up as specks about 2px wide, so you can't see the images or their order. The fix is larger, clearly different test images (or a minimum size in the preview), then re-record.\n2. **`rec-flag-queue` (FR-41):** the final frame shows only the \"dismissed\" banner. There's no \"+4 XP\" or \"fixed\" result from the re-evaluate step on screen.\n3. **`slice6-mission-create-reorder-publish` (FR-9, FR-55):** the mission shows as published while two of its tasks still show DRAFT. This looks like a real bug: the task list isn't refreshed after the tasks are published, not just a badly timed frame.\n\nI haven't run `check-vision` or `check-recordings` against the new verdicts."
+    }
+  ],
+  "logs": [
+    {
+      "phase": "Collect",
+      "message": "25 clip still(s) to look at"
+    },
+    {
+      "phase": "Report",
+      "message": "22/25 clips met + readable; FIX & RE-RECORD: rec-task-images, rec-flag-queue, slice6-mission-create-reorder-publish"
+    }
+  ],
+  "persisted": [],
+  "returned": {
+    "clips": 25,
+    "passed": 22,
+    "failed": [
+      {
+        "id": "rec-task-images",
+        "notes": "The Preview page's \"Child view\" card shows the task \"Které číslo je větší než 4?\" with answer options A 3 / B 4 / C 5. The two attached PNGs show up only as two tiny pink specks, about 2px each, under the question at roughly (85,402) and (98,402). No real image content is visible, so you can't see that two images rendered or what order they're in. Fix: use test PNGs that are visibly sized and clearly different from each other (for example, ≥120px with distinct colours or labels \"1\" and \"2\"), or make sure the preview sets a minimum image size. Then re-record so the reordered order can be seen. All text is legible, with dark navy on white or cream at good contrast."
+      },
+      {
+        "id": "rec-flag-queue",
+        "notes": "The Flag queue renders with entries showing the task, raw input, checker verdict (orange WRONG) and status (OPEN / DISMISSED / FIXED), but the only status banner says 'Report on \"Které číslo je větší než 4?\" dismissed.' No '+4 XP' or fixed message appears anywhere. Both FIXED entries show re-evaluated dates of 2026-10-03 and 2026-10-07, which look like seed data, not a re-evaluation done in this run, and the first card is still OPEN with Re-evaluate and Dismiss buttons. Fix: capture the frame after the Re-evaluate step too (or keep both banners visible), so the +4 XP / fixed message and a freshly fixed entry show up. Text is legible: dark text on a cream background and clear badges."
+      },
+      {
+        "id": "slice6-mission-create-reorder-publish",
+        "notes": "The Edit mission still shows topic \"Desetinná čísla\", position 2, \"3/10 tasks\", a PUBLISHED status badge and a \"Mission published.\" banner, with the first-place task reordered (\"Zaokrouhli 3,46 na desetiny.\"). But tasks 2 and 3 still carry DRAFT badges, so the frame contradicts \"the tasks get published\" and shows a published mission with draft tasks. Nothing in the frame shows the refusal step either. Fix: refetch or invalidate the mission's task list after the tasks are published and before publishing again, so every row shows PUBLISHED, then re-record. Text is legible; the only faint labels are the disabled \"Move task 1 up\" and \"Move task 3 down\" buttons, which is acceptable."
+      }
+    ],
+    "verdict": "some clips do NOT — fix the UI, re-record, and re-run vision-verify until met"
+  }
+}

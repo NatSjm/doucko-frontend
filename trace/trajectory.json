@@ -81,7 +81,7 @@
     {
       "slice": "2026-10-08-harden-phase5-ui",
       "reviewEvidence": "clean",
-      "trailerCommits": 8,
+      "trailerCommits": 10,
       "libDomains": [],
       "processComplete": true
     }

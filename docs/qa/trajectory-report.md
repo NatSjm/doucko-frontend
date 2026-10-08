@@ -17,7 +17,7 @@ Result: PASS, 6 warning(s)
 | 2026-10-05-implement-practice-flow-ui | clean | 3 | yes | hq, mission, task, child |
 | 2026-10-07-implement-gamification-ui | clean | 4 | yes | mission, summary, task, hq, rank, skin |
 | 2026-10-07-implement-progress-stats-ui | clean | 6 | yes | stats, admin-access, reports |
-| 2026-10-08-harden-phase5-ui | clean | 8 | yes | - |
+| 2026-10-08-harden-phase5-ui | clean | 10 | yes | - |
 
 ## Cross-slice module overlap
 

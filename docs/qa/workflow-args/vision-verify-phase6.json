@@ -1,0 +1,154 @@
+{
+  "clips": [
+    {
+      "id": "nfr8-single-part-task-entry",
+      "proof": "NFR-8, FR-3",
+      "screenshot": "docs/qa/demo-recordings/nfr8-task-entry/nfr8-single-part-task-entry.png",
+      "requirement": "Typical single-part task entered with the keyboard (NFR-8) — Steps (keyboard only, 150 ms per key, 700 ms between fields): the editor opens with the sticky source and page 57 and focus in the prompt; type the prompt, Tab to the topic and pick it with an arrow key, Tab to the task number and type it, Tab past the sub-part and the answer type, type the expected value, press Enter. Asserted: the task is stored as DRAFT with that source reference and one INTEGER part, the time is within 60 s, the page stays 57 and focus returns to the prompt. The still is the settled end state of the clip; it must visibly show this and be legible (WCAG AA by eye)."
+    },
+    {
+      "id": "rec-source-upload",
+      "proof": "FR-1",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-source-upload.png",
+      "requirement": "FR-1: the admin Sources screen after uploading a PDF: the list shows the source 'Matematika 6 – pracovní sešit' with publisher 'Testovací nakladatelství', edition 1, grade 6, subject and 12 pages, and an upload confirmation. English admin UI, legible."
+    },
+    {
+      "id": "rec-pdf-beside-editor",
+      "proof": "FR-2",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-pdf-beside-editor.png",
+      "requirement": "FR-2: the task editor with the source PDF rendered page by page beside it; the viewer shows page 30 (a rendered page, status like 'Page 30 of 120') with a page-number jump field and previous/next controls, while the editor prompt keeps 'Rozepsaná úloha'. Legible."
+    },
+    {
+      "id": "rec-task-images",
+      "proof": "FR-4",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-task-images.png",
+      "requirement": "FR-4: the admin task preview (as the child sees it) showing the task with its two attached images (PNG) in the reordered order. Legible."
+    },
+    {
+      "id": "rec-parts-hints-translations",
+      "proof": "FR-6, FR-7, FR-8",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-parts-hints-translations.png",
+      "requirement": "FR-6, FR-7, FR-8: the task editor after saving ('Task saved.'): two answer parts (Part 1 decimal 0.5, Part 2 whole number 3), each with a label and its own answer type/accepted answer; three ordered hints; a Ukrainian (uk) translation group with the prompt and hint 1 filled in. Legible."
+    },
+    {
+      "id": "rec-preview-tester",
+      "proof": "FR-10, FR-7, FR-8",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-preview-tester.png",
+      "requirement": "FR-10 (FR-7, FR-8): the admin preview shows the task as the child sees it (Czech prompt, the first hint opened, the Ukrainian translation shown beside the Czech text) and the answer tester showing verdict CORRECT for 0,50 with the normalized value 0.5. Legible."
+    },
+    {
+      "id": "rec-task-list-provenance",
+      "proof": "FR-11, FR-13",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-task-list-provenance.png",
+      "requirement": "FR-13 (reached from the FR-11 filtered task list): the PDF viewer opened from a task's 'Open source' link at the task's page, page 57 of 'Matematika 6 – pracovní sešit' rendered. Legible."
+    },
+    {
+      "id": "rec-skin-hq",
+      "proof": "FR-39",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-skin-hq.png",
+      "requirement": "FR-39: the child HQ (Czech) in the hero-academy skin: rank name from the ladder ('Nováček'), original medal art, theme copy and colours; no names, logos or terms from existing manga/anime; legible."
+    },
+    {
+      "id": "rec-stats",
+      "proof": "FR-40",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-stats.png",
+      "requirement": "FR-40: the admin Practice statistics page: a weekly table (sessions per week, tasks per session e.g. '12, 10, 11', hints used, revealed tasks), the success-metric verdict (not met), and first-try rate per topic (Desetinná čísla 75%, 6 of 8). Legible."
+    },
+    {
+      "id": "rec-flag-queue",
+      "proof": "FR-41",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-flag-queue.png",
+      "requirement": "FR-41: the admin Flag queue after re-evaluating one report (a status message about +4 XP / fixed) and dismissing another: entries list the task, raw input, checker verdict and status (Fixed / Dismissed). Legible."
+    },
+    {
+      "id": "rec-theme-light",
+      "proof": "FR-58",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-theme-light.png",
+      "requirement": "FR-58: with the OS in LIGHT mode the child HQ renders in the light theme (light cream paper background, dark text) and there is no in-app theme toggle. Legible, WCAG AA by eye."
+    },
+    {
+      "id": "rec-theme-dark",
+      "proof": "FR-58",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-theme-dark.png",
+      "requirement": "FR-58: with the OS in DARK mode the child HQ renders in the dark theme (dark navy background, light text) and there is no in-app theme toggle. Legible, WCAG AA by eye."
+    },
+    {
+      "id": "slice6-mission-create-reorder-publish",
+      "proof": "FR-9, FR-55",
+      "screenshot": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-mission-create-reorder-publish.png",
+      "requirement": "Create a mission, reorder it and publish it (FR-9, FR-55) — Open New mission, choose the topic, type position 2, add three tasks of the topic, move the third to the first place with the keyboard, save; publish is refused with the draft tasks named; the tasks get published; publish again. Asserted: the stored mission is DRAFT with the tasks in the new order and the counter 3/10 tasks, the refusal names the blocking tasks, and the mission ends PUBLISHED. The still shows the published mission editor. The still is the settled end state of the clip; it must visibly show this and be legible (WCAG AA by eye)."
+    },
+    {
+      "id": "slice6-mission-publish-refused",
+      "proof": "FR-9",
+      "screenshot": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-mission-publish-refused.png",
+      "requirement": "A refused mission publish names the blocking tasks (FR-9) — Open the seeded draft mission whose two tasks are drafts and publish it. Asserted: the alert shows the server reason and links both draft tasks; the mission stays DRAFT. The still shows the refusal next to the task list. The still is the settled end state of the clip; it must visibly show this and be legible (WCAG AA by eye)."
+    },
+    {
+      "id": "slice6-mission-list",
+      "proof": "FR-9",
+      "screenshot": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-mission-list.png",
+      "requirement": "Mission list by topic and position with counter and status (FR-9) — With a draft and a published mission, open Missions from the admin navigation. Asserted: both are listed with topic, position, counter and status. The still shows the list. The still is the settled end state of the clip; it must visibly show this and be legible (WCAG AA by eye)."
+    },
+    {
+      "id": "slice6-source-edit-delete-refused",
+      "proof": "FR-55",
+      "screenshot": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-source-edit-delete-refused.png",
+      "requirement": "Edit a source; a referenced source cannot be deleted (FR-55) — From the source list choose Edit, change the edition to 2 and press Enter, then delete the source and confirm. Asserted: there is no file field, the edition is stored, and the delete is refused with its reason and the three referencing tasks named. The still shows the refusal under the edit form. The still is the settled end state of the clip; it must visibly show this and be legible (WCAG AA by eye)."
+    },
+    {
+      "id": "slice6-task-status-blocked",
+      "proof": "FR-55",
+      "screenshot": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-task-status-blocked.png",
+      "requirement": "A task in a published mission: unpublish refused, delete blocked (FR-55) — With the seeded mission and its tasks published, open the task editor and unpublish the task. Asserted: the refusal names the mission with a link, the task stays PUBLISHED, and delete is disabled with the explanation offering to unpublish instead. The still shows the status and deletion panel. The still is the settled end state of the clip; it must visibly show this and be legible (WCAG AA by eye)."
+    },
+    {
+      "id": "slice7-hq-missions",
+      "proof": "FR-24, FR-25, NFR-7",
+      "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-hq-missions.png",
+      "requirement": "HQ without login: missions by topic with x/N vyřešeno and their states (FR-24, FR-25, NFR-7) — With one task of mission 1 resolved and the perimeter mission revealed, open the app. Asserted: HQ greets the fictional profile with no login form, the topics are grouped with mission 1 before mission 2, the cards show 1/3 in progress, 0/2 new and 1/1 complete, the draft mission has no card, and \"Pokračovat\" is offered. The still shows HQ. The still is the settled end state of the clip; it must visibly show this and be legible (WCAG AA by eye)."
+    },
+    {
+      "id": "slice7-start-two-clicks",
+      "proof": "FR-25, FR-26, NFR-7",
+      "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-start-two-clicks.png",
+      "requirement": "Start a new mission in two clicks: card, then \"Začít misi\" (FR-25, FR-26, NFR-7) — On HQ click mission 2, see its briefing, click \"Začít misi\". Asserted: two clicks open task 1 of mission 2 with its prompt and focus in input a. The still shows the task screen. The still is the settled end state of the clip; it must visibly show this and be legible (WCAG AA by eye)."
+    },
+    {
+      "id": "slice7-correct-next",
+      "proof": "FR-26, FR-27, NFR-7",
+      "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-correct-next.png",
+      "requirement": "Correct on the first attempt: \"Výborně!\" and \"Další úloha\" (FR-26, FR-27, NFR-7) — On the task with an image, type 0,75 and press Enter. Asserted: the image is shown, the answer is graded correct, the part locks and \"Další úloha\" takes focus. The still shows the solved task. The still is the settled end state of the clip; it must visibly show this and be legible (WCAG AA by eye)."
+    },
+    {
+      "id": "slice7-wrong-then-reveal",
+      "proof": "FR-27",
+      "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-wrong-then-reveal.png",
+      "requirement": "Two attempts, then the reveal: wrong part in \"almost\", right part locked, answers shown neutrally (FR-27) — On the two-part task answer a right and b wrong, then b wrong again. Asserted: after attempt 1 b shows \"Zkus znovu\", a is locked and 1 of 2 attempts is used, without the correct value of b; after attempt 2 \"Nevadí, příště!\" and the correct answers are shown, the inputs are read-only and nothing says \"Špatně\" or \"Chyba\". The still shows the reveal. The still is the settled end state of the clip; it must visibly show this and be legible (WCAG AA by eye)."
+    },
+    {
+      "id": "slice7-unparseable",
+      "proof": "FR-22",
+      "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-unparseable.png",
+      "requirement": "Unreadable input: a format tip, the typed text kept, no attempt used (FR-22) — On the two-part task type 3,5 and 5,,2 and press Enter. Asserted: b shows the format tip, keeps 5,,2, and the indicator still shows 0 of 2 attempts used; no attempt is stored. The still shows the tip. The still is the settled end state of the clip; it must visibly show this and be legible (WCAG AA by eye)."
+    },
+    {
+      "id": "slice7-hints-translation",
+      "proof": "FR-28, FR-29",
+      "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-hints-translation.png",
+      "requirement": "Hints in order and the Ukrainian translation next to the Czech (FR-28, FR-29) — Open both hints one at a time, then turn on \"Zobrazit ukrajinsky\". Asserted: the hint counter goes 2 → 1 → 0 and the button ends disabled, both hints are recorded, the profile setting is uk and the Ukrainian prompt and hint 1 show next to the Czech while the buttons stay Czech. The still shows the translated task with its hints. The still is the settled end state of the clip; it must visibly show this and be legible (WCAG AA by eye)."
+    },
+    {
+      "id": "slice7-report",
+      "proof": "FR-30",
+      "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-report.png",
+      "requirement": "\"Nahlásit problém\": the attempt attached, thanks, attempts unchanged; \"Jiné\" needs a note (FR-30) — After a wrong attempt report \"Myslím, že moje odpověď je správně\", then open the dialog again and send \"Jiné\" without a note. Asserted: the first report is stored with the raw attempt, \"Díky, podívám se na to!\" is shown and 1 attempt is still left; the second is refused with \"Napiš prosím krátce, co nesedí.\" The still shows the dialog. The still is the settled end state of the clip; it must visibly show this and be legible (WCAG AA by eye)."
+    },
+    {
+      "id": "slice7-save-resume",
+      "proof": "FR-31",
+      "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-save-resume.png",
+      "requirement": "Save and resume: a failed save keeps the input; reopening continues at the stored attempt (FR-31) — With the backend unreachable submit 7,1 on the two-part task; with it back submit again; then open the app afresh and press \"Pokračovat\". Asserted: the failure message shows and nothing is stored, the retry is graded as attempt 1 (one attempt in the log), and the reopened app lands on that task with 1 of 2 used and b marked. The still shows the resumed task. The still is the settled end state of the clip; it must visibly show this and be legible (WCAG AA by eye)."
+    }
+  ]
+}

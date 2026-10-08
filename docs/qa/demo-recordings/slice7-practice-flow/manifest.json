@@ -8,7 +8,12 @@
       "video": "docs/qa/demo-recordings/slice7-practice-flow/slice7-hq-missions.webm",
       "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-hq-missions.png",
       "explainer": "docs/qa/demo-recordings/slice7-practice-flow/slice7-hq-missions.md",
-      "asserted": true
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The HQ screen is fully rendered and shows no login form. It greets the fictional profile with \"Ahoj, Agent Nova!\" and has a red \"Pokračovat →\" button. Under \"Síla: Desetinná čísla\", Mise 1 (ROZDĚLANÁ, 1/3 vyřešeno) comes before Mise 2 (NOVÁ, 0/2 vyřešeno), and under \"Síla: Obvod a obsah\", Mise 1 shows SPLNĚNO, 1/1 vyřešeno. No draft card appears. All text is dark on light or has strong badge contrast. The only weak spot is the empty progress dots, which are very faint beige on white, but the \"x/N vyřešeno\" text says the same thing, so this is minor."
+      }
     },
     {
       "id": "slice7-start-two-clicks",
@@ -17,7 +22,12 @@
       "video": "docs/qa/demo-recordings/slice7-practice-flow/slice7-start-two-clicks.webm",
       "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-start-two-clicks.png",
       "explainer": "docs/qa/demo-recordings/slice7-practice-flow/slice7-start-two-clicks.md",
-      "asserted": true
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The task screen has fully rendered. It shows the heading \"Úloha 1\", the prompt \"Kolik je 1 000 + 250?\" and the counter \"Použité pokusy: 0 ze 2\". Input \"a\" has a clear blue focus ring and the red \"Odeslat\" button is visible, so the end state of the two-click start is shown. All text is legible on the cream and white backgrounds, but nothing on screen says this is mission 2. Adding the mission name or number to the task header would let the still prove that without the clip's assertion."
+      }
     },
     {
       "id": "slice7-correct-next",
@@ -26,7 +36,12 @@
       "video": "docs/qa/demo-recordings/slice7-practice-flow/slice7-correct-next.webm",
       "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-correct-next.png",
       "explainer": "docs/qa/demo-recordings/slice7-practice-flow/slice7-correct-next.md",
-      "asserted": true
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The solved \"Úloha 1\" (Sečti 0,5 + 0,25.) is shown with its number-line image painted. The locked input holds 0,75 with a teal check and the label \"Správně\", and the mint banner reads \"Výborně!\". The header says \"Použité pokusy: 1 ze 2\", which confirms it was the first attempt, and the red \"Další úloha →\" button has a visible blue focus ring. All text is legible: dark navy or teal on white or mint. The smallest items, the \"Správně\" label and \"Nahlásit problém\", are small but still readable by eye at AA."
+      }
     },
     {
       "id": "slice7-wrong-then-reveal",
@@ -35,7 +50,12 @@
       "video": "docs/qa/demo-recordings/slice7-practice-flow/slice7-wrong-then-reveal.webm",
       "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-wrong-then-reveal.png",
       "explainer": "docs/qa/demo-recordings/slice7-practice-flow/slice7-wrong-then-reveal.md",
-      "asserted": true
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The still shows the settled reveal: the header reads \"Použité pokusy: 2 ze 2\". Part a (\"3,5\") is locked in teal with a check and \"Správně\". Part b sits in a neutral dashed read-only field with an eye icon, and below it \"Tvoje odpověď: 7,2  Správná odpověď: 7\". A beige panel says \"Nevadí, příště! Tady jsou správné odpovědi.\" Nothing is red and nothing says \"Špatně\" or \"Chyba\". The text is legible against its backgrounds; the smallest is the grey \"Tvoje odpověď / Správná odpověď\" line, which is small but still looks AA. One minor point: rounding 7,04 to tenths would usually be shown as \"7,0\", not \"7\"."
+      }
     },
     {
       "id": "slice7-unparseable",
@@ -44,7 +64,12 @@
       "video": "docs/qa/demo-recordings/slice7-practice-flow/slice7-unparseable.webm",
       "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-unparseable.png",
       "explainer": "docs/qa/demo-recordings/slice7-practice-flow/slice7-unparseable.md",
-      "asserted": true
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "Field a shows 3,5 and field b keeps \"5,,2\" (focused, with a blue ring). Under b is the tip \"Tohle číslo neumím přečíst. Zkus třeba 5,2.\" and a yellow callout reading \"Tohle neumím přečíst — Tenhle pokus se nepočítá…\". The header still shows \"Použité pokusy: 0 ze 2\", and nothing is red or mocking. All text is dark on a light background and passes AA by eye. The only weak spot is the inline tip under b, which is small (about 12px) but still legible."
+      }
     },
     {
       "id": "slice7-hints-translation",
@@ -53,7 +78,12 @@
       "video": "docs/qa/demo-recordings/slice7-practice-flow/slice7-hints-translation.webm",
       "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-hints-translation.png",
       "explainer": "docs/qa/demo-recordings/slice7-practice-flow/slice7-hints-translation.md",
-      "asserted": true
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The still shows \"Úloha 1\" with the Czech prompt \"Sečti 0,5 + 0,25.\" and the Ukrainian line \"Додай 0,5 + 0,25.\" directly below it. \"NÁPOVĚDA 1 Z 2\" and \"NÁPOVĚDA 2 Z 2\" appear in order, and hint 1 has its Ukrainian line (\"Запиши обидва числа в сотих.\") under the Czech text. The hint button shows \"zbývá 0\" and looks muted (disabled), the toggle reads \"Skrýt ukrajinštinu\" (so the translation is on), and every button stays in Czech (\"Odeslat\", \"Nápověda\", \"Nahlásit problém\"). The text is easy to read: the dark navy text is crisp, and the grey Ukrainian lines on the beige and pale yellow backgrounds look like they meet the WCAG AA contrast bar by eye. The muted look of the disabled hint button is expected for a disabled control."
+      }
     },
     {
       "id": "slice7-report",
@@ -62,7 +92,12 @@
       "video": "docs/qa/demo-recordings/slice7-practice-flow/slice7-report.webm",
       "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-report.png",
       "explainer": "docs/qa/demo-recordings/slice7-practice-flow/slice7-report.md",
-      "asserted": true
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The settled still shows the \"Nahlásit problém\" dialog with \"Jiné\" selected, an empty Poznámka field, and the orange refusal \"Napiš prosím krátce, co nesedí.\" under it. Attempts are unchanged: the header reads \"Použité pokusy: 1 ze 2\" and the almost-banner says \"Máš ještě jeden pokus\" after the wrong answer 0,7. The first report's \"Díky, podívám se na to!\" message and the stored raw attempt can't be seen in this end-state still, because they come from earlier in the clip and the clip assertions cover them. All text is legible at AA by eye, including the small grey helper text \"U možnosti „Jiné“ ji prosím napiš.\""
+      }
     },
     {
       "id": "slice7-save-resume",
@@ -71,7 +106,12 @@
       "video": "docs/qa/demo-recordings/slice7-practice-flow/slice7-save-resume.webm",
       "screenshot": "docs/qa/demo-recordings/slice7-practice-flow/slice7-save-resume.png",
       "explainer": "docs/qa/demo-recordings/slice7-practice-flow/slice7-save-resume.md",
-      "asserted": true
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The settled still shows the reopened app on \"Úloha 2\" (the two-part task \"Zaokrouhli na desetiny: a) 3,46; b) 7,04.\"). The header reads \"Použité pokusy: 1 ze 2\", part a keeps 3,5 with a green \"Správně\" check, and part b is marked orange \"Zkus znovu\" with the \"Skoro! Zkus to znovu. Máš ještě jeden pokus.\" banner, so the image shows the resumed state at the stored attempt. The failed-save message and the one-entry attempt log are not in this frame; only the clip's assertions cover them. All text is legible and contrast looks AA by eye: dark navy on cream or white, deep orange-brown on light peach, and white on the crimson \"Odeslat\" button. The placeholder and the \"Nahlásit problém\" link are the faintest text, but they still read clearly."
+      }
     }
   ]
 }

@@ -40,6 +40,7 @@
     "qa:record-slice6": "npm run build && node tools/record-slice6.mjs",
     "qa:record-slice7": "npm run build && node tools/record-slice7.mjs",
     "qa:record-slice8": "npm run build && node tools/record-slice8.mjs",
+    "qa:record-e2e-clips": "npm run build && node tools/record-e2e-clips.mjs",
     "check:e2e-stack": "node scripts/check-e2e-stack.mjs"
   },
   "devDependencies": {

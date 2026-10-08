@@ -109,7 +109,9 @@
         "e2e/authoring-sources.spec.ts",
         "e2e/stack/authoring-to-practice.spec.ts"
       ],
-      "recordings": []
+      "recordings": [
+        "docs/qa/demo-recordings/phase6-admin-theme/manifest.json"
+      ]
     },
     {
       "id": "FR-2",
@@ -132,7 +134,9 @@
         "e2e/authoring-sources.spec.ts",
         "e2e/authoring-tasks.spec.ts"
       ],
-      "recordings": []
+      "recordings": [
+        "docs/qa/demo-recordings/phase6-admin-theme/manifest.json"
+      ]
     },
     {
       "id": "FR-3",
@@ -173,7 +177,9 @@
         "src/features/tasks/TaskEditorScreen.test.tsx",
         "e2e/authoring-tasks.spec.ts"
       ],
-      "recordings": []
+      "recordings": [
+        "docs/qa/demo-recordings/phase6-admin-theme/manifest.json"
+      ]
     },
     {
       "id": "FR-5",
@@ -204,7 +210,9 @@
         "src/features/tasks/TaskEditorScreen.test.tsx",
         "src/features/tasks/taskForm.test.ts"
       ],
-      "recordings": []
+      "recordings": [
+        "docs/qa/demo-recordings/phase6-admin-theme/manifest.json"
+      ]
     },
     {
       "id": "FR-7",
@@ -224,7 +232,9 @@
         "src/features/tasks/taskForm.test.ts",
         "e2e/authoring-preview.spec.ts"
       ],
-      "recordings": []
+      "recordings": [
+        "docs/qa/demo-recordings/phase6-admin-theme/manifest.json"
+      ]
     },
     {
       "id": "FR-8",
@@ -245,7 +255,9 @@
         "src/features/tasks/taskForm.test.ts",
         "e2e/authoring-preview.spec.ts"
       ],
-      "recordings": []
+      "recordings": [
+        "docs/qa/demo-recordings/phase6-admin-theme/manifest.json"
+      ]
     },
     {
       "id": "FR-9",
@@ -288,7 +300,9 @@
         "src/features/tasks/PreviewScreen.test.tsx",
         "e2e/authoring-preview.spec.ts"
       ],
-      "recordings": []
+      "recordings": [
+        "docs/qa/demo-recordings/phase6-admin-theme/manifest.json"
+      ]
     },
     {
       "id": "FR-11",
@@ -306,7 +320,9 @@
         "src/features/tasks/TaskListScreen.test.tsx",
         "e2e/authoring-tasks.spec.ts"
       ],
-      "recordings": []
+      "recordings": [
+        "docs/qa/demo-recordings/phase6-admin-theme/manifest.json"
+      ]
     },
     {
       "id": "FR-12",
@@ -338,7 +354,9 @@
         "src/features/tasks/TaskListScreen.test.tsx",
         "e2e/authoring-tasks.spec.ts"
       ],
-      "recordings": []
+      "recordings": [
+        "docs/qa/demo-recordings/phase6-admin-theme/manifest.json"
+      ]
     },
     {
       "id": "FR-55",
@@ -865,7 +883,9 @@
       "tests": [
         "src/features/skin/denylist.test.ts"
       ],
-      "recordings": []
+      "recordings": [
+        "docs/qa/demo-recordings/phase6-admin-theme/manifest.json"
+      ]
     },
     {
       "id": "FR-58",
@@ -882,7 +902,9 @@
         "src/app/theme-source.test.ts",
         "e2e/theme.spec.ts"
       ],
-      "recordings": []
+      "recordings": [
+        "docs/qa/demo-recordings/phase6-admin-theme/manifest.json"
+      ]
     },
     {
       "id": "FR-40",
@@ -903,7 +925,9 @@
         "e2e/progress-stats.spec.ts",
         "e2e/stack/stats.spec.ts"
       ],
-      "recordings": []
+      "recordings": [
+        "docs/qa/demo-recordings/phase6-admin-theme/manifest.json"
+      ]
     },
     {
       "id": "FR-41",
@@ -923,7 +947,9 @@
         "e2e/flag-queue.spec.ts",
         "e2e/stack/flag-queue.spec.ts"
       ],
-      "recordings": []
+      "recordings": [
+        "docs/qa/demo-recordings/phase6-admin-theme/manifest.json"
+      ]
     },
     {
       "id": "FR-42",
@@ -1216,56 +1242,8 @@
   "failures": [],
   "warnings": [
     {
-      "check": "recording-evidence",
-      "msg": "FR-1 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-2 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-4 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-6 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-7 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-8 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-10 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-11 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-13 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-39 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-58 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-40 is not referenced by any recording manifest under docs/qa/"
-    },
-    {
-      "check": "recording-evidence",
-      "msg": "FR-41 is not referenced by any recording manifest under docs/qa/"
+      "check": "active-changes",
+      "msg": "active change \"qa-phase6-ui\" is not archived"
     }
   ]
 }
