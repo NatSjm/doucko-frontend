@@ -124,7 +124,8 @@
       "file": "e2e/recordings/admin-and-theme.spec.ts",
       "line": 1,
       "status": "waived",
-      "note": "Summary entry (the coverage table of the review itself), no defect; the strengthened clips are in 7dbaa43."
+      "note": "Summary entry (the coverage table of the review itself), no defect; the strengthened clips are in 7dbaa43.",
+      "reason": "Summary entry (the coverage table of the review itself), no defect; the strengthened clips are in 7dbaa43."
     },
     {
       "id": "F10",
@@ -201,7 +202,8 @@
       "file": "tools/record-e2e-clips.mjs",
       "line": 475,
       "status": "waived",
-      "note": "By design: re-recording replaces the stills, so the old verdicts no longer describe them; documented in the tool header. The vision-verify re-run over the 11 re-recorded clips is an open item (cost cap), marked in docs/qa/vision-report.md."
+      "note": "By design: re-recording replaces the stills, so the old verdicts no longer describe them; documented in the tool header. The vision-verify re-run over the 11 re-recorded clips is an open item (cost cap), marked in docs/qa/vision-report.md.",
+      "reason": "By design: re-recording replaces the stills, so the old verdicts no longer describe them; documented in the tool header. The vision-verify re-run over the 11 re-recorded clips is an open item (cost cap), marked in docs/qa/vision-report.md."
     },
     {
       "id": "F17",
@@ -222,8 +224,9 @@
       "title": "Ticked tasks 3.1–3.3 have no artifacts: no review-findings.json, current-state not updated, qa:verify not re-run after the code change",
       "file": "openspec/changes/qa-phase6-ui/tasks.md",
       "line": 15,
-      "status": "waived",
-      "note": "Tasks 3.1–3.3 are completed later in this change (review dispositions here, qa:verify and the real-stack run at the final commit, current-state) before the archive."
+      "status": "fixed",
+      "note": "Tasks 3.1-3.3 completed before handoff: review dispositions and current-state in f1c3ede; qa:verify Pass and real-stack PASS at 8a8243a (docs/qa/automated-verification-latest.md, docs/qa/e2e-stack-latest.md).",
+      "fixCommit": "f1c3ede"
     },
     {
       "id": "F19",
@@ -245,7 +248,8 @@
       "file": "e2e/recordings/admin-and-theme.spec.ts",
       "line": 279,
       "status": "waived",
-      "note": "Kept as a clip-level heuristic, now also by accessible name (7dbaa43); the exhaustive check (every control on every screen activated in light and dark) is e2e/theme.spec.ts."
+      "note": "Kept as a clip-level heuristic, now also by accessible name (7dbaa43); the exhaustive check (every control on every screen activated in light and dark) is e2e/theme.spec.ts.",
+      "reason": "Kept as a clip-level heuristic, now also by accessible name (7dbaa43); the exhaustive check (every control on every screen activated in light and dark) is e2e/theme.spec.ts."
     },
     {
       "id": "F21",
@@ -300,7 +304,8 @@
       "file": "e2e/recordings/admin-and-theme.spec.ts",
       "line": 92,
       "status": "waived",
-      "note": "Child-side display of task images is asserted by e2e/practice-task.spec.ts (FR-26 test: prompt, image, inputs) and the slice7 clips; JPG acceptance is covered by the upload unit tests. The clip keeps the admin preview (\"exactly as the child sees it\", FR-10)."
+      "note": "Child-side display of task images is asserted by e2e/practice-task.spec.ts (FR-26 test: prompt, image, inputs) and the slice7 clips; JPG acceptance is covered by the upload unit tests. The clip keeps the admin preview (\"exactly as the child sees it\", FR-10).",
+      "reason": "Child-side display of task images is asserted by e2e/practice-task.spec.ts (FR-26 test: prompt, image, inputs) and the slice7 clips; JPG acceptance is covered by the upload unit tests. The clip keeps the admin preview (\"exactly as the child sees it\", FR-10)."
     },
     {
       "id": "F26",
@@ -311,7 +316,8 @@
       "file": "e2e/recordings/admin-and-theme.spec.ts",
       "line": 198,
       "status": "waived",
-      "note": "Same as F20."
+      "note": "Same as F20.",
+      "reason": "Same as F20."
     },
     {
       "id": "F27",
@@ -355,7 +361,8 @@
       "file": "e2e/recordings/admin-and-theme.spec.ts",
       "line": 118,
       "status": "waived",
-      "note": "FR-7 \"tasks without hints work normally\" is covered by the e2e and unit tests on hint-less tasks (practice-help); part-label translation now asserted (7dbaa43)."
+      "note": "FR-7 \"tasks without hints work normally\" is covered by the e2e and unit tests on hint-less tasks (practice-help); part-label translation now asserted (7dbaa43).",
+      "reason": "FR-7 \"tasks without hints work normally\" is covered by the e2e and unit tests on hint-less tasks (practice-help); part-label translation now asserted (7dbaa43)."
     },
     {
       "id": "F31",

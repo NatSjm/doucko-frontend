@@ -6,7 +6,7 @@ It does NOT verify test-first ordering or test integrity (not derivable from
 one-commit-per-slice history) — those are graded by the trajectory-eval workflow.
 
 Scope: 9 archived slice(s).
-Result: PASS, 8 warning(s)
+Result: PASS, 7 warning(s)
 
 | Slice | Review evidence | Trailer commits | design+tasks | lib domains touched |
 |---|---|---|---|---|
@@ -18,7 +18,7 @@ Result: PASS, 8 warning(s)
 | 2026-10-07-implement-gamification-ui | clean | 4 | yes | mission, summary, task, hq, rank, skin |
 | 2026-10-07-implement-progress-stats-ui | clean | 6 | yes | stats, admin-access, reports |
 | 2026-10-08-harden-phase5-ui | clean | 10 | yes | - |
-| 2026-10-08-qa-phase6-ui | **unclean** | 3 | yes | missions |
+| 2026-10-08-qa-phase6-ui | clean | 3 | yes | missions |
 
 ## Cross-slice module overlap
 
@@ -36,7 +36,6 @@ None.
 
 ## Warnings
 
-- **review-evidence**: 2026-10-08-qa-phase6-ui: review-findings.json is unclean — F09: waived without a reason; F16: waived without a reason; F18: a major finding cannot be waived in review evidence — fix it; F20: waived without a reason; F25: waived without a reason (+2 more) (review must have run, and its findings be dispositioned, before archive)
 - **in-scope**: lib/admin-access/ modified by 4 slices (2026-10-04-implement-admin-access-ui, 2026-10-04-implement-authoring-tasks-ui, 2026-10-05-implement-authoring-missions-ui, 2026-10-07-implement-progress-stats-ui) — review for scope drift
 - **in-scope**: lib/sources/ modified by 2 slices (2026-10-04-implement-authoring-tasks-ui, 2026-10-05-implement-authoring-missions-ui) — review for scope drift
 - **in-scope**: lib/tasks/ modified by 2 slices (2026-10-04-implement-authoring-tasks-ui, 2026-10-05-implement-authoring-missions-ui) — review for scope drift

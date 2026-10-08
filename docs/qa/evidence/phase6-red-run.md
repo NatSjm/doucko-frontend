@@ -23,3 +23,13 @@ Test added for review finding F08 (the catch branch), run with that branch remov
 AssertionError: expected [ <span …(1)></span>, …(1) ] to have a length of 1 but got 2
       Tests  1 failed | 34 skipped (35)
 ```
+
+## Real-stack runs at `8a8243a` (G5 e2eStack after the Phase 6 code change)
+
+- Run 1 (2026-10-08, 1.4 h under machine load): 20 passed, 1 failed — msedge
+  `authoring-to-practice.spec.ts:21` (the source upload answered "Saving failed. Check that the
+  server is running", i.e. no server answer; chromium and firefox passed the same journey; no
+  source-upload code changed in this branch). Result FAIL, not retried by the wrapper.
+- Run 2 (same commit, same command): 21 passed, Result PASS — `docs/qa/e2e-stack-latest.md`.
+- Recorded as a load flake to watch, not a pass: if it recurs, investigate the upload timeout
+  under load.

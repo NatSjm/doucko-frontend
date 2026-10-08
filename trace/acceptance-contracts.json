@@ -7,8 +7,8 @@
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "missing-artifact"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       },
       {
         "method": "local-verifiable",
@@ -21,24 +21,24 @@
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "missing-artifact"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-3": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "missing-artifact"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-4": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "missing-artifact"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-6": [
@@ -69,48 +69,48 @@
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "missing-artifact"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-10": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "missing-artifact"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-11": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "missing-artifact"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-13": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "missing-artifact"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-55": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "missing-artifact"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-22": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "missing-artifact"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       },
       {
         "method": "local-verifiable",
@@ -123,32 +123,32 @@
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "missing-artifact"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-25": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "missing-artifact"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-26": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "missing-artifact"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-27": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "missing-artifact"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       },
       {
         "method": "local-verifiable",
@@ -161,40 +161,40 @@
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "missing-artifact"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-29": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "missing-artifact"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-30": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "missing-artifact"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-31": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "missing-artifact"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-32": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "missing-artifact"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       },
       {
         "method": "recording",
@@ -229,8 +229,8 @@
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "missing-artifact"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       },
       {
         "method": "vision-verify",
@@ -265,24 +265,24 @@
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "missing-artifact"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-40": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "missing-artifact"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "FR-41": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "missing-artifact"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "NFR-3": [
@@ -305,8 +305,8 @@
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "missing-artifact"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       },
       {
         "method": "local-verifiable",
@@ -319,16 +319,16 @@
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "missing-artifact"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "NFR-7": [
       {
         "method": "e2e",
         "mechanism": "npm:test:e2e",
-        "artifact": null,
-        "status": "missing-artifact"
+        "artifact": "test-results/.last-run.json",
+        "status": "artifact-ok"
       }
     ],
     "NFR-8": [
