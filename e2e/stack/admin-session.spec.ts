@@ -24,6 +24,8 @@ test('sign in, the session survives a reload, sign out ends it on the server', a
   await page.getByRole('button', { name: m['admin.home.signOut'] }).click();
   await expect(page.getByRole('heading', { level: 1, name: signInHeading })).toBeVisible();
   expect((await page.request.get('/api/admin/session')).status()).toBe(401);
+  // Without the session the admin API refuses reads too (backend-owned NFR-1, seen through nginx).
+  expect((await page.request.get('/api/admin/tasks')).status()).toBe(401);
   await page.goto('/admin/tasks');
   await expect(page.getByRole('heading', { level: 1, name: signInHeading })).toBeVisible();
 });

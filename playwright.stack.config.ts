@@ -8,6 +8,8 @@ const baseURL = process.env.E2E_STACK_URL ?? 'http://127.0.0.1:18082';
 
 export default defineConfig({
   testDir: './e2e/stack',
+  // Refuses to run against anything but the isolated e2e stack (fake child name), before any write.
+  globalSetup: './e2e/stack/preflight.ts',
   // One child profile and one database: the journeys read XP and stats deltas, so they run one at a
   // time. Each test authors its own uniquely named content, so the order does not matter and a rerun
   // against the same (accumulated) state passes.

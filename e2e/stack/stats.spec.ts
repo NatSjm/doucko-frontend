@@ -26,11 +26,17 @@ test('a practice session with one hint and one reveal shows up in this week of /
   await expect(page.getByText(m['child.task.revealed'])).toBeVisible();
 
   const after = await stats(page);
-  const [weekBefore, weekAfter] = [before.weeks.at(-1)!, after.weeks.at(-1)!];
-  expect(weekAfter.weekStart).toBe(weekBefore.weekStart);
+  const weekAfter = after.weeks.at(-1)!;
+  // A run across Monday midnight (Europe/Prague) starts a new week: its baseline is an empty week.
+  const sameWeek = before.weeks.at(-1)!.weekStart === weekAfter.weekStart;
+  const weekBefore = sameWeek ? before.weeks.at(-1)! : { hintsUsed: 0, revealed: 0, sessions: 0, tasksPerSession: [] as number[] };
   expect(weekAfter.hintsUsed).toBe(weekBefore.hintsUsed + 1);
   expect(weekAfter.revealed).toBe(weekBefore.revealed + 1);
+  // Sessions are the server's grouping: this practice is in one of this week's sessions (>= 2 tasks
+  // answered in it), and no session disappeared.
   expect(weekAfter.sessions).toBeGreaterThanOrEqual(Math.max(1, weekBefore.sessions));
+  expect(weekAfter.tasksPerSession).toHaveLength(weekAfter.sessions);
+  expect(weekAfter.tasksPerSession.reduce((a, b) => a + b, 0)).toBeGreaterThanOrEqual(weekBefore.tasksPerSession.reduce((a, b) => a + b, 0) + 2);
   const topicAfter = after.firstTryRateByTopic.find((t) => t.topicId === topic.topicId);
   expect(topicAfter?.resolved).toBe((topicBefore?.resolved ?? 0) + 2);
   expect(topicAfter?.firstTry).toBe((topicBefore?.firstTry ?? 0) + 1);

@@ -65,7 +65,10 @@ test('correct, wrong-then-reveal and hint-then-correct: verdicts, XP per the lad
     ['REVEALED', 1],
     ['CORRECT_FIRST_TRY', 8],
   ]);
+  // FR-27: after the first wrong attempt the answer key is not sent, only after the reveal.
   expect(results[1].parts[0].verdict).toBe('WRONG');
+  expect(results[1].feedback?.revealedAnswers ?? null).toBeNull();
+  expect(results[2].feedback?.revealedAnswers).toEqual([{ key: 'a', answer: '7' }]);
   expect(results[3].missionComplete).toBe(true);
   const bonus = results[3].bonusXp;
   expect(bonus).toBeGreaterThan(0); // completion bonus (configurable, so not pinned here)

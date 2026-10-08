@@ -20,18 +20,15 @@ export const CHILD_NAME = process.env.E2E_STACK_CHILD_NAME ?? 'Testovací žák'
 export const unique = (label: string) => `${label} ${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
 /**
- * The `test` every stack spec imports. After each test the page must not show the owner's stack's
- * data: the child greeting on this stack is the fake name, so any HQ visit is checked against it.
+ * The `test` every stack spec imports. The target is checked once per run by `preflight.ts` (the
+ * isolated stack's fake child, or the run aborts before any write).
  */
-export const test = base.extend<{ isolation: void }>({
-  isolation: [
-    async ({ page, browserName }, use, testInfo) => {
+export const test = base.extend<{ firefoxSlow: void }>({
+  firefoxSlow: [
+    async ({ browserName }, use, testInfo) => {
       // Firefox on a loaded machine is slow to load the bundle: triple the time, never the assertions.
       if (browserName === 'firefox') testInfo.slow();
       await use();
-      if (new URL(page.url()).pathname === '/' && page.url() !== 'about:blank') {
-        await expect(page.getByRole('heading', { level: 1 })).toContainText(CHILD_NAME);
-      }
     },
     { auto: true },
   ],
@@ -157,5 +154,7 @@ export async function answer(page: Page, value: string): Promise<void> {
 /** Acknowledges any pending rank-up, so an earlier run's celebration does not cover the screen. */
 export async function settleRankUp(page: Page): Promise<void> {
   const view = await hq(page);
-  if (view.pendingRankUp) await page.request.post('/api/child/hq/rank-up-ack', { data: { rankIndex: view.pendingRankUp.index } });
+  if (!view.pendingRankUp) return;
+  const ack = await page.request.post('/api/child/hq/rank-up-ack', { data: { rankIndex: view.pendingRankUp.index } });
+  expect(ack.status(), 'ackRankUp').toBe(204);
 }

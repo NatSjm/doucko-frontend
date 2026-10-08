@@ -45,7 +45,7 @@ test('report a revealed task, see it in the flag queue, fix the answer spec, re-
 
   // Under the unchanged spec, re-evaluation changes nothing and the report stays open.
   await entry.getByRole('button', { name: m['admin.reports.reevaluate'] }).click();
-  await expect(page.getByText(/^Nothing changed for/)).toBeVisible();
+  await expect(page.getByText(format(m['admin.reports.unchanged'], { task: report!.taskPromptExcerpt }))).toBeVisible();
   expect((await api.get<Report[]>('/api/admin/reports?status=OPEN')).some((r) => r.reportId === report!.reportId)).toBe(true);
 
   // FR-55: fix the answer spec from the report's link (14 becomes an accepted alternative).
@@ -61,7 +61,8 @@ test('report a revealed task, see it in the flag queue, fix the answer spec, re-
   const before = await hq(page);
   await page.goto('/admin/reports');
   await entry.getByRole('button', { name: m['admin.reports.reevaluate'] }).click();
-  await expect(page.getByText(/^Fixed: the attempt on .* is now correct\. \+4 XP added for the child\./)).toBeVisible();
+  // The mission was already completed by the reveal, so no bonus line follows.
+  await expect(page.getByText(format(m['admin.reports.fixedXp'], { task: report!.taskPromptExcerpt, xp: 4 }), { exact: true })).toBeVisible();
   const fixed = (await api.get<Report[]>('/api/admin/reports?status=FIXED')).find((r) => r.reportId === report!.reportId);
   expect(fixed?.attempt?.reevaluation?.verdicts).toEqual({ a: 'CORRECT' });
   expect(fixed?.attempt?.verdicts).toEqual({ a: 'WRONG' });
