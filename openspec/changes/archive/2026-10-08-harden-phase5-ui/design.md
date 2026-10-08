@@ -37,7 +37,9 @@ A run that could not start the stack is NOT-EARNED. Narrowed (`-- <args>`) or
 `--keep` runs write `test-results-stack/e2e-stack-run.md`, never the G5
 evidence `docs/qa/e2e-stack-latest.md`, which records both commits.
 
-## Not done here (F12)
+## F12 (resolved by PD-16)
+
+Resolved by the factory change PD-16 (docs f04f481, installed as 28478f9): gate-status G5 key `e2eStack` and battery member `e2e-stack-evidence` read the evidence without Docker. Original note:
 
 The gate machinery does not yet read the real-stack verdict: gate-status G5
 checks coverage only and the battery's `browser-e2e-tests` is the mocked
