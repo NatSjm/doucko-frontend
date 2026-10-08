@@ -1,0 +1,104 @@
+{
+  "kind": "demo",
+  "results": [
+    {
+      "id": "rec-source-upload",
+      "title": "upload a PDF source with title, publisher, edition, grade and subject (FR-1)",
+      "proof": "FR-1",
+      "video": "docs/qa/demo-recordings/phase6-admin-theme/rec-source-upload.webm",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-source-upload.png",
+      "explainer": "docs/qa/demo-recordings/phase6-admin-theme/rec-source-upload.md",
+      "asserted": true
+    },
+    {
+      "id": "rec-pdf-beside-editor",
+      "title": "the PDF viewer beside the task editor jumps to a page; the form keeps its content (FR-2)",
+      "proof": "FR-2",
+      "video": "docs/qa/demo-recordings/phase6-admin-theme/rec-pdf-beside-editor.webm",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-pdf-beside-editor.png",
+      "explainer": "docs/qa/demo-recordings/phase6-admin-theme/rec-pdf-beside-editor.md",
+      "asserted": true
+    },
+    {
+      "id": "rec-task-images",
+      "title": "attach two PNG images and reorder them; the child preview shows them in order (FR-4)",
+      "proof": "FR-4",
+      "video": "docs/qa/demo-recordings/phase6-admin-theme/rec-task-images.webm",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-task-images.png",
+      "explainer": "docs/qa/demo-recordings/phase6-admin-theme/rec-task-images.md",
+      "asserted": true
+    },
+    {
+      "id": "rec-parts-hints-translations",
+      "title": "a task with two answer parts, ordered hints and a Ukrainian translation is saved (FR-6, FR-7, FR-8)",
+      "proof": "FR-6, FR-7, FR-8",
+      "video": "docs/qa/demo-recordings/phase6-admin-theme/rec-parts-hints-translations.webm",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-parts-hints-translations.png",
+      "explainer": "docs/qa/demo-recordings/phase6-admin-theme/rec-parts-hints-translations.md",
+      "asserted": true
+    },
+    {
+      "id": "rec-preview-tester",
+      "title": "preview as the child sees it, hints one by one, the translation, then the answer tester (FR-10, FR-7, FR-8)",
+      "proof": "FR-10, FR-7, FR-8",
+      "video": "docs/qa/demo-recordings/phase6-admin-theme/rec-preview-tester.webm",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-preview-tester.png",
+      "explainer": "docs/qa/demo-recordings/phase6-admin-theme/rec-preview-tester.md",
+      "asserted": true
+    },
+    {
+      "id": "rec-task-list-provenance",
+      "title": "filter and search the task list, see the source of a task and open the PDF at its page (FR-11, FR-13)",
+      "proof": "FR-11, FR-13",
+      "video": "docs/qa/demo-recordings/phase6-admin-theme/rec-task-list-provenance.webm",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-task-list-provenance.png",
+      "explainer": "docs/qa/demo-recordings/phase6-admin-theme/rec-task-list-provenance.md",
+      "asserted": true
+    },
+    {
+      "id": "rec-skin-hq",
+      "title": "the rank names are skin data (a swapped ladder renames the rank on HQ) and no deny-listed term shows (FR-39)",
+      "proof": "FR-39",
+      "video": "docs/qa/demo-recordings/phase6-admin-theme/rec-skin-hq.webm",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-skin-hq.png",
+      "explainer": "docs/qa/demo-recordings/phase6-admin-theme/rec-skin-hq.md",
+      "asserted": true
+    },
+    {
+      "id": "rec-stats",
+      "title": "the stats page shows sessions per week, tasks per session, first-try rate per topic, hints and revealed tasks (FR-40)",
+      "proof": "FR-40",
+      "video": "docs/qa/demo-recordings/phase6-admin-theme/rec-stats.webm",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-stats.png",
+      "explainer": "docs/qa/demo-recordings/phase6-admin-theme/rec-stats.md",
+      "asserted": true
+    },
+    {
+      "id": "rec-flag-queue",
+      "title": "a report lists task, raw input and verdict; dismiss one, fix the spec and re-evaluate another (+4 XP) (FR-41)",
+      "proof": "FR-41",
+      "video": "docs/qa/demo-recordings/phase6-admin-theme/rec-flag-queue.webm",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-flag-queue.png",
+      "explainer": "docs/qa/demo-recordings/phase6-admin-theme/rec-flag-queue.md",
+      "asserted": true
+    },
+    {
+      "id": "rec-theme-light",
+      "title": "HQ and the admin stats page follow the light OS setting; no in-app toggle (FR-58)",
+      "proof": "FR-58",
+      "video": "docs/qa/demo-recordings/phase6-admin-theme/rec-theme-light.webm",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-theme-light.png",
+      "explainer": "docs/qa/demo-recordings/phase6-admin-theme/rec-theme-light.md",
+      "asserted": true
+    },
+    {
+      "id": "rec-theme-dark",
+      "title": "HQ and the admin stats page follow the dark OS setting; no in-app toggle (FR-58)",
+      "proof": "FR-58",
+      "video": "docs/qa/demo-recordings/phase6-admin-theme/rec-theme-dark.webm",
+      "screenshot": "docs/qa/demo-recordings/phase6-admin-theme/rec-theme-dark.png",
+      "explainer": "docs/qa/demo-recordings/phase6-admin-theme/rec-theme-dark.md",
+      "asserted": true
+    }
+  ]
+}

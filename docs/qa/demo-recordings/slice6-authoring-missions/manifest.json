@@ -8,7 +8,12 @@
       "video": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-mission-create-reorder-publish.webm",
       "screenshot": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-mission-create-reorder-publish.png",
       "explainer": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-mission-create-reorder-publish.md",
-      "asserted": true
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The frame shows the Edit mission screen with the topic set to 'Desetinná čísla', position 2 and the counter '3/10 tasks'. The task list is in the reordered order, with 'Zaokrouhli 3,46 na desetiny.' first, and every row has a teal PUBLISHED badge. The Status section shows a PUBLISHED badge, a mint 'Mission published.' message and an 'Unpublish mission' button. All text is legible: dark text on cream or white, and dark text on the teal badges. The only faded text is on the disabled 'Move task 1 up' and 'Move task 3 down' buttons, which WCAG does not hold to contrast rules. One small oddity: the 'New mission' nav item is still highlighted while on Edit mission."
+      }
     },
     {
       "id": "slice6-mission-publish-refused",
@@ -17,7 +22,12 @@
       "video": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-mission-publish-refused.webm",
       "screenshot": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-mission-publish-refused.png",
       "explainer": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-mission-publish-refused.md",
-      "asserted": true
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The Edit mission page lists 2/10 tasks, both tagged DRAFT. Under \"Status and deletion\", the mission's badge still says DRAFT. Below it, an orange (not red) alert shows the server reason, \"Only published text tasks can be in a published mission: 2 tasks block publishing.\", and a \"Blocked by:\" list linking both draft tasks by title. Text contrast is AA-level throughout; only the disabled \"Move task 1 up\"/\"Move task 2 down\" buttons are faint, and disabled controls are exempt. One small issue that doesn't block this check: the nav highlights \"New mission\" on the Edit page."
+      }
     },
     {
       "id": "slice6-mission-list",
@@ -26,7 +36,12 @@
       "video": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-mission-list.webm",
       "screenshot": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-mission-list.png",
       "explainer": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-mission-list.md",
-      "asserted": true
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The Missions page is open, and the active \"Missions\" pill is highlighted in the admin nav. Its table has Topic / Position / Tasks / Status columns and shows two rows: \"Desetinná čísla\", position 1, \"2/10 tasks\", DRAFT badge; and \"Obvod a obsah\", position 1, \"1/10 tasks\", PUBLISHED badge in teal. All text is legible at AA by eye: dark navy body text and slate column headers on the cream background, dark text on both badges, and blue underlined links. Nothing is clipped or overlapping."
+      }
     },
     {
       "id": "slice6-source-edit-delete-refused",
@@ -35,7 +50,12 @@
       "video": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-source-edit-delete-refused.webm",
       "screenshot": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-source-edit-delete-refused.png",
       "explainer": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-source-edit-delete-refused.md",
-      "asserted": true
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The 'Edit source' form has no file field. The note says 'The PDF file cannot be replaced…' and Edition shows '2'. Under it, the Deletion panel shows the refusal in an orange-tinted box: '3 tasks reference this source. Delete or move those tasks first.' Below that, 'Blocked by:' lists the three referencing tasks as links. All text is legible at an AA level by eye: dark navy on cream or peach, blue underlined links, and white on the crimson 'Save source' button. The grey helper text is the faintest, but it still reads clearly. One limit: the still shows edition 2 in the field but can't prove it was stored."
+      }
     },
     {
       "id": "slice6-task-status-blocked",
@@ -44,7 +64,12 @@
       "video": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-task-status-blocked.webm",
       "screenshot": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-task-status-blocked.png",
       "explainer": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-task-status-blocked.md",
-      "asserted": true
+      "asserted": true,
+      "vision": {
+        "met": true,
+        "readable": true,
+        "notes": "The \"Status and deletion\" panel shows an orange-tinted refusal, \"The task is in a published mission. Unpublish the mission first.\", with a \"Blocked by: Desetinná čísla · Mission 1\" link. The teal PUBLISHED badge is still at the top of the page. \"Delete task\" is greyed out and disabled, with the explanation \"This task cannot be deleted… Unpublish it instead.\" All text is legible dark-on-cream. The only faint text is on disabled buttons (Delete task, Move part 1 up), which WCAG exempts from contrast rules. The PUBLISHED badge sits about 1,600px above the refusal, so a clip that ends on the panel wouldn't show both; that's minor."
+      }
     }
   ]
 }

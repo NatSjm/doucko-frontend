@@ -3,7 +3,21 @@
   "status": "passed",
   "baseUrl": "http://localhost:4174",
   "routes": [
-    "/"
+    "/",
+    "/mission",
+    "/task",
+    "/summary",
+    "/admin",
+    "/admin/sources",
+    "/admin/sources/view",
+    "/admin/sources/edit",
+    "/admin/tasks",
+    "/admin/tasks/edit",
+    "/admin/tasks/preview",
+    "/admin/missions",
+    "/admin/missions/edit",
+    "/admin/stats",
+    "/admin/reports"
   ],
   "schemes": [
     "light",

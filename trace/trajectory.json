@@ -81,8 +81,17 @@
     {
       "slice": "2026-10-08-harden-phase5-ui",
       "reviewEvidence": "clean",
-      "trailerCommits": 8,
+      "trailerCommits": 10,
       "libDomains": [],
+      "processComplete": true
+    },
+    {
+      "slice": "2026-10-08-qa-phase6-ui",
+      "reviewEvidence": "clean",
+      "trailerCommits": 4,
+      "libDomains": [
+        "missions"
+      ],
       "processComplete": true
     }
   ],
@@ -119,6 +128,13 @@
       ]
     },
     {
+      "domain": "missions",
+      "slices": [
+        "2026-10-05-implement-authoring-missions-ui",
+        "2026-10-08-qa-phase6-ui"
+      ]
+    },
+    {
       "domain": "hq",
       "slices": [
         "2026-10-05-implement-practice-flow-ui",
@@ -150,6 +166,10 @@
     {
       "check": "in-scope",
       "msg": "lib/task/ modified by 3 slices (2026-10-04-implement-authoring-tasks-ui, 2026-10-05-implement-practice-flow-ui, 2026-10-07-implement-gamification-ui) — review for scope drift"
+    },
+    {
+      "check": "in-scope",
+      "msg": "lib/missions/ modified by 2 slices (2026-10-05-implement-authoring-missions-ui, 2026-10-08-qa-phase6-ui) — review for scope drift"
     },
     {
       "check": "in-scope",

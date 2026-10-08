@@ -14,6 +14,7 @@ openspec/
 **/playwright-report/
 **/test-results/
 **/test-results-stack/
+**/test-results-record/
 **/playwright-report-stack/
 **/*.log
 **/.idea/

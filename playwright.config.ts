@@ -8,7 +8,7 @@ const previewPort = 4173;
 export default defineConfig({
   testDir: './e2e',
   // e2e/stack/ is the real-stack suite (playwright.stack.config.ts, `npm run test:e2e:stack`): no mocks.
-  testIgnore: 'stack/**',
+  testIgnore: ['stack/**', 'recordings/**'],
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
