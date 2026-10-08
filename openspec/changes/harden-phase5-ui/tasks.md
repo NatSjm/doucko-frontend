@@ -10,7 +10,7 @@
 
 ## 3. Verification
 
-- [x] 3.1 Two wrapper runs green in chromium, msedge and firefox (the second against the accumulated state of the first)
-- [x] 3.2 `npm run qa:verify`
-- [x] 3.3 Review gate over the diff; findings dispositioned in `review-findings.json`
+- [x] 3.1 Two wrapper runs green in chromium, msedge and firefox (the second against the accumulated state of the first) — evidence: `docs/qa/evidence/phase5-e2e-stack-runs.md`, `docs/qa/e2e-stack-latest.md`
+- [x] 3.2 `npm run qa:verify` — evidence: `docs/qa/automated-verification-latest.md`
+- [ ] 3.3 Review gate over the diff; findings dispositioned in `review-findings.json` (ran; every finding but F12 dispositioned; F12 needs a docs/factory change, see design.md)
 - [x] 3.4 `docs/current-state.md` updated
