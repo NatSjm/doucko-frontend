@@ -93,6 +93,15 @@
         "missions"
       ],
       "processComplete": true
+    },
+    {
+      "slice": "2026-10-09-release-review-ui",
+      "reviewEvidence": "clean",
+      "trailerCommits": 3,
+      "libDomains": [
+        "admin-access"
+      ],
+      "processComplete": true
     }
   ],
   "overlaps": [
@@ -102,7 +111,8 @@
         "2026-10-04-implement-admin-access-ui",
         "2026-10-04-implement-authoring-tasks-ui",
         "2026-10-05-implement-authoring-missions-ui",
-        "2026-10-07-implement-progress-stats-ui"
+        "2026-10-07-implement-progress-stats-ui",
+        "2026-10-09-release-review-ui"
       ]
     },
     {
@@ -153,7 +163,7 @@
   "warnings": [
     {
       "check": "in-scope",
-      "msg": "lib/admin-access/ modified by 4 slices (2026-10-04-implement-admin-access-ui, 2026-10-04-implement-authoring-tasks-ui, 2026-10-05-implement-authoring-missions-ui, 2026-10-07-implement-progress-stats-ui) — review for scope drift"
+      "msg": "lib/admin-access/ modified by 5 slices (2026-10-04-implement-admin-access-ui, 2026-10-04-implement-authoring-tasks-ui, 2026-10-05-implement-authoring-missions-ui, 2026-10-07-implement-progress-stats-ui, 2026-10-09-release-review-ui) — review for scope drift"
     },
     {
       "check": "in-scope",

@@ -75,7 +75,7 @@
       "file": "nginx.conf",
       "line": 55,
       "status": "waived",
-      "waiverReason": "A location-level add_header would stop nginx inheriting the http-level security headers (CSP, nosniff, Referrer-Policy) for /assets/; the config forbids that on purpose. 'expires 1y' already caches the hashed files; immutable only saves a revalidation on reload."
+      "reason": "A location-level add_header would stop nginx inheriting the http-level security headers (CSP, nosniff, Referrer-Policy) for /assets/; the config forbids that on purpose. 'expires 1y' already caches the hashed files; immutable only saves a revalidation on reload."
     },
     {
       "id": "F05",
@@ -99,7 +99,7 @@
       "file": "docs/qa/demo-recordings/phase6-admin-theme/rec-task-list-provenance.png",
       "line": null,
       "status": "waived",
-      "waiverReason": "The clip's assertions (FR-13 filters and provenance) passed; the still is one frame. Its verdict belongs to the open vision-verify re-run of the 11 phase6-admin-theme clips (not run: budget spent)."
+      "reason": "The clip's assertions (FR-13 filters and provenance) passed; the still is one frame. Its verdict belongs to the open vision-verify re-run of the 11 phase6-admin-theme clips (not run: budget spent)."
     },
     {
       "id": "F07",
@@ -111,7 +111,7 @@
       "file": "docs/qa/demo-recordings/phase6-admin-theme/rec-theme-dark.png",
       "line": null,
       "status": "waived",
-      "waiverReason": "Empty progress dots are decorative; the same card states the progress as AA text ('0/3 vyřešeno'). Dot colours are design-system tokens, which a feature may not change (AGENTS.md); goes to the design-system artifact."
+      "reason": "Empty progress dots are decorative; the same card states the progress as AA text ('0/3 vyřešeno'). Dot colours are design-system tokens, which a feature may not change (AGENTS.md); goes to the design-system artifact."
     },
     {
       "id": "F08",
@@ -124,7 +124,7 @@
       "line": 20,
       "status": "waived",
       "note": "verification skipped by the budget cap; treated as confirmed",
-      "waiverReason": "Refuted on inspection: the pinned pdfjs-dist 6.4.299 has no eval glyph path and no isEvalSupported option (fixed upstream in 4.2.67); the CSP has no unsafe-eval. A test asserting the option did not typecheck and was dropped."
+      "reason": "Refuted on inspection: the pinned pdfjs-dist 6.4.299 has no eval glyph path and no isEvalSupported option (fixed upstream in 4.2.67); the CSP has no unsafe-eval. A test asserting the option did not typecheck and was dropped."
     },
     {
       "id": "F09",
@@ -135,9 +135,9 @@
       "title": "Dependency audit not executed: area unverified",
       "file": "package.json",
       "line": 1,
-      "status": "fixed",
+      "status": "waived",
       "note": "verification skipped by the budget cap; treated as confirmed",
-      "resolution": "Ran npm audit --omit=dev on 2026-10-09: found 0 vulnerabilities."
+      "reason": "No code change needed: Ran npm audit --omit=dev on 2026-10-09: found 0 vulnerabilities."
     },
     {
       "id": "F10",
@@ -150,7 +150,7 @@
       "line": 12,
       "status": "waived",
       "note": "verification skipped by the budget cap; treated as confirmed",
-      "waiverReason": "openapi-fetch ^0.17 percent-encodes path parameters with its default serializer (the finding hinges on a pre-0.9 version); the impact would be a same-origin GET with the admin session."
+      "reason": "openapi-fetch ^0.17 percent-encodes path parameters with its default serializer (the finding hinges on a pre-0.9 version); the impact would be a same-origin GET with the admin session."
     },
     {
       "id": "F11",
@@ -163,7 +163,7 @@
       "line": 31,
       "status": "waived",
       "note": "verification skipped by the budget cap; treated as confirmed",
-      "waiverReason": "Informational coverage note, no defect."
+      "reason": "Informational coverage note, no defect."
     },
     {
       "id": "F12",
@@ -176,7 +176,7 @@
       "line": null,
       "status": "waived",
       "note": "verification skipped by the budget cap; treated as confirmed",
-      "waiverReason": "Finding text lost (three parallel runs wrote the same record file; the log prints only 4000 chars) and never adversarially verified (budget stop). Covered by the open vision-verify re-run of phase6-admin-theme."
+      "reason": "Finding text lost (three parallel runs wrote the same record file; the log prints only 4000 chars) and never adversarially verified (budget stop). Covered by the open vision-verify re-run of phase6-admin-theme."
     },
     {
       "id": "F13",
@@ -189,7 +189,7 @@
       "line": null,
       "status": "waived",
       "note": "verification skipped by the budget cap; treated as confirmed",
-      "waiverReason": "Finding text lost (three parallel runs wrote the same record file; the log prints only 4000 chars) and never adversarially verified (budget stop). The clip was judged met by vision-verify."
+      "reason": "Finding text lost (three parallel runs wrote the same record file; the log prints only 4000 chars) and never adversarially verified (budget stop). The clip was judged met by vision-verify."
     },
     {
       "id": "F14",
@@ -202,7 +202,7 @@
       "line": null,
       "status": "waived",
       "note": "verification skipped by the budget cap; treated as confirmed",
-      "waiverReason": "Finding text lost (three parallel runs wrote the same record file; the log prints only 4000 chars) and never adversarially verified (budget stop). Covered by the open vision-verify re-run of phase6-admin-theme."
+      "reason": "Finding text lost (three parallel runs wrote the same record file; the log prints only 4000 chars) and never adversarially verified (budget stop). Covered by the open vision-verify re-run of phase6-admin-theme."
     },
     {
       "id": "F15",
@@ -215,7 +215,7 @@
       "line": null,
       "status": "waived",
       "note": "verification skipped by the budget cap; treated as confirmed",
-      "waiverReason": "Finding text lost (three parallel runs wrote the same record file; the log prints only 4000 chars) and never adversarially verified (budget stop). The clip was judged met by vision-verify."
+      "reason": "Finding text lost (three parallel runs wrote the same record file; the log prints only 4000 chars) and never adversarially verified (budget stop). The clip was judged met by vision-verify."
     },
     {
       "id": "F16",
@@ -228,7 +228,7 @@
       "line": null,
       "status": "waived",
       "note": "verification skipped by the budget cap; treated as confirmed",
-      "waiverReason": "Finding text lost (three parallel runs wrote the same record file; the log prints only 4000 chars) and never adversarially verified (budget stop). Covered by the open vision-verify re-run of phase6-admin-theme."
+      "reason": "Finding text lost (three parallel runs wrote the same record file; the log prints only 4000 chars) and never adversarially verified (budget stop). Covered by the open vision-verify re-run of phase6-admin-theme."
     },
     {
       "id": "F17",
@@ -241,7 +241,7 @@
       "line": null,
       "status": "waived",
       "note": "verification skipped by the budget cap; treated as confirmed",
-      "waiverReason": "Follows the backend behaviour (a wrong part value is not stored); showing it needs a contract change. Owner/UX decision for UAT."
+      "reason": "Follows the backend behaviour (a wrong part value is not stored); showing it needs a contract change. Owner/UX decision for UAT."
     },
     {
       "id": "F18",
@@ -254,7 +254,7 @@
       "line": null,
       "status": "waived",
       "note": "verification skipped by the budget cap; treated as confirmed",
-      "waiverReason": "The UI prints the server-normalized answer; a display string needs a contract change (docs store first). Open item for UAT."
+      "reason": "The UI prints the server-normalized answer; a display string needs a contract change (docs store first). Open item for UAT."
     },
     {
       "id": "F19",
@@ -267,7 +267,7 @@
       "line": null,
       "status": "waived",
       "note": "verification skipped by the budget cap; treated as confirmed",
-      "waiverReason": "Design enhancement, not a defect; rank emblems belong to the design-system artifact and the final skin (OQ-1)."
+      "reason": "Design enhancement, not a defect; rank emblems belong to the design-system artifact and the final skin (OQ-1)."
     },
     {
       "id": "F20",
@@ -280,7 +280,7 @@
       "line": null,
       "status": "waived",
       "note": "verification skipped by the budget cap; treated as confirmed",
-      "waiverReason": "Design-system caption style for field messages; AA contrast held in the a11y gate. Design-system concern."
+      "reason": "Design-system caption style for field messages; AA contrast held in the a11y gate. Design-system concern."
     },
     {
       "id": "F21",
@@ -293,7 +293,7 @@
       "line": null,
       "status": "waived",
       "note": "verification skipped by the budget cap; treated as confirmed",
-      "waiverReason": "Finding text lost (three parallel runs wrote the same record file; the log prints only 4000 chars) and never adversarially verified (budget stop). The clip was judged met by vision-verify."
+      "reason": "Finding text lost (three parallel runs wrote the same record file; the log prints only 4000 chars) and never adversarially verified (budget stop). The clip was judged met by vision-verify."
     },
     {
       "id": "F22",
@@ -306,7 +306,7 @@
       "line": null,
       "status": "waived",
       "note": "verification skipped by the budget cap; treated as confirmed",
-      "waiverReason": "Finding text lost (three parallel runs wrote the same record file; the log prints only 4000 chars) and never adversarially verified (budget stop). The clip was judged met by vision-verify."
+      "reason": "Finding text lost (three parallel runs wrote the same record file; the log prints only 4000 chars) and never adversarially verified (budget stop). The clip was judged met by vision-verify."
     }
   ],
   "clean": false,

@@ -1241,10 +1241,5 @@
     }
   ],
   "failures": [],
-  "warnings": [
-    {
-      "check": "active-changes",
-      "msg": "active change \"release-review-ui\" is not archived"
-    }
-  ]
+  "warnings": []
 }
