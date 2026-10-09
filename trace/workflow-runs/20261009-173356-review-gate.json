@@ -1,0 +1,450 @@
+{
+  "workflow": "review-gate",
+  "file": "./.claude/workflows/review-gate.js",
+  "description": "Multi-dimensional adversarial review of a diff or capability: correctness, security, and spec compliance, with every finding adversarially verified before it is reported.",
+  "dryRun": false,
+  "startedAt": "2026-10-09T17:33:56.916Z",
+  "finishedAt": "2026-10-09T17:39:00.572Z",
+  "args": {
+    "scope": "Chunk A platform/admin: src/app, src/api (excluding generated), src/i18n, src/design-system, src/test, src/main.tsx, src/features/admin-access, nginx config, Dockerfile, eslint rules, vite/playwright configs, tools/ (scripts/ is the factory harness, skip). Only review files in these paths.",
+    "baseRef": "ab84763",
+    "headRef": "HEAD",
+    "focus": "Global release review (PLAYBOOK Phase 7) over the whole history from the first scaffold; focus on cross-feature defects, real bugs a child or admin would hit, security of the one-origin nginx image and the API client, and spec drift against contract/docs/requirements.md. Ignore docs/, trace/, openspec/ archive text and generated src/api/generated."
+  },
+  "settings": {
+    "allowedTools": null,
+    "concurrency": 4,
+    "model": null,
+    "budgetPerAgentUsd": 2,
+    "maxTotalUsd": 8,
+    "untypedTools": "Read,Grep,Glob",
+    "permissionMode": "acceptEdits"
+  },
+  "outcome": "failed",
+  "stoppedBecause": "--max-total-usd 8 reached ($8.16)",
+  "error": null,
+  "totalCostUsd": 10.8716,
+  "steps": [
+    {
+      "label": "find:correctness",
+      "phase": "Find",
+      "agentType": "code-reviewer",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 1023,
+      "durationMs": 206611,
+      "sessionId": "d5d02f75-52bd-48a0-8406-de3200222ace",
+      "costUsd": 1.8044249999999997,
+      "numTurns": 10,
+      "result": {
+        "findings": [
+          {
+            "title": "Login throttling (429) is reported to the admin as 'server not running'",
+            "file": "src/features/admin-access/session.ts",
+            "line": 34,
+            "severity": "major",
+            "confidence": "medium",
+            "evidence": "`signIn` treats only 204 and 401 as outcomes and throws `UnexpectedStatus` for anything else. `nginx.conf` documents that the backend applies per-IP login throttling (it overwrites X-Forwarded-For for exactly that purpose), so a throttled attempt comes back as 429. `SignInForm.submit` maps every throw to `admin.signIn.failed` = 'Sign-in failed. Check that the server is running and try again.' — the admin is told the server is down while it is actually asking them to wait, and keeps retrying, which extends the lockout.",
+            "suggestion": "Handle 429 explicitly in `signIn` (e.g. return a tri-state or throw a typed `Throttled` error carrying Retry-After) and add a dedicated catalog message such as 'Too many attempts. Wait a moment and try again.' in `SignInForm`."
+          },
+          {
+            "title": "Admin nav marks 'New task' / 'New mission' as current page while editing an existing item",
+            "file": "src/features/admin-access/AdminLayout.tsx",
+            "line": 41,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "`aria-current` is set with `current === item.href` where `current = routePath(window.location.pathname)`. The route `/admin/tasks/edit` serves both the new-task form and the edit form (`?taskId=…`), so the nav link labelled `admin.nav.newTask` is announced and styled as the current page while the admin is editing an existing task; the same applies to `/admin/missions/edit`.",
+            "suggestion": "Only mark the 'new' links current when the query has no `taskId`/`missionId` (e.g. compare against `window.location.search` too), or drop `aria-current` for the create links."
+          },
+          {
+            "title": "Malformed XSRF-TOKEN cookie makes every admin mutation throw a raw URIError",
+            "file": "src/features/admin-access/adminClient.ts",
+            "line": 16,
+            "severity": "minor",
+            "confidence": "low",
+            "evidence": "`xsrfToken()` calls `decodeURIComponent(cookie.slice(...))` unguarded inside the `onRequest` middleware. A cookie value containing a stray `%` (set by another app on the same localhost origin, or a corrupted cookie) throws `URIError`, which escapes the middleware so every POST/PUT/DELETE rejects before reaching the network. The screens' `catch` paths expect `ApiError`/network failures, so the admin sees a generic failure with no way out short of clearing cookies.",
+            "suggestion": "Wrap the decode in try/catch and fall back to the raw value (or `undefined`) so the request is still sent and the backend reports the CSRF refusal through the normal problem+json path."
+          },
+          {
+            "title": "FormAlert layout effect re-runs and calls setState on every parent render when `errors` is rebuilt per render",
+            "file": "src/features/admin-access/form.tsx",
+            "line": 67,
+            "severity": "minor",
+            "confidence": "low",
+            "evidence": "`useLayoutEffect(..., [errors])` both queries the DOM and calls `setUnmatched(...)` with a fresh array, and also moves focus to the first `[aria-invalid=\"true\"]` control. `TaskListScreen.tsx:46` passes `const errors: Record<string,string> = {}` created on each render, so every parent re-render (typing in the filter, selection changes) re-runs the effect and triggers an extra render of the alert. Today that screen never has an invalid control so no focus jump is visible, but any future caller that passes an unmemoised `errors` object alongside controlled inputs will get focus stolen on every keystroke.",
+            "suggestion": "Key the effect on a stable signature (e.g. `JSON.stringify(errors)` or require callers to memoise), and separate the one-shot focus move (run when errors first appear) from the unmatched-path computation."
+          },
+          {
+            "title": "Hashed assets are served with a 1-year expiry but without `immutable`",
+            "file": "nginx.conf",
+            "line": 55,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "`location /assets/ { try_files $uri =404; expires 1y; }` produces `Cache-Control: max-age=31536000` only. Browsers still revalidate on reload (Firefox and Chrome treat a user reload as conditional for non-immutable responses), so the point of hashed filenames is partly lost on the admin's laptop; it is also inconsistent with the explicit no-cache intent for the shell on the next block.",
+            "suggestion": "Replace `expires 1y;` with `add_header Cache-Control \"public, max-age=31536000, immutable\" always;` — but note the comment in the file: adding `add_header` in that location drops the http-level security headers, so repeat the four http-level `add_header` lines there (or move them into an included snippet)."
+          }
+        ]
+      }
+    },
+    {
+      "label": "find:security",
+      "phase": "Find",
+      "agentType": "security-reviewer",
+      "structured": true,
+      "ok": false,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 1051,
+      "durationMs": 220302,
+      "sessionId": "fadcb3b1-16a2-469a-b830-7b111521879a",
+      "costUsd": 2.08902975,
+      "numTurns": 49,
+      "error": "error_max_budget_usd — Reached maximum budget ($2)"
+    },
+    {
+      "label": "find:spec-compliance",
+      "phase": "Find",
+      "agentType": "spec-compliance-auditor",
+      "structured": true,
+      "ok": false,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob,Bash --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 994,
+      "durationMs": 187791,
+      "sessionId": "e6df8ac4-4afc-47be-a573-6a2e2ba86f0e",
+      "costUsd": 2.1018355,
+      "numTurns": 41,
+      "error": "error_max_budget_usd — Reached maximum budget ($2)"
+    },
+    {
+      "label": "find:visual",
+      "phase": "Find",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1263,
+      "durationMs": 113585,
+      "sessionId": "b65ee78d-c9ef-4b9e-b57f-7b23960c1ffe",
+      "costUsd": 1.477542,
+      "numTurns": 20,
+      "result": {
+        "findings": [
+          {
+            "title": "Edit mission screen highlights \"New mission\" as the current nav item",
+            "file": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-mission-publish-refused.png",
+            "line": 51,
+            "severity": "minor",
+            "confidence": "high",
+            "evidence": "The still shows the page title \"Edit mission\" while the header nav renders \"New mission\" in the active (filled pill) state. In src/features/admin-access/AdminLayout.tsx:51 aria-current=\"page\" is set when routePath(window.location.pathname) === item.href; the \"New mission\" item is '/admin/missions/edit', which is the same path used to edit an existing mission (?id=...). The same collision exists for \"New task\" ('/admin/tasks/edit') when editing an existing task. Screen-reader users are told the current page is \"New mission\" while editing an existing one.",
+            "suggestion": "Only mark the new-item nav links current when there is no id in the query (or compare against a route key that distinguishes new vs. edit); alternatively mark the parent list link (\"Missions\" / \"Tasks\") current on edit screens."
+          },
+          {
+            "title": "Wrong-moment frame: \"task list provenance\" still shows a PDF viewer with an empty right pane",
+            "file": "docs/qa/demo-recordings/phase6-admin-theme/rec-task-list-provenance.png",
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "The frame captioned as task-list provenance shows the source viewer (\"Matematika 6 – pracovní sešit\", \"Page 57 of 120\") with a large empty beige panel on the right and no task list or provenance text anywhere in the frame. Whatever the clip asserts about provenance is not visible in this still, so the recording evidence for that FR is not demonstrable from the image.",
+            "suggestion": "Re-capture the still after the task list (with its source/page provenance column) has rendered, or move the capture point to the Tasks list route; confirm the right pane is not a layout slot that failed to render."
+          },
+          {
+            "title": "Dark theme: mission-card progress dots are almost invisible",
+            "file": "docs/qa/demo-recordings/phase6-admin-theme/rec-theme-dark.png",
+            "severity": "minor",
+            "confidence": "medium",
+            "evidence": "On the dark HQ frame each mission card's per-task progress dots (bottom-left of \"Mise 1\" / \"Mise 2\" cards) render as very dark grey on the dark navy card body and are barely distinguishable from the background; in the light frame (rec-theme-light.png) the same dots are clearly visible. The dots are the only visual indicator of which tasks are done, so in dark mode a child cannot read progress at a glance; this is below the WCAG non-text contrast target for UI indicators.",
+            "suggestion": "Give the unsolved-dot colour a dedicated dark-scheme token in the design system (e.g. a lighter --ink-muted or outlined dot) so the indicator keeps at least 3:1 against the card surface in both schemes."
+          }
+        ]
+      }
+    },
+    {
+      "label": "verify:src/features/admin-access/session.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1369,
+      "durationMs": 83287,
+      "sessionId": "05b3a7e5-b464-421d-9f4b-80920279e516",
+      "costUsd": 0.954227,
+      "numTurns": 17,
+      "result": {
+        "refuted": true,
+        "reasoning": "The code reading in the finding is accurate as far as it goes: `signIn` (session.ts:28-32) returns true on 204, false on 401, and throws `UnexpectedStatus` otherwise; `SignInForm.submit` (SignInForm.tsx:30-31) maps any throw to `admin.signIn.failed` = \"Sign-in failed. Check that the server is running and try again.\" So IF a 429 arrived, it would be shown as a server failure.\n\nBut the premise that a 429 exists is not supported by the contract, and is contradicted by it:\n- The OpenAPI contract (`contract/api/openapi.yaml`, reflected in `src/api/generated/schema.d.ts:1550-1589`) declares only 204 and 401 for `signIn`. There is no 429 anywhere in `contract/api`.\n- The product spec `contract/openspec/specs/admin-access/spec.md:227-237` has a requirement \"No sign-in lockout\": failed sign-ins SHALL NOT lock the account or block the client, with a scenario of 20 consecutive failures followed by a successful 204. Line 326 explicitly excludes \"account lockout, rate limiting, CAPTCHA\".\n- `contract/docs/requirements.md` NFR-15 and OQ-23 both state \"No lockout (LAN only, NFR-2)\".\n- `contract/docs/mvp-capability-plan.md:137` scopes lockout out.\n\nThe finding's sole evidence for throttling is a comment in `nginx.conf:39-41` (echoed in `src/test/container-config.test.ts:66` and an archived design.md) saying X-Forwarded-For is overwritten so \"the backend's per-IP login throttling sees the real peer\". That comment describes a defensive header hygiene measure and its stated rationale; it is not a contract declaration, and it conflicts with the actual spec, which forbids rate limiting. The backend source could not be read (permission denied), so backend throttling could not be positively confirmed, and the frontend is contract-bound: it only has to handle statuses the OpenAPI declares.\n\nEven if a 429 did appear, the message shown is a generic failure path for any undeclared status (500, 502, 503, network error), and `signIn` throwing for an off-contract status is correct behaviour under the \"API only through the generated client / contract\" rule. The claimed harm (\"keeps retrying, which extends the lockout\") also contradicts the spec's \"no lockout\" requirement.\n\nNet: the mechanism (429 reaching this code) cannot be confirmed and the contract says it should not exist. At most this is a stale/misleading nginx comment that should be reconciled with the spec, which is a docs nit, not a major correctness defect in session.ts.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/features/admin-access/session.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1402,
+      "durationMs": 54413,
+      "sessionId": "311f88cd-68af-413f-abc8-8a9b8970ae7a",
+      "costUsd": 0.995492,
+      "numTurns": 14,
+      "result": {
+        "refuted": true,
+        "reasoning": "The code reading is accurate (signIn at session.ts:28-33 returns true/false for 204/401 and throws UnexpectedStatus for anything else; SignInForm.tsx:30-31 maps every throw to 'admin.signIn.failed'). But the premise that the backend answers 429 for login throttling is not supported by anything except a comment in nginx.conf, and the product contract explicitly says the opposite:\n\n- contract/openspec/specs/admin-access/spec.md:326 (Explicit exclusions, MVP): \"No account lockout, rate limiting, CAPTCHA or two-factor sign-in (LAN only, NFR-2).\"\n- contract/docs/requirements.md:176 (NFR-15): \"No lockout (LAN only, NFR-2).\" OQ-23 at line 299 repeats it.\n- contract/docs/mvp-capability-plan.md:137: \"Scope out: lockout (spec)\".\n- contract/api/openapi.yaml:299-325: the signIn operation declares only 204 and 401; no 429, no Retry-After, and no other spec in contract/openspec/specs mentions throttling, 429 or rate limiting.\n\nThe nginx.conf:39-41 comment (\"backend's per-IP login throttling\") is stale narrative that originated from an earlier review-gate round (trace/workflow-runs/20261003-233104 and 20261004-052700 findings about X-Forwarded-For spoofing), which assumed a throttle existed; the header overwrite was added as hardening, not because a throttle was implemented. The container-config.test.ts comment carries the same assumption. Neither is evidence of backend behaviour, and the contract is the source of truth for API responses.\n\nI could not read ../backend/src/main (permission not granted), so I cannot prove the absence of a 429 in backend code directly. However, the backend is bound to the same OpenAPI contract (NFR-12), which declares no 429 for signIn, and the spec forbids rate limiting. With no declared or specified 429 path, there is no reproducible scenario in which a real admin sees the \"server not running\" message because of throttling. If a 429 ever did arrive, the generic failure message would be imperfect wording, but that is a hypothetical for an excluded feature, which is at most a minor UX note, not a major correctness defect. The real actionable item here is a documentation fix: the nginx.conf comment should stop claiming a throttle that the contract excludes.",
+        "severityAdjustment": "downgrade"
+      }
+    },
+    {
+      "label": "verify:src/features/admin-access/AdminLayout.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1191,
+      "durationMs": 33405,
+      "sessionId": "4c05a516-c2aa-47b8-bee2-dc80b2455ef6",
+      "costUsd": 0.6835042499999999,
+      "numTurns": 7,
+      "result": {
+        "refuted": false,
+        "severityAdjustment": "keep",
+        "reasoning": "Confirmed in code. `src/features/admin-access/AdminLayout.tsx:29` computes `current = routePath(window.location.pathname)`; `routePath` in `src/app/route-paths.ts:51` only normalises the pathname (strips `/index.html` and trailing slashes) and never sees the query string. Line 51 of AdminLayout sets `aria-current=\"page\"` when `current === item.href`, and the NAV array (lines 12 and 14) registers `/admin/tasks/edit` as 'New task' and `/admin/missions/edit` as 'New mission'. The router in `src/app/routes.tsx:40,43` maps exactly those paths to TaskEditorScreen / MissionEditorScreen, whose doc comments (`TaskEditorScreen.tsx:442`, `MissionEditorScreen.tsx:368`) state the route serves both a new item and a saved one via `?taskId=` / `?missionId=`. Many callers link to the edit form with an id (TaskListScreen:329, PreviewScreen:164, ReportsScreen:160, MissionListScreen:64, etc.), and MissionEditorScreen:128 even rewrites the URL to `?missionId=…` after a first save, so the edit-with-id state is reachable and common. In that state the 'New task' / 'New mission' link is announced and styled (`admin-access.css:46`) as the current page. No guard exists elsewhere: there is no React Router NavLink, nav uses plain anchors and full page loads. Existing tests in AdminLayout.test.tsx only cover `/admin/tasks` and `/admin`, not the edit-with-id case. Minor note: the finding cites line 41 but the aria-current logic is on line 51; same file and mechanism. Severity 'minor' is appropriate: it is an a11y/UX mislabel, not a functional break."
+      }
+    },
+    {
+      "label": "verify:src/features/admin-access/AdminLayout.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 1224,
+      "durationMs": 39819,
+      "sessionId": "b50a7161-f62b-40d3-bf1a-15f6314a42c1",
+      "costUsd": 0.7655675,
+      "numTurns": 9,
+      "result": {
+        "refuted": false,
+        "severityAdjustment": "keep",
+        "reasoning": "Confirmed, not refuted. The mechanism is exactly as described and reproducible by any admin via ordinary navigation.\n\nEvidence:\n- `src/features/admin-access/AdminLayout.tsx:29,51`: `current = routePath(window.location.pathname)` and `aria-current={current === item.href ? 'page' : undefined}`. The NAV entries at lines 12 and 14 map `/admin/tasks/edit` to `admin.nav.newTask` (\"New task\") and `/admin/missions/edit` to `admin.nav.newMission` (\"New mission\").\n- `src/app/route-paths.ts:51-54`: `routePath` only normalises `/index.html` and trailing slashes. It never looks at `window.location.search`, so the query string cannot influence the match.\n- `src/app/routes.tsx:40,43`: a single route each for `/admin/tasks/edit` and `/admin/missions/edit`; there is no separate `/new` path.\n- Real entry points into the edit state use the same pathname with a query: `TaskListScreen.tsx:329` (`?taskId=`), `MissionListScreen.tsx:64` (`?missionId=`), `ReportsScreen.tsx:160`, `PreviewScreen.tsx:164`, `TaskStatusPanel.tsx:100`, and `MissionEditorScreen.tsx:128` which `replaceState`s to `?missionId=` right after a first save. So every \"Edit\" link in the admin lands on a page where the \"New task\"/\"New mission\" nav link is marked current.\n- The effect is both announced and visible: `admin-access.css:46` styles `.admin-nav-link[aria-current='page']`, and `TaskEditorScreen.tsx:450` sets the page heading to `admin.editor.editTitle` when `taskId` is present, so the h1 says \"edit\" while the nav highlights \"New task\".\n- Nothing guards it elsewhere: `AdminLayout.test.tsx` only asserts `aria-current` at `/admin/tasks` and `/admin`, never at an edit route with an id.\n\nImpact is as the finding states: a minor correctness/a11y inconsistency (wrong `aria-current` and highlight), no security or data consequence, so severity \"minor\" is appropriate. The suggested fix (consider `taskId`/`missionId` in the query, or drop `aria-current` on the create links) is sound."
+      }
+    },
+    {
+      "label": "verify:src/features/admin-access/adminClient.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 8 reached ($8.16)"
+    },
+    {
+      "label": "verify:src/features/admin-access/adminClient.ts",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 8 reached ($8.16)"
+    },
+    {
+      "label": "verify:src/features/admin-access/form.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 8 reached ($8.16)"
+    },
+    {
+      "label": "verify:src/features/admin-access/form.tsx",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 8 reached ($8.16)"
+    },
+    {
+      "label": "verify:nginx.conf",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 8 reached ($8.16)"
+    },
+    {
+      "label": "verify:nginx.conf",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 8 reached ($8.16)"
+    },
+    {
+      "label": "verify:docs/qa/demo-recordings/slice6-authoring-missions/slice6-mission-publish-refused.png",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 8 reached ($8.16)"
+    },
+    {
+      "label": "verify:docs/qa/demo-recordings/slice6-authoring-missions/slice6-mission-publish-refused.png",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 8 reached ($8.16)"
+    },
+    {
+      "label": "verify:docs/qa/demo-recordings/phase6-admin-theme/rec-task-list-provenance.png",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 8 reached ($8.16)"
+    },
+    {
+      "label": "verify:docs/qa/demo-recordings/phase6-admin-theme/rec-task-list-provenance.png",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 8 reached ($8.16)"
+    },
+    {
+      "label": "verify:docs/qa/demo-recordings/phase6-admin-theme/rec-theme-dark.png",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 8 reached ($8.16)"
+    },
+    {
+      "label": "verify:docs/qa/demo-recordings/phase6-admin-theme/rec-theme-dark.png",
+      "phase": "Verify",
+      "agentType": null,
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 8 reached ($8.16)"
+    }
+  ],
+  "logs": [
+    {
+      "phase": "Find",
+      "message": "8 unique findings across 4 dimensions"
+    },
+    {
+      "phase": "Report",
+      "message": "confirmed: 7, contested: 0, rejected: 1"
+    }
+  ],
+  "persisted": [],
+  "returned": {
+    "scope": "Chunk A platform/admin: src/app, src/api (excluding generated), src/i18n, src/design-system, src/test, src/main.tsx, src/features/admin-access, nginx config, Dockerfile, eslint rules, vite/playwright configs, tools/ (scripts/ is the factory harness, skip). Only review files in these paths.",
+    "summary": "Review gate for Chunk A platform/admin: src/app, src/api (excluding generated), src/i18n, src/design-system, src/test, src/main.tsx, src/features/admin-access, nginx config, Dockerfile, eslint rules, vite/playwright configs, tools/ (scripts/ is the factory harness, skip). Only review files in these paths.: 7 confirmed, 0 contested (treat as confirmed unless trivially wrong), 1 rejected.",
+    "confirmed": [
+      {
+        "title": "Admin nav marks 'New task' / 'New mission' as current page while editing an existing item",
+        "file": "src/features/admin-access/AdminLayout.tsx",
+        "line": 41,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "`aria-current` is set with `current === item.href` where `current = routePath(window.location.pathname)`. The route `/admin/tasks/edit` serves both the new-task form and the edit form (`?taskId=…`), so the nav link labelled `admin.nav.newTask` is announced and styled as the current page while the admin is editing an existing task; the same applies to `/admin/missions/edit`.",
+        "suggestion": "Only mark the 'new' links current when the query has no `taskId`/`missionId` (e.g. compare against `window.location.search` too), or drop `aria-current` for the create links.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": [
+          "Confirmed in code. `src/features/admin-access/AdminLayout.tsx:29` computes `current = routePath(window.location.pathname)`; `routePath` in `src/app/route-paths.ts:51` only normalises the pathname (strips `/index.html` and trailing slashes) and never sees the query string. Line 51 of AdminLayout sets `aria-current=\"page\"` when `current === item.href`, and the NAV array (lines 12 and 14) registers `/admin/tasks/edit` as 'New task' and `/admin/missions/edit` as 'New mission'. The router in `src/app/routes.tsx:40,43` maps exactly those paths to TaskEditorScreen / MissionEditorScreen, whose doc comments (`TaskEditorScreen.tsx:442`, `MissionEditorScreen.tsx:368`) state the route serves both a new item and a saved one via `?taskId=` / `?missionId=`. Many callers link to the edit form with an id (TaskListScreen:329, PreviewScreen:164, ReportsScreen:160, MissionListScreen:64, etc.), and MissionEditorScreen:128 even rewrites the URL to `?missionId=…` after a first save, so the edit-with-id state is reachable and common. In that state the 'New task' / 'New mission' link is announced and styled (`admin-access.css:46`) as the current page. No guard exists elsewhere: there is no React Router NavLink, nav uses plain anchors and full page loads. Existing tests in AdminLayout.test.tsx only cover `/admin/tasks` and `/admin`, not the edit-with-id case. Minor note: the finding cites line 41 but the aria-current logic is on line 51; same file and mechanism. Severity 'minor' is appropriate: it is an a11y/UX mislabel, not a functional break.",
+          "Confirmed, not refuted. The mechanism is exactly as described and reproducible by any admin via ordinary navigation.\n\nEvidence:\n- `src/features/admin-access/AdminLayout.tsx:29,51`: `current = routePath(window.location.pathname)` and `aria-current={current === item.href ? 'page' : undefined}`. The NAV entries at lines 12 and 14 map `/admin/tasks/edit` to `admin.nav.newTask` (\"New task\") and `/admin/missions/edit` to `admin.nav.newMission` (\"New mission\").\n- `src/app/route-paths.ts:51-54`: `routePath` only normalises `/index.html` and trailing slashes. It never looks at `window.location.search`, so the query string cannot influence the match.\n- `src/app/routes.tsx:40,43`: a single route each for `/admin/tasks/edit` and `/admin/missions/edit`; there is no separate `/new` path.\n- Real entry points into the edit state use the same pathname with a query: `TaskListScreen.tsx:329` (`?taskId=`), `MissionListScreen.tsx:64` (`?missionId=`), `ReportsScreen.tsx:160`, `PreviewScreen.tsx:164`, `TaskStatusPanel.tsx:100`, and `MissionEditorScreen.tsx:128` which `replaceState`s to `?missionId=` right after a first save. So every \"Edit\" link in the admin lands on a page where the \"New task\"/\"New mission\" nav link is marked current.\n- The effect is both announced and visible: `admin-access.css:46` styles `.admin-nav-link[aria-current='page']`, and `TaskEditorScreen.tsx:450` sets the page heading to `admin.editor.editTitle` when `taskId` is present, so the h1 says \"edit\" while the nav highlights \"New task\".\n- Nothing guards it elsewhere: `AdminLayout.test.tsx` only asserts `aria-current` at `/admin/tasks` and `/admin`, never at an edit route with an id.\n\nImpact is as the finding states: a minor correctness/a11y inconsistency (wrong `aria-current` and highlight), no security or data consequence, so severity \"minor\" is appropriate. The suggested fix (consider `taskId`/`missionId` in the query, or drop `aria-current` on the create links) is sound."
+        ]
+      },
+      {
+        "title": "Malformed XSRF-TOKEN cookie makes every admin mutation throw a raw URIError",
+        "file": "src/features/admin-access/adminClient.ts",
+        "line": 16,
+        "severity": "minor",
+        "confidence": "low",
+        "evidence": "`xsrfToken()` calls `decodeURIComponent(cookie.slice(...))` unguarded inside the `onRequest` middleware. A cookie value containing a stray `%` (set by another app on the same localhost origin, or a corrupted cookie) throws `URIError`, which escapes the middleware so every POST/PUT/DELETE rejects before reaching the network. The screens' `catch` paths expect `ApiError`/network failures, so the admin sees a generic failure with no way out short of clearing cookies.",
+        "suggestion": "Wrap the decode in try/catch and fall back to the raw value (or `undefined`) so the request is still sent and the backend reports the CSRF refusal through the normal problem+json path.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": []
+      },
+      {
+        "title": "FormAlert layout effect re-runs and calls setState on every parent render when `errors` is rebuilt per render",
+        "file": "src/features/admin-access/form.tsx",
+        "line": 67,
+        "severity": "minor",
+        "confidence": "low",
+        "evidence": "`useLayoutEffect(..., [errors])` both queries the DOM and calls `setUnmatched(...)` with a fresh array, and also moves focus to the first `[aria-invalid=\"true\"]` control. `TaskListScreen.tsx:46` passes `const errors: Record<string,string> = {}` created on each render, so every parent re-render (typing in the filter, selection changes) re-runs the effect and triggers an extra render of the alert. Today that screen never has an invalid control so no focus jump is visible, but any future caller that passes an unmemoised `errors` object alongside controlled inputs will get focus stolen on every keystroke.",
+        "suggestion": "Key the effect on a stable signature (e.g. `JSON.stringify(errors)` or require callers to memoise), and separate the one-shot focus move (run when errors first appear) from the unmatched-path computation.",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": []
+      },
+      {
+        "title": "Hashed assets are served with a 1-year expiry but without `immutable`",
+        "file": "nginx.conf",
+        "line": 55,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "`location /assets/ { try_files $uri =404; expires 1y; }` produces `Cache-Control: max-age=31536000` only. Browsers still revalidate on reload (Firefox and Chrome treat a user reload as conditional for non-immutable responses), so the point of hashed filenames is partly lost on the admin's laptop; it is also inconsistent with the explicit no-cache intent for the shell on the next block.",
+        "suggestion": "Replace `expires 1y;` with `add_header Cache-Control \"public, max-age=31536000, immutable\" always;` — but note the comment in the file: adding `add_header` in that location drops the http-level security headers, so repeat the four http-level `add_header` lines there (or move them into an included snippet).",
+        "dimension": "correctness",
+        "verdict": "confirmed",
+        "verifierNotes": []
+      },
+      {
+        "title": "Edit mission screen highlights \"New mission\" as the current nav item",
+        "file": "docs/qa/demo-recordings/slice6-authoring-missions/slice6-mission-publish-refused.png",
+        "line": 51,
+        "severity": "minor",
+        "confidence": "high",
+        "evidence": "The still shows the page title \"Edit mission\" while the header nav renders \"New mission\" in the active (filled pill) state. In src/features/admin-access/AdminLayout.tsx:51 aria-current=\"page\" is set when routePath(window.location.pathname) === item.href; the \"New mission\" item is '/admin/missions/edit', which is the same path used to edit an existing mission (?id=...). The same collision exists for \"New task\" ('/admin/tasks/edit') when editing an existing task. Screen-reader users are told the current page is \"New mission\" while editing an existing one.",
+        "suggestion": "Only mark the new-item nav links current when there is no id in the query (or compare against a route key that distinguishes new vs. edit); alternatively mark the parent list link (\"Missions\" / \"Tasks\") current on edit screens.",
+        "dimension": "visual",
+        "verdict": "confirmed",
+        "verifierNotes": []
+      },
+      {
+        "title": "Wrong-moment frame: \"task list provenance\" still shows a PDF viewer with an empty right pane",
+        "file": "docs/qa/demo-recordings/phase6-admin-theme/rec-task-list-provenance.png",
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "The frame captioned as task-list provenance shows the source viewer (\"Matematika 6 – pracovní sešit\", \"Page 57 of 120\") with a large empty beige panel on the right and no task list or provenance text anywhere in the frame. Whatever the clip asserts about provenance is not visible in this still, so the recording evidence for that FR is not demonstrable from the image.",
+        "suggestion": "Re-capture the still after the task list (with its source/page provenance column) has rendered, or move the capture point to the Tasks list route; confirm the right pane is not a layout slot that failed to render.",
+        "dimension": "visual",
+        "verdict": "confirmed",
+        "verifierNotes": []
+      },
+      {
+        "title": "Dark theme: mission-card progress dots are almost invisible",
+        "file": "docs/qa/demo-recordings/phase6-admin-theme/rec-theme-dark.png",
+        "severity": "minor",
+        "confidence": "medium",
+        "evidence": "On the dark HQ frame each mission card's per-task progress dots (bottom-left of \"Mise 1\" / \"Mise 2\" cards) render as very dark grey on the dark navy card body and are barely distinguishable from the background; in the light frame (rec-theme-light.png) the same dots are clearly visible. The dots are the only visual indicator of which tasks are done, so in dark mode a child cannot read progress at a glance; this is below the WCAG non-text contrast target for UI indicators.",
+        "suggestion": "Give the unsolved-dot colour a dedicated dark-scheme token in the design system (e.g. a lighter --ink-muted or outlined dot) so the indicator keeps at least 3:1 against the card surface in both schemes.",
+        "dimension": "visual",
+        "verdict": "confirmed",
+        "verifierNotes": []
+      }
+    ],
+    "contested": [],
+    "rejected": [
+      {
+        "title": "Login throttling (429) is reported to the admin as 'server not running'",
+        "file": "src/features/admin-access/session.ts",
+        "line": 34,
+        "severity": "major",
+        "confidence": "medium",
+        "evidence": "`signIn` treats only 204 and 401 as outcomes and throws `UnexpectedStatus` for anything else. `nginx.conf` documents that the backend applies per-IP login throttling (it overwrites X-Forwarded-For for exactly that purpose), so a throttled attempt comes back as 429. `SignInForm.submit` maps every throw to `admin.signIn.failed` = 'Sign-in failed. Check that the server is running and try again.' — the admin is told the server is down while it is actually asking them to wait, and keeps retrying, which extends the lockout.",
+        "suggestion": "Handle 429 explicitly in `signIn` (e.g. return a tri-state or throw a typed `Throttled` error carrying Retry-After) and add a dedicated catalog message such as 'Too many attempts. Wait a moment and try again.' in `SignInForm`.",
+        "dimension": "correctness",
+        "verdict": "rejected",
+        "verifierNotes": [
+          "The code reading in the finding is accurate as far as it goes: `signIn` (session.ts:28-32) returns true on 204, false on 401, and throws `UnexpectedStatus` otherwise; `SignInForm.submit` (SignInForm.tsx:30-31) maps any throw to `admin.signIn.failed` = \"Sign-in failed. Check that the server is running and try again.\" So IF a 429 arrived, it would be shown as a server failure.\n\nBut the premise that a 429 exists is not supported by the contract, and is contradicted by it:\n- The OpenAPI contract (`contract/api/openapi.yaml`, reflected in `src/api/generated/schema.d.ts:1550-1589`) declares only 204 and 401 for `signIn`. There is no 429 anywhere in `contract/api`.\n- The product spec `contract/openspec/specs/admin-access/spec.md:227-237` has a requirement \"No sign-in lockout\": failed sign-ins SHALL NOT lock the account or block the client, with a scenario of 20 consecutive failures followed by a successful 204. Line 326 explicitly excludes \"account lockout, rate limiting, CAPTCHA\".\n- `contract/docs/requirements.md` NFR-15 and OQ-23 both state \"No lockout (LAN only, NFR-2)\".\n- `contract/docs/mvp-capability-plan.md:137` scopes lockout out.\n\nThe finding's sole evidence for throttling is a comment in `nginx.conf:39-41` (echoed in `src/test/container-config.test.ts:66` and an archived design.md) saying X-Forwarded-For is overwritten so \"the backend's per-IP login throttling sees the real peer\". That comment describes a defensive header hygiene measure and its stated rationale; it is not a contract declaration, and it conflicts with the actual spec, which forbids rate limiting. The backend source could not be read (permission denied), so backend throttling could not be positively confirmed, and the frontend is contract-bound: it only has to handle statuses the OpenAPI declares.\n\nEven if a 429 did appear, the message shown is a generic failure path for any undeclared status (500, 502, 503, network error), and `signIn` throwing for an off-contract status is correct behaviour under the \"API only through the generated client / contract\" rule. The claimed harm (\"keeps retrying, which extends the lockout\") also contradicts the spec's \"no lockout\" requirement.\n\nNet: the mechanism (429 reaching this code) cannot be confirmed and the contract says it should not exist. At most this is a stale/misleading nginx comment that should be reconciled with the spec, which is a docs nit, not a major correctness defect in session.ts.",
+          "The code reading is accurate (signIn at session.ts:28-33 returns true/false for 204/401 and throws UnexpectedStatus for anything else; SignInForm.tsx:30-31 maps every throw to 'admin.signIn.failed'). But the premise that the backend answers 429 for login throttling is not supported by anything except a comment in nginx.conf, and the product contract explicitly says the opposite:\n\n- contract/openspec/specs/admin-access/spec.md:326 (Explicit exclusions, MVP): \"No account lockout, rate limiting, CAPTCHA or two-factor sign-in (LAN only, NFR-2).\"\n- contract/docs/requirements.md:176 (NFR-15): \"No lockout (LAN only, NFR-2).\" OQ-23 at line 299 repeats it.\n- contract/docs/mvp-capability-plan.md:137: \"Scope out: lockout (spec)\".\n- contract/api/openapi.yaml:299-325: the signIn operation declares only 204 and 401; no 429, no Retry-After, and no other spec in contract/openspec/specs mentions throttling, 429 or rate limiting.\n\nThe nginx.conf:39-41 comment (\"backend's per-IP login throttling\") is stale narrative that originated from an earlier review-gate round (trace/workflow-runs/20261003-233104 and 20261004-052700 findings about X-Forwarded-For spoofing), which assumed a throttle existed; the header overwrite was added as hardening, not because a throttle was implemented. The container-config.test.ts comment carries the same assumption. Neither is evidence of backend behaviour, and the contract is the source of truth for API responses.\n\nI could not read ../backend/src/main (permission not granted), so I cannot prove the absence of a 429 in backend code directly. However, the backend is bound to the same OpenAPI contract (NFR-12), which declares no 429 for signIn, and the spec forbids rate limiting. With no declared or specified 429 path, there is no reproducible scenario in which a real admin sees the \"server not running\" message because of throttling. If a 429 ever did arrive, the generic failure message would be imperfect wording, but that is a hypothetical for an excluded feature, which is at most a minor UX note, not a major correctness defect. The real actionable item here is a documentation fix: the nginx.conf comment should stop claiming a throttle that the contract excludes."
+        ]
+      }
+    ],
+    "reviewEvidence": null
+  }
+}
