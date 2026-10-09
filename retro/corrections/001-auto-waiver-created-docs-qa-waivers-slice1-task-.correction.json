@@ -9,5 +9,10 @@
   "failureModeSource": "detector",
   "source": "auto-waiver",
   "autoKey": "waiver-created:docs/qa/waivers/slice1-task-2.8-red-run.md",
-  "disposition": null
+  "disposition": {
+    "status": "waived",
+    "by": "project owner",
+    "ts": "2026-10-09T17:21:18.493Z",
+    "note": "Owner: \"waive COR-1\" (Claude Code chat, 2026-10-09). Accepts the missing RED-run record for the original slice-1 frontend tests for the reasons in docs/qa/waivers/slice1-task-2.8-red-run.md; process step only, no requirement or acceptance method waived; RED runs recorded from slice 2 on."
+  }
 }
