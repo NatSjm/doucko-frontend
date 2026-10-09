@@ -61,14 +61,17 @@ export function FormAlert({ errors, failure }: { errors: Record<string, string>;
   const box = useRef<HTMLDivElement>(null);
   const [unmatched, setUnmatched] = useState<string[]>([]);
 
+  // Keyed by content: a parent that rebuilds an equal errors object on each render must not refocus.
+  const signature = JSON.stringify(errors);
   useLayoutEffect(() => {
+    const current = JSON.parse(signature) as Record<string, string>;
     // The enclosing form: its own ref is not attached yet while its children lay out.
     const root = (box.current as HTMLDivElement).closest('form') as HTMLFormElement;
     const shown = new Set([...root.querySelectorAll('[data-field]')].map((el) => el.getAttribute('data-field')));
     // Which paths have a control is known only once the form is laid out (a measurement).
-    setUnmatched(Object.keys(errors).filter((path) => !shown.has(path)));
+    setUnmatched(Object.keys(current).filter((path) => !shown.has(path)));
     root.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
-  }, [errors]);
+  }, [signature]);
 
   const visible = unmatched.filter((path) => path in errors);
   return (

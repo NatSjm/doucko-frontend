@@ -20,6 +20,14 @@ describe('adminClient (NFR-15)', () => {
     expect(backend.seen.at(-1)?.headers.get('X-XSRF-TOKEN')).toBe('xsrf-123');
   });
 
+  it('sends a malformed (not percent-decodable) cookie as it is instead of throwing', async () => {
+    document.cookie = 'XSRF-TOKEN=bad%E0%A4%A; path=/';
+    const backend = stubAdminBackend();
+    backend.signedIn = true;
+    await adminClient.DELETE('/api/admin/session');
+    expect(backend.seen.at(-1)?.headers.get('X-XSRF-TOKEN')).toBe('bad%E0%A4%A');
+  });
+
   it('sends no CSRF header on a read', async () => {
     const backend = stubAdminBackend();
     await adminClient.GET('/api/admin/session');

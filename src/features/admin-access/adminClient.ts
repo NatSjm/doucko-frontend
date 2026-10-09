@@ -13,7 +13,14 @@ export function xsrfToken(): string | undefined {
     .split(';')
     .map((part) => part.trim())
     .find((part) => part.startsWith('XSRF-TOKEN='));
-  return cookie ? decodeURIComponent(cookie.slice('XSRF-TOKEN='.length)) : undefined;
+  if (!cookie) return undefined;
+  const raw = cookie.slice('XSRF-TOKEN='.length);
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    // Not percent-decodable: sent as it is, so the server refuses it with 403 instead of the UI throwing.
+    return raw;
+  }
 }
 
 /**

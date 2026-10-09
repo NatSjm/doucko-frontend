@@ -27,6 +27,8 @@ export function AdminLayout({ title, wide = false, children }: { title: ReactNod
   const [failed, setFailed] = useState(false);
   const [busy, setBusy] = useState(false);
   const current = routePath(window.location.pathname);
+  // The "New …" links share their route with editing a saved item (`?taskId=` / `?missionId=`).
+  const editing = /[?&](taskId|missionId)=/.test(window.location.search);
 
   /** Any failure (no server, a refused CSRF token, a 5xx) keeps the screen and says sign-out failed. */
   async function handleSignOut() {
@@ -48,7 +50,7 @@ export function AdminLayout({ title, wide = false, children }: { title: ReactNod
           <ul className="admin-nav">
             {NAV.map((item) => (
               <li key={item.href}>
-                <a className="admin-nav-link" href={item.href} aria-current={current === item.href ? 'page' : undefined}>
+                <a className="admin-nav-link" href={item.href} aria-current={current === item.href && !(editing && item.href.endsWith('/edit')) ? 'page' : undefined}>
                   {t(item.label)}
                 </a>
               </li>

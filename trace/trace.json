@@ -1090,6 +1090,7 @@
         "src/app/i18n-coverage.test.tsx",
         "src/features/admin-access/AdminGate.test.tsx",
         "src/features/admin-access/AdminLayout.test.tsx",
+        "src/features/admin-access/form.test.tsx",
         "src/i18n/format.test.ts",
         "src/test/lint-rule.test.ts",
         "e2e/admin-sign-in.spec.ts",
@@ -1240,5 +1241,10 @@
     }
   ],
   "failures": [],
-  "warnings": []
+  "warnings": [
+    {
+      "check": "active-changes",
+      "msg": "active change \"release-review-ui\" is not archived"
+    }
+  ]
 }

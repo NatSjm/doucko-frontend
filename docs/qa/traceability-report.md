@@ -5,7 +5,7 @@ requirements/spec/test/recording change; CI runs `--check-fresh`.
 
 Repo: frontend (contract: submodule).
 Scope: 48 MVP functional requirements, 30 owned by frontend.
-Result: PASS
+Result: PASS, 1 warning(s)
 
 | FR | Spec | Plan | Owner repo(s) | Test trace here | Recording here |
 |---|---|---|---|---|---|
@@ -70,7 +70,7 @@ Result: PASS
 | NFR-6 | frontend | 3 |
 | NFR-7 | frontend | 7 |
 | NFR-8 | frontend | 2 |
-| NFR-9 | backend, frontend | 7 |
+| NFR-9 | backend, frontend | 8 |
 | NFR-10 | backend | n/a |
 | NFR-11 | backend | n/a |
 | NFR-12 | backend, frontend | 2 |
@@ -97,4 +97,4 @@ None.
 
 ## Warnings
 
-None.
+- **active-changes**: active change "release-review-ui" is not archived
