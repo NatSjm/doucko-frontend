@@ -70,7 +70,7 @@ Result: PASS
 | NFR-6 | frontend | 3 |
 | NFR-7 | frontend | 7 |
 | NFR-8 | frontend | 2 |
-| NFR-9 | backend, frontend | 7 |
+| NFR-9 | backend, frontend | 8 |
 | NFR-10 | backend | n/a |
 | NFR-11 | backend | n/a |
 | NFR-12 | backend, frontend | 2 |

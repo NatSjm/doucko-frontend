@@ -1,0 +1,519 @@
+{
+  "workflow": "trajectory-eval",
+  "file": "./.claude/workflows/trajectory-eval.js",
+  "description": "Trajectory evaluation: grade the PATH each slice took, not just its output. A fresh judge (maker≠checker) scores each slice on process-order, test-integrity, in-scope discipline, and craft, reading the git log/diff/spec/tasks/review evidence. The LLM half of trajectory evals — the deterministic half is check-trajectory.mjs.",
+  "dryRun": false,
+  "startedAt": "2026-10-09T17:35:37.526Z",
+  "finishedAt": "2026-10-09T17:43:24.600Z",
+  "args": {},
+  "settings": {
+    "allowedTools": null,
+    "concurrency": 4,
+    "model": null,
+    "budgetPerAgentUsd": 4,
+    "maxTotalUsd": 6,
+    "untypedTools": "Read,Grep,Glob",
+    "permissionMode": "acceptEdits"
+  },
+  "outcome": "failed",
+  "stoppedBecause": "--max-total-usd 6 reached ($6.91)",
+  "error": null,
+  "totalCostUsd": 9.678,
+  "steps": [
+    {
+      "label": "collect-slices",
+      "phase": "Collect",
+      "agentType": null,
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 4 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 585,
+      "durationMs": 357871,
+      "sessionId": "675a576b-ee7d-4af2-8b27-eb34b46736fc",
+      "costUsd": 3.8803312500000002,
+      "numTurns": 64,
+      "result": {
+        "slices": [
+          {
+            "slice": "implement-platform-foundation-ui",
+            "evidence": "ARCHIVE: openspec/changes/archive/2026-10-04-implement-platform-foundation-ui (proposal, design, tasks, review-findings.json, specs/platform-foundation/spec.md, .openspec.yaml).\n\nGIT LOG: `git log --all --grep \"Slice: implement-platform-foundation-ui\"` could NOT be run (Bash disabled in this session; reflog at C:/projects/school-tutor/frontend/.git/logs/HEAD is outside the worktree and read was denied). Commit identities taken from in-repo docs: review fix 442dd3a (round-10 findings F01/F02, scheme-word pattern); tasks.md 4.6 names the archive commit trailer `Slice: implement-platform-foundation-ui` + `Refs: FR-58, NFR-3, NFR-4, NFR-6, NFR-9, NFR-12, NFR-13`. Review baseRef 93e81cd. docs/qa/evidence/slice1-review-fixes.md cites review-gate run trace/workflow-runs/20261003-233104-review-gate.json.\n\nCHANGED FILES (tasks.md §3 + evidence): src/i18n/ (cs/en catalogs, provider, useT), src/app/routes.tsx, src/app/App.tsx, eslint-rules/no-literal-ui-text.js + eslint.config.js, playwright.config.ts (chromium/msedge/firefox, @axe-core/playwright), fixtures/PROVENANCE.md, e2e/fixtures/profile.ts (expectNoRealName), Dockerfile, nginx.conf, .dockerignore. Tests: src/app/i18n-coverage.test.tsx, src/test/lint-rule.test.ts, src/test/provenance.test.ts, src/api/contract-client.test.ts, src/app/theme-source.test.ts, src/test/container-config.test.ts, src/app/App.test.tsx, e2e/theme.spec.ts, e2e/a11y.spec.ts, e2e/app-shell.spec.ts.\n\nTESTS vs IMPLEMENTATION (most telling): FR-58 is enforced by a static source invariant, not a runtime toggle. src/app/theme-source.test.ts:21-44 defines TOKEN_WRITE, SCHEME_API and a SCHEME regex (`(?<![A-Za-z])(?:is|has|use|set|get|no|app|ui|my|to|on)?(?:dark|light|...)(?:mode|theme|scheme|ui|bg)?s?(?![a-z])`) and scans every app source file outside NOT_APP = {src/design-system, src/api/generated}; tests at :82 'the invariants catch the ways a theme can be forced', :144 'only the design system and generated client are skipped, by exact directory', :149 'no app source, public file or index.html breaks an invariant'. Round-10 review findings F01/F02 were about this regex missing `isdark`, `appdark`, `darkmodes`; the fix 442dd3a widened the prefix/suffix alternation shown above. RED evidence (slice1-review-fixes.md): unit `28 failed | 32 passed (60)` before implementation changed (App.test routes/not-found/title, i18n-coverage, container-config nginx/Dockerfile/tsconfig, 15 lint-rule invalid cases, provenance); e2e 9 failed in chromium (`[data-route=\"/\"] not found (App ignored the URL)`). The two provenance failures found real gaps (unlisted e2e/fixtures/test.ts; a font borrowing another's licence).\n\nTASKS.MD: fully ticked (1.1; 2.1–2.8; 3.1–3.6; 4.1–4.6). Task 2.8 (original RED run) is ticked as WAIVED by the owner 2026-10-04 (docs/qa/waivers/slice1-task-2.8-red-run.md): no recorded RED run for the original tests; only the review-fix tests have one. This waiver is later recorded as correction COR-1 (qa-phase6-ui task 2.4).\n\nSPEC SCENARIOS OWNED (specs/platform-foundation/spec.md, ADDED): Theme follows the OS: Dark OS, Light OS, No toggle. Externalized UI strings: Pseudo-catalog render, Literal text is a lint error. Accessible in light and dark: axe on every route, Reduced motion. Supported browsers: Smoke in three browsers. Provenance of fixtures and skin assets: Unlisted asset fails, Licensed asset without its licence. No real name in e2e evidence: Real name on a page, Guard not configured against a stack. Client generated from the pinned contract: Every contract path is generated, Image build without the contract. Served behind one origin: API through the frontend origin, Missing asset, Foreign host name, Spoofed client address. (20 scenarios.)\n\nREVIEW-FINDINGS.JSON: `\"clean\": false`, generatedAt 2026-10-04T11:40:49Z, baseRef 93e81cd. 2 findings (F01 correctness, F02 spec-compliance), both minor, verdict contested, status fixed in 442dd3a. Closed by owner signOff 2026-10-04T11:55:52Z: 'Accepted after round 10 without a further review round… remaining limits are documented in design.md \"Accepted limits\"'. design.md §'Review sign-off' confirms rounds 1–10 and the sign-off; §'Accepted limits (review round 3)' lists kept limits (e.g. NFR-9 lint rule sees only literals). Note: this is the only archived slice whose review-findings.json is not clean:true; closure rests on the owner sign-off field."
+          },
+          {
+            "slice": "implement-admin-access-ui",
+            "evidence": "ARCHIVE: openspec/changes/archive/2026-10-04-implement-admin-access-ui (proposal, design, tasks, review-findings.json, specs/admin-access/spec.md).\n\nGIT LOG: `git log --all --grep \"Slice: implement-admin-access-ui\"` not runnable (Bash disabled; shared reflog outside worktree denied). Commits named in-repo: review fixes 79ba422 (F01–F05, F07–F10) and d3030a3 (F06, current-state/tasks sync); tasks.md 4.6 archive trailer `Slice: implement-admin-access-ui` + `Refs: NFR-6, NFR-9, NFR-13`. Review baseRef main.\n\nCHANGED FILES (tasks.md §3, findings): src/features/admin-access/{adminClient.ts, session.ts, AdminGate.tsx, AdminArea.tsx, SignInForm.tsx, AdminHome.tsx, admin-access.css}, catalog keys (src/i18n/en.ts), route /admin in src/app/routes.tsx, e2e fixture stub. Tests: src/features/admin-access/adminClient.test.ts, src/features/admin-access/AdminGate.test.tsx, src/app/i18n-coverage.test.tsx (+/admin), e2e/admin-sign-in.spec.ts, a11y list.\n\nTESTS vs IMPLEMENTATION: AdminGate.test.tsx case list (:40–:185): 'shows the English sign-in form with a single password field'; 'a second wrong password is announced again in a new alert'; 'a wrong password shows an alert and keeps the form'; 'the right password, submitted with Enter, opens the admin home'; 'a server error on sign-in says so without claiming a wrong password'; 'sign-out sends the CSRF header and returns to the sign-in form'; 'a later admin 401 (idle expiry) brings back the sign-in form'; 'a 500 on the session check offers a retry'; 'a sign-out answered 401 shows the sign-in form'; 'a sign-out refused for its CSRF token says sign-out failed, not that the server is unreachable'. Matching implementation in SignInForm.tsx:15-17 `const [error, setError] = useState<'invalid' | 'failed' | null>(null); /** Bumped on every failed attempt: a new alert node is announced again, even with the same text. */ const [attempt, setAttempt] = useState(0);` and :54 `{error && <p key={attempt} role=\"alert\">{t(error === 'invalid' ? 'admin.signIn.invalid' : 'admin.signIn.failed')}</p>}`. The `key={attempt}` re-announce and the 403-vs-unreachable split are exactly review findings F02/F04 and F01/F08, fixed in 79ba422, with tests added for each. RED evidence docs/qa/evidence/slice2-red-run.md: `npx vitest run src/features src/app` against compile-only stubs (AdminArea renders nothing, adminClient has no middleware): 13 failed / 24 passed; adminClient.test 3 of 5 (read and JSON-body cases pass on plain openapi-fetch), AdminGate.test 9 of 9, i18n-coverage 1 (/admin empty). 'Every failure is an assertion… No type or import errors.' e2e/admin-sign-in.spec.ts written same step, green after implementation (no recorded RED for the e2e).\n\nTASKS.MD: fully ticked (1.1; 2.1–2.5; 3.1–3.2; 4.1–4.6). 4.3 line: 'findings fixed in 79ba422 / d3030a3; 4.1 re-run PASS'. 4.4 compose smoke evidence docs/qa/evidence/slice2-compose-smoke.md. Note 2.1 says NFR-15 is backend-owned so untraced (follows review F03, which caught the frontend claiming NFR-1/NFR-15).\n\nSPEC SCENARIOS OWNED (specs/admin-access/spec.md, ADDED): Admin sign-in screen: No session, Wrong password, Session ends while signed in. CSRF header on admin mutations: Sign-out. (4 scenarios; review F10 coverage summary counted 7 incl. store-level: 6 implemented, 1 partial = F04, then fixed.)\n\nREVIEW-FINDINGS.JSON: `\"clean\": true`, generatedAt 2026-10-04T14:58:54Z. Dimensions: correctness 2 confirmed/1 contested/2 rejected; spec-compliance 6/1/2; security 0; visual 0. 10 findings, all status fixed (none waived): F01 minor sign-out reports 403 as unreachable; F02 minor second wrong password not re-announced; F03 MAJOR frontend traces NFR-1/NFR-15 owned by backend (AdminGate.test.tsx:1); F04 MAJOR 'Wrong password' scenario only partly met; F05 ticked task 3.1 names non-existent useAdminSession; F06 tasks.md vs stale current-state.md (fixed d3030a3); F07 undocumented UI states (checking, unreachable+retry, failures); F08 403 sign-out shown as unreachable; F09 raw font-weight/rem in feature CSS; F10 coverage summary 6/1/0/0."
+          },
+          {
+            "slice": "implement-authoring-tasks-ui",
+            "evidence": "ARCHIVE: openspec/changes/archive/2026-10-04-implement-authoring-tasks-ui (proposal, design, tasks, review-findings.json, specs/content-authoring/spec.md).\n\nGIT LOG: not runnable (Bash disabled; shared reflog denied). In-repo commit refs: review fix 37534ca (6 majors + 11 minors); archive trailer per tasks 4.6 `Slice: implement-authoring-tasks-ui` + `Refs: FR-1, FR-2, FR-3, FR-4, FR-6, FR-7, FR-8, FR-10, FR-11, FR-13, NFR-8, NFR-17`. Review baseRef main, generated 2026-10-04T18:19:48Z.\n\nCHANGED FILES (tasks §3 + findings): src/features/admin-access/{AdminLayout.tsx, problem.ts, useObjectUrl.ts}; src/features/sources/{SourcesScreen.tsx, SourceViewerScreen.tsx, PdfViewer.tsx, pdf.ts, page.ts, upload-limits.ts}; src/features/tasks/{taskForm.ts, TaskEditorScreen.tsx, PartEditor.tsx, ImagesEditor.tsx, TaskListScreen.tsx, PreviewScreen.tsx}; src/features/task/TaskView.tsx (child view, Czech); src/i18n/{en.ts, cs.ts, format.ts}; routes with example queries; tools NFR-8 recorder + docs/qa/demo-recordings/nfr8-task-entry/. Tests: taskForm.test.ts, TaskEditorScreen.test.tsx (8 @trace), TaskListScreen.test.tsx, PreviewScreen.test.tsx, SourcesScreen.test.tsx, PdfViewer.test.tsx, SourceViewerScreen.test.tsx, upload-limits.test.ts, pdf.test.ts, page.test.ts, problem.test.ts, AdminLayout.test.tsx, format.test.ts, TaskView.test.tsx; e2e/authoring-sources.spec.ts, e2e/authoring-tasks.spec.ts (7 @trace), e2e/authoring-preview.spec.ts.\n\nTESTS vs IMPLEMENTATION: taskForm.test.ts cases (:47–:337) pin the form model: 'never reuses a key still in use after a part was removed'; 'keeps accepted answers as entered (notation matters)'; 'sends hints in order (FR-7)'; 'sends only the translated texts that were entered, keyed by locale and part key (FR-8)'; 'moves and removes translated hints with the Czech ones, padding a shorter translation'; 'removes a part with its translated label and options'; 'removes an option and moves the later translations up a letter'; 'refuses exact decimal places that are not a whole number from 0 to 6'. Implementation taskForm.ts:114 `exactDecimals: part.type === 'DECIMAL' && part.exactDecimals.trim() ? Number(part.exactDecimals) : null` paired with the new validation test (:337) is review F03 (NaN serialised to null); the translation-move/remove tests (:304–:320) are F01/F02 (orphaned translation keys on hint/option removal). All in 37534ca. RED evidence docs/qa/evidence/slice5-red-run.md: `npx vitest run` against compile-only stubs: 143 failed / 162 passed (305), 16 of 23 files; TaskEditorScreen 34/34, TaskListScreen 16/16, PreviewScreen 16/16, taskForm 16/18 (two move/off-end cases pass on identity stub), SourcesScreen 14/14, PdfViewer 11/11, upload-limits 5/7, page 1/12 (refusals pass on null stub); e2e chromium 14 failed of 14 (screens render nothing). `npx tsc -b` passed.\n\nTASKS.MD: fully ticked (1.1; 2.1–2.6; 3.1–3.6; 4.1–4.6). Caveat ticks: 2.5 eval case 'left planned (evals are SKIP-planned and need a judge this run cannot call)' (review F14 waived on that basis); 4.1 reads '`Overall result: Pass`' without an inline evidence pointer (later slices add one).\n\nSPEC SCENARIOS OWNED (specs/content-authoring/spec.md, ADDED): Source upload screen: Upload a source, Wrong file type refused before upload, Server refusal inline. PDF viewer with page jump: Jump to a page keeps the form, Invalid page. Keyboard-first task editor: Sticky source and page, Part error inline, Timed single-part entry. Task images in the editor: Attach and reorder. Task list with filters, provenance and bulk publish: Combined filters, No match, Open source at the task's page, Bulk publish. Preview and answer tester screen: Tester verdict, Translation toggle, No hint control without hints. Externalized authoring strings: Pseudo-catalog render. (17 delta scenarios; store scenario 'Preview matches the child task screen' deferred to slice 7, F15.)\n\nREVIEW-FINDINGS.JSON: `\"clean\": true`. Dimensions: correctness 11 confirmed/0/1 rejected; security 1/0/1; spec-compliance 8/0/1; visual 2/0/2. 22 findings: 17 fixed in 37534ca, 5 waived. Majors fixed: F01 hint removal misaligns translations; F02 option/part removal leaves orphan translation keys; F03 non-numeric exactDecimals dropped; F04 overlapping pdf.js renders unhandled; F05 bulk publish includes filter-hidden tasks; F21 visual inverted button styles. Minors fixed incl. F12 security: sign-out/idle leaves admin data (answer specs, PDFs) in QueryClient. Waived: F13 coverage summary (16/17 implemented, 1 partial = F15); F14 ticked 2.5 has no artifact (eval SKIP-planned); F15 preview-vs-child pixel parity deferred to slice 7; F20 translation toggle reaches only first locale (MVP has one); F22 NFR-8 still taken after reset (intended)."
+          },
+          {
+            "slice": "implement-authoring-missions-ui",
+            "evidence": "ARCHIVE: openspec/changes/archive/2026-10-05-implement-authoring-missions-ui (proposal, design, tasks, review-findings.json, specs/content-authoring/spec.md).\n\nGIT LOG: not runnable (Bash disabled; shared reflog denied). In-repo commit refs: review fix fcaf268 (2 majors + 6 minors); archive trailer per tasks 4.6 `Slice: implement-authoring-missions-ui` + `Refs: FR-9, FR-55`. Review baseRef e57bb4d, run trace/workflow-runs/20261004-203224-review-gate.json, generated 2026-10-04T20:37:06Z.\n\nCHANGED FILES (tasks §3, RED doc, findings): src/features/missions/{api hooks, missionForm.ts, MissionListScreen.tsx, MissionEditorScreen.tsx}; src/features/sources/SourceEditScreen.tsx (+ 'Edit' link in SourcesScreen); src/features/tasks/TaskStatusPanel.tsx; src/features/admin-access/{AdminLayout nav entries, ConflictAlert.tsx, DeleteControl / inline confirm, problem.ts problemConflicts}; src/i18n/en.ts; routes with example queries. Tests: missionForm.test.ts, MissionListScreen.test.tsx, MissionEditorScreen.test.tsx, SourceEditScreen.test.tsx, TaskStatusPanel.test.tsx, ConflictAlert.test.tsx, AdminLayout.test.tsx, SourcesScreen.test.tsx, problem.test.ts, i18n-coverage; e2e/authoring-missions.spec.ts, e2e/authoring-edit.spec.ts.\n\nTESTS vs IMPLEMENTATION: TaskStatusPanel.test.tsx cases (:35–:138): 'publishes a draft task and unpublishes it again'; 'a task in a published mission cannot return to draft: the refusal names the mission'; 'deletes an unused draft task after confirming'; 'disables delete with an explanation offering to unpublish (Task with attempts cannot be deleted)'; 'shows a delete refused by the server with its reason and the mission'; 'publishing waits while the form has unsaved edits, since it acts on the stored task (review F01)'; 'a refused topic change of a task in a mission names the mission'. Implementation TaskStatusPanel.tsx:24-25 `/** The editor's form differs from the stored task: publishing would act on the stored copy. */ dirty: boolean;` and :74-77 `<Button disabled={busy || saving || dirty} onClick={() => void changeStatus()}>… {dirty && <span className=\"admin-muted\">{t('admin.taskStatus.saveFirst')}</span>}`; delete at :111 `disabled={!task.deletable || busy || saving}`. The `dirty` guard is review major F01 (publish enabled while form has unsaved edits) fixed in fcaf268 with the test tagged 'review F01'. MissionEditorScreen.test.tsx covers position refusals inline (:111 it.each ['', '0', 'abc', '1,5', '1000']), server duplicate position (:122), refused task on its row (:226), state-rule refusal (:239). RED evidence docs/qa/evidence/slice6-red-run.md: `npx vitest run` on compile-only stubs: 74 failed / 358 passed (432), 10 of 30 files: MissionEditorScreen 27/27, SourceEditScreen 10/10, TaskStatusPanel 9/9, missionForm 9/20 (refused positions pass on null stub), ConflictAlert 6/7, MissionListScreen 4/4; failures 54 element-not-found + 12 AssertionError, no import error. e2e chromium 13 failed of 13 (8 missions, 5 edit).\n\nTASKS.MD: fully ticked (1.1; 2.1–2.6; 3.1–3.5; 4.1–4.6). 2.5 ticked as 'Disposition recorded — eval case NOT delivered, deferred'. 4.1 now carries evidence pointer docs/qa/automated-verification-latest.md (review F05 had flagged the bare 'Overall result: Pass'). 4.4 ticked as 'Handed to the owner — real-stack smoke NOT run in this change' (owner smoke recorded later in current-state.md: merged 945dee8, PASS 2026-10-05).\n\nSPEC SCENARIOS OWNED (specs/content-authoring/spec.md): ADDED Mission list screen: Missions listed, No missions. Mission editor: Create a mission with ordered tasks, Counter is a target not a limit, Position refused inline, The 50-task maximum, Search the topic's tasks, Reorder a saved mission. Publishing and deleting with clear refusals: Publish refused for a draft task, Publish a valid mission, Task unpublish refused by a published mission, Save before publishing, Task save refused while the task is in a mission, Blocked delete, Delete an unused mission. Source metadata edit: Edit the edition, No file field, Source delete refused. MODIFIED Externalized authoring strings: Pseudo-catalog render. (19 scenarios; 'Search the topic's tasks' was added to the delta after review F06 scope-drift.)\n\nREVIEW-FINDINGS.JSON: `\"clean\": true`. Dimensions: correctness 3 confirmed/1 contested/1 rejected; security 0; spec-compliance 3/0/5 rejected; visual 2/0/0. 9 findings: 8 fixed in fcaf268, 1 waived. Majors: F01 publish enabled with unsaved edits (fixed); F07 visual: no rendered screenshots of any slice-6 screen (fixed: 5 clips in docs/qa/demo-recordings/slice6-authoring-missions/). Minors fixed: F02 stale save-error alert; F03 no shared busy guard; F04 tasks 2.5 ticked without eval; F05 4.1 'Overall result: Pass' without evidence pointer; F06 task-picker search had no requirement; F09 source grade select shows a value it does not submit. Waived F08 (about the slice-5 NFR-8 still, already waived as slice 5 F22)."
+          },
+          {
+            "slice": "implement-practice-flow-ui",
+            "evidence": "ARCHIVE: openspec/changes/archive/2026-10-05-implement-practice-flow-ui (proposal, design, tasks, review-findings.json, specs/practice-flow/spec.md, .openspec.yaml).\n\nGIT LOG: not runnable (Bash disabled; shared reflog denied). In-repo commit refs: review fix 4a6bd98 (1 major + 13 minors, also folds in the backend half's error behaviour); archive trailer per tasks 4.6 `Slice: implement-practice-flow-ui` + `Refs: FR-22, FR-24..FR-31, NFR-5, NFR-7`; merged into main as 1ec25de (current-state.md). Review baseRef 4a38c1d, run trace/workflow-runs/20261005-064844-review-gate.json, generated 2026-10-05T06:55:21Z.\n\nCHANGED FILES: src/app/ (navigate, Link, route re-render; `/` becomes HQ); src/features/child/ (client, ChildLayout, load/not-found); src/features/hq/{HqScreen.tsx, api.ts}; src/features/mission/MissionScreen.tsx; src/features/task/{TaskScreen.tsx, practice.ts, ReportDialog.tsx, hints, translation toggle}; src/i18n/cs.ts; src/test/fake-child-backend.ts (contract stub); tools/record-slice7.mjs + docs/qa/demo-recordings/slice7-practice-flow/. Tests: practice.test.ts (4 @trace), TaskScreen.test.tsx (9 @trace), HqScreen.test.tsx, MissionScreen.test.tsx, navigation.test.tsx, App.test.tsx; e2e/practice-hq.spec.ts, practice-task.spec.ts, practice-help.spec.ts, practice-resume.spec.ts, practice-timing.spec.ts (NFR-5, stack-only).\n\nTESTS vs IMPLEMENTATION: practice.test.ts describes (:52–:155): 'part states from the stored task (FR-27, FR-31)': leaves every part editable before the first attempt; locks a part correct on attempt 1 with its stored value and leaves the wrong part editable; reveals every part after the second wrong attempt; 'what a submission sends (FR-26, FR-27)': sends every part, typed as text and choice as option keys; leaves out a part locked as correct (OQ-11); 'input and display helpers': keeps at most 100 code points, counting an emoji once; writes a decimal point as the Czech comma; 'applying an answer (FR-22, FR-27)': a graded result moves attempts/state/feedback; an unreadable submission changes nothing (no attempt used). Implementation practice.ts: `MAX_ANSWER_CODE_POINTS = 100` (:24); `czechNumber` `value.replace(/(\\d)\\.(\\d)/g, '$1,$2')` (:32); `partStates(task)` reads lastFeedback and `revealed = task.state === 'REVEALED'` (:46); `answersToSend` maps only `openParts(task)` (:72); `clampCodePoints` slices `[...value]` by code points (:93); `applyResult` returns the task unchanged when `result.status !== 'GRADED'` (:113-114) — the UNPARSEABLE-costs-nothing rule. Review F04/F10 (ReportDialog maxLength counted UTF-16 units next to the code-point clamp) and F03/F09 (revealed part kept the wrong value as prominent input) were fixed in 4a6bd98. RED evidence docs/qa/evidence/slice7-red-run.md: practice.ts stubbed to identity values, screens render nothing; `npx vitest run`: 83 failed / 448 passed (531): TaskScreen 44/44, practice 13/14 (the unreadable-submission case passes on the identity stub), HqScreen 9/9, MissionScreen 7/7, App.test 4 (HQ at root + NFR-7 click paths); 61 element-not-found, 14 AssertionError, 1 TypeError. e2e chromium: 35 failed, 3 passed (unchanged NFR-3 guard), 2 skipped (NFR-5 stack-only).\n\nTASKS.MD: fully ticked (1.1; 2.1–2.6; 3.1–3.7; 4.1–4.6). 4.1 explicitly states 'NFR-5 itself is NOT measured in this change… only the frontend share of the load budget is (e2e/practice-timing.spec.ts, against the contract stub)' (follows review major F17). 4.4 'Handed to the owner — real-stack smoke NOT run in this change' (owner smoke PASS 2026-10-05 per current-state; NFR-5 stack measurement still listed under Scope NOT delivered).\n\nSPEC SCENARIOS OWNED (specs/practice-flow/spec.md, ADDED): HQ screen: Fresh browser lands on HQ, Missions with their states, Draft mission not listed, Continue in one click. Mission briefing screen: Start in two clicks, Unknown mission. Task screen practice: Keyboard-only submission, Wrong then revealed, Unreadable input costs nothing. Hints, translation and reports: Hints in order, Toggle remembered, Other needs a note. Save and resume: Server unreachable then back, Lost response. (14 scenarios; review F07: 14 implemented, 0 partial.)\n\nREVIEW-FINDINGS.JSON: `\"clean\": true`. Dimensions: correctness 6 confirmed/1 contested/1 rejected; security 0; spec-compliance 5/1/2; visual 4/0/2. 17 findings: 14 fixed in 4a6bd98, 3 waived. Only major: F17 (contested) 'NFR-5 is never measured, yet task 4.1 is ticked with Overall result: Pass' (e2e/practice-timing.spec.ts:16) — fixed by honest scoping. Minors fixed: F01 submit applies result to stale task; F02 translation toggle mismatch; F03/F09 revealed part shows wrong value; F04/F10 UTF-16 maxLength; F05 409 no-hint-left stale; F06 HQ shows cached progress; F08 focus lost when hint button disables; F12 attempt pips inverted; F15 report error styling; F16 400/413 shown as lost response. Waived: F11 extra fallback alerts without spec backing; F13 revealed '7' not '7,0' (shows author's entry); F14 empty orange field after resume (intended)."
+          },
+          {
+            "slice": "implement-gamification-ui",
+            "evidence": "ARCHIVE: openspec/changes/archive/2026-10-07-implement-gamification-ui (proposal, design, tasks, review-findings.json, specs/gamification/spec.md, specs/practice-flow/spec.md).\n\nGIT LOG: not runnable (Bash disabled; shared reflog denied). In-repo commit refs: review fix 79f9993 (2 majors + 8 minors, none waived); first full-run commit 3c666a7 (Firefox flakes); archive trailer per tasks 4.6 `Slice: implement-gamification-ui` + `Refs: FR-32, FR-33, FR-36, FR-37, FR-38, FR-39`; merged into main as b4b9d81. Review baseRef 48b9ff6, run trace/workflow-runs/20261007-095548-review-gate.json ($14.28), generated 2026-10-07T10:02:52Z.\n\nCHANGED FILES (review scope + tasks §3): src/features/rank/{rank.ts, RankUpCelebration, RankPanel, RankLine, rank.css}; src/features/hq/ (progress panel, pending celebration); src/features/summary/SummaryScreen.tsx (/summary); src/features/mission/{MissionScreen.tsx, useReplay.ts}; src/features/task/ (XP on correct/revealed, bonus line, mid-mission celebration, 'Výsledky mise'); src/features/skin/ deny-list; src/i18n/cs.ts; src/test/fake-child-backend.ts extended; tools/record-slice8.mjs + docs/qa/demo-recordings/slice8-gamification/; e2e/a11y.spec.ts CELEBRATIONS. Tests: rank.test.ts, RankUp.test.tsx, HqProgress.test.tsx, SummaryScreen.test.tsx, TaskXp.test.tsx, MissionScreen.test.tsx, denylist.test.ts; e2e/gamification-hq.spec.ts, e2e/gamification-summary.spec.ts.\n\nTESTS vs IMPLEMENTATION: rank.test.ts (:9–:32): '275 XP under the placeholder ladder: 125 of 250 XP towards the 3rd rank'; 'a fresh profile: an empty bar at 0 of 150 XP'; 'right at a threshold the bar starts empty again'; 'the top rank: a full bar marked as the highest rank, no next target'; 'never leaves 0–100 %, whatever the server sends'; 'groups thousands with a no-break space'. Implementation rank.ts:19-22 `export function xpProgress({ totalXp, rank, nextRank }) { if (!nextRank) return { have: 100, need: 100, percent: 100, top: true }; const need = nextRank.minXp - rank.minXp; const have = Math.min(need, Math.max(0, totalXp - rank.minXp));` and :27-29 `formatXp` = `toLocaleString('cs-CZ', { useGrouping: true }).replace(/\\s/g, ' ')`. Review majors F01/F04 ('+0 XP' sticker and 'Získala jsi 0 XP.' on a first run) resolved with 'SummaryScreen renders the XP sticker… only when xpEarned > 0; test SummaryScreen.test.tsx \"a first run that earned no XP\"'; F02 shared useReplay hook with 409 handling; F03 child.task.bonusMany for several missions (TaskXp.test.tsx). RED evidence docs/qa/evidence/slice8-red-run.md: rank.ts stubbed to a fixed empty bar, RankUpCelebration/SummaryScreen render nothing, parseDenyList/findDenied return []; `npx vitest run`: 56 failed / 556 passed (612): SummaryScreen 17/17, HqProgress 9/9, rank 6/6, RankUp 6/7, MissionScreen 6, TaskXp 5/10 (the +10 XP on correct already held from slice 7), denylist 3/5 ('catalog and asset scans pass vacuously on the empty matcher'); slice 7 suites stayed green on the extended stub (550/550). e2e chromium: 23 failed, 9 passed (other routes' a11y scans caught by --grep).\n\nTASKS.MD: fully ticked (1.1; 2.1–2.6; 3.1–3.7; 4.1–4.6). 3.7 carries evidence (manifest.json, docs/qa/vision-report.md, trace/workflow-runs/20261007-101043-vision-verify.json: 8 of 8 met and readable) — it was unticked at review time (F05). 4.1 records 616 unit tests, 552 e2e passed, 1 flaky (firefox practice-timing on retry), 23 skipped, plus an earlier failed run of 3c666a7 (Firefox crashes). 4.4 'Handed to the coordinator — real-stack smoke NOT run in this change' (PASS 2026-10-07 after merge per current-state; the celebration itself not played on the stack).\n\nSPEC SCENARIOS OWNED: specs/gamification/spec.md ADDED — HQ progress panel: Bar inside a rank, Fresh profile, Top rank. Rank-up celebration on the child screens: Task award crosses a threshold, Pending rank-up on HQ plays once, Reduced motion. No negative mechanics: Wrong answer shows no XP change, Revealed answer shows +1 XP. Theme text only in the skin: No borrowed IP, The check catches a borrowed term. specs/practice-flow/spec.md ADDED — Mission-complete screen: Summary after the last task, Last task revealed, Rank-up earlier in the mission. Replay from the briefing and the summary: Replay starts fresh, Replay earns no XP, Resume an unfinished replay. XP still to earn on the briefing: New mission, Complete mission (added after review F09). (18 scenarios.)\n\nREVIEW-FINDINGS.JSON: `\"clean\": true`. Dimensions: correctness 3 confirmed/1 contested/3 rejected; security 0/0/1; spec-compliance 3/2/4; visual 1/0/3. 10 findings, all fixed in 79f9993, none waived, each with a `resolution` string. Majors F01/F04 '+0 XP' on first-run summary. Minors: F02 summary replay ignores 409; F03 bonus copy singular; F05 task 3.7 unticked despite evidence; F06 mid-mission celebration not axe-scanned (added to e2e/a11y.spec.ts CELEBRATIONS); F07 stub data inconsistent (XP without solved tasks; recorder now prepares 5 solved/90 XP); F08 vision evidence not covering every FR claimed (re-judged 8/8); F09 'Můžeš získat až {xp} XP' lacked a requirement (delta added); F10 'Replay earns no XP' had hard-coded 0, now formats server xpEarned."
+          },
+          {
+            "slice": "implement-progress-stats-ui",
+            "evidence": "ARCHIVE: openspec/changes/archive/2026-10-07-implement-progress-stats-ui (proposal, design, tasks, review-findings.json, specs/progress-stats/spec.md).\n\nGIT LOG: not runnable (Bash disabled; shared reflog denied). In-repo commit refs: review fixes bd732c8 (+ test 8a40a4e); archive trailer per tasks 4.6 `Slice: implement-progress-stats-ui` + `Refs: FR-40, FR-41`; merged into main as d08f576 with the backend half. Review baseRef 14ded76, run trace/workflow-runs/20261007-195534-review-gate.json ($11.59), generated 2026-10-07T20:01:51Z.\n\nCHANGED FILES (review scope + tasks §3): src/features/stats/{api hook, stats.ts view model, StatsScreen.tsx}; src/features/reports/{api hooks, ReportsScreen.tsx, reports.ts, reports.css}; src/features/admin-access/AdminLayout.tsx nav entries ('Stats', 'Flag queue'); src/i18n/{en.ts, format.ts} numeric ISO admin dates (Europe/Prague); routes /admin/stats, /admin/reports; src/test/fake-progress-backend.ts wired into fake-admin-backend.ts; provenance row for the stub seed; playwright.config.ts gained opt-in PW_WORKERS cap. Tests: stats.test.ts, StatsScreen.test.tsx, ReportsScreen.test.tsx, AdminLayout.test.tsx, routes.test.ts, i18n-coverage; e2e/progress-stats.spec.ts (FR-40), e2e/flag-queue.spec.ts (FR-41).\n\nTESTS vs IMPLEMENTATION: stats.test.ts (:33–:112): 'defaults to 5 weeks, so the current week and all four metric weeks are shown, and offers up to 52'; 'lists the newest week first and marks the current week and the four metric weeks'; 'marks a metric week with fewer than 3 qualifying sessions as short, never the current week'; 'marks no week short when the metric is met'; 'names the metric weeks that fell short when the metric is not met, oldest first'; 'is not shown when a topic has a resolved task (practice before the shown weeks), so short weeks are marked'; 'is shown only when no week has a session, a hint or a reveal'; 'has no value when nothing is resolved (shown as —, never 0 %)'; 'shows a week start as a calendar date, never shifted by the time zone'. Implementation stats.ts: `weekRows(stats)` (:32) computes `const empty = noPractice(stats);` (:35) and `short: metric && !stats.metricMet && !empty && w.qualifyingSessions < METRIC_SESSIONS` (:44); `shortWeeks` (:56) filters rows oldest first; `noPractice(stats)` (:68). The 'practice before the shown weeks' test and the `empty` term in :44 are review majors F02/F07 (empty state decided from shown weeks only hid every Short mark), fixed in bd732c8. ReportsScreen focus-after-409 (majors F01/F08) and the e2e wrap assertion that could never fail (F04/F09, e2e/flag-queue.spec.ts:122-125) were also fixed there. RED evidence docs/qa/evidence/slice9-red-run.md: stats.ts stub offers 4 weeks, no rows, noPractice false; screens render nothing; targeted `npx vitest run …`: 45 failed / 44 passed (89): stats 10/12 ('two \"nothing short when the metric is met\" checks pass vacuously on the empty stub'), StatsScreen 8/9, ReportsScreen 22/22, AdminLayout 1, i18n-coverage 4. One test ('says loading failed') first failed for a wrong reason and was corrected before the RED record. e2e chromium: 18 failed, 0 passed (6 FR-40, 6 FR-41, 6 gate scans). Logs ../scratch/s9-frontend-red-*.log (outside repo).\n\nTASKS.MD: fully ticked (1.1; 2.1–2.6; 3.1–3.4; 4.1–4.6). 4.1: 673 unit (100% coverage), 636 e2e passed, 0 flaky, 24 skipped with `CI=1 PW_WORKERS=2`; earlier 4-worker runs failed on Firefox timeouts. 4.3 names bd732c8 + 8a40a4e, 1 waived. 4.4 'Handed to the coordinator — real-stack smoke NOT run in this change' (PASS 2026-10-08 after merge per current-state, evidence in ../backend). No recordings in this slice (FR-40/FR-41 e2e-only per trace/acceptance-contracts.json); Phase 6 later added rec-stats and rec-flag-queue clips.\n\nSPEC SCENARIOS OWNED (specs/progress-stats/spec.md, ADDED): Admin stats page: Metric not met short week marked, Metric met, Weekly figures and session sizes, First-try rate per topic, Week count, Practice before the weeks shown, No data yet. Admin flag queue: Report with an attempt, Report without an attempt, Fix the answer spec then re-evaluate, Both verdicts on a fixed report, Replay attempt re-evaluated, Long raw input, Dismiss, Report handled elsewhere. (15 scenarios.)\n\nREVIEW-FINDINGS.JSON: `\"clean\": true`. Dimensions: correctness 6 confirmed/1 contested/1 rejected; security 0; spec-compliance 6/1/2; visual 0. 14 findings: 13 fixed in bd732c8, 1 waived. Majors: F01/F08 409 refusal moves no focus, button can unmount (ReportsScreen.tsx:58-60); F07 empty state from shown weeks only (stats.ts:36); F09 vacuous e2e 'wrapped' assertion. Minors fixed: F02 short weeks hidden; F03 'unchanged' outcome wording; F04 vacuous wrap e2e; F05 failed refetch ignored with cached data; F06/F11 stale doc comments; F10 dismiss copy; F12 coverage summary; F13 narrow part-key column. Waived F14 (contested): stub fidelity — excerpt code-point cut fixed, topic list and simplified replay rule kept because the UI renders whatever the server serves; backend notes scratch/slice9-backend-behaviour.md folded into design.md."
+          },
+          {
+            "slice": "harden-phase5-ui",
+            "evidence": "ARCHIVE: openspec/changes/archive/2026-10-08-harden-phase5-ui (proposal, design, tasks, review-findings.json, .openspec.yaml). No specs/ directory: `skip_specs: true` (review F35: checklist is PLAYBOOK Phase 5 / GATES G5 plus the proposal's What Changes).\n\nGIT LOG: not runnable (Bash disabled; shared reflog denied). In-repo commit refs: pre-fix state dc49cd2 (+ working tree); review fixes c0d0c7c (wrapper, support, specs) and cd84043 (evidence file + tasks.md); factory install 28478f9 (PD-16 from docs f04f481: gate-status G5 key e2eStack, battery member e2e-stack-evidence via scripts/check-e2e-stack.mjs). Review baseRef 54917ec, run trace/workflow-runs/20261008-045829-review-gate.json (budget-capped at $20, 10 of 88 steps failed), generated 2026-10-08T05:08:20Z. Evidence tied to frontend c0d0c7c / backend 81c0fbd.\n\nCHANGED FILES (review scope): e2e/stack/support.ts; e2e/stack/{admin-session, authoring-to-practice, practice, flag-queue, stats, seed}.spec.ts; playwright.stack.config.ts; tools/e2e-stack-run.mjs (`npm run test:e2e:stack`, `test:e2e:stack:only`); mocked suite testIgnore for e2e/stack/; ignore files; docs/qa/e2e-stack-latest.md; docs/qa/evidence/phase5-e2e-stack-runs.md; coverage ratchet baseline (`check-coverage-ratchet --update`, 100% all four metrics); scripts/gate-status.mjs + scripts/check-e2e-stack.mjs (installed, not hand-edited). No product code under src/ changed.\n\nTESTS vs IMPLEMENTATION: This slice IS test infrastructure, so the contrast is wrapper vs the review. e2e/stack @trace headers: stats.spec FR-40; seed.spec FR-24/25/26; practice.spec FR-26/27/28/32/37; authoring-to-practice.spec FR-1/3/9/24/25/26/27/37; admin-session.spec NFR-6/NFR-9; flag-queue.spec FR-30/41/55. Wrapper tools/e2e-stack-run.mjs after c0d0c7c: header ':5 always takes the stack down again: on success, failure, and on SIGINT, SIGTERM, SIGHUP'; ':11 Prints the qa-verify contract: \"Scope: <n> test(s)\" and \"Result: PASS|FAIL|NOT-EARNED\". A full run writes the G5 evidence docs/qa/e2e-stack-latest.md; a narrowed run (Playwright args) or a --keep…' does not; ':14 PASS needs every test passed: none failed, flaky, skipped or not run, and the stack taken down.'; `:26 const keep = ownArgs.includes('--keep')` (own args only, not Playwright's); `:33 for (const signal of ['SIGINT','SIGTERM','SIGHUP','SIGBREAK'])`; `:68 let result = 'NOT-EARNED'`; `:100 else if (counts.flaky) [result, reason] = ['FAIL', \\`${counts.flaky} test(s) passed only on retry\\`]`; `:114 const full = pwArgs.length === 0 && !keep` gating the evidence title 'Real-stack E2E latest' vs 'run (narrowed or kept: not G5 evidence)'. Each of these lines maps to a review finding (F01/F07/F13/F22 signals; F02/F23 failed down ignored; F03 --keep anywhere in argv; F04/F25 flaky counted as PASS; F08/F15/F24 narrowed run overwrote evidence; F21 stale results.json). support.ts:8 documents self-authored unique values per run; the pre-flight isolation guard (F10/F14) was verified manually: 'with a different expected child name it aborted before any test (\"is not the isolated e2e stack … refusing to write to it\")' (phase5-e2e-stack-runs.md). Run evidence: run 1 `--keep` fresh volumes 21 passed/0 failed/0 flaky (2.8 min) PASS; run 2 same volumes, seed idempotent ('exists (PUBLISHED)', same ids) 21 passed (1.7 min) PASS, stack taken down, owner's `doucko` containers untouched. Before the fixes (dc49cd2) 5 direct + 2 wrapper runs all green except one Firefox sign-in timeout under load (now triple time). No RED-first record exists for this slice (it adds tests, not product behaviour); the review found the committed evidence was produced from a dirty tree at a commit predating the suite (F05/F09/F16/F29, fixed in cd84043).\n\nTASKS.MD: fully ticked (1.1; 2.1–2.3; 3.1–3.4). 3.1 'Two wrapper runs green in chromium, msedge and firefox (the second against the accumulated state of the first)' with evidence pointers docs/qa/evidence/phase5-e2e-stack-runs.md and docs/qa/e2e-stack-latest.md — review F18 had found only one run evidenced and F06/F17 ticked items without artifacts; the file was rewritten in cd84043. 3.3 notes F12/F30 fixed by PD-16 (28478f9).\n\nSPEC SCENARIOS OWNED: none (skip_specs). Coverage checklist = Phase 5 of ../docs/factory/PLAYBOOK.md and G5 of GATES.md + proposal 'What Changes'. G5 previously had no mechanism for the real-stack suite (F12 CRITICAL: test:e2e stays mocked, gate-status G5 checked coverage only) — the 'declared-method-needs-mechanism' lesson applied.\n\nREVIEW-FINDINGS.JSON: `\"clean\": true`. Dimensions: correctness 6 confirmed/2 contested/2 rejected; security 5/2/1; spec-compliance 10/1/3; visual 9/0/1. 35 findings: 33 fixed (c0d0c7c ×26, cd84043 ×6 incl. duplicates, 28478f9 ×2), 2 waived. Severities: 1 critical (F12), majors F01, F06, F13, F14, F15, F16, F17, F18. Waived: F33 (contested) specs pin XP values 10/1/8/+4 which FR-34 calls configuration — kept deliberately to catch drifted defaults on the composed stack; F35 informational coverage summary. Heavy cross-dimension duplication (signals, failed down, narrowed run, flaky, week boundary each reported 3–4 times)."
+          },
+          {
+            "slice": "qa-phase6-ui",
+            "evidence": "ARCHIVE: openspec/changes/archive/2026-10-08-qa-phase6-ui (proposal, design, tasks, review-findings.json, .openspec.yaml). No specs/ directory (QA-proof change; checklist is the FRs the clips claim).\n\nGIT LOG: not runnable (Bash disabled; shared reflog denied). In-repo commit refs: review fixes 7dbaa43 (26 findings), f1c3ede (review dispositions + current-state), 8a8243a (qa:verify Pass + real-stack PASS after the code change), final code commit 2683a5b (real-stack run 3 PASS). Branch phase6-qa-proof, archived 2026-10-08, NOT merged at the time of current-state.md. Review baseRef 93c60ad, run trace/workflow-runs/20261008-181259-review-gate.json (budget-capped $9.60, 31 of 80 steps skipped), generated 2026-10-08T18:20:06Z.\n\nCHANGED FILES (review scope): e2e/recordings/admin-and-theme.spec.ts (11 clips); playwright.record.config.ts; tools/record-e2e-clips.mjs (Playwright JSON report → recordings manifest, `npm run qa:record-e2e-clips`); e2e suite testIgnore for e2e/recordings/; docs/qa/demo-recordings/phase6-admin-theme/manifest.json; docs/qa/recordings-report.md; docs/qa/a11y-report.json; docs/qa/vision-report.md; retro/corrections/001-… (COR-1 for the slice-1 waiver, via `correct.mjs --detect`); and ONE product fix: src/features/missions/MissionEditorScreen.tsx + src/features/missions/MissionEditorScreen.test.tsx (refetch the topic task list after a publish/unpublish or a refused status change). Proposal originally said 'No product behaviour changes' (F17, corrected).\n\nTESTS vs IMPLEMENTATION: Product fix came from a vision-verify miss, not a spec: clip slice6-mission-create-reorder-publish showed a published mission editor with tasks still 'Draft'. docs/qa/evidence/phase6-red-run.md: test 'after a publish, the task rows show the tasks published meanwhile, not a stale Draft (vision-verify phase 6)' run before the fix → `AssertionError: expected [ <span …(1)></span>, …(1) ] to have a length of +0 but got 2`, `Tests 1 failed | 33 skipped (34)` — 'RED on the assertion (2 rows still Draft after the successful publish), not on setup.' Review F05/F08/F19/F29 then found the catch branch untested ('removing it keeps the suite green'); a second test 'after a refused publish, the task rows show a task published meanwhile (review F08)' was run with the branch removed → `expected … length of 1 but got 2`, then restored (60/60). Implementation MissionEditorScreen.tsx:103-109 `await queryClient.invalidateQueries({ queryKey: ['admin','task'] }); await refreshTaskRows();` with `/** The rows show each task's status: tasks published or unpublished elsewhere must not stay stale. */ async function refreshTaskRows() { await queryClient.invalidateQueries({ queryKey: TASKS_KEY });` and the catch path :160-161 `setActionError(error); await refreshTaskRows();`. Clips (admin-and-theme.spec.ts): :38 rec-source-upload (FR-1, now sets grade+subject); :60 rec-pdf-beside-editor (FR-2 side by side); :81 rec-task-images (FR-4); :109 rec-parts-hints-translations (FR-6/7/8, now asserts part-label translation entered by admin); :139 rec-preview-tester (FR-10/7/8); :163 rec-task-list-provenance (FR-11/13, now all six filters); :198 rec-skin-hq 'the rank names are skin data (a swapped ladder renames the rank on HQ) and no deny-listed term shows (FR-39)' (was asserting only the deny-list, F10/F21); :221 rec-theme-{light,dark} (FR-58); :245 rec-stats (FR-40); :265 rec-flag-queue (FR-41, dismiss + fix + re-evaluate +4 XP). Real-stack runs at 8a8243a: run 1 20 passed / 1 failed (msedge source upload 'no server answer' under 1.4 h load) → FAIL, not retried; run 2 21 passed PASS; run 3 at 2683a5b 21 passed PASS (docs/qa/e2e-stack-latest.md). Recorded 'as a load flake to watch, not a pass'.\n\nTASKS.MD: fully ticked (1.1–1.2; 2.1–2.4; 3.1–3.3). 1.2 '11 of 11 clips asserted; check-recordings PASS; check-traceability --release --strict-tests --strict-recordings PASS'. 2.2 eval ratchet SKIP-planned (no MVP requirement declares eval). 2.3 vision-verify 'over the clips without a verdict; act on failures' — but after 7dbaa43 the 11 re-recorded phase6 clips have OPEN verdicts (F16 waived; current-state 'Next task' lists the re-run). 3.1–3.3 were ticked without artifacts at review time (F18 MAJOR) and completed before handoff in f1c3ede / 8a8243a. Note: docs/qa/traceability-report.md currently reads 'Result: FAIL (1 failure)' solely because the unarchived active change release-review-ui exists (Phase 7 work, outside this slice).\n\nSPEC SCENARIOS OWNED: none in the change; coverage checklist = FRs claimed by the clips: FR-1, FR-2, FR-4, FR-6, FR-7, FR-8, FR-10, FR-11, FR-13, FR-39, FR-40, FR-41, FR-58 plus FR-9/FR-57 for the mission-editor fix (test describe 'publishing (FR-9, store rules FR-57)').\n\nREVIEW-FINDINGS.JSON: `\"clean\": true`. Dimensions: correctness 5 confirmed/1 contested/3 rejected; security 3/2/2; spec-compliance 12/1/0; visual 9/0/0. 33 findings: 26 fixed in 7dbaa43, 1 fixed in f1c3ede (F18), 6 waived. Majors: F01/F11/F22 FR-11 clip never exercised grade/topic/modality filters; F10/F21 FR-39 clip asserted deny-list not swappable skin; F12 FR-8 clip asserted seed data; F14 recorder silently dropped expected clips; F18 ticked 3.1–3.3 without artifacts. Waived: F09 coverage summary; F16 re-recording wipes stored vision verdicts (by design, re-judge open); F20/F26 FR-58 no-toggle heuristic selector (exhaustive check lives in e2e/theme.spec.ts); F25 FR-4 child-side display asserted elsewhere (practice-task.spec.ts); F30 FR-7 hint-less task covered by practice-help tests."
+          }
+        ]
+      }
+    },
+    {
+      "label": "judge:implement-platform-foundation-ui:process-order",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 4 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 5025,
+      "durationMs": 56653,
+      "sessionId": "fad575a5-6012-4047-9f8f-52e14e2644ab",
+      "costUsd": 0.9331030000000001,
+      "numTurns": 8,
+      "result": {
+        "score": 65,
+        "pass": false,
+        "criteriaMet": [
+          "1. CRITICAL: tests written from the spec, existed with/before implementation — test files carry `// @trace FR-58 / NFR-3 / NFR-4 / NFR-6 / NFR-9 / NFR-12 / NFR-13` headers matching the requirement ids in tasks.md §2; RED-listed test names map one-to-one onto spec scenarios (e.g. 'light OS › / uses the light theme', 'no control switches away from the light theme' ↔ Dark OS/Light OS/No toggle; 'reduced motion › / runs no animation' ↔ Reduced motion; 'answers a missing built asset 404, not the SPA page' ↔ Missing asset; 'proxies the API with the original host and client address' ↔ API through origin/Spoofed client address; 'fails the build when the pinned contract is missing' ↔ Image build without the contract; provenance 'licensed asset needs its licence file' ↔ Licensed asset without its licence). slice1-review-fixes.md records a genuine RED run before implementation changed: 'Tests  28 failed | 32 passed (60)' plus 9 e2e failures ('[data-route=\"/\"] not found (App ignored the URL)'), and the RED run found real gaps (unlisted e2e/fixtures/test.ts, font borrowing another licence). Met, but only partially evidenced: the original tests (tasks 2.1–2.7) have no recorded RED run, covered by an explicit owner waiver (slice1-task-2.8-red-run.md: 'no failing run was recorded ... cannot be recorded truthfully now')."
+        ],
+        "criteriaMissed": [
+          "2. spec → tests(red) → implement(green) → review → archive with review-findings.json present and clean:true — review-findings.json is `\"clean\": false` with two findings (F01, F02) verdict 'contested', status 'fixed' in 442dd3a, closed only via the owner `signOff` field ('Accepted after round 10 without a further review round'); tasks.md 4.3 claims '(clean: true)' but the archived file contradicts it. The tests(red) step was waived for the original tests (task 2.8 WAIVED, later filed as correction COR-1), so the canonical order is evidenced only for the review-fix cycle, not the slice's first implementation."
+        ],
+        "reasoning": "The critical criterion holds: every test file traces a requirement id and the RED-run test names in slice1-review-fixes.md line up with the archived spec's 20 scenarios, with a documented 28-failed/9-e2e-failed run before the implementation changed. But the full ordered process is not evidenced as the rubric specifies: the original RED run was waived by owner (no evidence, only a waiver file), and the archived review-findings.json is clean:false, closed by a sign-off field rather than a further clean review round, while tasks.md 4.3 still asserts 'clean: true'. One of two criteria is missed outright and the critical one is only partially evidenced, so the score lands below the pass line."
+      }
+    },
+    {
+      "label": "judge:implement-platform-foundation-ui:test-integrity",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 4 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 4966,
+      "durationMs": 106756,
+      "sessionId": "2dfac9af-28b1-42d9-a83c-896079b09169",
+      "costUsd": 1.7728325,
+      "numTurns": 23,
+      "result": {
+        "score": 84,
+        "pass": true,
+        "criteriaMet": [
+          "CRITICAL 1: no test weakened, skipped or deleted to go green; assertions meaningful. The only test-side edit documented in slice1-review-fixes.md ('Failure 5 was a bug in the test, not the guard: passing `undefined` re-applied the env default, so the \"missing name\" case now passes `\\'\\'`') made the test exercise the intended case; the surviving assertion is `await expect(expectNoRealName(page, '', true)).rejects.toThrow(/DOUCKO_CHILD_DISPLAY_NAME/)` (e2e/app-shell.spec.ts:42). Round-10 fix 442dd3a strengthened, not loosened, the guard: the `named` list gained `'isdark'`, `'appdark'`, `'nodark'`, `'darkmodes'`, `'lightthemes'` and the regex prefix/suffix alternation was widened (theme-source.test.ts:34,128-132). The only skip in slice files is spec-mandated anti-vacuity: `test.skip(activated === 0, 'no control on this screen; covered by src/app/theme-source.test.ts')` (theme.spec.ts:66) matches spec 'reports the check as skipped, never passed'. `test.slow(...)` calls carry 'triple the time, never the assertions'. Anti-tautology guards are present: `expect(files.length).toBeGreaterThan(0)` (theme-source:151, provenance:106), `expect(contract.length).toBeGreaterThan(30)` (contract-client:32), `expect(routes.length).toBeGreaterThan(0)`. Every test named in the RED run list (App.test routes/not-found/title, i18n-coverage, container-config, 15 lint invalid cases, provenance) still exists with its assertions.",
+          "2: edge/locale/boundary cases are asserted. Lint rule: all five spec examples are in `invalid` (`<h1>Doučko</h1>`, `aria-label=\"Zavřít\"`, `{ok ? \"Hotovo\" : t(\"x\")}`, `{`Úroveň ${n}`}`, `<Icon name=\"check\" label=\"Hotovo\" />`) plus `valid` Intl/toLocale cases with Czech locale. Coverage check self-tests malformed `'⟦a'`, concatenation `'⟦Doučko⟧ navíc'`, separator-only `' · '`. Provenance: fixture with `licensed:` origin, missing author, listed-but-absent file, row without backticks, font named like a licence (`C-OFL.woff2`), docs/qa recording exemption with `../` path rejected. nginx 421: positive `['127.0.0.1','192.168.1.20']` and negative `['evil.example','127.0.0.1.evil.example','localhost.evil.example']`. Real-name guard uses `toLocaleLowerCase('cs')` and asserts the error message `not.toContain('hrdinka')`; both the against-stack-missing and non-stack cases are asserted. routePath boundaries `/index.html`, `//`, `/admin//`. Theme: both schemes on every screen with exact `--paper` rgb and `[data-theme]` count 0 after every control activation; reduced motion sampled at 0 and 500 ms counting `pending`. cs/en catalogs asserted to share no key and keep namespaces."
+        ],
+        "criteriaMissed": [],
+        "reasoning": "Both criteria are met on the in-repo evidence: the slice's tests carry explicit known-bad cases, anti-vacuity guards, and the only documented test change (the real-name guard's missing-name case) corrected a test that was not exercising its scenario, while the review fix in 442dd3a widened the theme-scheme guard rather than narrowing it. Deductions: git history could not be read, so 'no test deleted' rests on the archive and the RED-run list rather than a diff; task 2.8 was waived (no recorded RED run for the original 2.1–2.7 tests), so test-first integrity for the originals is asserted by negative controls instead of a failing run; and three behavioral scenarios ('Image build without the contract', 'Spoofed client address', 'API through the frontend origin') are asserted in unit tests only as static Dockerfile/nginx.conf text checks, with live behavior resting on the compose-smoke evidence file not opened here. review-findings.json is `clean: false`, closed by owner signOff with both findings `status: fixed`, which concerns review closure rather than test weakening."
+      }
+    },
+    {
+      "label": "judge:implement-platform-foundation-ui:in-scope",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 4 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 4925,
+      "durationMs": 51548,
+      "sessionId": "d8a8dfe7-9b8d-4262-810c-6aea9364eafa",
+      "costUsd": 0.856582,
+      "numTurns": 6,
+      "result": {
+        "score": 78,
+        "pass": true,
+        "criteriaMet": [
+          "1. changes are confined to the slice's own domain modules; any cross-module edit is justified by the spec, not silent drift — every changed file in the evidence (src/i18n/, src/app/routes.tsx + App.tsx, eslint-rules/no-literal-ui-text.js + eslint.config.js, playwright.config.ts, fixtures/PROVENANCE.md, e2e/fixtures/profile.ts, Dockerfile, nginx.conf, .dockerignore) maps one-to-one onto proposal.md 'What Changes' and tasks.md §3.1–3.6; the repo-wide theme-source.test.ts scan is justified by the owned spec scenario 'No toggle' and explicitly exempts src/design-system and src/api/generated 'by exact directory'; the vendored design system's Czech defaults were deliberately left untouched ('out of scope (vendored); recorded in design.md as a known gap'); proposal states 'No API operation is consumed yet' and no src/features/* was created.",
+          "2. no unrelated refactor or opportunistic rewrite was smuggled into the slice — the additions beyond the original tasks (App routing by pathname, data-route markers, not-found screen, nginx headers/421/digest pins, tools/container-smoke.mjs) each trace to a confirmed review-gate finding in the 'Fix map' table of slice1-review-fixes.md and to spec deltas validated with 'openspec validate --strict'; nothing in the evidence touches unrelated modules or rewrites existing code for its own sake."
+        ],
+        "criteriaMissed": [
+          "2 (partial) — the tsconfig split ('DOM types leak into Node-side tsconfig' → tsconfig.e2e.json) is a build-config refactor justified only by a review finding, with no owned FR/NFR behind it; and the serving hardening (CSP, DNS-rebinding 421, X-Forwarded-For overwrite 'to the login throttle', digest pinning) grew well past the proposal's 'Dockerfile + nginx.conf for the Compose frontend service', with the spec delta ('NFR-12 and serving had no requirement → spec delta: two requirements') added mid-slice to cover it — documented, but scope growth nonetheless.",
+          "1 (uncertainty) — the actual commit diff could not be inspected (git log/reflog unavailable); the changed-file list rests on tasks.md and the evidence doc, so untracked cross-module edits cannot be ruled out from the output alone."
+        ],
+        "reasoning": "The slice stayed inside its declared domain: the file list matches the proposal and tasks exactly, the vendored design system and generated client were explicitly excluded (design.md 'Known gap (out of scope here)'), and every post-review addition is tied to a named finding in the fix map and to a validated spec delta rather than being slipped in silently. Deductions for the tsconfig.e2e.json split, which is a build-config refactor with no spec backing, for the serving hardening that expanded scope via a mid-slice spec delta, and for the inability to verify the true diff since only documentary evidence of changed files was available. Neither rubric criterion is critical, and both are substantively met, so the slice passes at 78."
+      }
+    },
+    {
+      "label": "judge:implement-platform-foundation-ui:craft",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 4 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 4882,
+      "durationMs": 72196,
+      "sessionId": "e28d4945-ab4e-4caa-84d4-f0c1ded9e19a",
+      "costUsd": 1.24461375,
+      "numTurns": 18,
+      "result": {
+        "score": 82,
+        "pass": true,
+        "criteriaMet": [
+          "1. no leftover TODO/FIXME, dead code, or commented-out blocks were introduced — grep for TODO|FIXME|XXX|HACK across src/ (minus design-system), e2e/, eslint-rules/, playwright.config.ts, Dockerfile, nginx.conf, .dockerignore, fixtures/PROVENANCE.md: 'No matches found'; grep for commented-out statements (`// const|import|return|expect|it(`) in the slice's files: 'No matches found'; no commented-out nginx/Dockerfile directives; no `.skip`/`.only` in the slice's unit tests, and the one e2e skip in theme.spec.ts:66 is a documented runtime guard ('no control on this screen; covered by src/app/theme-source.test.ts'), not a disabled test. App.tsx, routes.tsx, no-literal-ui-text.js and Dockerfile read clean with every declared constant used.",
+          "2. no thrash: no revert churn, no abandoned half-implementation visible in the diff — tasks.md is fully ticked (1.1; 2.1–2.8; 3.1–3.6; 4.1–4.6); every one of the 20 owned spec scenarios maps to a named test in the fix map of docs/qa/evidence/slice1-review-fixes.md; the only post-review change named is a single targeted widening of the SCHEME regex in 442dd3a (theme-source.test.ts:34 now carries the `(?:is|has|use|set|get|no|app|ui|my|to|on)?…(?:mode|theme|scheme|ui|bg)?s?` alternation with the F01/F02 cases `isdark`, `appdark`, `darkmodes` added at :128-131), not a revert. Partially evidenced only: git history was unavailable, so revert churn across the 10 review rounds cannot be ruled out from the diff itself."
+        ],
+        "criteriaMissed": [],
+        "reasoning": "Both craft criteria are met on the evidence that can be inspected: the slice's files carry no TODO/FIXME markers, no commented-out code, and no unused declarations, and the archive shows a complete task list with a coherent, non-reverting fix map. Points are withheld because (a) the git log for the slice could not be read, so criterion 2 rests on archive docs plus the current tree rather than the actual commit diff, and (b) the slice's own tasks.md 4.3 still states '`review-findings.json` (clean: true)' while the archived review-findings.json is `\"clean\": false` with closure by owner sign-off, a stale leftover claim inside the delivered artifact. A minor smell remains at theme-source.test.ts:39 where `.replace(/^(.*)$/, '(?:$1)')` wraps the alternation in a needlessly indirect way. No critical criteria exist in this rubric, so the verdict passes."
+      }
+    },
+    {
+      "label": "judge:implement-admin-access-ui:process-order",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 4 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 4691,
+      "durationMs": 47284,
+      "sessionId": "83b2ecc4-193d-46ad-8993-3e1e262c78cc",
+      "costUsd": 0.512704,
+      "numTurns": 8,
+      "result": {
+        "score": 84,
+        "pass": true,
+        "criteriaMet": [
+          "1. CRITICAL: tests written from spec and existed before implementation — docs/qa/evidence/slice2-red-run.md (2026-10-04, task 2.5) records `npx vitest run src/features src/app` against compile-only stubs: '13 failed, 24 passed. Every failure is an assertion… No type or import errors', with AdminGate.test.tsx '9 of 9' failing and adminClient.test.ts '3 of 5'. The 9 RED-time cases plus the 6 added for review findings (F01/F02/F04/F07/F08) equal the 15 cases now in AdminGate.test.tsx, so the counts are internally consistent. Assertions map directly to the ADDED spec scenarios: 'No session' → `container.querySelector('[lang=\"en\"]')`, `fields).toHaveLength(1)`, `type: password`; 'Wrong password' → `findByRole('alert')).toHaveTextContent(messages['admin.signIn.invalid'])` + form stays; 'Session ends while signed in' → `adminClient.GET('/api/admin/stats')` then `signInHeading()`; CSRF 'Sign-out' → `del?.headers.get('X-XSRF-TOKEN')).toBe('xsrf-123')`; the `{\"password\": …}` body requirement → `JSON.parse(post?.body)).toEqual({ password: PASSWORD })`. These are spec-shaped assertions, not post-hoc snapshots of code.",
+          "2. spec → tests(red) → implement(green) → review → archive — tasks.md is ordered 1 Contract → 2 'Failing tests first (red)' (2.5 RED evidence) → 3 'UI (green)' → 4 Validation/review/archive, all ticked; archive dir openspec/changes/archive/2026-10-04-implement-admin-access-ui/ holds proposal, design, tasks, specs/admin-access/spec.md and review-findings.json with `\"clean\": true`, generatedAt 2026-10-04T14:58:54Z, 10 findings all `\"status\": \"fixed\"` with fixCommit 79ba422 / d3030a3 (none waived); tasks 4.3 records '4.1 re-run PASS' after the fixes."
+        ],
+        "criteriaMissed": [
+          "Partial on 1/2 (non-gating): the RED proof is a hand-written summary, not captured runner output, and git ordering of test-vs-implementation commits could not be verified (git log unavailable); the e2e spec has no recorded RED ('runs green in qa:verify after the implementation'); review-findings.json pins `\"headRef\": \"HEAD\"` rather than a SHA, so the reviewed tree is not resolvable."
+        ],
+        "reasoning": "Both criteria are evidenced on disk: a dated RED-run record with per-file failure counts that reconcile with the current test file, assertions that quote the spec scenarios (lang=\"en\" subtree, single password field, alert text, X-XSRF-TOKEN on DELETE, 401 returning the form), and a complete archive with a clean review-findings.json whose 10 findings are all fixed with named commits. The critical criterion is met. Points are withheld because the RED evidence is narrative rather than exit-coded output, commit ordering could not be independently confirmed, the e2e never had a RED, and the review headRef is unpinned."
+      }
+    },
+    {
+      "label": "judge:implement-admin-access-ui:test-integrity",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": true,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 4 --tools Read,Grep,Glob --append-system-prompt <…> --json-schema <…>",
+      "promptChars": 4632,
+      "durationMs": 52504,
+      "sessionId": "5468ab41-a335-4a00-b9a3-2addfa1b6c28",
+      "costUsd": 0.4778285,
+      "numTurns": 10,
+      "result": {
+        "score": 90,
+        "pass": true,
+        "criteriaMet": [
+          "1. CRITICAL: no test weakened, skipped, or deleted — grep of src/features/admin-access for `.skip(`, `.only(`, `xit(`, `expect(true)` returns no matches; RED run (docs/qa/evidence/slice2-red-run.md) recorded 9/9 AdminGate failures and 3/5 adminClient failures as 'Every failure is an assertion … No type or import errors'; the current files hold 15 AdminGate cases and 7 adminClient cases, i.e. cases were added (F02/F04 re-announce, F01/F08 403-vs-unreachable), none removed; assertions are concrete (`expect(del?.headers.get('X-XSRF-TOKEN')).toBe('xsrf-123')`, `expect(screen.getByRole('alert')).not.toBe(first)`, `expect(passwordField()).toHaveFocus()`); review-findings.json shows all 10 findings fixed, none waived",
+          "2. spec edge/locale/boundary cases asserted — all four owned scenarios have a direct test: No session (`container.querySelector('[lang=\"en\"]')`, `fields toHaveLength(1)`, type=password), Wrong password (alert text + field cleared + focus kept + second-attempt re-announce), Session ends while signed in (`a later admin 401 (idle expiry) brings back the sign-in form`), CSRF Sign-out (`X-XSRF-TOKEN` = cookie); beyond the spec: reads carry no header, malformed percent-encoded cookie, rotated cookie read at call time, missing cookie → 403, 500 on session check/sign-in/sign-out each distinguished from 401, sign-out 401 vs 403 split; locale covered by `lang=\"en\"` assertion plus i18n-coverage test for /admin"
+        ],
+        "criteriaMissed": [
+          "(partial, non-rubric deduction) e2e/admin-sign-in.spec.ts has no recorded RED — slice2-red-run.md states it 'was written in the same step' and only 'runs green … after the implementation', so RED-before-GREEN is evidenced for unit tests only",
+          "(minor) the 'Wrong password' scenario names the literal copy 'That password is not correct.' but AdminGate.test.tsx asserts via `messages['admin.signIn.invalid']`, so the literal is only indirectly pinned through the catalog"
+        ],
+        "reasoning": "The critical criterion is clearly met: no skips, `.only`, or tautologies exist in the admin-access tests; the RED-run record shows every failure was an assertion failure; and the case count grew from 9 to 15 (AdminGate) and 5 to 7 (adminClient) across the review-fix commits, with every review finding fixed rather than waived. Edge cases are asserted well beyond the happy path: `lang=\"en\"`, single password field, alert re-announcement on a second wrong password, idle-expiry 401, CSRF header present on DELETE and absent on GET, malformed and rotated cookies, and 401/403/500 distinctions on sign-in and sign-out. Points are withheld because the e2e spec was never seen RED and the spec's literal copy is asserted only through the catalog key."
+      }
+    },
+    {
+      "label": "judge:implement-admin-access-ui:in-scope",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge:implement-admin-access-ui:craft",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge:implement-authoring-tasks-ui:process-order",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge:implement-authoring-tasks-ui:test-integrity",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge:implement-authoring-tasks-ui:in-scope",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge:implement-authoring-tasks-ui:craft",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge:implement-authoring-missions-ui:process-order",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge:implement-authoring-missions-ui:test-integrity",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge:implement-authoring-missions-ui:in-scope",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge:implement-authoring-missions-ui:craft",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge:implement-practice-flow-ui:process-order",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge:implement-practice-flow-ui:test-integrity",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge:implement-practice-flow-ui:in-scope",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge:implement-practice-flow-ui:craft",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge:implement-gamification-ui:process-order",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge:implement-gamification-ui:test-integrity",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge:implement-gamification-ui:in-scope",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge:implement-gamification-ui:craft",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge:implement-progress-stats-ui:process-order",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge:implement-progress-stats-ui:test-integrity",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge:implement-progress-stats-ui:in-scope",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge:implement-progress-stats-ui:craft",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge:harden-phase5-ui:process-order",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge:harden-phase5-ui:test-integrity",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge:harden-phase5-ui:in-scope",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge:harden-phase5-ui:craft",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge:qa-phase6-ui:process-order",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge:qa-phase6-ui:test-integrity",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge:qa-phase6-ui:in-scope",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge:qa-phase6-ui:craft",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge2:implement-platform-foundation-ui:in-scope",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "judge2:implement-platform-foundation-ui:process-order",
+      "phase": "Judge",
+      "agentType": "eval-judge",
+      "structured": true,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    },
+    {
+      "label": "write-trajectory-artifacts",
+      "phase": "Aggregate",
+      "agentType": null,
+      "structured": false,
+      "ok": false,
+      "error": "skipped: --max-total-usd 6 reached ($6.91)"
+    }
+  ],
+  "logs": [
+    {
+      "phase": "Collect",
+      "message": "9 slice(s) × 4 dimensions = 36 judgements"
+    },
+    {
+      "phase": "Aggregate",
+      "message": "scored 6 judgement(s): 5 pass; dimensions {\"process-order\":74.5,\"test-integrity\":87,\"in-scope\":78,\"craft\":82}"
+    }
+  ],
+  "persisted": [],
+  "returned": {
+    "slices": 2,
+    "judgements": 6,
+    "passed": 5,
+    "dimensions": {
+      "process-order": 74.5,
+      "test-integrity": 87,
+      "in-scope": 78,
+      "craft": 82
+    },
+    "sliceRollup": {
+      "implement-platform-foundation-ui": 65,
+      "implement-admin-access-ui": 84
+    },
+    "wrote": [
+      "evals/results/trajectory-latest.json",
+      "evals/results/trajectory-manifest.json",
+      "docs/qa/trajectory-eval-report.md"
+    ]
+  }
+}

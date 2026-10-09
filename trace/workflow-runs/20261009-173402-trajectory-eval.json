@@ -1,0 +1,43 @@
+{
+  "workflow": "trajectory-eval",
+  "file": "./.claude/workflows/trajectory-eval.js",
+  "description": "Trajectory evaluation: grade the PATH each slice took, not just its output. A fresh judge (maker≠checker) scores each slice on process-order, test-integrity, in-scope discipline, and craft, reading the git log/diff/spec/tasks/review evidence. The LLM half of trajectory evals — the deterministic half is check-trajectory.mjs.",
+  "dryRun": false,
+  "startedAt": "2026-10-09T17:34:02.899Z",
+  "finishedAt": "2026-10-09T17:35:26.603Z",
+  "args": {},
+  "settings": {
+    "allowedTools": null,
+    "concurrency": 4,
+    "model": null,
+    "budgetPerAgentUsd": 2,
+    "maxTotalUsd": 8,
+    "untypedTools": "Read,Grep,Glob",
+    "permissionMode": "acceptEdits"
+  },
+  "outcome": "failed",
+  "stoppedBecause": null,
+  "error": "No slices to evaluate (args.slices empty and none found under openspec/changes/archive/).",
+  "totalCostUsd": 2.0389,
+  "steps": [
+    {
+      "label": "collect-slices",
+      "phase": "Collect",
+      "agentType": null,
+      "structured": true,
+      "ok": false,
+      "command": "claude -p --output-format json --no-session-persistence --permission-mode acceptEdits --max-budget-usd 2 --tools Read,Grep,Glob --json-schema <…>",
+      "promptChars": 585,
+      "durationMs": 83638,
+      "sessionId": "c1d14ad9-7d1a-4d4c-9842-705e4be8651a",
+      "costUsd": 2.0389120000000003,
+      "numTurns": 26,
+      "error": "error_max_budget_usd — Reached maximum budget ($2)"
+    }
+  ],
+  "logs": [],
+  "persisted": [],
+  "returned": {
+    "error": "No slices to evaluate (args.slices empty and none found under openspec/changes/archive/)."
+  }
+}

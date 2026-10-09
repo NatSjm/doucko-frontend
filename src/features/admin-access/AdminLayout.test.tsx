@@ -76,4 +76,32 @@ describe('sign-out forgets admin data (review F12)', () => {
     expect(client.getQueryData(['other'])).toBe(1);
     expect(client.getQueryData(ADMIN_SESSION_KEY)).toBe(false);
   });
+
+  it('does not mark "New task" or "New mission" as the current page while an existing item is edited', async () => {
+    stubSignedInAdmin();
+    renderAt(
+      <AdminArea>
+        <AdminLayout title={messages['admin.tasks.title']}>
+          <p>content</p>
+        </AdminLayout>
+      </AdminArea>,
+      '/admin/tasks/edit?taskId=00000000-0000-4000-8000-000000000001',
+    );
+    await screen.findByRole('heading', { level: 1, name: messages['admin.tasks.title'] });
+    expect(screen.getByRole('link', { name: messages['admin.nav.newTask'] })).not.toHaveAttribute('aria-current');
+  });
+
+  it('marks "New mission" as the current page on a new mission', async () => {
+    stubSignedInAdmin();
+    renderAt(
+      <AdminArea>
+        <AdminLayout title={messages['admin.tasks.title']}>
+          <p>content</p>
+        </AdminLayout>
+      </AdminArea>,
+      '/admin/missions/edit',
+    );
+    await screen.findByRole('heading', { level: 1, name: messages['admin.tasks.title'] });
+    expect(screen.getByRole('link', { name: messages['admin.nav.newMission'] })).toHaveAttribute('aria-current', 'page');
+  });
 });
