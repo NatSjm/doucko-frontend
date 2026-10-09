@@ -97,7 +97,7 @@
     {
       "slice": "2026-10-09-release-review-ui",
       "reviewEvidence": "clean",
-      "trailerCommits": 4,
+      "trailerCommits": 6,
       "libDomains": [
         "admin-access"
       ],
