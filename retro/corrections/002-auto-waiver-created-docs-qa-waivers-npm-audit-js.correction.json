@@ -1,0 +1,18 @@
+{
+  "id": "COR-2",
+  "ts": "2026-10-11T14:59:38.596Z",
+  "utterance": "AUTO: waiver created (docs/qa/waivers/npm-audit.json) — an evidence requirement was waived; record why and disposition this correction.",
+  "contradictedClaim": null,
+  "mappedReqIds": [],
+  "gateThatShouldHaveCaught": null,
+  "failureMode": "skipped-convention",
+  "failureModeSource": "detector",
+  "source": "auto-waiver",
+  "autoKey": "waiver-created:docs/qa/waivers/npm-audit.json",
+  "disposition": {
+    "status": "waived",
+    "by": "project owner",
+    "ts": "2026-10-11T14:59:51.899Z",
+    "note": "Owner chose option 2 in the Claude Code chat (2026-10-11): waive only braces GHSA-vfj7-8cjw-p6xm (no patched version; reachable only via the OpenSpec CLI devDependency) in docs/qa/waivers/npm-audit.json, reviewBy 2026-11-11; every other advisory still fails the CI audit."
+  }
+}

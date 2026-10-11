@@ -1,6 +1,6 @@
 {
-  "createdAt": "2026-10-11T14:47:47.633Z",
-  "gitHead": "3243fcc807f45108001a34dbe63951071b997ad3",
+  "createdAt": "2026-10-11T14:59:38.356Z",
+  "gitHead": "2c8b297149f0d302e43719e1bc3ad6e5551598f9",
   "files": {
     ".claude/workflows/eval-suite.js": "f93c99d868b812cfa7412927f52b62d1042525396a9d0265f16cfe435b9c6098",
     ".claude/workflows/review-gate.js": "9f9e52f080beac273019e5a4bd704e50b67d340925d613f16bfacc106dac4428",
@@ -8,7 +8,7 @@
     ".claude/workflows/vision-verify.js": "84c893a066088a158d308a3a21cf7cd3b44fdefb4f503ef9bd85507b7364fc69",
     ".githooks/commit-msg": "252e926124a88e9b45eb58d44a3de1ab61527305a77ce0bc75c8db9319e218f8",
     ".githooks/pre-commit": "dffa1154686e27f1fa24323e95371be4ada9cbbe096580049be113dc8e08ce06",
-    ".github/workflows/ci.yml": "cdec32f709df2c7a8bc7cf251d9bd12d4e5c0bb7f141dc140c27f634b0736c36",
+    ".github/workflows/ci.yml": "6b0052e27af11ce95277299d755482483bbfedfcdad299495efefead2b961011",
     "factory.config.json": "7ef2585daf743d36ef26d457a05cbcd64ecfae848d0f94696104e28001ea1901",
     "quality/coverage-baseline.json": "54eb1fb3ca6cd3608958b272cd95f97debcd9dbab3daf711a4421ff25a90eaa5",
     "quality/process-baseline.json": "d056760471ca3d36d949db3d07cae43280bb5c19660cb8522567f40b106e7f93",
@@ -19,6 +19,7 @@
     "scripts/check-e2e-stack.mjs": "55a4c5c11f4df7d277ace772bf399f372f362e7d953dfde2db6f2ebd013c4cc5",
     "scripts/check-eval-ratchet.mjs": "6b60fead8aa15628641914446b3ded755c6e0fa71e59497c10c55903044d9d41",
     "scripts/check-factory-integrity.mjs": "40aae2f7f12ae0a1f30897977e08ce9ad2617e9a4f7d007361fe75b460fd9883",
+    "scripts/check-npm-audit.mjs": "af0b6479fe364955b2c39a528e82db87c284257cb11f160df03570071a9e84b3",
     "scripts/check-process-ratchet.mjs": "2aaf87ec0d262659e70906f32a83700e60d48d562d5cf3d036957402835db38d",
     "scripts/check-recordings.mjs": "d6e16b518d7c99b98db1c0912434c361766a016aa3d7e056705eb236028f86e1",
     "scripts/check-traceability.mjs": "489a1532aad09eef4f2b8a9dbef9fbf7e20b42d60919bcc51108b842d254090e",

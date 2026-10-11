@@ -28,8 +28,10 @@ jobs:
         run: node scripts/check-traceability.mjs --check-fresh
       - name: Trajectory (freshness)
         run: node scripts/check-trajectory.mjs --check-fresh
+      # npm audit over ALL dependencies; only owner-approved, dated advisory
+      # waivers in docs/qa/waivers/npm-audit.json are skipped.
       - name: Dependency audit (fail on high+)
-        run: npm audit --audit-level=high
+        run: node scripts/check-npm-audit.mjs --level=high
 
       - name: Install Playwright browsers
         if: hashFiles('playwright.config.ts') != ''

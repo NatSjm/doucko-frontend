@@ -1,0 +1,12 @@
+{
+  "advisories": [
+    {
+      "id": "GHSA-vfj7-8cjw-p6xm",
+      "package": "braces",
+      "reason": "High-severity advisory with no patched version of braces published yet. It reaches this repo only through the OpenSpec CLI (@fission-ai/openspec -> fast-glob -> micromatch -> braces), a devDependency that is never part of the shipped app; `npm audit --omit=dev` reports 0 vulnerabilities. Remove this entry once braces publishes a fix.",
+      "approvedBy": "project owner (Claude Code chat, option 2)",
+      "approved": "2026-10-11",
+      "reviewBy": "2026-11-11"
+    }
+  ]
+}
