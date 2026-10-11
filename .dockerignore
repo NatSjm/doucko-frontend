@@ -29,3 +29,6 @@ openspec/
 **/*.dump
 **/raw/
 src/api/generated/
+docs/qa/full-demo/*.webm
+docs/qa/full-demo/snaps/
+docs/qa/full-demo/failure.png
