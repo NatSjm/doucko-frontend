@@ -22,3 +22,7 @@ backups/
 **/raw/
 # generated from the contract (NFR-12) by `npm run api:generate`
 src/api/generated/
+# demo take (scripts/record-full-demo.mjs): the video is published separately, only the captions are kept
+docs/qa/full-demo/*.webm
+docs/qa/full-demo/snaps/
+docs/qa/full-demo/failure.png
