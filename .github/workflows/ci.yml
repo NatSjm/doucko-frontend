@@ -33,7 +33,7 @@ jobs:
 
       - name: Install Playwright browsers
         if: hashFiles('playwright.config.ts') != ''
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium firefox msedge # every project in playwright*.config.ts
 
       # The battery: lint, typecheck, unit + coverage + ratchet, Playwright
       # E2E (mocked: browser-e2e-tests), real-stack evidence freshness
@@ -90,7 +90,7 @@ jobs:
       - name: Backend tooling
         working-directory: backend
         run: npm ci
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium firefox msedge # every project in playwright*.config.ts
       - name: Real-stack E2E (writes docs/qa/e2e-stack-latest.md)
         env:
           DOUCKO_BACKEND_DIR: ${{ github.workspace }}/backend
