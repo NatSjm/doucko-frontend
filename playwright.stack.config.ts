@@ -18,6 +18,9 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   timeout: 60_000,
+  // Real backend + Postgres in Docker: a save took 4.6 s on a loaded laptop, so the default 5 s
+  // assertion window failed random tests. A wrong state still fails; it just fails after 15 s.
+  expect: { timeout: 15_000 },
   reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report-stack' }]],
   outputDir: 'test-results-stack',
   use: { baseURL, trace: 'retain-on-failure' },
