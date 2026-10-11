@@ -80,6 +80,8 @@ jobs:
           repository: ${{ vars.DOUCKO_BACKEND_REPO }} # <owner>/<backend repo>: set this repository variable
           token: ${{ secrets.DOUCKO_BACKEND_TOKEN || github.token }}
           path: backend
+          # The backend image COPYs contract/api; without its contract/ submodule the build fails.
+          submodules: recursive
       - uses: actions/setup-node@v4
         with:
           node-version: 22

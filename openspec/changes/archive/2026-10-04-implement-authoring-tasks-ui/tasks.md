@@ -24,7 +24,7 @@
 
 - [x] 4.1 `npm run qa:verify` — `Overall result: Pass`.
 - [x] 4.2 `npx openspec validate implement-authoring-tasks-ui --strict`
-- [x] 4.3 review-gate workflow; fix confirmed findings; persist `review-findings.json` (clean:true). 2026-10-04: 6 majors and 11 minors fixed in `37534ca`, 5 minors waived with reasons; qa:verify re-run PASS.
+- [x] 4.3 review-gate workflow; fix confirmed findings; persist `review-findings.json` (clean:true). 2026-10-04: 6 majors and 11 minors fixed in `45350dc`, 5 minors waived with reasons; qa:verify re-run PASS.
 - [x] 4.4 Smoke against the compose stack after the slice 5 merge: PASS after the merge (2026-10-04) — evidence: `docs/qa/evidence/slice5-compose-smoke.md`.
 - [x] 4.5 Update `docs/current-state.md`.
 - [x] 4.6 Archive: `npx openspec archive implement-authoring-tasks-ui --yes`; commit with `Slice: implement-authoring-tasks-ui` + `Refs: FR-1, FR-2, FR-3, FR-4, FR-6, FR-7, FR-8, FR-10, FR-11, FR-13, NFR-8, NFR-17`.

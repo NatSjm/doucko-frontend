@@ -36,7 +36,7 @@
       "file": "src/features/tasks/TaskEditorScreen.tsx",
       "line": 279,
       "status": "fixed",
-      "fixCommit": "37534ca"
+      "fixCommit": "45350dc"
     },
     {
       "id": "F02",
@@ -47,7 +47,7 @@
       "file": "src/features/tasks/PartEditor.tsx",
       "line": 110,
       "status": "fixed",
-      "fixCommit": "37534ca"
+      "fixCommit": "45350dc"
     },
     {
       "id": "F03",
@@ -58,7 +58,7 @@
       "file": "src/features/tasks/taskForm.ts",
       "line": 114,
       "status": "fixed",
-      "fixCommit": "37534ca"
+      "fixCommit": "45350dc"
     },
     {
       "id": "F04",
@@ -69,7 +69,7 @@
       "file": "src/features/sources/PdfViewer.tsx",
       "line": 42,
       "status": "fixed",
-      "fixCommit": "37534ca"
+      "fixCommit": "45350dc"
     },
     {
       "id": "F05",
@@ -80,7 +80,7 @@
       "file": "src/features/tasks/TaskListScreen.tsx",
       "line": 153,
       "status": "fixed",
-      "fixCommit": "37534ca"
+      "fixCommit": "45350dc"
     },
     {
       "id": "F06",
@@ -91,7 +91,7 @@
       "file": "src/features/admin-access/useObjectUrl.ts",
       "line": 11,
       "status": "fixed",
-      "fixCommit": "37534ca"
+      "fixCommit": "45350dc"
     },
     {
       "id": "F07",
@@ -102,7 +102,7 @@
       "file": "src/features/sources/PdfViewer.tsx",
       "line": 13,
       "status": "fixed",
-      "fixCommit": "37534ca"
+      "fixCommit": "45350dc"
     },
     {
       "id": "F08",
@@ -113,7 +113,7 @@
       "file": "src/features/tasks/TaskEditorScreen.tsx",
       "line": 92,
       "status": "fixed",
-      "fixCommit": "37534ca"
+      "fixCommit": "45350dc"
     },
     {
       "id": "F09",
@@ -124,7 +124,7 @@
       "file": "src/features/tasks/TaskEditorScreen.tsx",
       "line": 207,
       "status": "fixed",
-      "fixCommit": "37534ca"
+      "fixCommit": "45350dc"
     },
     {
       "id": "F10",
@@ -135,7 +135,7 @@
       "file": "src/features/tasks/PreviewScreen.tsx",
       "line": 187,
       "status": "fixed",
-      "fixCommit": "37534ca"
+      "fixCommit": "45350dc"
     },
     {
       "id": "F11",
@@ -146,7 +146,7 @@
       "file": "src/features/sources/SourcesScreen.tsx",
       "line": 35,
       "status": "fixed",
-      "fixCommit": "37534ca"
+      "fixCommit": "45350dc"
     },
     {
       "id": "F12",
@@ -157,7 +157,7 @@
       "file": "src/features/admin-access/AdminLayout.tsx",
       "line": 32,
       "status": "fixed",
-      "fixCommit": "37534ca"
+      "fixCommit": "45350dc"
     },
     {
       "id": "F13",
@@ -201,7 +201,7 @@
       "file": "src/features/tasks/ImagesEditor.tsx",
       "line": 70,
       "status": "fixed",
-      "fixCommit": "37534ca"
+      "fixCommit": "45350dc"
     },
     {
       "id": "F17",
@@ -212,7 +212,7 @@
       "file": "src/features/tasks/TaskListScreen.tsx",
       "line": 136,
       "status": "fixed",
-      "fixCommit": "37534ca"
+      "fixCommit": "45350dc"
     },
     {
       "id": "F18",
@@ -223,7 +223,7 @@
       "file": "src/features/tasks/TaskListScreen.tsx",
       "line": 180,
       "status": "fixed",
-      "fixCommit": "37534ca"
+      "fixCommit": "45350dc"
     },
     {
       "id": "F19",
@@ -234,7 +234,7 @@
       "file": "src/features/tasks/PreviewScreen.tsx",
       "line": 61,
       "status": "fixed",
-      "fixCommit": "37534ca"
+      "fixCommit": "45350dc"
     },
     {
       "id": "F20",
@@ -256,7 +256,7 @@
       "file": "docs/qa/demo-recordings/nfr8-task-entry/nfr8-single-part-task-entry.png",
       "line": 0,
       "status": "fixed",
-      "fixCommit": "37534ca"
+      "fixCommit": "45350dc"
     },
     {
       "id": "F22",

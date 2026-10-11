@@ -42,7 +42,7 @@
   - Slice 6 merged into `main` (`945dee8`); real-stack smoke PASS after the merge (2026-10-05, API click path through 127.0.0.1:8081; new routes served) — evidence: `../backend/docs/qa/evidence/slice6-compose-smoke.md`
   - Slice 5 real-stack smoke PASS after the merge (2026-10-04) — evidence: `docs/qa/evidence/slice5-compose-smoke.md`
   - Slice 5 authoring screens (`/admin/sources`, `/admin/sources/view`, `/admin/tasks`, `/admin/tasks/edit`, `/admin/tasks/preview`): QA battery passes (347 unit tests, coverage 100%, 219 e2e in chromium, msedge and firefox incl. the authoring routes signed in in the a11y and theme gates, `⟦` test signed in) — evidence: `docs/qa/automated-verification-latest.md` (2026-10-04)
-  - Slice 5 review gate clean (6 majors and 11 minors fixed in `37534ca`, 5 minors waived) — evidence: `openspec/changes/archive/2026-10-04-implement-authoring-tasks-ui/review-findings.json`
+  - Slice 5 review gate clean (6 majors and 11 minors fixed in `45350dc`, 5 minors waived) — evidence: `openspec/changes/archive/2026-10-04-implement-authoring-tasks-ui/review-findings.json`
   - Slice 5 RED run — evidence: `docs/qa/evidence/slice5-red-run.md`; NFR-8 recording (asserted, 8.6 s against the contract stub) — evidence: `docs/qa/demo-recordings/nfr8-task-entry/manifest.json`
   - Slice 2 QA battery passes (unit, coverage at 100%, e2e in chromium, msedge and firefox incl. `/admin` in the a11y gate) — evidence: `docs/qa/automated-verification-latest.md` (2026-10-04)
   - Slice 2 RED run — evidence: `docs/qa/evidence/slice2-red-run.md`; real-stack smoke — evidence: `docs/qa/evidence/slice2-compose-smoke.md`

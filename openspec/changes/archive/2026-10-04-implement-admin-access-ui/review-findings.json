@@ -36,7 +36,7 @@
       "file": "src/features/admin-access/AdminArea.tsx",
       "line": 19,
       "status": "fixed",
-      "fixCommit": "79ba422"
+      "fixCommit": "2388289"
     },
     {
       "id": "F02",
@@ -47,7 +47,7 @@
       "file": "src/features/admin-access/SignInForm.tsx",
       "line": 51,
       "status": "fixed",
-      "fixCommit": "79ba422"
+      "fixCommit": "2388289"
     },
     {
       "id": "F03",
@@ -58,7 +58,7 @@
       "file": "src/features/admin-access/AdminGate.test.tsx",
       "line": 1,
       "status": "fixed",
-      "fixCommit": "79ba422"
+      "fixCommit": "2388289"
     },
     {
       "id": "F04",
@@ -69,7 +69,7 @@
       "file": "src/features/admin-access/SignInForm.tsx",
       "line": 51,
       "status": "fixed",
-      "fixCommit": "79ba422"
+      "fixCommit": "2388289"
     },
     {
       "id": "F05",
@@ -80,7 +80,7 @@
       "file": "openspec/changes/implement-admin-access-ui/tasks.md",
       "line": 15,
       "status": "fixed",
-      "fixCommit": "79ba422"
+      "fixCommit": "2388289"
     },
     {
       "id": "F06",
@@ -102,7 +102,7 @@
       "file": "src/features/admin-access/AdminGate.tsx",
       "line": 20,
       "status": "fixed",
-      "fixCommit": "79ba422"
+      "fixCommit": "2388289"
     },
     {
       "id": "F08",
@@ -113,7 +113,7 @@
       "file": "src/features/admin-access/AdminArea.tsx",
       "line": 29,
       "status": "fixed",
-      "fixCommit": "79ba422"
+      "fixCommit": "2388289"
     },
     {
       "id": "F09",
@@ -124,7 +124,7 @@
       "file": "src/features/admin-access/admin-access.css",
       "line": 13,
       "status": "fixed",
-      "fixCommit": "79ba422"
+      "fixCommit": "2388289"
     },
     {
       "id": "F10",
@@ -135,7 +135,7 @@
       "file": "openspec/changes/implement-admin-access-ui/specs/admin-access/spec.md",
       "line": 1,
       "status": "fixed",
-      "fixCommit": "79ba422",
+      "fixCommit": "2388289",
       "note": "The partial scenario was F04 (repeated wrong password not re-announced)."
     }
   ],

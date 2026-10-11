@@ -1,6 +1,6 @@
 {
-  "createdAt": "2026-10-08T05:49:22.045Z",
-  "gitHead": "b45f2618dab97fb46810daf88019425c6691368a",
+  "createdAt": "2026-10-11T14:39:25.217Z",
+  "gitHead": "95be97be8d0e167eaa79c5f70469274b112bd809",
   "files": {
     ".claude/workflows/eval-suite.js": "f93c99d868b812cfa7412927f52b62d1042525396a9d0265f16cfe435b9c6098",
     ".claude/workflows/review-gate.js": "9f9e52f080beac273019e5a4bd704e50b67d340925d613f16bfacc106dac4428",
@@ -8,7 +8,7 @@
     ".claude/workflows/vision-verify.js": "84c893a066088a158d308a3a21cf7cd3b44fdefb4f503ef9bd85507b7364fc69",
     ".githooks/commit-msg": "252e926124a88e9b45eb58d44a3de1ab61527305a77ce0bc75c8db9319e218f8",
     ".githooks/pre-commit": "dffa1154686e27f1fa24323e95371be4ada9cbbe096580049be113dc8e08ce06",
-    ".github/workflows/ci.yml": "de21162dc391678cd971833db92e7503c3607120df2b287c5f22e8c504bf738a",
+    ".github/workflows/ci.yml": "f6a54c271d6f4664714e2478a6b30f535fc772d7086e6625814d728e2846d624",
     "factory.config.json": "7ef2585daf743d36ef26d457a05cbcd64ecfae848d0f94696104e28001ea1901",
     "quality/coverage-baseline.json": "54eb1fb3ca6cd3608958b272cd95f97debcd9dbab3daf711a4421ff25a90eaa5",
     "quality/process-baseline.json": "d056760471ca3d36d949db3d07cae43280bb5c19660cb8522567f40b106e7f93",
@@ -32,6 +32,6 @@
     "scripts/qa-verify.mjs": "77e5c4a00ff226baeabb5a9adedd4546d11db758ce4c5692301138a07616906e"
   },
   "adaptations": [
-    "PD-16: G5 e2eStack key + e2e-stack-evidence battery member + CI e2e-stack job"
+    "doucko multi-repo harness (frontend)"
   ]
 }
