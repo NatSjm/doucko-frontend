@@ -507,6 +507,29 @@ describe('hints (FR-28)', () => {
     await screen.findByText('Sečti 50 setin a 25 setin.');
     await waitFor(() => expect(document.querySelector('[data-hint="2"]')).toHaveFocus());
   });
+
+  it('a last hint arriving while the child already types an answer does not take the focus away', async () => {
+    const backend = stubChildBackend();
+    await open(at(PRACTICE.missionA, PRACTICE.taskSum));
+    await userEvent.click(hintButton() as HTMLElement);
+    await screen.findByText('Zapiš obě čísla na setiny.');
+    let release = () => {};
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    const original = backend.handle;
+    backend.handle = async (request) => {
+      if (request.url.endsWith('/hints')) await gate;
+      return original(request);
+    };
+    await userEvent.click(hintButton() as HTMLElement);
+    await userEvent.click(field('a'));
+    await userEvent.keyboard('0,7');
+    release();
+    await screen.findByText('Sečti 50 setin a 25 setin.');
+    expect(field('a')).toHaveFocus();
+    await userEvent.keyboard('5{Enter}');
+    expect(await screen.findByText(m['child.task.correct'])).toBeInTheDocument();
+    expect(field('a')).toHaveValue('0,75');
+  });
 });
 
 describe('translation toggle (FR-29)', () => {

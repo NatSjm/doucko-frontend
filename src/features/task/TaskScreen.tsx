@@ -337,13 +337,17 @@ function TaskPractice({ initial, missionId }: { initial: ChildTask; missionId: s
   }
 
   async function openHint() {
+    // Where focus was when the hint was asked for (the hint button, or nowhere).
+    const askedFrom = document.activeElement;
     setHintBusy(true);
     try {
       const hint = await openNextHint(missionId, task.taskId);
       setTask((cur) => ({ ...cur, hints: { ...cur.hints, opened: [...cur.hints.opened.filter((h) => h.index !== hint.index), hint] } }));
       setNotice(null);
-      // The button is disabled now: focus moves to the hint just opened instead of being lost.
-      if (hint.remaining === 0) setFocusTarget(`hint:${hint.index}`);
+      // The button is disabled now: focus moves to the hint just opened instead of being lost,
+      // unless the child has moved on meanwhile (e.g. is typing an answer): that focus stays.
+      const active = document.activeElement;
+      if (hint.remaining === 0 && (active === askedFrom || active === document.body)) setFocusTarget(`hint:${hint.index}`);
     } catch (error) {
       setNotice('hint');
       // 409: every hint is already open (another tab); show what the server holds.
