@@ -19,7 +19,7 @@ Result: PASS, 7 warning(s)
 | 2026-10-07-implement-progress-stats-ui | clean | 6 | yes | stats, admin-access, reports |
 | 2026-10-08-harden-phase5-ui | clean | 10 | yes | - |
 | 2026-10-08-qa-phase6-ui | clean | 5 | yes | missions |
-| 2026-10-09-release-review-ui | clean | 6 | yes | admin-access |
+| 2026-10-09-release-review-ui | clean | 7 | yes | admin-access |
 
 ## Cross-slice module overlap
 
